@@ -1,0 +1,9 @@
+{
+  "contract": "intent-spec", "expected_error": "self_reported_uncertainty",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-inferred-hedge", "version": 1, "created_at": "2026-08-19T10:00:00Z",
+    "user_idea_refs": [{ "idea_id": "idea-1", "version": 1 }], "supersedes_intent_spec_id": null, "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [{ "claim_id": "claim-source", "proposition": "The task runs weekly.", "origin": "user_provided", "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-1", "user_idea_version": 1, "speaker": { "kind": "submitting_user" } } }, { "claim_id": "claim-recurs", "proposition": "The task recurs.", "origin": "inferred", "self_reported_uncertainty": { "expression": "maybe" }, "discourse_role": "operative", "provenance": { "kind": "derivation", "premise_claim_ids": ["claim-source"], "reasoning_kind": "implication", "derivation_confidence": "high" } }],
+    "open_items": [], "conflicts": [], "clarification_decisions": []
+  }
+}

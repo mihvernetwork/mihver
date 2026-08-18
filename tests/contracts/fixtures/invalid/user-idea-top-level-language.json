@@ -1,0 +1,9 @@
+{
+  "contract": "user-idea", "expected_error": "source_language",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "user_idea", "idea_id": "idea-language", "version": 1,
+    "source": { "source_id": "user-1", "channel": "chat" }, "created_at": "2026-08-19T08:00:00Z", "source_language": "en",
+    "turns": [{ "turn_id": "turn-1", "sequence": 1, "supplied_at": "2026-08-19T08:00:00Z", "source_id": "user-1", "source_language": "tr", "contents": [{ "kind": "text", "text": "Bir yardımcı istiyorum." }] }],
+    "supersessions": []
+  }
+}

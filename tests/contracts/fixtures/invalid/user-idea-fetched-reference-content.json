@@ -1,0 +1,10 @@
+{
+  "contract": "user-idea",
+  "expected_error": "fetched_content",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "user_idea", "idea_id": "idea-ref", "version": 1,
+    "source": { "source_id": "user-1", "channel": "chat" }, "created_at": "2026-08-19T08:00:00Z",
+    "turns": [{ "turn_id": "turn-1", "sequence": 1, "supplied_at": "2026-08-19T08:00:00Z", "source_id": "user-1", "source_language": "en", "contents": [{ "kind": "external_reference", "reference": "https://example.com/spec", "fetched_content": "Not supplied by the user" }] }],
+    "supersessions": []
+  }
+}

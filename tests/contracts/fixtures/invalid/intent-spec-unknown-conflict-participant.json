@@ -1,0 +1,11 @@
+{
+  "contract": "intent-spec", "expected_error": "open_item",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-unknown-conflict", "version": 1, "created_at": "2026-08-19T10:00:00Z",
+    "user_idea_refs": [{ "idea_id": "idea-1", "version": 1 }], "supersedes_intent_spec_id": null, "handoff": { "status": "blocked", "requirement_derivation_consumable": false },
+    "claims": [{ "claim_id": "claim-1", "proposition": "Run locally.", "origin": "user_provided", "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-1", "user_idea_version": 1, "speaker": { "kind": "submitting_user" } } }],
+    "open_items": [{ "open_item_id": "unknown-1", "kind": "unknown", "question": "Which region?", "relevance_rationale": "Region affects deployment.", "decision_impact": { "level": "high", "unresolved_item": "Region", "downstream_decision": "Deployment location", "level_rationale": "It materially changes deployment." } }],
+    "conflicts": [{ "conflict_id": "conflict-1", "participants": [{ "kind": "claim", "claim_id": "claim-1" }, { "kind": "open_item", "id": "unknown-1" }], "incompatibility_rationale": "An Unknown cannot conflict.", "decision_impact": { "level": "high", "unresolved_item": "Invalid conflict", "downstream_decision": "None", "level_rationale": "Fixture must be rejected." } }],
+    "clarification_decisions": [{ "subject_kind": "open_item", "subject_id": "unknown-1", "needed": true, "rationale": "High impact." }, { "subject_kind": "conflict", "subject_id": "conflict-1", "needed": true, "rationale": "Invalid fixture." }]
+  }
+}
