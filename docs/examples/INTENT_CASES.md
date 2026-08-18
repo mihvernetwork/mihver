@@ -18,9 +18,11 @@ hard Intent Parsing failure — see "Handoff Status: Blocked vs. Failed" in `INT
 below say "needs clarification" for this Blocked disposition; even Case 19, the thinnest request in
 this corpus, resolves to Blocked rather than outright failure, because a minimal but genuine
 structure (domain, the "best possible" claim, and the under-specification itself) can still be
-recorded — failure is reserved for input too thin for even that. A Blocked version never becomes
-unblocked in place — whatever resolves it produces a new, superseding version; the Blocked version
-itself remains in history unchanged.
+recorded — failure is reserved for input too thin for even that. A Blocked version is never
+consumable — not now, not once whatever blocked it resolves. Resolution never unblocks that
+version in place; it produces a new, superseding version, and that new version — not the Blocked
+one — is what becomes eligible. The Blocked version itself remains in history, permanently
+not-consumable, unchanged.
 
 Two policies worth keeping in mind across every case below: **Assumptions are restricted to
 narrowly interpretive gaps** — Intent Parsing never invents a technical/operational default
@@ -40,33 +42,40 @@ bugs."
   pull requests against "our repo"; the user calls it a "coding agent."
 - **Permissible inferences:** the user wants some degree of autonomous code modification, since PR
   creation implies acting on the repository without the user typing the diff themselves.
-- **Unsafe assumptions:** that the system may merge its own PRs; that "small bugs" includes any
-  particular bug category (typos, logic errors, security patches); that repo write/push access is
-  already authorized.
+- **Unsafe assumptions:** that "small bugs" includes any particular bug category (typos, logic
+  errors, security patches); that repo write/push access is already authorized.
 - **Unknowns:** which repository/repositories (necessary to safely compile — nothing can target a
   bug fix without it); what counts as "small" (directly implicated — it's the stated scope
-  boundary of the goal itself); whether human review is required before merge (directly implicated
-  — opening a PR presupposes some merge decision by someone, so who/what makes it is a boundary the
-  stated capability itself raises, not a speculative addition). *Not* listed: whether tests must
-  pass before a PR is opened — nothing in the `UserIdea` addresses CI/testing policy at all, and
+  boundary of the goal itself). *Not* listed, and excluded on the same basis: whether tests must
+  pass before a PR is opened — nothing in the `UserIdea` addresses CI/testing policy at all, so
   resolving it isn't necessary to interpret, safely compile, or preserve any boundary the stated
-  intent actually implicates; per the Open Item relevance test in `INTENT_SPEC.md`, this is an
-  imaginable adjacent capability, not a valid Open Item here, so it's excluded rather than recorded.
+  intent actually implicates. **Also not listed: merge authority** (who/what may merge the PR, or
+  whether human review gates it). The stated capability is "open pull requests... to fix small
+  bugs" — not "open and merge," and not "merge automatically." Opening a PR is a standard,
+  self-contained capability in every PR-based workflow; merging is a separate, subsequent action
+  that ordinary review conventions already gate, and nothing in this `UserIdea`'s wording raises a
+  question about it. Treating merge authority as implicated by "opens PRs" — reasoning that opening
+  a PR "presupposes" a merge decision someone must make — is exactly the adjacent-capability
+  inference the Relevance Test forbids: it's a plausible thing a *coding agent system in general*
+  might eventually need to address, not something *this* `UserIdea`'s wording actually raises. If
+  the user's idea had instead said "open pull requests and merge them once tests pass," merge
+  authority would be directly implicated and this exclusion wouldn't apply.
 - **Conflicts:** none in this UserIdea alone.
-- **Clarification needs:** whether merge authority is automatic or human-gated is HIGH impact
-  (differs from "agent proposes changes" to "agent commits to main") — likely needs clarification
-  before Requirement Derivation. Bug-category scope stays Unknown rather than being paired with an
-  invented Assumption — per the Assumption Policy, "small" is the user's own stated scope boundary,
-  and guessing which bug categories that covers would be inventing an operational default, not
-  resolving an interpretive gap.
-- **Decision-impact reasoning:** merge autonomy is assessed as HIGH because (a) the unresolved item
-  is who/what may merge into the target repository, (b) the downstream decision it changes is
-  whether the architecture needs isolation boundaries and an approval gate at all, and (c) HIGH
-  applies rather than LOW because getting it wrong risks an unreviewed change reaching production
-  code — a materially different and riskier architecture, not just a cosmetic difference.
+- **Clarification needs:** MEDIUM for repository identity — deferrable, but genuinely necessary
+  before the goal can be safely compiled into a requirement targeting a specific codebase. LOW for
+  bug-category scope, which stays Unknown rather than being paired with an invented Assumption —
+  per the Assumption Policy, "small" is the user's own stated scope boundary, and guessing which
+  bug categories that covers would be inventing an operational default, not resolving an
+  interpretive gap.
+- **Decision-impact reasoning:** the unresolved item is which repository the agent targets; the
+  downstream decision it changes is which codebase/environment context Requirement Derivation
+  compiles against — necessary to proceed at all, but not safety- or architecture-shape-critical in
+  itself; MEDIUM applies (not HIGH) because nothing in this `UserIdea` raises a safety-relevant
+  question — that would require the idea itself to say something about merge, deployment, or
+  production access, which it doesn't.
 - **What IntentSpec must NOT decide:** whether this needs one agent or several; whether it uses a
-  sandboxed execution environment; any CI/CD gating mechanism; whether "coding agent" implies any
-  specific tool-use framework.
+  sandboxed execution environment; any CI/CD gating mechanism; who or what may merge the PRs this
+  agent opens; whether "coding agent" implies any specific tool-use framework.
 
 ---
 
@@ -204,9 +213,12 @@ follow-up."
 
 **UserIdea:** "I want it to cost under $100/month."
 
-- **User-provided claims:** a cost ceiling of $100/month, as stated, with obligatory force ("I
-  want it to cost under" reads as a stated requirement, not a hedge — this reading is direct enough
-  to record as the Claim's force itself, not a separate low-confidence Inference).
+- **User-provided claims:** a cost ceiling of $100/month, as stated, with **preference** force —
+  "I want" is desiderative language expressing what the user wants, not obligation language.
+  Recording it as obligatory ("must") would silently upgrade "I want X" into "X is mandatory," which
+  Information-Loss Rules forbid regardless of how important the underlying desire seems; if the
+  user had written "it must cost under $100" or "needs to cost under $100," *that* wording would
+  license obligatory force. "I want" alone licenses preference — a strong one, but a preference.
 - **Permissible inferences:** the user is cost-sensitive generally (a weaker, separately recorded
   Inference distinct from the ceiling Claim's own force).
 - **Unsafe assumptions:** what's included (infrastructure only? model API usage? third-party
@@ -236,30 +248,45 @@ follow-up."
 
 **UserIdea:** "Build a customer-support system using LangGraph, GPT-5, Pinecone, and Kubernetes."
 
-- **User-provided claims:** the goal is a customer-support system; the user names
-  LangGraph, GPT-5, Pinecone, and Kubernetes.
+- **User-provided claims:** the goal is a customer-support system; the user names LangGraph, GPT-5,
+  Pinecone, and Kubernetes as the technologies to build it with. Force: the wording ("using X, Y, Z,
+  W") is a direct, unhedged statement of method — no "maybe," "like," "e.g.," or similar hedge
+  qualifies it. Intent Parsing preserves it at that stated strength; it does not soften it into an
+  "example" or "illustrative" reading the wording doesn't support, and it does not inflate it into
+  formal obligation either — see the Unknowns bullet below for why negotiability itself stays open
+  rather than resolved in either direction.
 - **Permissible inferences:** none needed to establish the named-technology claims themselves —
   they're explicit, and no further inference is safely drawable from the tool list alone. (A
   temptation like "the user prefers a modern/scalable stack" has no stated premise beyond "these
   are the names given" and would not meet the Inference Policy's basis requirement — it belongs in
   Unsafe Assumptions, not Permissible Inferences.)
-- **Unsafe assumptions:** that each named technology is a hard requirement rather than a
-  preference or example; that Pinecone implies a vector-search requirement, or Kubernetes implies a
-  container-orchestration requirement, derived from the tool names rather than from any stated
-  need.
-- **Unknowns:** whether the list is mandatory or illustrative; why each was chosen; whether the
-  user would accept an evidence-backed alternative.
+- **Unsafe assumptions:** two symmetric errors, both unsafe. (1) Assuming each named technology is
+  a hard, non-negotiable requirement, when nothing in the wording says "must" or "required." (2)
+  Equally unsafe in the other direction: assuming the list is "merely illustrative" or that the
+  user would readily accept substitutes — nothing in "using LangGraph, GPT-5, Pinecone, and
+  Kubernetes" hedges it as an example the way "something like LangGraph, for instance" would. Both
+  directions are unsupported weakening or strengthening of what was actually said; the wording
+  supports neither reading over the other, which is exactly why negotiability is recorded as
+  Unknown rather than resolved. Also unsafe: assuming Pinecone implies a vector-search requirement,
+  or Kubernetes implies a container-orchestration requirement, derived from the tool names rather
+  than from any stated functional need.
+- **Unknowns:** whether the list is negotiable or a hard constraint — genuinely unaddressed by the
+  `UserIdea`'s wording, which states the technologies directly without hedging either toward
+  "example" or toward "mandatory"; why each was chosen; whether the user would accept an
+  evidence-backed alternative.
 - **Conflicts:** none.
 - **Clarification needs:** MEDIUM while the technologies are only preserved claims, not yet
-  evaluated — deferrable. The rating could later move to HIGH (not remain MEDIUM) *in a subsequent
+  evaluated — deferrable, and negotiability stays Unknown rather than being resolved by default in
+  either direction. The rating could later move to HIGH (not remain MEDIUM) *in a subsequent
   version* if a later stage finds the named stack technically inappropriate, since at that point
   the unresolved question becomes whether the user will accept deviation — a different, higher-
   stakes item than "are these binding," which is what MEDIUM assesses here.
 - **Decision-impact reasoning:** the unresolved item is whether the four named technologies are
-  binding constraints or negotiable preferences; the downstream decision it changes is how much
-  freedom Architecture Synthesis has to deviate from them; MEDIUM applies because, absent evidence
-  they're technically inappropriate, treating them as preserved-but-negotiable preferences is safe
-  to proceed on.
+  binding constraints or negotiable — recorded as Unknown, not defaulted either way; the downstream
+  decision it changes is how much freedom Architecture Synthesis has to deviate from them; MEDIUM
+  applies because, absent evidence they're technically inappropriate, there's no immediate need to
+  resolve negotiability before proceeding — but that's a reason to defer the question, not a reason
+  to quietly answer it as "negotiable."
 - **What IntentSpec must NOT decide:** whether LangGraph/GPT-5/Pinecone/Kubernetes are
   *appropriate* — IntentSpec preserves "user explicitly requested X" and nothing more (see "No
   Architecture Leakage" in `INTENT_SPEC.md`).
@@ -286,8 +313,9 @@ easiest."
   resolve it — unlike a conflict involving an Inference or Assumption, which Intent Parsing could
   revise on its own in a later run.
 - **Clarification needs:** CRITICAL — deferrable only in the sense that `IntentSpec` itself can
-  still be produced (Blocked, not failed — see below); Requirement Derivation cannot proceed until
-  resolved.
+  still be produced (Blocked, not failed — see below); this specific Blocked version is never
+  consumable by Requirement Derivation, full stop — proceeding requires an explicit `UserIdea`
+  revision that produces a new, separately-eligible version, not this one becoming eligible.
 - **Decision-impact reasoning:** the unresolved item is the Conflict itself (claims (a) and (b));
   the downstream decision it changes is which of two materially different architectures
   (on-premises vs. managed cloud) gets built; CRITICAL applies (not merely HIGH) because proceeding
@@ -297,9 +325,11 @@ easiest."
 - **What IntentSpec must NOT decide:** which claim wins. This Conflict is fully representable —
   both claims, their incompatibility, and the CRITICAL rating are all statable — so per the
   Handoff Status policy the correct outcome is a **Blocked** `IntentSpec` (not a fabricated choice,
-  and not outright failure): the artifact is produced with the Conflict recorded, held ineligible
-  for Requirement Derivation until an explicit `UserIdea` revision resolves it. Outright Intent
-  Parsing failure would only apply if the input were additionally incoherent beyond this Conflict.
+  and not outright failure): the artifact is produced with the Conflict recorded, permanently
+  ineligible for Requirement Derivation to consume. An explicit `UserIdea` revision doesn't make
+  this version eligible — it produces a new version, and that new version is what Requirement
+  Derivation may consume. Outright Intent Parsing failure would only apply if the input were
+  additionally incoherent beyond this Conflict.
 
 ---
 
@@ -620,7 +650,11 @@ conflicts."
   weighed against each other by Intent Parsing: (a) employees should be able to concurrently edit a
   shared policy document without conflicts; (b) the user requests "a blockchain" as the means,
   named explicitly (preserved per "No Architecture Leakage" — the claim is "user explicitly
-  requested blockchain," nothing about whether blockchain is a good fit for (a)).
+  requested blockchain," nothing about whether blockchain is a good fit for (a)). Force on (b):
+  "Make a blockchain" is a direct imperative, not hedged as an example or suggestion ("maybe a
+  blockchain," "something like a blockchain") — Intent Parsing preserves it at that stated
+  strength, neither softened into "illustrative" nor inflated into a more formal obligation than
+  the wording itself carries.
 - **Permissible inferences:** none that would characterize *why* the user named blockchain — MIHVER
   has no stated premise for a belief about the user's reasoning, and asserting one (e.g. "the user
   believes blockchain solves concurrent editing") would be speculation about mental state with no

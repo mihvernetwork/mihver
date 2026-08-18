@@ -162,8 +162,13 @@ MIHVER related to the content, not what the content was.
   reading of it.
 - **UI-04 Supersession, not mutation.** Corrections and additions produce new versions; prior
   versions remain retrievable.
-- **UI-05 Explicit supersession linkage.** When a new version corrects or withdraws prior content,
-  that relationship is recorded, not left for downstream stages to infer silently.
+- **UI-05 Explicit supersession linkage.** A supersession relationship is recorded only when the
+  user's own wording explicitly signals correction or withdrawal ("ignore what I said," "actually,
+  scratch that," "correction:") — never inferred merely because a new statement appears to conflict
+  with or update an earlier one. When that explicit signal is present, the relationship is recorded,
+  not left for downstream stages to infer silently; when it is absent, `UserIdea` records both
+  statements as their own turns and leaves any apparent inconsistency for `IntentSpec`'s Conflict
+  Policy to handle (see "Explicit vs. implicit correction" above).
 - **UI-06 Faithful capture.** Any transcription or capture step (e.g. speech-to-text) must preserve
   the user's words as given; normalization for meaning happens only in `IntentSpec`.
 - **UI-07 Reference vs. fetched content.** A user-supplied reference (URL, path, pointer) is

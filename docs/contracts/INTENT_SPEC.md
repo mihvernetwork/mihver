@@ -61,27 +61,42 @@ also carry the user's own hedging, or the claim's discourse role; a Claim can be
 preference, a confident prohibition, a hedged example, and so on, and each axis needs to be
 readable on its own:
 
-- its **force** — the normative/preference modality only, and only that: whether it expresses an
-  obligation as the user stated it ("must"), a prohibition ("must not"), a permission or allowance
-  ("may," "is allowed to" — distinct from an obligation: something being permitted does not mean it
-  is required), a preference ("would like," "prefer"), or a weakly-held possibility ("it'd be nice
-  if," "maybe"). Force is strictly about modal strength — it says nothing about whether the text is
-  the user's own operative statement or an illustrative sample; that question belongs entirely to
-  the separate **discourse role** axis below, and force's wording must not reuse "example" or
-  similar language that overlaps with it (see Invariant I-22). Force must survive Intent Parsing
-  undistorted — a preference must never be tightened into an obligation, a permission must never be
-  tightened into an obligation either (see Anti-Examples), and an obligation must never be softened
-  into a preference, no matter how MIHVER might rate its feasibility.
+- its **force** — the normative/desiderative modality only, and *only* that: whether it expresses
+  an obligation as the user stated it ("must"), a prohibition ("must not"), a permission or
+  allowance ("may," "is allowed to" — distinct from an obligation: something being permitted does
+  not mean it is required), or a preference of some strength ("would like," "prefer," down to a
+  weak "it'd be nice if"). Force is about what the user wants, requires, or permits — it is never
+  epistemic. Words like "maybe," "perhaps," or "I'm not sure" are not force values and must never
+  be read as a weak or hedged force category ("weakly-held possibility" is not a thing this axis
+  represents) — they belong entirely to the separate **self-reported uncertainty** axis below, even
+  when they modify what looks like a preference in the same sentence ("maybe you could add X" is a
+  weak preference *and*, separately, a hedged one — two distinct axis values, never one blended
+  category).
+
+  **A Claim may also carry no force at all.** A purely descriptive statement — "we have 50,000
+  active users," "our team is five engineers" — asserts a fact about the world without expressing
+  any obligation, permission, or preference. Such a Claim's force is simply absent: not a weak
+  default standing in for one of the categories above, and not something Intent Parsing manufactures
+  to fill the property. If the user didn't express a want, requirement, or permission, there is no
+  force to record.
+
+  Force says nothing about whether the text is the user's own operative statement or an
+  illustrative sample; that question belongs entirely to the separate **discourse role** axis
+  below, and force's wording must not reuse "example" or similar language that overlaps with it
+  (see Invariant I-22). Force must survive Intent Parsing undistorted — a preference must never be
+  tightened into an obligation, a permission must never be tightened into an obligation either (see
+  Anti-Examples), and an obligation must never be softened into a preference, no matter how MIHVER
+  might rate its feasibility.
 - its **self-reported uncertainty** — separate from force, and separate from the Inference
   confidence described in "Confidence Policy" below: whether the *user themselves* hedged the
-  claim ("I think," "roughly," "not sure," "around X") versus asserted it plainly. "I think we have
-  about 10,000 users" is still a User-Provided Claim (the user did say it), but it is a *hedged*
-  one — that hedge is part of what the user actually communicated and must survive, the same way
-  force must survive. Collapsing a hedged claim into an unhedged one is a loss of meaning just like
-  collapsing a preference into an obligation would be. This axis has no fixed value set defined
-  here (schema design is deferred, per [M0_SCOPE](../foundation/M0_SCOPE.md)) — the requirement at
-  this stage is only that the hedge, when present, is preserved as a distinguishable property of
-  the Claim, not silently dropped or folded into force or confidence.
+  claim ("I think," "roughly," "not sure," "maybe," "around X") versus asserted it plainly. "I
+  think we have about 10,000 users" is still a User-Provided Claim (the user did say it), but it is
+  a *hedged* one — that hedge is part of what the user actually communicated and must survive, the
+  same way force must survive. Collapsing a hedged claim into an unhedged one is a loss of meaning
+  just like collapsing a preference into an obligation would be. This axis has no fixed value set
+  defined here (schema design is deferred, per [M0_SCOPE](../foundation/M0_SCOPE.md)) — the
+  requirement at this stage is only that the hedge, when present, is preserved as a distinguishable
+  property of the Claim, not silently dropped or folded into force or confidence.
 - its **speaker attribution** — the submitting user's own statement is the default case, but a
   `UserIdea` may report a third party's statement instead (e.g. "my CTO says X"). When it does,
   the Claim's origin is still User-Provided (the *submission* is traceable to the user), but its
@@ -366,11 +381,14 @@ and the difference matters:
 
 - **Blocked.** Intent Parsing produces a complete, valid, versioned `IntentSpec` — everything that
   *can* be recorded (Claims, Open Items, Conflicts, their Decision Impact) is recorded — but the
-  artifact is explicitly marked as not eligible for Requirement Derivation to consume while the
-  HIGH/CRITICAL item is unresolved. This is the normal outcome for a well-formed idea that simply
-  contains a decision-critical gap (e.g. Case 5 or Case 17 in
-  [INTENT_CASES](../examples/INTENT_CASES.md)): the epistemic record is exactly what this contract
-  is for, and producing it is not the same as authorizing what comes next.
+  artifact is explicitly marked as **never** eligible for Requirement Derivation to consume — not a
+  temporary hold that lifts once the HIGH/CRITICAL item resolves, but a permanent property of this
+  specific version. Resolving the underlying item doesn't change this version's eligibility; it
+  produces a different, new version that carries its own (unblocked) status — see Invariant I-18.
+  This is the normal outcome for a well-formed idea that simply contains a decision-critical gap
+  (e.g. Case 5 or Case 17 in [INTENT_CASES](../examples/INTENT_CASES.md)): the epistemic record is
+  exactly what this contract is for, and producing it is not the same as authorizing what comes
+  next.
 - **Failed.** Intent Parsing cannot produce a defensible `IntentSpec` at all — not even a blocked
   one — because no coherent structure can be extracted from the input (see "Failure Semantics"
   below). This is reserved for input that is unintelligible or so self-contradictory that no
@@ -436,7 +454,9 @@ Requirement Derivation may not decide what the user meant.
 The precise line:
 
 ```text
-IntentSpec:      "The user says/wants/needs/prohibits X," with force, origin, and provenance.
+IntentSpec:      "The user says/wants/needs/prohibits X (or simply states X)," with origin and
+                 provenance, and force when the statement actually carries normative/desiderative
+                 content — absent for a purely descriptive claim.
 RequirementSpec: "The system shall satisfy X'," a formal, measurable, typed requirement derived
                  from an accepted IntentSpec claim.
 ```
@@ -591,11 +611,13 @@ to force an output where the input does not support one.
 - **I-17** An Ambiguity's candidate readings must trace to specific user wording; MIHVER may not
   record an Ambiguity that isn't grounded in something the user actually wrote.
 - **I-18** A Blocked `IntentSpec` (a complete, versioned artifact with an unresolved HIGH/CRITICAL
-  item) is a valid produced output, not a failure — Requirement Derivation simply may not consume
-  it until the block clears. Failure is reserved for input that prevents any defensible
-  `IntentSpec` from being recorded at all. A Blocked version never transitions to unblocked in
-  place; clearing the block always produces a new, superseding `IntentSpec` version, and the
-  Blocked version remains in the historical record unchanged.
+  item) is a valid produced output, not a failure. That specific Blocked version is **never**
+  consumable by Requirement Derivation — not now, and not later, even once whatever blocked it is
+  resolved. Resolution does not make the Blocked version eligible; it produces a new, superseding
+  `IntentSpec` version, and *that new version* — not the Blocked one — is what Requirement
+  Derivation may consume. The Blocked version remains in the historical record, permanently
+  not-consumable, exactly as it was. Failure is reserved for input that prevents any defensible
+  `IntentSpec` from being recorded at all.
 - **I-19** An Assumption may only fill a narrowly interpretive gap (what the user meant); it may
   never supply a technical or operational working default (a parameter, scope, or figure the user
   never addressed) merely to give a downstream stage something to work with.
@@ -606,9 +628,11 @@ to force an output where the input does not support one.
   `UserIdea` revision; a Conflict involving an Inferred or Assumed Claim may additionally be
   resolved by Intent Parsing revising its own derived claim on a later run — either way, resolution
   produces a new version, never an in-place edit.
-- **I-22** A Claim's force (normative modality), self-reported uncertainty (the user's own
-  hedging), and discourse role (operative/example/quotation) are independent axes; none may be
-  collapsed into or inferred from another.
+- **I-22** A Claim's force (normative/desiderative modality — obligation, prohibition, permission,
+  or preference; possibly absent for a purely descriptive claim), self-reported uncertainty (the
+  user's own epistemic hedging, e.g. "maybe," "I think"), and discourse role
+  (operative/example/quotation) are independent axes; none may be collapsed into or inferred from
+  another, and epistemic hedge words must never be read as a force value.
 
 ## Examples
 
@@ -624,11 +648,18 @@ to force an output where the input does not support one.
 - "Everything must run locally" earlier, "use a managed cloud-only service" later in the same
   `UserIdea` (no supersession stated). → Conflict recorded, both Claims preserved, no side chosen.
 - User: "I think we have about 10,000 users, but I'm not sure." → Claim, origin = User-Provided,
-  self-reported uncertainty = hedged, force = informational estimate (not an obligation). The hedge
-  survives distinctly from any separate Inference confidence MIHVER might record elsewhere.
+  self-reported uncertainty = hedged, force = absent (this is a purely descriptive statement about
+  the world — no obligation, permission, or preference is expressed; the hedge belongs entirely to
+  self-reported uncertainty, not to a force value). The hedge survives distinctly from any separate
+  Inference confidence MIHVER might record elsewhere.
 - User: "May we retain logs for 30 days if legal approves?" → Claim, force = permission (not
   obligation), condition = legal approval. `IntentSpec` does not compile this into a retention
   requirement.
+- User: "We currently have 5 engineers on the team." → Claim, origin = User-Provided, force =
+  absent (purely descriptive — no obligation, permission, or preference is expressed).
+- User: "Maybe you could add a dark mode?" → Claim, force = preference (weak — the desiderative
+  content is "add a dark mode"), self-reported uncertainty = hedged ("maybe"). "Maybe" is not read
+  as the force value itself; force and hedge are recorded as two separate properties of one Claim.
 
 ## Anti-Examples
 
@@ -654,3 +685,11 @@ to force an output where the input does not support one.
 - Recording "the user is fairly confident about the 10,000-user figure" as an Inference confidence
   score derived from the words "I think." (Violates I-22 — self-reported uncertainty is the user's
   own hedge, not a MIHVER-assigned confidence value.)
+- Recording "I want it to cost under $100/month" with obligatory force ("must"). "I want" is
+  preference language; silently upgrading it to an obligation because the underlying desire seems
+  important is exactly the drift Information-Loss Rules forbid — "I want X" must not become "X is
+  mandatory" without wording that actually says so ("must," "need to," "required to"). (Violates
+  "Modality must not drift" and I-22.)
+- Recording "maybe we should use Redis" with force = "weakly-held possibility." There is no such
+  force category; the correct record is force = preference (weak) plus self-reported uncertainty =
+  hedged, as two separate properties. (Violates I-22.)
