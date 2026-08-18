@@ -13,6 +13,25 @@ the rules below.
   output and never advances MIHVER to the next step on its own authority.
 - **The human** is the final gate. Moving to the next MIHVER step requires explicit human approval.
 
+## Fast Session Bootstrap
+
+A fresh session must reconstruct MIHVER's current state cheaply — not by scanning the repository,
+not by reading full git history, and not by relying on prior conversation history.
+
+- Do not recursively inspect the repository on startup.
+- Do not read the full git history by default.
+- Do not use GitHub to rediscover local repository content.
+- Run `npm run context`.
+- Read only `.project/CURRENT_TASK.md`'s Required Context plus files named for the relevant topic
+  in `.project/CONTEXT_INDEX.md`.
+- Expand context beyond that only when evidence in the current task shows it is necessary.
+- Use GitHub only for remote-only facts — open PRs, CI status, PR review comments, or merge
+  state — never to rediscover content that already lives in the local repository.
+
+See `.project/PROJECT_STATE.md` (milestone/checkpoint state), `.project/CURRENT_TASK.md` (active
+task), `.project/REVIEW_STATE.md` (review/approval state), and `.project/CONTEXT_INDEX.md`
+(topic → file map).
+
 ## Standing Rules
 
 - **Frozen documents are not modified** unless the current task explicitly authorizes it. If a task

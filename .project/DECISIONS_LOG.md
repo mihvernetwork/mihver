@@ -1,0 +1,16 @@
+# Decisions Log
+
+Append-only. Records durable, human-approved project/process decisions — not their technical
+content, which lives in the relevant ADR/contract and must not be duplicated here. Entries are
+added at task completion; existing entries are never edited or removed.
+
+Format: `YYYY-MM-DD — decision — reference`.
+
+---
+
+- 2026-08-19 — M0 Step 02A (Intent semantic contract) merged to `main` via PR #1, human-gated
+  merge per `AGENT_POLICY.md`. — `218bced`
+- 2026-08-19 — M0 Step 02B (Intent schema): human decision stated directly as "APPROVED"; merged
+  to `main`. — `0683e84`
+- 2026-08-19 — Authorized `PROJECT-CONTEXT-BOOTSTRAP`: build the `.project/` session-bootstrap
+  mechanism and `scripts/dev/project-context.mjs`. — branch `chore/project-context-bootstrap`

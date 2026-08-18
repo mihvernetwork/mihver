@@ -2,7 +2,8 @@
   "name": "mihver-contract-validation",
   "private": true,
   "scripts": {
-    "test": "node tests/contracts/validate-contracts.mjs"
+    "test": "node tests/contracts/validate-contracts.mjs",
+    "context": "node scripts/dev/project-context.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

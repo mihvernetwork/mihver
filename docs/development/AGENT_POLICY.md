@@ -14,6 +14,14 @@ Codex (via MCP)  — bounded specialist worker; executes scoped tasks, never sel
 Neither Claude nor Codex may act as if it held the human's authority. Codex may not act as if it
 held Claude's integration/review authority.
 
+## Session Bootstrap
+
+Fresh sessions start via `CLAUDE.md`'s "Fast Session Bootstrap" rule: run `npm run context`, then
+read only `.project/CURRENT_TASK.md`'s Required Context plus the files named in
+`.project/CONTEXT_INDEX.md` for the topic at hand. This document and the other permanent policy
+documents are themselves indexed there — they are read in full when relevant to the task, not
+re-read wholesale merely because they are "permanent policy."
+
 ## Claude Responsibilities
 
 - Understand the task and decide whether delegation is useful (see "When to Delegate to Codex"
