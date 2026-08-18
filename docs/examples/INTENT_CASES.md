@@ -1,0 +1,716 @@
+# Intent Semantic Test Corpus
+
+A worked-example corpus for [INTENT_SPEC](../contracts/INTENT_SPEC.md), intended as the basis for
+future contract validation / evaluation tests once schema design happens. Each case applies the
+epistemic model — Claim (User-Provided / Inferred / Assumed), Open Item (Unknown / Ambiguity),
+Conflict, and Decision Impact — defined there. No schema or field names are implied by the
+formatting below; it is a readable worked form, not a serialization.
+
+Terminology used throughout: **claim**, never "fact," for anything attributed to the user (see
+"Terminology: Claim, Not Fact" in `INTENT_SPEC.md`). Where a case title below says "requirement"
+(e.g. "Conditional requirement," "Negative requirement") that names the adversarial-case category
+this test corpus was asked to cover — it does not mean a `RequirementSpec` artifact exists at this
+stage. Every such case still resolves, in its body, to `IntentSpec`-level Claims only.
+
+A HIGH/CRITICAL Decision Impact below generally means the resulting `IntentSpec` is **Blocked**
+(produced, versioned, but not yet eligible for Requirement Derivation to consume) rather than a
+hard Intent Parsing failure — see "Handoff Status: Blocked vs. Failed" in `INTENT_SPEC.md`. Cases
+below say "needs clarification" for this Blocked disposition; even Case 19, the thinnest request in
+this corpus, resolves to Blocked rather than outright failure, because a minimal but genuine
+structure (domain, the "best possible" claim, and the under-specification itself) can still be
+recorded — failure is reserved for input too thin for even that. A Blocked version never becomes
+unblocked in place — whatever resolves it produces a new, superseding version; the Blocked version
+itself remains in history unchanged.
+
+Two policies worth keeping in mind across every case below: **Assumptions are restricted to
+narrowly interpretive gaps** — Intent Parsing never invents a technical/operational default
+(a competitor list, a cost scope, a capacity figure) merely to help a downstream stage get started;
+Unknown normally stays Unknown. And **Open Items must be relevant** — a case lists an Unknown or
+Ambiguity only when resolving it is necessary to interpret, safely compile, or preserve a boundary
+the stated idea directly implicates, not for every capability a similar system might someday need.
+
+---
+
+## 1. Coding agent system
+
+**UserIdea:** "Build me a coding agent that can open pull requests against our repo to fix small
+bugs."
+
+- **User-provided claims:** the user wants a system that fixes small bugs; it should open
+  pull requests against "our repo"; the user calls it a "coding agent."
+- **Permissible inferences:** the user wants some degree of autonomous code modification, since PR
+  creation implies acting on the repository without the user typing the diff themselves.
+- **Unsafe assumptions:** that the system may merge its own PRs; that "small bugs" includes any
+  particular bug category (typos, logic errors, security patches); that repo write/push access is
+  already authorized.
+- **Unknowns:** which repository/repositories (necessary to safely compile — nothing can target a
+  bug fix without it); what counts as "small" (directly implicated — it's the stated scope
+  boundary of the goal itself); whether human review is required before merge (directly implicated
+  — opening a PR presupposes some merge decision by someone, so who/what makes it is a boundary the
+  stated capability itself raises, not a speculative addition). *Not* listed: whether tests must
+  pass before a PR is opened — nothing in the `UserIdea` addresses CI/testing policy at all, and
+  resolving it isn't necessary to interpret, safely compile, or preserve any boundary the stated
+  intent actually implicates; per the Open Item relevance test in `INTENT_SPEC.md`, this is an
+  imaginable adjacent capability, not a valid Open Item here, so it's excluded rather than recorded.
+- **Conflicts:** none in this UserIdea alone.
+- **Clarification needs:** whether merge authority is automatic or human-gated is HIGH impact
+  (differs from "agent proposes changes" to "agent commits to main") — likely needs clarification
+  before Requirement Derivation. Bug-category scope stays Unknown rather than being paired with an
+  invented Assumption — per the Assumption Policy, "small" is the user's own stated scope boundary,
+  and guessing which bug categories that covers would be inventing an operational default, not
+  resolving an interpretive gap.
+- **Decision-impact reasoning:** merge autonomy is assessed as HIGH because (a) the unresolved item
+  is who/what may merge into the target repository, (b) the downstream decision it changes is
+  whether the architecture needs isolation boundaries and an approval gate at all, and (c) HIGH
+  applies rather than LOW because getting it wrong risks an unreviewed change reaching production
+  code — a materially different and riskier architecture, not just a cosmetic difference.
+- **What IntentSpec must NOT decide:** whether this needs one agent or several; whether it uses a
+  sandboxed execution environment; any CI/CD gating mechanism; whether "coding agent" implies any
+  specific tool-use framework.
+
+---
+
+## 2. Research system
+
+**UserIdea:** "I want something that researches our competitors weekly and writes me a report."
+
+- **User-provided claims:** desired cadence is weekly; output is a report; subject is
+  competitor research.
+- **Permissible inferences:** the user wants ongoing (recurring), not one-off, operation, since
+  "weekly" implies repetition.
+- **Unsafe assumptions:** which competitors; which sources are acceptable to research (public web,
+  paid data, internal sales notes); report format or length; that the report should be delivered
+  automatically without review.
+- **Unknowns:** competitor list; source scope; delivery channel; report depth/format.
+- **Conflicts:** none.
+- **Clarification needs:** competitor identity stays Unknown, deferrable without an Assumption —
+  naming a provisional competitor list (e.g. "assume the top 3-5 by public visibility") would be an
+  invented operational default, not an interpretive gap, and the Assumption Policy forbids that;
+  Unknown is the correct, complete result here, MEDIUM impact and carried forward as-is. Source
+  legitimacy could become HIGH if inferred sources include anything requiring
+  authentication/licensing MIHVER can't assume access to.
+- **Decision-impact reasoning:** the unresolved item is which competitors and sources are in scope;
+  the downstream decision it changes is whether the architecture needs authenticated/licensed data
+  access at all, versus purely public sources; MEDIUM applies (not HIGH) because no irreversible or
+  sensitive action is implied — cadence and output shape are load-bearing for architecture
+  (recurring scheduling vs. on-demand) but not safety-critical.
+- **What IntentSpec must NOT decide:** whether this uses a scheduled job, an agent with memory, or
+  a simple periodic script (zero-agent is plausible here — see Case 11); any specific search or
+  data provider.
+
+---
+
+## 3. Customer email responder
+
+**UserIdea:** "Auto-respond to customer emails with helpful answers."
+
+- **User-provided claims:** the system should respond to customer emails; responses should
+  be "helpful"; the user says "auto-respond."
+- **Permissible inferences:** the user wants some degree of automation in the reply loop, since
+  "auto-respond" implies the system initiates responses rather than only drafting for a human.
+- **Unsafe assumptions:** that "auto-respond" means fully autonomous sending with no human review;
+  that all email types are in scope (including billing disputes, legal complaints, refund
+  requests); that "helpful" has an agreed definition.
+- **Ambiguity:** "auto-respond" itself supports two materially different readings — fully
+  autonomous sending, or automatic drafting for a human to approve — so this is an Ambiguity
+  tracing to that specific word, not an Unknown (the user's wording does bear on the question, it
+  just doesn't settle it).
+- **Unknowns:** which email categories are included/excluded; escalation path for anything the
+  system can't handle.
+- **Conflicts:** none stated, but "auto-respond" and "helpful answers" could later prove to be in
+  tension if literal automation produces poor-quality replies — not a Conflict yet, since nothing
+  contradicts; flagged as a risk area for Requirement Derivation, not recorded as IntentSpec
+  Conflict.
+- **Clarification needs:** autonomous-send vs. draft-for-approval is HIGH impact (materially
+  different safety/architecture); category scope (e.g. legal/billing exclusions) is HIGH if
+  unaddressed, since a wrong autonomous reply to a dispute could be costly.
+- **Decision-impact reasoning:** the unresolved item is whether "auto-respond" means autonomous
+  sending or draft-for-approval; the downstream decision it changes is whether the architecture
+  needs a human review/approval stage in the send path at all; HIGH applies (not CRITICAL) because
+  a wrong autonomous reply to a dispute is a real reputational/legal risk, but not the kind of
+  unsafe-or-irreversible outcome CRITICAL is reserved for — a bad email can be followed up and
+  corrected, unlike an irreversible action.
+- **What IntentSpec must NOT decide:** whether replies are generated by an LLM, a template engine,
+  or a hybrid; whether there's a review queue; any escalation routing logic.
+
+---
+
+## 4. Local-only privacy requirement
+
+**UserIdea:** "I don't want my source code leaving my computer."
+
+- **User-provided claims:** a prohibition — source code must not leave the user's
+  computer.
+- **Permissible inferences:** the user likely has a privacy or confidentiality motivation (recorded
+  separately as an Inference, with that basis stated, not merged into the Claim itself).
+- **Unsafe assumptions:** that "leaving my computer" excludes local-network services; that it
+  excludes encrypted/anonymized derivatives (embeddings, hashes, telemetry); that any specific
+  local-only technology (e.g. a fully offline model) is thereby mandated.
+- **Ambiguity:** "leaving my computer" supports multiple readings (device-only? local network
+  included? self-hosted-but-remote infrastructure?) — an Ambiguity tracing to that phrase, not an
+  Unknown, since the user's own wording is what generates the multiple readings.
+- **Unknowns:** whether derived artifacts (not raw source) are covered by the same prohibition —
+  this is a genuine Unknown, since nothing in the wording addresses derived artifacts at all.
+- **Conflicts:** none in isolation — but see Case 8 for this same statement in contradiction with a
+  later one.
+- **Clarification needs:** the exact boundary of "my computer" is CRITICAL if any architecture
+  candidate would involve any external processing at all — this is exactly the kind of ambiguity
+  that must not be silently resolved by picking the most convenient reading.
+- **Decision-impact reasoning:** the unresolved item is what boundary "my computer" actually draws
+  (device/network/premises); the downstream decision it changes is which candidate architectures
+  are even eligible — anything involving external processing is disqualified under one reading and
+  permitted under another; CRITICAL applies (not HIGH) because misreading this in the permissive
+  direction risks an architecture that violates an explicit, strongly-stated user prohibition —
+  not merely a suboptimal fit, but a recommendation the user directly ruled out.
+- **What IntentSpec must NOT decide:** `execution_location = LOCAL` or any other formal deployment
+  constraint; any specific on-device technology.
+
+---
+
+## 5. Medical-data ambiguity
+
+**UserIdea:** "I want a tool that reads clinic notes and flags patients who might need
+follow-up."
+
+- **User-provided claims:** the system reads clinic notes; it flags patients who might
+  need follow-up.
+- **Permissible inferences:** the domain involves healthcare-adjacent information; the described
+  activity resembles clinical risk triage, which typically involves sensitive personal health
+  information.
+- **Unsafe assumptions:** that the clinic has authorization/consent to use the notes this way; that
+  the output is advisory rather than a clinical determination; that generic text-processing privacy
+  handling is sufficient.
+- **Unknowns:** jurisdiction and applicable regulatory regime; whether patient consent exists;
+  whether flags are advisory signals or treated as clinical conclusions by staff; who may see the
+  output.
+- **Conflicts:** none stated.
+- **Clarification needs:** CRITICAL — whether this involves regulated health data and what the
+  output's clinical weight is must be resolved; proceeding on an unsafe assumption here risks a
+  materially unsafe or non-compliant architecture recommendation.
+- **Decision-impact reasoning:** the unresolved items are the regulatory regime, consent status,
+  and clinical weight of the output; the downstream decision they change is whether the
+  architecture needs regulated-health-data safeguards (access control, audit, compliance
+  boundaries) at all, and whether the output can be advisory-only or must meet a clinical-decision
+  standard; CRITICAL applies (not HIGH) because proceeding on an unsafe assumption here risks a
+  non-compliant or unsafe architecture recommendation involving real patients — not just an
+  architecturally expensive one.
+- **What IntentSpec must NOT decide:** any compliance framework (HIPAA or otherwise) as a
+  requirement; any specific security/access-control architecture; whether the output constitutes
+  medical advice.
+
+---
+
+## 6. Budget constraint
+
+**UserIdea:** "I want it to cost under $100/month."
+
+- **User-provided claims:** a cost ceiling of $100/month, as stated, with obligatory force ("I
+  want it to cost under" reads as a stated requirement, not a hedge — this reading is direct enough
+  to record as the Claim's force itself, not a separate low-confidence Inference).
+- **Permissible inferences:** the user is cost-sensitive generally (a weaker, separately recorded
+  Inference distinct from the ceiling Claim's own force).
+- **Unsafe assumptions:** what's included (infrastructure only? model API usage? third-party
+  licenses? MIHVER's own usage, if any?); the currency, if not explicit.
+- **Unknowns:** included cost categories; measurement period boundaries (calendar month? rolling
+  30 days?); what happens if usage would exceed it — none of this is addressed by any wording in
+  the `UserIdea`, so these are genuine Unknowns, not Ambiguities.
+- **Conflicts:** potential future conflict if other stated requirements (e.g. high autonomy, large
+  scale) are architecturally expensive — not yet a Conflict here, since no other cost-relevant
+  claim exists in this UserIdea alone.
+- **Clarification needs:** MEDIUM, and stays Unknown rather than being paired with an invented
+  scope Assumption — "assume this covers infrastructure and model usage, excluding setup" would be
+  a manufactured operational default (what's included in a budget is a cost-category decision the
+  user never addressed, not an interpretive gap in what they meant), which the Assumption Policy
+  forbids. Deferring with the gap left open is correct here; would become HIGH if later stages find
+  no architecture can plausibly satisfy the constraint alongside other stated needs.
+- **Decision-impact reasoning:** the unresolved item is which cost categories the ceiling covers;
+  the downstream decision it changes is which architecture candidates are even cost-eligible;
+  MEDIUM applies (not HIGH) because the ceiling matters architecturally but doesn't yet threaten
+  safety or validity, only cost-fit.
+- **What IntentSpec must NOT decide:** `max_monthly_cost = 100` as a formal requirement; which
+  specific services fit the budget.
+
+---
+
+## 7. User-selected technology
+
+**UserIdea:** "Build a customer-support system using LangGraph, GPT-5, Pinecone, and Kubernetes."
+
+- **User-provided claims:** the goal is a customer-support system; the user names
+  LangGraph, GPT-5, Pinecone, and Kubernetes.
+- **Permissible inferences:** none needed to establish the named-technology claims themselves —
+  they're explicit, and no further inference is safely drawable from the tool list alone. (A
+  temptation like "the user prefers a modern/scalable stack" has no stated premise beyond "these
+  are the names given" and would not meet the Inference Policy's basis requirement — it belongs in
+  Unsafe Assumptions, not Permissible Inferences.)
+- **Unsafe assumptions:** that each named technology is a hard requirement rather than a
+  preference or example; that Pinecone implies a vector-search requirement, or Kubernetes implies a
+  container-orchestration requirement, derived from the tool names rather than from any stated
+  need.
+- **Unknowns:** whether the list is mandatory or illustrative; why each was chosen; whether the
+  user would accept an evidence-backed alternative.
+- **Conflicts:** none.
+- **Clarification needs:** MEDIUM while the technologies are only preserved claims, not yet
+  evaluated — deferrable. The rating could later move to HIGH (not remain MEDIUM) *in a subsequent
+  version* if a later stage finds the named stack technically inappropriate, since at that point
+  the unresolved question becomes whether the user will accept deviation — a different, higher-
+  stakes item than "are these binding," which is what MEDIUM assesses here.
+- **Decision-impact reasoning:** the unresolved item is whether the four named technologies are
+  binding constraints or negotiable preferences; the downstream decision it changes is how much
+  freedom Architecture Synthesis has to deviate from them; MEDIUM applies because, absent evidence
+  they're technically inappropriate, treating them as preserved-but-negotiable preferences is safe
+  to proceed on.
+- **What IntentSpec must NOT decide:** whether LangGraph/GPT-5/Pinecone/Kubernetes are
+  *appropriate* — IntentSpec preserves "user explicitly requested X" and nothing more (see "No
+  Architecture Leakage" in `INTENT_SPEC.md`).
+
+---
+
+## 8. Contradictory requirements
+
+**UserIdea:** "Everything must run locally. ... Also, just use a managed cloud-only service, that's
+easiest."
+
+- **User-provided claims:** (a) everything must run locally; (b) use a managed
+  cloud-only service.
+- **Permissible inferences:** none that resolve the contradiction — inference cannot manufacture
+  compatibility between mutually exclusive claims.
+- **Unsafe assumptions:** picking either claim as "what the user really meant"; assuming the later
+  statement automatically supersedes the earlier one without an explicit signal that it's a
+  correction (see Case 20 for the case where it *is* explicit).
+- **Unknowns:** which claim reflects the user's actual priority, if either.
+- **Conflicts:** yes — Claim (a) and Claim (b) cannot both hold. Recorded as a Conflict; both
+  Claims retained with their own origin and provenance. Both sides are User-Provided, so per the
+  Conflict Policy this is the strict case: Intent Parsing has no authority to pick a winner by any
+  means, and only an explicit `UserIdea` revision (naming which statement it supersedes) can
+  resolve it — unlike a conflict involving an Inference or Assumption, which Intent Parsing could
+  revise on its own in a later run.
+- **Clarification needs:** CRITICAL — deferrable only in the sense that `IntentSpec` itself can
+  still be produced (Blocked, not failed — see below); Requirement Derivation cannot proceed until
+  resolved.
+- **Decision-impact reasoning:** the unresolved item is the Conflict itself (claims (a) and (b));
+  the downstream decision it changes is which of two materially different architectures
+  (on-premises vs. managed cloud) gets built; CRITICAL applies (not merely HIGH) because proceeding
+  on either side without resolution risks building against a constraint the user explicitly and
+  directly contradicted — not just a suboptimal choice, but one the user may have explicitly ruled
+  out.
+- **What IntentSpec must NOT decide:** which claim wins. This Conflict is fully representable —
+  both claims, their incompatibility, and the CRITICAL rating are all statable — so per the
+  Handoff Status policy the correct outcome is a **Blocked** `IntentSpec` (not a fabricated choice,
+  and not outright failure): the artifact is produced with the Conflict recorded, held ineligible
+  for Requirement Derivation until an explicit `UserIdea` revision resolves it. Outright Intent
+  Parsing failure would only apply if the input were additionally incoherent beyond this Conflict.
+
+---
+
+## 9. Conditional requirement
+
+**UserIdea:** "Only use cloud execution if local execution can't support the workload."
+
+- **User-provided claims:** a single conditional claim, exactly as stated — cloud execution is
+  permitted only when local execution is insufficient for the workload. Strictly, this establishes
+  a necessary condition for cloud use; it does not by itself establish that local is "preferred" or
+  "default" outside that condition, and the Claim must not be recorded as though it did (recording
+  "local preferred/default" as part of the explicit claim would be exactly the kind of conditional
+  strengthening this contract prohibits — see I-12).
+- **Permissible inferences:** that the framing ("only use cloud if local can't...") suggests a
+  local-first preference ordering is a plausible pragmatic reading, but it is an Inference, not
+  part of the Claim itself, and should be recorded with moderate (not high) confidence and a stated
+  basis ("the conditional framing itself, not any separate preference statement") — not treated as
+  settled. It is not an absolute prohibition on cloud either way.
+- **Unsafe assumptions:** resolving the condition one way or the other now (`cloud_execution =
+  true` or `= false`) instead of preserving it as a condition; assuming "can't support the
+  workload" has an agreed technical meaning (e.g. throughput vs. memory vs. latency) without
+  flagging that as unresolved.
+- **Unknowns:** what workload characteristics would trigger the fallback; what "can't support"
+  means quantitatively.
+- **Conflicts:** none — this is a single coherent conditional claim, not two contradictory ones.
+- **Clarification needs:** LOW to proceed with intent capture (the condition itself is clear enough
+  to preserve as stated); the quantitative trigger becomes relevant at Requirement Derivation, not
+  here.
+- **Decision-impact reasoning:** LOW at this stage specifically because the condition can be
+  faithfully preserved without needing to be resolved yet — the risk is architectural only if the
+  condition gets collapsed into an unconditional claim (see I-12 in `INTENT_SPEC.md`).
+- **What IntentSpec must NOT decide:** the workload threshold; whether the fallback, if triggered,
+  is automatic or requires approval.
+
+---
+
+## 10. Negative requirement
+
+**UserIdea:** "Help teachers spot struggling students, but do not rank students or assign risk
+scores."
+
+- **User-provided claims:** (a) positive: help teachers identify possibly-struggling
+  students; (b) prohibition: do not rank students; (c) prohibition: do not assign risk scores.
+- **Permissible inferences:** the user wants support without reductive quantification of students —
+  a values-level motivation, recorded as an Inference distinct from the claims themselves.
+- **Unsafe assumptions:** that an unlabeled numeric output ("not a score, just a number") satisfies
+  the prohibition; that the positive goal and the prohibitions are in tension and one must be
+  weakened to satisfy the other.
+- **Unknowns:** what form of output would be acceptable (alerts? qualitative flags? trend
+  descriptions?); what "struggling" means operationally.
+- **Conflicts:** none logically — "identify possible need" and "don't rank/score" are not mutually
+  exclusive, though they constrain the solution space together.
+- **Clarification needs:** MEDIUM — the acceptable output form isn't specified, but this doesn't
+  block capturing intent; it does need resolution before Requirement Derivation can produce a
+  testable requirement.
+- **Decision-impact reasoning:** the unresolved item is what output form counts as compliant with
+  the prohibitions; the downstream decision it changes is which output mechanisms are even eligible
+  (a raw numeric score is out; qualitative flags may be in); MEDIUM applies (not HIGH) because
+  getting it wrong would violate an explicit prohibition — a meaningful failure — but not one that
+  is unsafe, irreversible, or non-compliant with an external standard the way HIGH/CRITICAL cases
+  are.
+- **What IntentSpec must NOT decide:** the acceptable output format; whether any per-student
+  numeric value is permissible in any form.
+
+---
+
+## 11. Zero-agent-suitable automation
+
+**UserIdea:** "I want an AI agent that renames uploaded invoices to
+`YYYY-MM-DD_VENDOR_AMOUNT.pdf` using fields already on the invoice."
+
+- **User-provided claims:** invoices should be renamed to a fixed pattern; the values populating
+  that pattern come from fields "already on the invoice" — this establishes *where the values come
+  from* (the invoice itself, not some external lookup), not *how they get read*; the user calls it
+  an "AI agent."
+- **Permissible inferences:** the renaming logic itself, once the values are known, is a
+  deterministic mapping to a fixed filename pattern; "AI agent" is the user's proposed solution
+  framing, not proof that reasoning/autonomy is actually needed.
+- **Unsafe assumptions:** that "fields already on the invoice" means no extraction, OCR, or parsing
+  is required — invoices are typically documents (PDFs, scans, images), and getting a value that is
+  "on" a document into a usable field is exactly what extraction does; assuming this away treats an
+  unresolved technical question as already settled. Equally unsafe: assuming an agent (LLM-based or
+  otherwise) is required purely because the user used that word; or, conversely, deciding at this
+  stage that zero agents is the right answer — extraction mechanics and architecture shape are both
+  Architecture Synthesis's call, not Intent Parsing's.
+- **Unknowns:** how the field values are actually extracted from the invoice (structured data
+  export? OCR on a scan/PDF? something else?) — genuinely unaddressed by the `UserIdea`, and
+  directly implicated because the renaming goal can't be safely compiled without knowing whether
+  extraction is even a solved input or a real technical problem; what should happen when a field is
+  missing or malformed; how filename collisions are handled.
+- **Conflicts:** none.
+- **Clarification needs:** LOW for the core goal (the renaming pattern itself is clear); the
+  extraction-mechanics Unknown is MEDIUM — deferrable, but must be carried forward rather than
+  silently assumed solved; MEDIUM for edge-case behavior (missing fields, collisions).
+- **Decision-impact reasoning:** the unresolved item is how field values get extracted from the
+  source invoice; the downstream decision it changes is whether the architecture needs any
+  document-parsing/OCR capability at all, versus operating on already-structured data — a
+  potentially significant architectural difference, not a cosmetic one — so this is MEDIUM, not the
+  LOW it would be if extraction were genuinely a non-issue. Collision/missing-field handling is
+  separately LOW: well-specified, low-risk, and reversible regardless of how extraction resolves.
+- **What IntentSpec must NOT decide:** whether an LLM, an OCR pipeline, a rules engine, or a plain
+  script performs the extraction and renaming — that determination (which may or may not conclude
+  "zero agents needed," per Principle 14 — zero-agent is one *possible* later architecture, not a
+  conclusion reached here) belongs to Architecture Synthesis, informed by Requirement Derivation,
+  not to Intent Parsing.
+
+---
+
+## 12. High autonomy
+
+**UserIdea:** "Give me an agent that runs my online store while I'm asleep."
+
+- **User-provided claims:** the system should operate the online store; it should do so
+  during periods the user is unavailable ("asleep").
+- **Permissible inferences:** some degree of unattended operation is intended, since the premise is
+  explicitly operating while the user cannot supervise.
+- **Unsafe assumptions:** that "runs my store" includes financial actions (refunds, pricing
+  changes, supplier orders); that full autonomy over all store functions is intended rather than a
+  narrower subset.
+- **Unknowns:** which specific activities are in scope (customer replies? refunds? pricing?
+  inventory? advertising?); what authority level is intended for each; what happens on exceptions.
+- **Conflicts:** none stated.
+- **Clarification needs:** HIGH — the scope of unattended authority, especially anything financial,
+  materially changes the risk profile and the required safeguards.
+- **Decision-impact reasoning:** the unresolved item is which store activities are in scope and at
+  what authority level; the downstream decision it changes is whether the architecture needs
+  per-action approval gates (especially for anything financial) or can run fully unattended; HIGH
+  applies (not CRITICAL) because unattended operation over commerce functions has real financial
+  and reputational consequences if scope is misjudged, but nothing here is inherently irreversible
+  or unsafe in the way a destructive or medical action would be.
+- **What IntentSpec must NOT decide:** which specific actions are auto-approved vs. gated; any
+  specific autonomy/approval architecture.
+
+---
+
+## 13. Human approval requirement
+
+**UserIdea:** "I need approval before any deployment."
+
+- **User-provided claims:** the user says approval is needed before deployment, with obligatory
+  force ("I need"). This preserves the statement itself — it does not yet establish a
+  system-enforced mechanism ("gate"), nor whether the user means they personally need to obtain
+  approval from someone else, or that the system must enforce approval from a third party before
+  acting; both are plausible readings of "I need approval."
+- **Permissible inferences:** the user is cautious about unreviewed changes reaching some
+  environment(s).
+- **Ambiguity:** which environments "deployment" covers (production only? staging too?) — the word
+  "deployment" alone supports multiple readings, so this is an Ambiguity, not an Unknown; likewise
+  whether "I need approval" means self-directed process discipline or a system-enforced approval
+  requirement is an Ambiguity in the statement's force/subject, not a blank gap.
+- **Unsafe assumptions:** who the approver is; whether emergency/rollback paths are exempt;
+  resolving either Ambiguity above by picking the reading that's easiest to implement.
+- **Unknowns:** approver identity/role; whether any automated exception path is acceptable.
+- **Conflicts:** none stated, though this would conflict with a separately stated desire for fully
+  autonomous deployment (see how Case 8 models such a conflict).
+- **Clarification needs:** MEDIUM initially, staying Unknown rather than assuming "production
+  deployments only" — which environments are covered is an operational scope question the user
+  never addressed, not an interpretive gap, so inventing a default for it would violate the
+  Assumption Policy; HIGH if any other claim implies autonomous deployment, which would surface as
+  a Conflict.
+- **Decision-impact reasoning:** the unresolved items are which environments "deployment" covers
+  and whether "I need approval" is self-directed or system-enforced; the downstream decision they
+  change is whether any approval-gate mechanism needs to exist in the architecture at all, and for
+  which environments; MEDIUM applies in this `UserIdea` alone because nothing yet establishes a
+  competing claim that makes the gap unsafe to defer — it would escalate to HIGH specifically if
+  another claim implied autonomous deployment (making the scope ambiguity load-bearing for a real
+  Conflict, as in Case 8), not merely because approval-related claims are generically sensitive.
+- **What IntentSpec must NOT decide:** `human_approval = REQUIRED` as a formal requirement; the
+  specific approval mechanism (CI gate, two-person rule, manual sign-off, etc.).
+
+---
+
+## 14. Unknown scale
+
+**UserIdea:** "I need a booking platform for local fitness instructors. It should be ready for when
+we go viral."
+
+- **User-provided claims:** the system is a booking platform for local fitness
+  instructors; the user wants it to handle a large increase in usage ("go viral").
+- **Permissible inferences:** the user has a scale concern, but "viral" gives no usable magnitude.
+- **Unsafe assumptions:** assigning any specific number of users, requests/sec, or geographic
+  footprint; treating "viral" as internet-scale by default.
+- **Unknowns:** actual expected number of instructors/customers/bookings; what "local" bounds
+  geographically; whether "viral" readiness is essential now or aspirational for later.
+- **Conflicts:** none.
+- **Clarification needs:** LOW for the primary booking-platform intent (clear enough to proceed);
+  the scale question stays Unknown — no Assumption is recorded for it. A capacity/scale figure
+  ("design for moderate headroom by default") is exactly the kind of technical/operational default
+  the Assumption Policy forbids Intent Parsing from inventing: the user raised a scale concern
+  without giving a number, and MIHVER has no interpretive basis to convert that into a working
+  figure — only Requirement Derivation (or a later stage) has the standing to decide how to handle
+  an unresolved capacity question, whether that's a default, a range, or a clarification request.
+- **Decision-impact reasoning:** the unresolved item is expected scale/magnitude; the downstream
+  decision it changes is whether the architecture needs elastic/distributed capacity or a simpler
+  fixed-capacity design; MEDIUM applies because scale affects architecture significantly, but not
+  HIGH/CRITICAL since a fixed-capacity starting point can be revised later without an unsafe or
+  irreversible outcome in the meantime — Requirement Derivation carries the live Unknown forward
+  and decides how to handle it, rather than Intent Parsing pre-empting that with a guessed default.
+- **What IntentSpec must NOT decide:** any concurrency, traffic, or capacity figures; any elastic
+  or distributed-architecture decision.
+
+---
+
+## 15. Unknown deployment
+
+**UserIdea:** "Create a knowledge assistant for our engineers, but none of our internal documents
+can leave the company."
+
+- **User-provided claims:** the system assists engineers with internal knowledge; internal
+  documents must not "leave the company."
+- **Permissible inferences:** the user intends a data-boundary constraint of some kind.
+- **Ambiguity:** what infrastructure boundary "the company" refers to (on-premises only? a
+  company-controlled cloud tenant? any network the company administers?) — this traces directly to
+  the phrase "leave the company" itself, which supports multiple readings; it is not resolvable
+  from wording alone and must not collapse into any single reading, including "on-premises only."
+- **Unsafe assumptions:** translating "leave the company" directly into "on-premises only" instead
+  of preserving the Ambiguity; assuming a company-controlled cloud tenant does or doesn't satisfy
+  the constraint; deciding whether derived data (embeddings, logs, prompts) counts as "documents."
+- **Unknowns:** whether external network access of any kind is permitted, independent of the
+  storage-boundary question — nothing in the `UserIdea` addresses network access directly, making
+  this a genuine Unknown rather than a reading of existing wording.
+- **Conflicts:** none stated.
+- **Clarification needs:** HIGH — the trust boundary is central to any architecture recommendation
+  MIHVER could responsibly make here.
+- **Decision-impact reasoning:** the unresolved item is which infrastructure boundary "the company"
+  denotes; the downstream decision it changes is which hosting/network topologies are even
+  eligible; HIGH applies (not CRITICAL, since unlike Case 4's "my computer" this isn't phrased as
+  an absolute personal-device prohibition) because proceeding on the wrong reading could still
+  produce a recommendation that violates an explicit user constraint on data leaving the company.
+- **What IntentSpec must NOT decide:** any specific hosting environment, network topology, or model
+  provider selection.
+
+---
+
+## 16. Multi-goal request
+
+**UserIdea:** "I need one system that recruits candidates, monitors employee productivity, predicts
+who will quit, and automatically adjusts their pay."
+
+- **User-provided claims:** four distinct stated goals — recruiting, productivity monitoring,
+  attrition prediction, automatic pay adjustment — **and a separate, explicit claim that must be
+  preserved in its own right: the user said "one system."** This is not incidental phrasing folded
+  into the goals list; it's a Claim (force = as stated, effectively a preference/requirement that
+  the four goals be delivered as a single system rather than several). `IntentSpec` preserves it
+  exactly because the user said it — independent of whether one system later turns out to be the
+  right call.
+- **Permissible inferences:** this is a compound intent, not a single narrowly scoped goal;
+  several of the stated activities materially affect people's employment and compensation.
+- **Unsafe assumptions:** collapsing the four goals into a single generic "HR platform" label that
+  loses their distinctness; assuming automatic pay adjustment is authorized merely because it was
+  requested; assuming all four goals share equal priority.
+- **Unknowns:** relative priority among the four goals; whether they must ship together or could be
+  phased; what "monitors productivity" means operationally; what governs automatic pay changes.
+- **Conflicts:** none stated between the goals themselves, though automatic pay adjustment and
+  (if present) any separately stated human-approval requirement would conflict — not present in
+  this UserIdea alone.
+- **Clarification needs:** CRITICAL specifically for automatic pay adjustment (compensation actions
+  taken without described oversight); MEDIUM for the other three regarding priority/phasing.
+- **Decision-impact reasoning:** the unresolved item driving the top-line rating is what governs
+  automatic pay changes (authorization, approval, limits — none stated); the downstream decision it
+  changes is whether the architecture needs a human-in-the-loop compensation-change safeguard at
+  all; CRITICAL applies because unauthorized, unreviewed pay changes are the kind of outcome the
+  Decision Impact model's CRITICAL tier exists for. The other three goals' priority/phasing Unknowns
+  are individually MEDIUM by the same three-part reasoning (unresolved: sequencing; changes: whether
+  phased delivery is architecturally acceptable; MEDIUM because getting it wrong shifts delivery
+  shape, not safety) — but they are not averaged down against the pay-adjustment component; the
+  highest-impact component governs the overall clarification need.
+- **What IntentSpec must NOT decide:** whether a one-system architecture is technically
+  appropriate, feasible, or the one Architecture Synthesis ultimately recommends — that evaluation
+  belongs downstream, per Principle 2 (Evidence Before Recommendation). To be precise about what
+  this means: `IntentSpec` *must* preserve that the user explicitly asked for one system (dropping
+  or softening that Claim would violate Information-Loss Rules); it must *not* independently
+  bless the request as sound, second-guess it, or decide the four goals will in fact ship as a
+  single system — that outcome is Architecture Synthesis's call, informed by this preserved Claim
+  among its inputs, not Intent Parsing's to predetermine either way. Also out of scope: any
+  specific compensation-adjustment logic or approval workflow.
+
+---
+
+## 17. Unsafe production action
+
+**UserIdea:** "Build an autonomous cleanup bot that permanently deletes anything in our production
+database that looks obsolete."
+
+- **User-provided claims:** target is the production database; the action is permanent
+  deletion; eligibility is "looks obsolete"; operation should be autonomous.
+- **Permissible inferences:** the user wants unattended, recurring or continuous cleanup, not a
+  one-time manual review, given "autonomous" and "permanently deletes."
+- **Unsafe assumptions:** any specific definition of "obsolete" (old? unused? unreferenced?
+  duplicated?); that backups make the deletion effectively reversible; that the requester has
+  authority to authorize permanent deletion of production data.
+- **Unknowns:** obsolescence criteria; data ownership/authorization; retention, audit, or legal
+  constraints that might apply; whether "permanently" and "autonomous" are both truly non-negotiable.
+- **Conflicts:** none stated, though this would conflict with a separately stated approval
+  requirement (see Case 13) if one existed in the same UserIdea.
+- **Clarification needs:** CRITICAL — irreversible destructive action on production data, triggered
+  by a subjective/unresolved criterion, run autonomously. This is the paradigm case for a Blocked
+  `IntentSpec`: everything statable (the claims, the undefined "obsolete" criterion, the
+  authorization Unknown) is recorded in full, but the artifact is marked ineligible for
+  Requirement Derivation while unresolved. This Blocked version never flips to eligible in place —
+  whatever resolves the obsolescence criterion and authorization question (a user clarification, or
+  other means) produces a new `IntentSpec` version; this version remains Blocked, permanently, in
+  the history. Outright failure (no `IntentSpec` produced at all) would only apply if the input
+  were additionally incoherent, not merely dangerous.
+- **Decision-impact reasoning:** CRITICAL — irreversibility plus autonomy plus an undefined
+  eligibility rule is exactly the combination the Decision Impact model's CRITICAL tier exists for.
+- **What IntentSpec must NOT decide:** any concrete obsolescence rule; any confirmation, backup, or
+  safety-mechanism design; whether the action proceeds at all.
+
+---
+
+## 18. False technical premise from user
+
+**UserIdea:** "Make a blockchain so our employees can edit the same policy document at once without
+conflicts."
+
+- **User-provided claims:** two separate claims, both preserved as stated and *not* merged or
+  weighed against each other by Intent Parsing: (a) employees should be able to concurrently edit a
+  shared policy document without conflicts; (b) the user requests "a blockchain" as the means,
+  named explicitly (preserved per "No Architecture Leakage" — the claim is "user explicitly
+  requested blockchain," nothing about whether blockchain is a good fit for (a)).
+- **Permissible inferences:** none that would characterize *why* the user named blockchain — MIHVER
+  has no stated premise for a belief about the user's reasoning, and asserting one (e.g. "the user
+  believes blockchain solves concurrent editing") would be speculation about mental state with no
+  traceable basis, which the Inference Policy does not permit as an Inference.
+- **Unsafe assumptions:** deciding, at Intent Parsing, that blockchain is or isn't a good technical
+  fit for claim (a) — that is a suitability judgment reserved for Technology Candidate
+  Identification / Architecture Synthesis under Principle 2 (Evidence Before Recommendation), and
+  Intent Parsing must not make it even informally (e.g. by calling it a "misconception" or a
+  "mismatch," both of which are suitability judgments); silently dropping claim (b) because it
+  looks technically dubious; silently merging (a) and (b) into a single requirement that presumes
+  blockchain satisfies (a).
+- **Unknowns:** why the user specifically wants blockchain (auditability? decentralized trust among
+  departments? no reason beyond familiarity with the term?) — nothing in the `UserIdea` says, so
+  this stays an Unknown rather than an unsupported Inference about the user's motivation.
+- **Conflicts:** none — claims (a) and (b) are not logically incompatible; whether blockchain
+  technically satisfies (a) is an open technical question for later stages, not a Conflict between
+  two IntentSpec claims.
+- **Clarification needs:** LOW at the intent-capture stage itself — both claims can be
+  preserved as stated without Intent Parsing needing to resolve anything. The open question (why
+  blockchain, and whether it's negotiable) is real, but it is a Requirement Derivation /
+  Architecture Synthesis concern, not a block on producing `IntentSpec`.
+- **Decision-impact reasoning:** LOW for Intent Parsing specifically, precisely because the
+  suitability question doesn't need answering here — recording both claims faithfully and flagging
+  the motivation as Unknown fully discharges this stage's responsibility.
+- **What IntentSpec must NOT decide:** whether blockchain is technically appropriate for goal (a);
+  whether "blockchain" is negotiable or a hard requirement, if that's not stated — that's a
+  separate Open Item (the Claim's force is as explicit as the user made it, no more); any
+  characterization of the user's request as mistaken.
+
+---
+
+## 19. Vague "build the best system" request
+
+**UserIdea:** "Just build me the best possible system for managing my small business."
+
+- **User-provided claims:** the domain is "managing my small business"; the user wants
+  the "best possible system," with no further specification.
+- **Permissible inferences:** none that meaningfully narrow the goal — "best possible" and "managing
+  my small business" do not, by themselves, support any inference about specific functionality.
+- **Unsafe assumptions:** selecting any specific business function (accounting, scheduling,
+  inventory, CRM, all of the above) as the intended scope; treating "best" as license to add
+  maximal complexity or features MIHVER judges impressive.
+- **Unknowns:** what the business actually does; which management activities are painful enough to
+  be worth addressing; what "best" would mean to this user (cheapest? simplest? most feature-rich?).
+- **Conflicts:** none.
+- **Clarification needs:** CRITICAL — the request is too underspecified to support any accepted
+  intent beyond "the user wants business-management help." Intent Parsing should not manufacture
+  scope. This *is* representable, though: the domain, the "best possible" claim, and the
+  under-specification itself are all statable Claims and Unknowns — so the correct outcome is a
+  **Blocked** `IntentSpec` (see "Handoff Status" in `INTENT_SPEC.md`), not a best-effort guess and
+  not outright failure. Outright Intent Parsing failure would only apply to something even thinner
+  than this — input so minimal that not even "domain: small-business management" could be
+  extracted as a Claim.
+- **Decision-impact reasoning:** the unresolved item is essentially the entire functional scope
+  (what the system does); the downstream decision it changes is which business function(s) the
+  architecture even targets — not a detail, the goal itself; CRITICAL applies (not HIGH) because
+  *any* concrete architecture decision made from this input alone would be almost entirely MIHVER's
+  invention rather than the user's intent, which is precisely the hallucination risk this contract
+  exists to prevent — this is a more severe case of underspecification than an ordinary HIGH-level
+  architectural divergence.
+- **What IntentSpec must NOT decide:** any business function, feature set, or "best" criterion.
+  MIHVER should record the goal as under-specified and require narrowing before proceeding, rather
+  than filling the gap with popular defaults.
+
+---
+
+## 20. Follow-up correction that supersedes an earlier statement
+
+**UserIdea (v1):** "I want it to cost under $100/month."
+**UserIdea (v2, explicit correction):** "Actually, ignore what I said about the budget — it's
+actually up to $500/month."
+
+- **User-provided claims (v2):** a budget ceiling of $500/month; an explicit statement
+  that this supersedes the earlier $100/month claim.
+- **Permissible inferences:** none needed — the supersession is stated directly ("ignore what I
+  said"), not inferred.
+- **Unsafe assumptions:** retaining the $100/month Claim as still active alongside the new one
+  (treating this as a Conflict rather than a supersession); silently updating the v1 `IntentSpec`
+  in place instead of producing a new version.
+- **Unknowns:** none newly introduced by the correction itself, beyond whatever was already
+  unknown about cost scope (see Case 6).
+- **Conflicts:** none — this is explicit supersession, not an unresolved Conflict. The v1 Claim is
+  marked superseded, not deleted, and remains part of the historical record; only the current
+  (v2) `IntentSpec` treats $500/month as the live budget claim.
+- **Clarification needs:** LOW — the correction is unambiguous and self-resolving; no clarification
+  is needed to act on it.
+- **Decision-impact reasoning:** LOW for the correction mechanics themselves; the underlying budget
+  figure's impact is assessed the same way as in Case 6 (MEDIUM), just with the corrected value.
+- **What IntentSpec must NOT decide:** silently discarding the historical v1 claim rather than
+  marking it superseded (violates provenance/reproducibility); anything about which dependent
+  Inferences or Assumptions from v1 need reconsideration — that reconsideration must happen, per
+  the Revision and Version Semantics policy, but *what* changes as a result is a case-by-case
+  analysis, not a fixed rule this corpus entry can predetermine.
