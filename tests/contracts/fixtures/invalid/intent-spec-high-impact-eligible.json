@@ -1,0 +1,11 @@
+{
+  "contract": "intent-spec",
+  "expected_error": "HIGH/CRITICAL",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-high-eligible", "version": 1,
+    "created_at": "2026-08-19T09:00:00Z", "user_idea_refs": [{ "idea_id": "idea-1", "version": 1 }], "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true }, "claims": [],
+    "open_items": [{ "open_item_id": "unknown-authority", "kind": "unknown", "question": "What authority is intended?", "relevance_rationale": "Authority directly changes safeguards.", "decision_impact": { "level": "high", "unresolved_item": "Action authority", "downstream_decision": "Approval architecture", "level_rationale": "The wrong choice materially changes safeguards." } }],
+    "conflicts": [], "clarification_decisions": [{ "subject_kind": "open_item", "subject_id": "unknown-authority", "needed": true, "rationale": "High impact." }]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "contract": "intent-spec",
+  "expected_error": "requirement_derivation_consumable",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-bad", "version": 1,
+    "created_at": "2026-08-19T09:00:00Z", "user_idea_refs": [{ "idea_id": "idea-1", "version": 1 }], "supersedes_intent_spec_id": null,
+    "handoff": { "status": "blocked", "requirement_derivation_consumable": true },
+    "claims": [],
+    "open_items": [{ "open_item_id": "unknown-danger", "kind": "unknown", "question": "Is deletion authorized?", "relevance_rationale": "Authorization directly gates destructive action.", "decision_impact": { "level": "critical", "unresolved_item": "Deletion authority", "downstream_decision": "Whether destructive action may be compiled", "level_rationale": "Unauthorized deletion is irreversible." } }],
+    "conflicts": [], "clarification_decisions": [{ "subject_kind": "open_item", "subject_id": "unknown-danger", "needed": true, "rationale": "Critical gap." }]
+  }
+}

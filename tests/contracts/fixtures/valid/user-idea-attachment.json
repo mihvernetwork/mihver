@@ -1,0 +1,9 @@
+{
+  "contract": "user-idea",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "user_idea", "idea_id": "idea-attachment", "version": 1,
+    "source": { "source_id": "user-1", "channel": "upload" }, "created_at": "2026-08-19T08:00:00Z", "source_language": "en",
+    "turns": [{ "turn_id": "turn-1", "sequence": 1, "supplied_at": "2026-08-19T08:00:00Z", "source_id": "user-1", "source_language": "en", "contents": [{ "kind": "text", "text": "Use the attached note as context." }, { "kind": "attachment", "media_type": "text/plain", "content_base64": "aGVsbG8=", "content_digest": "sha256:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", "description": "The user attached a text file." }] }],
+    "supersessions": []
+  }
+}

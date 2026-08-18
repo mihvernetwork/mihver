@@ -1,0 +1,15 @@
+{
+  "contract": "intent-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-local-1-v1", "version": 1,
+    "created_at": "2026-08-19T09:00:00Z", "user_idea_refs": [{ "idea_id": "idea-local-1", "version": 1 }], "supersedes_intent_spec_id": null,
+    "handoff": { "status": "blocked", "requirement_derivation_consumable": false },
+    "claims": [
+      { "claim_id": "claim-local", "proposition": "Everything must run locally.", "origin": "user_provided", "force": { "modality": "obligation" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-local-1", "user_idea_version": 1, "turn_id": "turn-1", "statement_quote": "Everything must run locally", "speaker": { "kind": "submitting_user" } } },
+      { "claim_id": "claim-cloud", "proposition": "Use a managed cloud-only service.", "origin": "user_provided", "force": { "modality": "preference", "strength": "strong" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-local-1", "user_idea_version": 1, "turn_id": "turn-2", "statement_quote": "use a managed cloud-only service", "speaker": { "kind": "submitting_user" } } }
+    ],
+    "open_items": [],
+    "conflicts": [{ "conflict_id": "conflict-location", "participants": [{ "kind": "claim", "claim_id": "claim-local" }, { "kind": "claim", "claim_id": "claim-cloud" }], "incompatibility_rationale": "Cloud-only and wholly local execution cannot both hold.", "decision_impact": { "level": "critical", "unresolved_item": "Execution-location conflict", "downstream_decision": "Local versus managed-cloud architecture", "level_rationale": "Choosing either side could violate an explicit user statement." } }],
+    "clarification_decisions": [{ "subject_kind": "conflict", "subject_id": "conflict-location", "needed": true, "rationale": "The critical conflict requires resolution in a new version before derivation." }]
+  }
+}

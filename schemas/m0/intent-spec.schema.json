@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/m0/intent-spec.schema.json",
+  "title": "MIHVER M0 IntentSpec",
+  "description": "A versioned epistemic record. Failed parsing produces no IntentSpec. Semantic references and cross-item invariants are additionally checked by the deterministic contract validator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "intent_spec_id", "version", "created_at", "user_idea_refs", "supersedes_intent_spec_id", "handoff", "claims", "open_items", "conflicts", "clarification_decisions"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "artifact_type": { "const": "intent_spec" },
+    "intent_spec_id": { "$ref": "#/$defs/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "user_idea_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/userIdeaRef" } },
+    "supersedes_intent_spec_id": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+    "handoff": { "$ref": "#/$defs/handoff" },
+    "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "open_items": { "type": "array", "items": { "$ref": "#/$defs/openItem" } },
+    "conflicts": { "type": "array", "items": { "$ref": "#/$defs/conflict" } },
+    "clarification_decisions": { "type": "array", "items": { "$ref": "#/$defs/clarificationDecision" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$", "minLength": 1 },
+    "userIdeaRef": {
+      "type": "object", "additionalProperties": false, "required": ["idea_id", "version"],
+      "properties": { "idea_id": { "$ref": "#/$defs/id" }, "version": { "type": "integer", "minimum": 1 } }
+    },
+    "handoff": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["status", "requirement_derivation_consumable"], "properties": { "status": { "const": "eligible" }, "requirement_derivation_consumable": { "const": true } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "requirement_derivation_consumable"], "properties": { "status": { "const": "blocked" }, "requirement_derivation_consumable": { "const": false } } }
+      ]
+    },
+    "force": {
+      "type": "object", "additionalProperties": false, "required": ["modality"],
+      "properties": {
+        "modality": { "enum": ["obligation", "prohibition", "permission", "preference"] },
+        "strength": { "enum": ["weak", "moderate", "strong"] }
+      },
+      "if": { "properties": { "modality": { "not": { "const": "preference" } } } },
+      "then": { "properties": { "strength": false } }
+    },
+    "selfReportedUncertainty": {
+      "type": "object", "additionalProperties": false, "required": ["expression"],
+      "properties": { "expression": { "type": "string", "minLength": 1 } }
+    },
+    "speaker": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "submitting_user" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "attribution"], "properties": { "kind": { "const": "reported_third_party" }, "attribution": { "type": "string", "minLength": 1 } } }
+      ]
+    },
+    "userClaimProvenance": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "idea_id", "user_idea_version", "speaker"],
+      "properties": {
+        "kind": { "const": "user_statement" }, "idea_id": { "$ref": "#/$defs/id" },
+        "user_idea_version": { "type": "integer", "minimum": 1 }, "turn_id": { "$ref": "#/$defs/id" },
+        "statement_quote": { "type": "string", "minLength": 1 }, "speaker": { "$ref": "#/$defs/speaker" }
+      },
+      "dependentRequired": { "turn_id": ["statement_quote"], "statement_quote": ["turn_id"] }
+    },
+    "inferenceProvenance": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "premise_claim_ids", "reasoning_kind", "derivation_confidence"],
+      "properties": {
+        "kind": { "const": "derivation" }, "premise_claim_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "reasoning_kind": { "type": "string", "minLength": 1 }, "derivation_confidence": { "enum": ["low", "moderate", "high"] }
+      }
+    },
+    "assumptionProvenance": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "gap", "rationale", "scope", "reversible"],
+      "properties": {
+        "kind": { "const": "assumption_basis" }, "gap": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 }, "scope": { "type": "string", "minLength": 1 }, "reversible": { "const": true }
+      }
+    },
+    "claim": {
+      "oneOf": [
+        { "$ref": "#/$defs/userProvidedClaim" },
+        { "$ref": "#/$defs/inferredClaim" },
+        { "$ref": "#/$defs/assumedClaim" }
+      ]
+    },
+    "claimCommon": {
+      "type": "object",
+      "required": ["claim_id", "proposition", "origin", "discourse_role", "provenance"],
+      "properties": {
+        "claim_id": { "$ref": "#/$defs/id" }, "proposition": { "type": "string", "minLength": 1 },
+        "origin": { "enum": ["user_provided", "inferred", "assumed"] }, "force": { "$ref": "#/$defs/force" },
+        "self_reported_uncertainty": { "$ref": "#/$defs/selfReportedUncertainty" },
+        "discourse_role": { "enum": ["operative", "example", "quotation", "sample"] },
+        "scope_condition": { "type": "string", "minLength": 1 },
+        "provenance": true
+      }
+    },
+    "userProvidedClaim": {
+      "allOf": [
+        { "$ref": "#/$defs/claimCommon" },
+        { "type": "object", "additionalProperties": false, "properties": { "claim_id": true, "proposition": true, "origin": { "const": "user_provided" }, "force": true, "self_reported_uncertainty": true, "discourse_role": true, "scope_condition": true, "provenance": { "$ref": "#/$defs/userClaimProvenance" } } }
+      ]
+    },
+    "inferredClaim": {
+      "allOf": [
+        { "$ref": "#/$defs/claimCommon" },
+        { "type": "object", "additionalProperties": false, "properties": { "claim_id": true, "proposition": true, "origin": { "const": "inferred" }, "force": true, "self_reported_uncertainty": false, "discourse_role": true, "scope_condition": true, "provenance": { "$ref": "#/$defs/inferenceProvenance" } } }
+      ]
+    },
+    "assumedClaim": {
+      "allOf": [
+        { "$ref": "#/$defs/claimCommon" },
+        { "type": "object", "additionalProperties": false, "properties": { "claim_id": true, "proposition": true, "origin": { "const": "assumed" }, "force": true, "self_reported_uncertainty": false, "discourse_role": true, "scope_condition": true, "provenance": { "$ref": "#/$defs/assumptionProvenance" } } }
+      ]
+    },
+    "wordingRef": {
+      "type": "object", "additionalProperties": false, "required": ["idea_id", "user_idea_version", "turn_id", "quote"],
+      "properties": { "idea_id": { "$ref": "#/$defs/id" }, "user_idea_version": { "type": "integer", "minimum": 1 }, "turn_id": { "$ref": "#/$defs/id" }, "quote": { "type": "string", "minLength": 1 } }
+    },
+    "decisionImpact": {
+      "type": "object", "additionalProperties": false, "required": ["level", "unresolved_item", "downstream_decision", "level_rationale"],
+      "properties": {
+        "level": { "enum": ["low", "medium", "high", "critical"] },
+        "unresolved_item": { "type": "string", "minLength": 1 }, "downstream_decision": { "type": "string", "minLength": 1 }, "level_rationale": { "type": "string", "minLength": 1 }
+      }
+    },
+    "openItem": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["open_item_id", "kind", "question", "relevance_rationale", "decision_impact"],
+          "properties": {
+            "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "unknown" },
+            "question": { "type": "string", "minLength": 1 }, "relevance_rationale": { "type": "string", "minLength": 1 },
+            "decision_impact": { "$ref": "#/$defs/decisionImpact" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["open_item_id", "kind", "question", "relevance_rationale", "wording_refs", "candidate_readings", "decision_impact"],
+          "properties": {
+            "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "ambiguity" },
+            "question": { "type": "string", "minLength": 1 }, "relevance_rationale": { "type": "string", "minLength": 1 },
+            "wording_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/wordingRef" } },
+            "candidate_readings": {
+              "type": "array", "minItems": 2,
+              "items": {
+                "type": "object", "additionalProperties": false, "required": ["reading_id", "reading"],
+                "properties": { "reading_id": { "$ref": "#/$defs/id" }, "reading": { "type": "string", "minLength": 1 }, "plausibility_basis": { "type": "string", "minLength": 1 } }
+              }
+            },
+            "decision_impact": { "$ref": "#/$defs/decisionImpact" }
+          }
+        }
+      ]
+    },
+    "participantRef": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "claim_id"], "properties": { "kind": { "const": "claim" }, "claim_id": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "open_item_id", "reading_id"], "properties": { "kind": { "const": "ambiguity_reading" }, "open_item_id": { "$ref": "#/$defs/id" }, "reading_id": { "$ref": "#/$defs/id" } } }
+      ]
+    },
+    "conflict": {
+      "type": "object", "additionalProperties": false, "required": ["conflict_id", "participants", "incompatibility_rationale", "decision_impact"],
+      "properties": { "conflict_id": { "$ref": "#/$defs/id" }, "participants": { "type": "array", "minItems": 2, "contains": { "type": "object", "required": ["kind"], "properties": { "kind": { "const": "claim" } } }, "items": { "$ref": "#/$defs/participantRef" } }, "incompatibility_rationale": { "type": "string", "minLength": 1 }, "decision_impact": { "$ref": "#/$defs/decisionImpact" } }
+    },
+    "clarificationDecision": {
+      "type": "object", "additionalProperties": false, "required": ["subject_kind", "subject_id", "needed", "rationale"],
+      "properties": { "subject_kind": { "enum": ["open_item", "conflict"] }, "subject_id": { "$ref": "#/$defs/id" }, "needed": { "type": "boolean" }, "rationale": { "type": "string", "minLength": 1 } }
+    }
+  }
+}
