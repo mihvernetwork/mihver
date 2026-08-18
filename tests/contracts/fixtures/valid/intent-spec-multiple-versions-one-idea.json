@@ -1,0 +1,8 @@
+{
+  "contract": "intent-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-one-idea-v2", "version": 2, "created_at": "2026-08-19T10:00:00Z",
+    "user_idea_refs": [{ "idea_id": "idea-one", "version": 1 }, { "idea_id": "idea-one", "version": 2 }], "supersedes_intent_spec_id": "intent-one-idea-v1",
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true }, "claims": [], "open_items": [], "conflicts": [], "clarification_decisions": []
+  }
+}

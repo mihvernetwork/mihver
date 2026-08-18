@@ -5,7 +5,7 @@
   "description": "A single immutable, cumulative version of exactly what a user supplied. Cross-version immutability and semantic faithfulness require validation outside JSON Schema.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "idea_id", "version", "source", "created_at", "source_language", "turns", "supersessions"],
+  "required": ["schema_version", "artifact_type", "idea_id", "version", "source", "created_at", "turns", "supersessions"],
   "properties": {
     "schema_version": { "const": "1.0.0" },
     "artifact_type": { "const": "user_idea" },
@@ -13,6 +13,7 @@
     "version": { "type": "integer", "minimum": 1 },
     "source": {
       "type": "object",
+      "description": "Stable source identity for every turn in this UserIdea version. The deterministic validator requires each turn source_id to match it.",
       "additionalProperties": false,
       "required": ["source_id", "channel"],
       "properties": {
@@ -21,7 +22,6 @@
       }
     },
     "created_at": { "type": "string", "format": "date-time" },
-    "source_language": { "$ref": "#/$defs/language" },
     "turns": {
       "type": "array",
       "minItems": 1,
@@ -44,7 +44,10 @@
         "sequence": { "type": "integer", "minimum": 1 },
         "supplied_at": { "type": "string", "format": "date-time" },
         "source_id": { "$ref": "#/$defs/id" },
-        "source_language": { "$ref": "#/$defs/language" },
+        "source_language": {
+          "description": "Authoritative source language for this turn; different turns may use different languages.",
+          "$ref": "#/$defs/language"
+        },
         "contents": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/content" } }
       }
     },

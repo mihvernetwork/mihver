@@ -1,0 +1,14 @@
+{
+  "contract": "intent-spec", "expected_error": "confidence cannot exceed inferred premise",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-confidence", "version": 1, "created_at": "2026-08-19T10:00:00Z",
+    "user_idea_refs": [{ "idea_id": "idea-1", "version": 1 }], "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [
+      { "claim_id": "claim-user", "proposition": "The task runs weekly.", "origin": "user_provided", "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-1", "user_idea_version": 1, "speaker": { "kind": "submitting_user" } } },
+      { "claim_id": "claim-low", "proposition": "The task probably recurs indefinitely.", "origin": "inferred", "discourse_role": "operative", "provenance": { "kind": "derivation", "premise_claim_ids": ["claim-user"], "reasoning_kind": "generalization", "derivation_confidence": "low" } },
+      { "claim_id": "claim-high", "proposition": "The task will recur indefinitely.", "origin": "inferred", "discourse_role": "operative", "provenance": { "kind": "derivation", "premise_claim_ids": ["claim-low"], "reasoning_kind": "implication", "derivation_confidence": "high" } }
+    ],
+    "open_items": [], "conflicts": [], "clarification_decisions": []
+  }
+}

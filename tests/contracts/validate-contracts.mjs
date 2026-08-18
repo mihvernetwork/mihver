@@ -31,6 +31,9 @@ function validateUserIdea(document) {
     }
   }
   for (const turn of document.turns) {
+    if (turn.source_id !== document.source.source_id) {
+      fail(`turn ${turn.turn_id} source_id must match the UserIdea source_id`);
+    }
     for (const content of turn.contents) {
       if (content.kind !== "attachment") continue;
       const bytes = Buffer.from(content.content_base64, "base64");
@@ -60,6 +63,9 @@ function validateIntentSpec(document) {
 
   const sourceRefs = new Set(document.user_idea_refs.map((ref) => `${ref.idea_id}@${ref.version}`));
   unique([...document.user_idea_refs.map((ref) => `${ref.idea_id}@${ref.version}`)], "UserIdea references");
+  if (new Set(document.user_idea_refs.map((ref) => ref.idea_id)).size !== 1) {
+    fail("all IntentSpec user_idea_refs must belong to the same idea_id");
+  }
 
   for (const claim of document.claims) {
     if (claim.origin === "user_provided") {
@@ -97,6 +103,20 @@ function validateIntentSpec(document) {
     visited.add(claimId);
   }
   claims.forEach((_, id) => visit(id));
+
+  const confidenceRank = { low: 0, moderate: 1, high: 2 };
+  for (const claim of document.claims) {
+    if (claim.origin !== "inferred") continue;
+    const childConfidence = confidenceRank[claim.provenance.derivation_confidence];
+    for (const premiseId of claim.provenance.premise_claim_ids) {
+      const premise = claims.get(premiseId);
+      if (premise.origin !== "inferred") continue;
+      const premiseConfidence = confidenceRank[premise.provenance.derivation_confidence];
+      if (childConfidence > premiseConfidence) {
+        fail(`inference ${claim.claim_id} confidence cannot exceed inferred premise ${premiseId} confidence`);
+      }
+    }
+  }
 
   for (const conflict of document.conflicts) {
     const refs = conflict.participants.map((participant) => participant.kind === "claim"

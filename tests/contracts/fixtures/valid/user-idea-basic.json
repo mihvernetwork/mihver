@@ -7,7 +7,6 @@
     "version": 1,
     "source": { "source_id": "user-42", "channel": "chat" },
     "created_at": "2026-08-19T08:00:00Z",
-    "source_language": "en",
     "turns": [{
       "turn_id": "turn-1", "sequence": 1, "supplied_at": "2026-08-19T08:00:00Z",
       "source_id": "user-42", "source_language": "en",
