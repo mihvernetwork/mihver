@@ -27,10 +27,12 @@ Complete — implemented, independently reviewed (one read-only Codex reviewer; 
 APPROVE WITH REQUIRED CHANGES, fix applied, re-reviewed to APPROVED — see
 `.project/REVIEW_STATE.md`), and validated (`npm test` 24/24, `npm run context` compact and
 `--full`, plus manual worktree/clone scenario checks for the INFO/WARNING and task-ID-mismatch
-paths). Committed and pushed to `chore/project-context-review-scope`. PR expected: yes. Human
-review/merge decision is pending — that gate has not been reached yet. Actual PR existence,
-status, and mergeability remain remote-only GitHub facts not tracked in this file — query GitHub
-(e.g. `gh pr view`, `gh pr list`) when that information is needed.
+paths). Committed and pushed to `chore/project-context-review-scope`. The human has since stated:
+"PR #5 / PROJECT-CONTEXT-REVIEW-SCOPE is APPROVED for merge" — recorded via a Gate Recording
+Commit (see `.project/REVIEW_STATE.md`'s Merge Decision entry). The merge itself has not been
+performed yet and is not authorized by that recording commit. Actual PR existence, status, and
+mergeability remain remote-only GitHub facts not tracked in this file — query GitHub (e.g.
+`gh pr view`, `gh pr list`) when that information is needed.
 
 ## Allowed Scope
 
@@ -66,6 +68,8 @@ GitHub PR state may be recorded in repository metadata (carry forward the
 
 ## Next Gate
 
-Human review and merge decision on this task's work. Do not merge without explicit human
-authorization. Actual PR existence, status, and mergeability remain remote-only GitHub facts not
-tracked in this file — query GitHub when needed.
+The human has approved PR #5 / `PROJECT-CONTEXT-REVIEW-SCOPE` for merge (see
+`.project/REVIEW_STATE.md`'s Merge Decision entry). What remains is the merge execution itself — a
+separate action requiring its own explicit instruction; not started by this Gate Recording Commit.
+Actual PR status/mergeability remain remote-only GitHub facts not tracked in this file; query
+GitHub when needed.

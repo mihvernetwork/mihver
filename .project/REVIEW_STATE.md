@@ -44,14 +44,23 @@ of being reported as current.
 
 ## Merge Decision
 
-Not yet made — human review/merge decision for this task is pending. Actual PR existence and
-status are remote-only GitHub facts not tracked in this file.
+PR #5 (`chore/project-context-review-scope` → `main`, task `PROJECT-CONTEXT-REVIEW-SCOPE`) is
+**APPROVED for merge** — stated directly by the human: "PR #5 / PROJECT-CONTEXT-REVIEW-SCOPE is
+APPROVED for merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording
+Commit" policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and
+`CURRENT_TASK.md`).
+
+This entry records the decision only. **The merge has not been performed yet.** Per
+`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge is a
+separate, later action requiring its own explicit instruction — this Gate Recording Commit does
+not authorize it. PR #5's live status/mergeability, if relevant, are remote-only GitHub facts and
+are not tracked in this file.
 
 ## Pending Human Gate
 
-Human review/merge decision is pending for this task. Do not merge without explicit human
-authorization. Actual PR existence, status, and mergeability remain remote-only GitHub facts not
-tracked in this file — query GitHub when needed.
+The merge decision above is recorded. What remains pending is the merge *execution* itself, which
+requires a separate explicit instruction — not implied by this entry or by the commit that records
+it.
 
 ## History
 
