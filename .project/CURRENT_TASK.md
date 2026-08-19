@@ -30,10 +30,11 @@ Base: `main` (`fdc27d4`)
 Complete — implemented (two additive hunks in `CLAUDE.md`'s "Fast Session Bootstrap" section; no
 existing rule removed or rewritten), independently reviewed (one read-only Codex reviewer;
 verdict **APPROVED**, no required changes — see `.project/REVIEW_STATE.md`), and validated
-(`npm test` 24/24, `npm run context` compact). Committed (`66f63ab`) and pushed to
-`chore/project-context-auto-bootstrap`; PR #6 opened against `main`. Not merged — merge requires
-a separate, later human instruction per `AGENT_POLICY.md`'s Authority Hierarchy. Live PR
-status/mergeability is remote-only GitHub state, not tracked here — query GitHub when needed.
+(`npm test` 24/24, `npm run context` compact — see Validation below). Committed (`66f63ab`,
+`8d5461c`) and pushed to `chore/project-context-auto-bootstrap`. PR expected: yes, per this
+task's Git authorization. Human review and merge decision are pending. Actual PR
+existence/status/mergeability is remote-only GitHub state, not tracked here — query GitHub when
+needed.
 
 ## Allowed Scope
 
@@ -59,9 +60,10 @@ GitHub PR state may be recorded in repository metadata (carry forward the
 
 ## Validation
 
-- `npm run context` (compact) run on this branch: reports `Active task: none` for this branch
-  (expected — this file itself declares the branch being worked on, consistent with how prior
-  in-progress tasks report under `project-context.mjs`'s branch/Task-ID matching).
+- `npm run context` (compact), re-run on this branch at HEAD `8d5461c`: reports
+  `Active task: PROJECT-CONTEXT-AUTO-BOOTSTRAP` and `Review state: current (branch
+  "chore/project-context-auto-bootstrap") - see "Latest Review" in REVIEW_STATE.md` — i.e. this
+  task and its review state are correctly recognized as current for this branch.
 - `npm test` passes (24/24 contract fixtures; untouched by this task).
 - One read-only Codex reviewer, focused on requirement coverage (all 7 numbered goals from the
   task prompt), patch minimality, and consistency with `AGENT_POLICY.md`'s Session Bootstrap
@@ -69,6 +71,7 @@ GitHub PR state may be recorded in repository metadata (carry forward the
 
 ## Next Gate
 
-PR #6 (`chore/project-context-auto-bootstrap` → `main`) opened. Awaiting human review and merge
-decision — not started or implied by this task. Actual PR status/mergeability are remote-only
-GitHub facts, not tracked in this file; query GitHub when needed.
+PR expected: yes, per this task's Git authorization — the branch has been pushed for that
+purpose. Awaiting human review and merge decision; not started or implied by this task. Actual PR
+existence/status/mergeability is remote-only GitHub state, not tracked in this file; query GitHub
+when needed.

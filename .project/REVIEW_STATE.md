@@ -38,22 +38,24 @@ None needed. Validated: `npm test` (24/24), `npm run context` (compact) on this 
 ## Merge Decision
 
 Not yet requested. This task's Git authorization was Commit: yes / Push: yes / PR: yes / Merge:
-explicitly **no** — PR #6 (`chore/project-context-auto-bootstrap` → `main`) was opened, but merge
-was neither requested nor performed.
+explicitly **no**. Implementation, review, and validation are complete; the branch is committed
+and pushed, and a PR was expected per this task's Git authorization. Actual PR
+existence/status/mergeability is remote-only GitHub state and is not recorded here.
 
 ## Pending Human Gate
 
-PR #6 review and merge decision, per `AGENT_POLICY.md`'s Authority Hierarchy — not started or
-implied by this entry. Live PR status/mergeability is remote-only GitHub state, not tracked here.
+Human review and merge decision for this task's branch, per `AGENT_POLICY.md`'s Authority
+Hierarchy — not started or implied by this entry. Actual PR existence/status/mergeability is
+remote-only GitHub state, not tracked here.
 
 ## History
 
 - 2026-08-19 — `PROJECT-CONTEXT-REVIEW-SCOPE` (PR #5): human approved for merge, stated directly
   as "PR #5 / PROJECT-CONTEXT-REVIEW-SCOPE is APPROVED for merge", recorded via a Gate Recording
-  Commit; merge execution itself was not authorized by that commit and remains a separate, later
-  action not yet taken as of this entry — see `DECISIONS_LOG.md` for the durable record. Moved
-  here from "Merge Decision"/"Pending Human Gate" now that those sections describe the current
-  task (`PROJECT-CONTEXT-AUTO-BOOTSTRAP`) instead, per this file's branch/task scoping. — branch
+  Commit. PR #5 was subsequently squash-merged to `main` at `fdc27d4` ("chore: scope review state
+  to active task") — see `DECISIONS_LOG.md` for the durable record. Moved here from "Merge
+  Decision"/"Pending Human Gate" now that those sections describe the current task
+  (`PROJECT-CONTEXT-AUTO-BOOTSTRAP`) instead, per this file's branch/task scoping. — branch
   `chore/project-context-review-scope`
 
 - 2026-08-19 — `PROJECT-CONTEXT-FREEZE-STATE` (PR #4): human approved for merge, stated directly
