@@ -15,62 +15,82 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: PROJECT-CONTEXT-AUTO-BOOTSTRAP
-Branch: `chore/project-context-auto-bootstrap`
-Reviewer: one independent read-only Codex reviewer, focused on coverage of the task's 7 numbered
-requirements, patch minimality, and consistency with `AGENT_POLICY.md`'s Session Bootstrap
-section.
-Reviewer's verdict: **APPROVED** — no required changes. Confirmed requirements 1–6 were
-pre-existing in `CLAUDE.md`'s "Fast Session Bootstrap" section, requirement 7 (post-bootstrap
-answer step) newly added; diff is two additive hunks with no existing rule removed or rewritten
-(`git status --short` showed only `M CLAUDE.md`); no ambiguity or contradiction found against
-`AGENT_POLICY.md`.
-Claude's final outcome: **APPROVED**.
+Task: NIGHT-RUNNER-FOUNDATION
+Branch: `chore/night-runner-foundation`
+Reviewer: one independent read-only Codex reviewer, focused on requirement coverage against
+`docs/development/NIGHT_RUNNER.md`, determinism, the structural no-execution-capability
+invariant (no `child_process`/`http`/`https`/`fetch`/`spawn`/`exec`/git-operation imports),
+algorithm correctness (budget consumption, limit-cascade, human-gated blocking, `main`-branch
+refusal, retry/timeout math), fixture coverage, and the Windows "run as script" guard fix.
+Reviewer's verdict: **APPROVE WITH REQUIRED CHANGES** — two documentation-consistency issues in
+`NIGHT_RUNNER.md` (a stale `--out` flag mention with no implementation; an inaccurate claim that
+a `STOPPED` dependency reaches the per-dependency `BLOCKED` check, when the queue-level STOPPED
+cascade always intercepts it first). No material algorithmic, determinism, or
+execution-capability defect found. Named several test-coverage gaps explicitly as non-required
+("test-suite gaps, not demonstrated implementation failures").
+Claude's final outcome: **APPROVED** (after applying both required doc fixes and adding two
+fixtures — self-referencing dependency, `max_retries: 0` boundary — closing the two cheapest
+named gaps).
 
 ## Required Changes
 
-None — reviewer's first pass returned APPROVED directly.
+1. `NIGHT_RUNNER.md`'s "What this version does not do" list claimed writes were limited to "an
+   optional `--out` report path" that the implementation never had. Fixed: now states the CLI
+   only ever prints its report to stdout.
+2. `NIGHT_RUNNER.md`'s dependency-propagation bullet claimed a `STOPPED` dependency causes its
+   dependents to become `BLOCKED` via the per-dependency check. In the actual algorithm this
+   never happens — once a queue-level limit trips or the kill switch engages, every remaining
+   task (dependents included) is `STOPPED` directly by the cascade, before the per-dependency
+   check would run. Fixed: the bullet now names only `BLOCKED`/`FAILED` dependencies for that
+   check and explains the STOPPED-cascade precedence explicitly.
 
 ## Fixes Applied
 
-None needed. Validated: `npm test` (24/24), `npm run context` (compact) on this branch.
+Both required documentation changes above applied to `docs/development/NIGHT_RUNNER.md`. Also
+added `tests/night-runner/fixtures/refused-self-dependency.json` and
+`tests/night-runner/fixtures/timeout-zero-retries-immediate-fail.json` (not required by the
+reviewer, but the two cheapest of the named test-coverage gaps). Re-validated after fixes:
+`npm run test:night-runner` 12/12, `npm test` 24/24.
+
+Separately, during Claude's own manual CLI smoke test (before the independent review), a real
+Windows portability bug was found and fixed: the "run as script" guard's naive
+`` file://${process.argv[1]} `` string comparison never matches a Windows path (backslashes, no
+drive-letter leading slash), so the CLI silently did nothing on this platform. Fixed by switching
+to `pathToFileURL(process.argv[1]).href`. The independent reviewer separately confirmed this fix
+is in place and the bug is not present in any other form.
 
 ## Merge Decision
 
-PR #6 (`chore/project-context-auto-bootstrap` → `main`, task `PROJECT-CONTEXT-AUTO-BOOTSTRAP`) is
-**APPROVED for merge** — stated directly by the human: "PR #6 / PROJECT-CONTEXT-AUTO-BOOTSTRAP is
-APPROVED for merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording
-Commit" policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and
-`CURRENT_TASK.md`).
-
-This entry records the decision only. **The merge has not been performed yet.** Per
-`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge is a
-separate, later action requiring its own explicit instruction — this Gate Recording Commit does
-not authorize it. PR #6's live status/mergeability, if relevant, are remote-only GitHub facts and
-are not tracked in this file.
+Not reached. This task's Git authorization is Commit: yes, Push: yes, PR: yes, **merge: no** —
+"Do not merge. Then stop." No PR has been opened yet as of this entry.
 
 ## Pending Human Gate
 
-The merge decision above is recorded. What remains pending is the merge *execution* itself, which
-requires a separate explicit instruction — not implied by this entry or by the commit that records
-it.
+Once commit/push/PR are performed, the PR itself becomes the pending human gate (review + merge
+approval), per `AGENT_POLICY.md`'s Authority Hierarchy — not yet reached at the time of this
+entry.
 
 ## History
+
+- 2026-08-19 — `PROJECT-CONTEXT-AUTO-BOOTSTRAP` (PR #6): reviewed by one independent read-only
+  Codex reviewer, verdict **APPROVED** (no required changes). Human stated "PR #6 /
+  PROJECT-CONTEXT-AUTO-BOOTSTRAP is APPROVED for merge", recorded via a Gate Recording Commit.
+  **The merge itself was not performed** as of this entry — PR #6's live status/mergeability are
+  remote-only GitHub facts not tracked here; query GitHub if needed. Moved here from "Latest
+  Review"/"Merge Decision"/"Pending Human Gate" now that those sections describe the current task
+  (`NIGHT-RUNNER-FOUNDATION`) instead, per this file's branch/task scoping. — branch
+  `chore/project-context-auto-bootstrap`
 
 - 2026-08-19 — `PROJECT-CONTEXT-REVIEW-SCOPE` (PR #5): human approved for merge, stated directly
   as "PR #5 / PROJECT-CONTEXT-REVIEW-SCOPE is APPROVED for merge", recorded via a Gate Recording
   Commit. PR #5 was subsequently squash-merged to `main` at `fdc27d4` ("chore: scope review state
-  to active task") — see `DECISIONS_LOG.md` for the durable record. Moved here from "Merge
-  Decision"/"Pending Human Gate" now that those sections describe the current task
-  (`PROJECT-CONTEXT-AUTO-BOOTSTRAP`) instead, per this file's branch/task scoping. — branch
+  to active task") — see `DECISIONS_LOG.md` for the durable record. — branch
   `chore/project-context-review-scope`
 
 - 2026-08-19 — `PROJECT-CONTEXT-FREEZE-STATE` (PR #4): human approved for merge, stated directly
   as "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is APPROVED for merge", recorded via a Gate Recording
   Commit; merge execution itself was not authorized by that commit and remains a separate, later
-  action not yet taken — see `DECISIONS_LOG.md` for the durable record. Moved here from "Merge
-  Decision"/"Pending Human Gate" now that those sections describe the current task
-  (`PROJECT-CONTEXT-REVIEW-SCOPE`) instead, per this file's new branch/task scoping. — branch
+  action not yet taken — see `DECISIONS_LOG.md` for the durable record. — branch
   `chore/project-context-freeze-state`
 
 - 2026-08-19 — M0 Step 02B (Intent schema) — human decision: **APPROVED**, stated directly in

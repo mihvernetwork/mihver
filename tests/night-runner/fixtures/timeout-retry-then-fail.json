@@ -1,0 +1,32 @@
+{
+  "description": "A task whose estimate exceeds per_task_timeout_seconds retries twice then FAILS.",
+  "queue": {
+    "queue_id": "timeout-retry-then-fail",
+    "limits": {
+      "max_runtime_seconds": 1000,
+      "max_tasks": 5,
+      "per_task_timeout_seconds": 50,
+      "max_retries": 2
+    },
+    "tasks": [
+      {
+        "task_id": "task-a",
+        "branch": "chore/task-a",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      }
+    ]
+  },
+  "stop_switch_active": false,
+  "expected": {
+    "status": "OK",
+    "task_states": {
+      "task-a": "FAILED"
+    },
+    "retries_used": {
+      "task-a": 2
+    }
+  }
+}

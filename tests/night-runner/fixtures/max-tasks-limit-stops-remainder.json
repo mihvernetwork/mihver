@@ -1,0 +1,47 @@
+{
+  "description": "max_tasks: 1 with three independent authorized tasks: only the first runs, the rest are STOPPED.",
+  "queue": {
+    "queue_id": "max-tasks-limit-stops-remainder",
+    "limits": {
+      "max_runtime_seconds": 1000,
+      "max_tasks": 1,
+      "per_task_timeout_seconds": 500,
+      "max_retries": 1
+    },
+    "tasks": [
+      {
+        "task_id": "task-a",
+        "branch": "chore/task-a",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      },
+      {
+        "task_id": "task-b",
+        "branch": "chore/task-b",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      },
+      {
+        "task_id": "task-c",
+        "branch": "chore/task-c",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      }
+    ]
+  },
+  "stop_switch_active": false,
+  "expected": {
+    "status": "OK",
+    "task_states": {
+      "task-a": "READY_FOR_HUMAN",
+      "task-b": "STOPPED",
+      "task-c": "STOPPED"
+    }
+  }
+}
