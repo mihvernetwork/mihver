@@ -24,6 +24,11 @@ Follow `CLAUDE.md`.
 
 <allowed scope>
 
+## Required Context
+
+<files a fresh session must read before starting this task — keep short; if omitted, Claude
+derives it from `.project/CONTEXT_INDEX.md`'s entries for the topics this task touches>
+
 ## Requirements
 
 - ...

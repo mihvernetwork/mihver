@@ -14,6 +14,35 @@ Codex (via MCP)  — bounded specialist worker; executes scoped tasks, never sel
 Neither Claude nor Codex may act as if it held the human's authority. Codex may not act as if it
 held Claude's integration/review authority.
 
+## Session Bootstrap
+
+Fresh sessions start via `CLAUDE.md`'s "Fast Session Bootstrap" rule: run `npm run context`, then
+read `.project/CURRENT_TASK.md`'s Required Context — the primary read set.
+`.project/CONTEXT_INDEX.md` is a fallback, consulted only when the task in progress reveals a
+context gap, not a second list to read alongside Required Context by default. This document and
+the other permanent policy documents are themselves indexed there — they are read in full when
+relevant to the task, not re-read wholesale merely because they are "permanent policy."
+
+## Operational State Scope
+
+Each `.project/` state file accepts exactly one kind of update. This is permanent policy — task
+prompts do not need to restate it per task.
+
+- **`CURRENT_TASK.md`** — update at task start (objective, scope, branch) and again at task
+  completion (status, outcome). Branch-scoped: describes the task active on the branch it
+  declares, not a history of past tasks. `npm run context` treats it as active only when its
+  declared branch matches the checked-out branch; on mismatch it reports no active task for the
+  current branch rather than presenting stale content as current.
+- **`REVIEW_STATE.md`** — record only observed review outcomes (Codex/Claude verdicts, required
+  changes, human gate status). Never invent or assume an outcome that wasn't actually observed.
+- **`PROJECT_STATE.md`** — change only for human-approved checkpoint/milestone state. Never record
+  active-task or branch-specific facts here — those belong in `CURRENT_TASK.md` and go stale the
+  moment that branch is merged or abandoned.
+- **`DECISIONS_LOG.md`** — append only explicit, durable human decisions. Entries are never edited
+  or removed, and this file never records task-in-progress detail.
+- **`CONTEXT_INDEX.md`** — update only when an authoritative topic → file mapping actually
+  changes (a file is added, renamed, or superseded) — not on every task.
+
 ## Claude Responsibilities
 
 - Understand the task and decide whether delegation is useful (see "When to Delegate to Codex"
@@ -190,6 +219,30 @@ Claude may create a commit only when the current task explicitly authorizes comm
 
 Intermediate commits are allowed on task branches once commits are authorized for the task — they
 don't each need separate re-authorization.
+
+### Gate Recording Commit
+
+A narrow, separate authority from the general commit rule above: once a human has given
+**explicit approval** for a gate decision (a PR merge, a milestone freeze, a task's completion)
+in conversation, Claude may create exactly **one** commit recording that decision — even if
+nothing in the current exchange set `Commit allowed: yes` the way a full task prompt would,
+because this commit only records the approval; it does not perform or continue the approved work.
+
+- Allowed files for a Gate Recording Commit:
+  - `.project/REVIEW_STATE.md`
+  - `.project/DECISIONS_LOG.md`
+  - `.project/CURRENT_TASK.md`
+- It must change no architecture, code, contract, schema, test, or policy file. A Gate Recording
+  Commit is non-substantive by definition; if recording the decision requires touching anything
+  outside the three files above, it is not a Gate Recording Commit and needs its own task
+  authorization (`Commit allowed: yes`) instead.
+- Exactly one commit per approval — don't split it, and don't fold unrelated changes into it.
+- A pure Gate Recording Commit does not invalidate, supersede, or re-open the human approval it
+  records — it is a record of the decision, not a new decision, and it does not itself constitute
+  approval of anything further (in particular, it never authorizes an actual merge to `main` —
+  see "Pull Requests" below).
+- Push follows the same authorization as any other commit — see "Push" below; a Gate Recording
+  Commit does not implicitly authorize a push.
 
 ### Push
 
