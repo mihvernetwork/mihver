@@ -5,46 +5,49 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-PROJECT-CONTEXT-REVIEW-SCOPE
+PROJECT-CONTEXT-AUTO-BOOTSTRAP
 
 ## Objective
 
-Fix the fresh-session acceptance-test failure where stale `REVIEW_STATE.md` content from a
-completed branch was interpreted as the current gate on `main`. Make `REVIEW_STATE.md`
-branch/task-scoped like `CURRENT_TASK.md`, restrict when it may describe the "current" gate,
-make `PROJECT_STATE.md`'s Next Authorized Action authoritative when there is no active task, and
-teach `npm run context` to validate task/review branch consistency and say `Active task: none`
-explicitly.
+Update `CLAUDE.md`'s "Fast Session Bootstrap" section so it explicitly triggers before answering
+the **first** user message of a fresh session, unconditionally — including a bare greeting
+("hello") with no stated task — not only when the message names a MIHVER task; and so it
+explicitly directs Claude to then answer the user's original message normally afterward,
+surfacing current project state briefly only when useful. Requirements 1–6 of the originating
+task prompt (run `npm run context`; use the compact snapshot as initial state; active-task vs.
+no-active-task REVIEW_STATE handling; no repo/git-history/GitHub scanning by default; GitHub as
+remote-only) were already present in `CLAUDE.md` before this task — this task closed the one gap
+(unconditional trigger + explicit post-bootstrap answer step), as a minimal patch, not an
+architecture change.
 
 ## Branch / Base
 
-Branch: `chore/project-context-review-scope`
-Base: `main` (`6a399c7`)
+Branch: `chore/project-context-auto-bootstrap`
+Base: `main` (`fdc27d4`)
 
 ## Status
 
-Complete — implemented, independently reviewed (one read-only Codex reviewer; first pass
-APPROVE WITH REQUIRED CHANGES, fix applied, re-reviewed to APPROVED — see
-`.project/REVIEW_STATE.md`), and validated (`npm test` 24/24, `npm run context` compact and
-`--full`, plus manual worktree/clone scenario checks for the INFO/WARNING and task-ID-mismatch
-paths). Committed and pushed to `chore/project-context-review-scope`. The human has since stated:
-"PR #5 / PROJECT-CONTEXT-REVIEW-SCOPE is APPROVED for merge" — recorded via a Gate Recording
-Commit (see `.project/REVIEW_STATE.md`'s Merge Decision entry). The merge itself has not been
-performed yet and is not authorized by that recording commit. Actual PR existence, status, and
-mergeability remain remote-only GitHub facts not tracked in this file — query GitHub (e.g.
-`gh pr view`, `gh pr list`) when that information is needed.
+Complete — implemented (two additive hunks in `CLAUDE.md`'s "Fast Session Bootstrap" section; no
+existing rule removed or rewritten), independently reviewed (one read-only Codex reviewer;
+verdict **APPROVED**, no required changes — see `.project/REVIEW_STATE.md`), and validated
+(`npm test` 24/24, `npm run context` compact — see Validation below). Committed
+(`66f63ab`, `8d5461c`, `113b7e9`) and pushed to `chore/project-context-auto-bootstrap`. The human
+has since stated: "PR #6 / PROJECT-CONTEXT-AUTO-BOOTSTRAP is APPROVED for merge" — recorded via a
+Gate Recording Commit (see `.project/REVIEW_STATE.md`'s Merge Decision entry). The merge itself
+has not been performed yet and is not authorized by that recording commit. Actual PR existence,
+status, and mergeability remain remote-only GitHub facts not tracked in this file — query GitHub
+(e.g. `gh pr view`, `gh pr list`) when that information is needed.
 
 ## Allowed Scope
 
 Update:
 - `CLAUDE.md`
-- `docs/development/AGENT_POLICY.md`
 - `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
-- `scripts/dev/project-context.mjs`
 
 Forbidden: `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `docs/foundation/**`,
 `docs/adr/**`, `docs/contracts/**`, `docs/examples/**`, `schemas/**`, `tests/**`,
-`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`. No live/prospective
+`docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`,
+`docs/development/TASK_TEMPLATE.md`, `scripts/dev/project-context.mjs`. No live/prospective
 GitHub PR state may be recorded in repository metadata (carry forward the
 `PROJECT-CONTEXT-REMOTE-STATE-PATCH` invariant).
 
@@ -54,21 +57,23 @@ GitHub PR state may be recorded in repository metadata (carry forward the
 - `.project/CURRENT_TASK.md`
 - `.project/REVIEW_STATE.md`
 - `.project/PROJECT_STATE.md`
-- `docs/development/AGENT_POLICY.md` (Operational State Scope, Git & Branch Workflow)
+- `docs/development/AGENT_POLICY.md` (Session Bootstrap, Git & Branch Workflow)
 - `docs/development/REVIEW_PROTOCOL.md` (Completion Checklist, Outcomes)
-- `scripts/dev/project-context.mjs`
 
 ## Validation
 
-- `npm run context` (compact) on `main` behavior validated conceptually/testably (via an isolated
-  worktree, not by switching this task's checkout).
-- `npm run context -- --full` runs without error.
-- `npm test` still passes (contract validator untouched).
-- One read-only Codex reviewer focused on stale review-state leakage.
+- `npm run context` (compact), re-run on this branch at HEAD `8d5461c`: reports
+  `Active task: PROJECT-CONTEXT-AUTO-BOOTSTRAP` and `Review state: current (branch
+  "chore/project-context-auto-bootstrap") - see "Latest Review" in REVIEW_STATE.md` — i.e. this
+  task and its review state are correctly recognized as current for this branch.
+- `npm test` passes (24/24 contract fixtures; untouched by this task).
+- One read-only Codex reviewer, focused on requirement coverage (all 7 numbered goals from the
+  task prompt), patch minimality, and consistency with `AGENT_POLICY.md`'s Session Bootstrap
+  section — verdict **APPROVED**.
 
 ## Next Gate
 
-The human has approved PR #5 / `PROJECT-CONTEXT-REVIEW-SCOPE` for merge (see
+The human has approved PR #6 / `PROJECT-CONTEXT-AUTO-BOOTSTRAP` for merge (see
 `.project/REVIEW_STATE.md`'s Merge Decision entry). What remains is the merge execution itself — a
 separate action requiring its own explicit instruction; not started by this Gate Recording Commit.
 Actual PR status/mergeability remain remote-only GitHub facts not tracked in this file; query
