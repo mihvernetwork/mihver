@@ -5,63 +5,58 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-PROJECT-CONTEXT-MERGE-GATE
+PROJECT-CONTEXT-FREEZE-STATE
 
 ## Objective
 
-Final bootstrap fixes ahead of the human's merge decision: define a permanent Gate Recording
-Commit policy, add a compact global-project summary (milestone / latest checkpoint / next
-authorized action) to `npm run context` without dumping `PROJECT_STATE.md`, and record the human's
-current review of the branch as approved contingent on this patch — not yet a merge approval.
+Bring durable project state back in sync now that the approved Context Bootstrap was squash-merged
+through PR #3 at `c5d3dc8`: record it as a frozen checkpoint in `PROJECT_STATE.md`, update
+operational state files only as `AGENT_POLICY.md`'s Operational State Scope policy requires, and
+record the completed merge in `DECISIONS_LOG.md`.
 
 ## Branch / Base
 
-Branch: `chore/project-context-bootstrap`
-Base: `main` (`0683e84`)
+Branch: `chore/project-context-freeze-state`
+Base: `main` (`c5d3dc8`)
 
 ## Status
 
-Complete — committed and pushed to `chore/project-context-bootstrap`. No PR opened (task's PR
-expected: no). The human has since stated: "PROJECT-CONTEXT-BOOTSTRAP is APPROVED for merge" —
-recorded via a Gate Recording Commit (see `.project/REVIEW_STATE.md`'s Merge Decision entry). The
-merge itself has not been performed and is not authorized by that recording commit.
+Complete — committed and pushed to `chore/project-context-freeze-state`. A PR into `main` (title:
+"chore: freeze project context bootstrap state") is expected next; per this task's explicit
+instruction, it is not merged.
 
 ## Allowed Scope
 
 Update:
-- `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `.project/DECISIONS_LOG.md`
-- `docs/development/AGENT_POLICY.md`
-- `scripts/dev/project-context.mjs`
+- `.project/PROJECT_STATE.md`, `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`,
+  `.project/DECISIONS_LOG.md`
 
 Forbidden: `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `docs/examples/**`,
-`schemas/**`, `tests/**` — no architecture, foundation, contract, or schema changes. `CLAUDE.md`
-and `.project/PROJECT_STATE.md` are also out of scope for this task — not requested by this
-task's prompt, so left untouched (reported to the human as a minor, non-blocking follow-up
-instead of edited silently).
+`schemas/**`, `tests/**` — no architecture, foundation, contract, or schema changes.
+`scripts/dev/project-context.mjs` and any other bootstrap implementation file are also forbidden —
+this task updates state records, not the bootstrap mechanism itself. No M0 step is started by this
+task.
 
 ## Required Context
 
 - `CLAUDE.md`
 - `.project/PROJECT_STATE.md`
 - `.project/REVIEW_STATE.md`
+- `.project/DECISIONS_LOG.md`
 - `.project/CONTEXT_INDEX.md`
-- `docs/development/AGENT_POLICY.md` (Task Contract, Git & Branch Workflow, Operational State
-  Scope, Gate Recording Commit)
+- `docs/development/AGENT_POLICY.md` (Operational State Scope, Git & Branch Workflow)
 - `docs/development/REVIEW_PROTOCOL.md` (Completion Checklist, Outcomes)
-- `scripts/dev/project-context.mjs`
 
 ## Validation
 
-- `npm run context` runs without error, prints the new Project summary (milestone/latest
-  checkpoint/next action) without dumping `PROJECT_STATE.md`, and stays ~30-40 lines.
-- `npm run context -- --full` runs and prints the detailed state-file dump.
+- `npm run context` runs without error; compact output's "Latest checkpoint" line reflects the new
+  Project Context Bootstrap entry.
 - `npm test` still passes (contract validator untouched).
-- `git status` / `git diff --stat` confirm only files listed under Allowed Scope changed.
-- One read-only Codex review pass focused solely on state-lifecycle consistency.
+- `git diff --stat` confirms only files listed under Allowed Scope changed.
+- One read-only Codex review pass focused on stale-state consistency.
 
 ## Next Gate
 
-The human has approved `chore/project-context-bootstrap` for merge (see
-`.project/REVIEW_STATE.md`'s Merge Decision entry). What remains is the merge execution itself (or
-a PR to carry it) — a separate action requiring its own explicit instruction; not started by this
-Gate Recording Commit.
+A PR from `chore/project-context-freeze-state` into `main` (title: "chore: freeze project context
+bootstrap state") will be opened for human review once this task's changes are committed and
+pushed. This task does not merge it — the merge decision is a separate, later gate.
