@@ -44,11 +44,14 @@ of being reported as current.
 
 ## Merge Decision
 
-None yet for this task — no PR opened yet.
+Not yet made — human review/merge decision for this task is pending. Actual PR existence and
+status are remote-only GitHub facts not tracked in this file.
 
 ## Pending Human Gate
 
-None yet — awaiting PR review once opened; per the task's instructions, do not merge.
+Human review/merge decision is pending for this task. Do not merge without explicit human
+authorization. Actual PR existence, status, and mergeability remain remote-only GitHub facts not
+tracked in this file — query GitHub when needed.
 
 ## History
 

@@ -27,8 +27,10 @@ Complete — implemented, independently reviewed (one read-only Codex reviewer; 
 APPROVE WITH REQUIRED CHANGES, fix applied, re-reviewed to APPROVED — see
 `.project/REVIEW_STATE.md`), and validated (`npm test` 24/24, `npm run context` compact and
 `--full`, plus manual worktree/clone scenario checks for the INFO/WARNING and task-ID-mismatch
-paths). Ready to commit, push, and open a PR per this task's Git authorization. Not merged — PR
-review/merge is a separate, later human gate.
+paths). Committed and pushed to `chore/project-context-review-scope`. PR expected: yes. Human
+review/merge decision is pending — that gate has not been reached yet. Actual PR existence,
+status, and mergeability remain remote-only GitHub facts not tracked in this file — query GitHub
+(e.g. `gh pr view`, `gh pr list`) when that information is needed.
 
 ## Allowed Scope
 
@@ -64,4 +66,6 @@ GitHub PR state may be recorded in repository metadata (carry forward the
 
 ## Next Gate
 
-None yet — PR not opened. Do not merge. Stop after PR is opened for human review.
+Human review and merge decision on this task's work. Do not merge without explicit human
+authorization. Actual PR existence, status, and mergeability remain remote-only GitHub facts not
+tracked in this file — query GitHub when needed.
