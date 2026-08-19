@@ -22,14 +22,25 @@ None — this task's own scope defines the fix directly; no reviewer findings to
 Not applicable (no reviewer, no required changes). `npm test` (24/24) and `npm run context`
 verified after the edit.
 
+## Merge Decision
+
+PR #4 (`chore/project-context-freeze-state` → `main`, task `PROJECT-CONTEXT-FREEZE-STATE`) is
+**APPROVED for merge** — stated directly by the human: "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is
+APPROVED for merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording
+Commit" policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and
+`CURRENT_TASK.md`).
+
+This entry records the decision only. **The merge has not been performed yet.** Per
+`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge is a
+separate, later action requiring its own explicit instruction — this Gate Recording Commit does
+not authorize it. PR #4's live status/mergeability, if relevant, are remote-only GitHub facts and
+are not tracked in this file.
+
 ## Pending Human Gate
 
-Human review and merge decision for `chore/project-context-freeze-state` into `main` are pending.
-Commit and push are authorized for this task; the merge decision itself is not — it remains a
-separate, later gate per `AGENT_POLICY.md`'s Authority Hierarchy. Whether a PR exists for this
-branch, and its status/mergeability, are remote-only GitHub facts not tracked in this file; query
-GitHub (e.g. `gh pr list --head chore/project-context-freeze-state`) when that information is
-needed.
+The merge decision above is recorded. What remains pending is the merge *execution* itself, which
+requires a separate explicit instruction — not implied by this entry or by the commit that records
+it.
 
 ## History
 

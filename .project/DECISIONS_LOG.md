@@ -35,3 +35,8 @@ Format: `YYYY-MM-DD — decision — reference`.
   #3 merge — record the new frozen checkpoint in `PROJECT_STATE.md`, update operational state
   files per `AGENT_POLICY.md`'s Operational State Scope, no bootstrap-implementation or
   architecture changes. — branch `chore/project-context-freeze-state`
+- 2026-08-19 — `PROJECT-CONTEXT-FREEZE-STATE` (PR #4) **APPROVED for merge** — human decision
+  stated directly as "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is APPROVED for merge"; recorded via a
+  Gate Recording Commit per `AGENT_POLICY.md`. The merge itself has not been performed —
+  execution requires a separate, later explicit instruction. — branch
+  `chore/project-context-freeze-state`

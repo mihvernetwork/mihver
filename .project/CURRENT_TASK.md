@@ -21,10 +21,12 @@ Base: `main` (`c5d3dc8`)
 
 ## Status
 
-Complete — committed and pushed to `chore/project-context-freeze-state`. PR expected: yes. Human
-review and the merge decision are pending. Actual PR existence, status, and mergeability are
-remote-only GitHub facts and are not tracked in this file — query GitHub (e.g. `gh pr view`,
-`gh pr list`) when that information is needed.
+Complete — committed and pushed to `chore/project-context-freeze-state`. The human has since
+stated: "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is APPROVED for merge" — recorded via a Gate
+Recording Commit (see `.project/REVIEW_STATE.md`'s Merge Decision entry). The merge itself has not
+been performed yet and is not authorized by that recording commit. Actual PR existence, status,
+and mergeability remain remote-only GitHub facts not tracked in this file — query GitHub (e.g.
+`gh pr view`, `gh pr list`) when that information is needed.
 
 ## Allowed Scope
 
@@ -53,7 +55,8 @@ task is a wording-only fix to two operational state files.
 
 ## Next Gate
 
-Human review and merge decision for `chore/project-context-freeze-state` into `main`. This task
-pushes to the branch only — it does not open or merge a PR. Whether a PR exists for this branch,
-and its status/mergeability, are remote-only GitHub facts not tracked in this file; query GitHub
-(e.g. `gh pr list --head chore/project-context-freeze-state`) when that information is needed.
+The human has approved PR #4 / `PROJECT-CONTEXT-FREEZE-STATE` for merge (see
+`.project/REVIEW_STATE.md`'s Merge Decision entry). What remains is the merge execution itself — a
+separate action requiring its own explicit instruction; not started by this Gate Recording Commit.
+Actual PR status/mergeability remain remote-only GitHub facts not tracked in this file; query
+GitHub when needed.
