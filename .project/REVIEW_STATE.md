@@ -7,54 +7,40 @@ assessment, not human sign-off — see `AGENT_POLICY.md`'s Authority Hierarchy.
 
 ## Latest Review
 
-Task: PROJECT-CONTEXT-MERGE-GATE
-Reviewer: Codex (read-only), scoped solely to state-lifecycle consistency: the new Gate Recording
-Commit policy (AGENT_POLICY.md), the new PROJECT_STATE.md-derived summary in `npm run context`
-(accuracy, and that it doesn't dump the file), and whether this file's recorded human-gate status
-overclaims.
-Codex outcome: **APPROVE** — no BLOCKING, SHOULD-FIX, or NIT findings across all four checked
-points (Gate Recording Commit policy consistency, PROJECT_STATE.md summary correctness/safety and
-non-dumping, Human Review Gate wording, CURRENT_TASK.md accuracy).
+Task: PROJECT-CONTEXT-REMOTE-STATE-PATCH
+Reviewer: none — a small, mechanical wording fix to two existing state files (removing
+prospective/live GitHub PR wording), which `REVIEW_PROTOCOL.md` exempts from requiring its own
+independent review pass.
 Claude's final outcome: **APPROVED**.
 
 ## Required Changes
 
-None — Codex found no issues in scope.
+None — this task's own scope defines the fix directly; no reviewer findings to apply.
 
 ## Fixes Applied
 
-Not applicable (no required changes). `npm test` (24/24), `npm run context` (compact, 33 lines),
-and `npm run context -- --full` verified independently by Claude, since Codex's sandbox blocked
-`npm`/`node` execution for its own run.
-
-## Human Review Gate
-
-Human review of the `chore/project-context-bootstrap` branch and the project-context bootstrap
-mechanism as a whole: **APPROVED WITH FINAL OPERATIONAL PATCH REQUIRED** — stated directly by the
-human when authorizing `PROJECT-CONTEXT-MERGE-GATE`. This is **not** final merge approval: it
-means the human approved contingent on this task's patch (Gate Recording Commit policy, compact
-`npm run context` project summary, this review-state update) being applied. The decision to
-actually merge `chore/project-context-bootstrap` into `main` is a separate, later gate per
-`AGENT_POLICY.md`'s Authority Hierarchy and is not granted by this entry or by this task's
-completion.
+Not applicable (no reviewer, no required changes). `npm test` (24/24) and `npm run context`
+verified after the edit.
 
 ## Merge Decision
 
-`PROJECT-CONTEXT-BOOTSTRAP` (the `chore/project-context-bootstrap` branch as a whole) is
-**APPROVED for merge** — stated directly by the human: "PROJECT-CONTEXT-BOOTSTRAP is APPROVED for
-merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording Commit"
-policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and `CURRENT_TASK.md`).
+PR #4 (`chore/project-context-freeze-state` → `main`, task `PROJECT-CONTEXT-FREEZE-STATE`) is
+**APPROVED for merge** — stated directly by the human: "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is
+APPROVED for merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording
+Commit" policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and
+`CURRENT_TASK.md`).
 
-This entry records the decision only. **The merge has not been performed.** Per
-`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge (or opening
-a PR and merging it) is a separate, later action requiring its own explicit instruction — this
-Gate Recording Commit does not authorize it.
+This entry records the decision only. **The merge has not been performed yet.** Per
+`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge is a
+separate, later action requiring its own explicit instruction — this Gate Recording Commit does
+not authorize it. PR #4's live status/mergeability, if relevant, are remote-only GitHub facts and
+are not tracked in this file.
 
 ## Pending Human Gate
 
-The merge decision above is recorded. What remains pending is the merge *execution* itself (or a
-PR to carry it), which requires a separate explicit instruction — not implied by this entry or by
-the commit that records it.
+The merge decision above is recorded. What remains pending is the merge *execution* itself, which
+requires a separate explicit instruction — not implied by this entry or by the commit that records
+it.
 
 ## History
 
@@ -63,3 +49,11 @@ the commit that records it.
   conversation; it is not independently verifiable from git/GitHub state — the merge commit
   `0683e84` confirms the code landed, not that a human approved it. — merged to `main` at
   `0683e84`.
+- 2026-08-19 — Project Context Bootstrap — human review of the branch/mechanism as a whole:
+  **APPROVED WITH FINAL OPERATIONAL PATCH REQUIRED**, stated directly by the human, explicitly not
+  final merge approval; authorized the `PROJECT-CONTEXT-MERGE-GATE` patch that was applied to
+  satisfy it.
+- 2026-08-19 — Project Context Bootstrap — human decision: **APPROVED for merge**, stated directly
+  ("PROJECT-CONTEXT-BOOTSTRAP is APPROVED for merge"), recorded via a Gate Recording Commit, then
+  executed on the human's explicit request for a PR + squash merge (base `main`, compare
+  `chore/project-context-bootstrap`). — merged to `main` via PR #3, squash commit `c5d3dc8`.

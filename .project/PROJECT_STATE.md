@@ -25,6 +25,12 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   (Status: Proposed — see Open Items), `INTENT_SPEC.md`, `USER_IDEA.md`, `INTENT_CASES.md`.
 - **M0 Step 02B** — Intent schema. Merged (`0683e84`). Produced `SCHEMA_MAPPING.md`,
   `schemas/m0/*.json`, `tests/contracts/**`, `package.json`.
+- **Project Context Bootstrap** — durable `.project/` session-bootstrap state and
+  `npm run context` tooling for fresh-session state reconstruction, plus the Operational State
+  Scope and Gate Recording Commit policies. Merged via PR #3, squash commit `c5d3dc8`. Produced
+  `.project/PROJECT_STATE.md`, `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`,
+  `.project/CONTEXT_INDEX.md`, `.project/DECISIONS_LOG.md`, `scripts/dev/project-context.mjs`;
+  extended `docs/development/AGENT_POLICY.md`.
 
 ## Open Items
 
