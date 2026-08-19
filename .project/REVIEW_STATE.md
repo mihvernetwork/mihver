@@ -15,54 +15,46 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: PROJECT-CONTEXT-REVIEW-SCOPE
-Branch: `chore/project-context-review-scope`
-Reviewer: one independent read-only Codex reviewer, focused on stale review-state leakage.
-Reviewer's first pass: **APPROVE WITH REQUIRED CHANGES** — `scripts/dev/project-context.mjs`
-matched `REVIEW_STATE.md` against the active task by branch only, not Task ID, so a REVIEW_STATE
-left over from an earlier task on the *same* branch could still be reported as current.
-Fix applied (exact Task ID matching added, failing closed on any missing/unparseable field);
-reviewer re-reviewed the diff and returned **APPROVED**.
+Task: PROJECT-CONTEXT-AUTO-BOOTSTRAP
+Branch: `chore/project-context-auto-bootstrap`
+Reviewer: one independent read-only Codex reviewer, focused on coverage of the task's 7 numbered
+requirements, patch minimality, and consistency with `AGENT_POLICY.md`'s Session Bootstrap
+section.
+Reviewer's verdict: **APPROVED** — no required changes. Confirmed requirements 1–6 were
+pre-existing in `CLAUDE.md`'s "Fast Session Bootstrap" section, requirement 7 (post-bootstrap
+answer step) newly added; diff is two additive hunks with no existing rule removed or rewritten
+(`git status --short` showed only `M CLAUDE.md`); no ambiguity or contradiction found against
+`AGENT_POLICY.md`.
 Claude's final outcome: **APPROVED**.
 
 ## Required Changes
 
-- Match `.project/REVIEW_STATE.md`'s declared Task, not just its declared Branch, against
-  `.project/CURRENT_TASK.md`'s active Task ID before treating review state as current — fixed in
-  `scripts/dev/project-context.mjs` (`extractTaskField`, `extractSectionValue`,
-  `reviewStateMatchesActiveTask`).
+None — reviewer's first pass returned APPROVED directly.
 
 ## Fixes Applied
 
-Task-ID matching added to `scripts/dev/project-context.mjs` as above. Re-verified: `npm test`
-(24/24), `npm run context` (compact) on this branch, `npm run context -- --full`. Also manually
-verified, via a throwaway git worktree/clone (not by switching this task's own checkout): (a) a
-branch mismatch on a non-`main` branch still warns as before, (b) `main` with a stale
-`CURRENT_TASK.md` now prints INFO instead of WARNING, and (c) a same-branch Task-ID mismatch
-(temporarily simulated in `.project/REVIEW_STATE.md`, then reverted) now correctly warns instead
-of being reported as current.
+None needed. Validated: `npm test` (24/24), `npm run context` (compact) on this branch.
 
 ## Merge Decision
 
-PR #5 (`chore/project-context-review-scope` → `main`, task `PROJECT-CONTEXT-REVIEW-SCOPE`) is
-**APPROVED for merge** — stated directly by the human: "PR #5 / PROJECT-CONTEXT-REVIEW-SCOPE is
-APPROVED for merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording
-Commit" policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and
-`CURRENT_TASK.md`).
-
-This entry records the decision only. **The merge has not been performed yet.** Per
-`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge is a
-separate, later action requiring its own explicit instruction — this Gate Recording Commit does
-not authorize it. PR #5's live status/mergeability, if relevant, are remote-only GitHub facts and
-are not tracked in this file.
+Not yet requested. This task's Git authorization was Commit: yes / Push: yes / PR: yes / Merge:
+explicitly **no** — a PR was opened for `chore/project-context-auto-bootstrap` → `main` but merge
+was neither requested nor performed.
 
 ## Pending Human Gate
 
-The merge decision above is recorded. What remains pending is the merge *execution* itself, which
-requires a separate explicit instruction — not implied by this entry or by the commit that records
-it.
+PR review and merge decision for `chore/project-context-auto-bootstrap`, per
+`AGENT_POLICY.md`'s Authority Hierarchy — not started or implied by this entry.
 
 ## History
+
+- 2026-08-19 — `PROJECT-CONTEXT-REVIEW-SCOPE` (PR #5): human approved for merge, stated directly
+  as "PR #5 / PROJECT-CONTEXT-REVIEW-SCOPE is APPROVED for merge", recorded via a Gate Recording
+  Commit; merge execution itself was not authorized by that commit and remains a separate, later
+  action not yet taken as of this entry — see `DECISIONS_LOG.md` for the durable record. Moved
+  here from "Merge Decision"/"Pending Human Gate" now that those sections describe the current
+  task (`PROJECT-CONTEXT-AUTO-BOOTSTRAP`) instead, per this file's branch/task scoping. — branch
+  `chore/project-context-review-scope`
 
 - 2026-08-19 — `PROJECT-CONTEXT-FREEZE-STATE` (PR #4): human approved for merge, stated directly
   as "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is APPROVED for merge", recorded via a Gate Recording

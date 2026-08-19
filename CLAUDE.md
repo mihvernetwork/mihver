@@ -16,7 +16,9 @@ the rules below.
 ## Fast Session Bootstrap
 
 A fresh session must reconstruct MIHVER's current state cheaply — not by scanning the repository,
-not by reading full git history, and not by relying on prior conversation history.
+not by reading full git history, and not by relying on prior conversation history. This runs
+before answering the **first** user message of a fresh session, unconditionally — including a
+bare greeting ("hello") with no stated task — not only when the message names a MIHVER task.
 
 - Do not recursively inspect the repository on startup.
 - Do not read the full git history by default.
@@ -41,6 +43,9 @@ not by reading full git history, and not by relying on prior conversation histor
 - Expand context beyond that only when evidence in the current task shows it is necessary.
 - Use GitHub only for remote-only facts — open PRs, CI status, PR review comments, or merge
   state — never to rediscover content that already lives in the local repository.
+- Bootstrapping is a precondition for answering, not a substitute for it: once the steps above are
+  done, answer the user's original message normally. Surface current project state briefly only
+  when it's useful to that reply — a bare greeting doesn't need a state dump back.
 
 See `.project/PROJECT_STATE.md` (milestone/checkpoint state), `.project/CURRENT_TASK.md` (active
 task), `.project/REVIEW_STATE.md` (review/approval state), and `.project/CONTEXT_INDEX.md`
