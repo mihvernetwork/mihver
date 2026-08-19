@@ -5,44 +5,60 @@ completion checklist. Never invent or assume approval: if a human has not explic
 record the gate as pending, not granted. A Codex or Claude `APPROVED` verdict is a technical
 assessment, not human sign-off — see `AGENT_POLICY.md`'s Authority Hierarchy.
 
+**Branch/task-scoped, like [CURRENT_TASK.md](./CURRENT_TASK.md).** The "Latest Review" section
+below describes the current gate only when *both* hold: `CURRENT_TASK.md` is active for the
+checked-out branch, and this file's own declared Branch/Task (below) matches that same
+branch/task. `npm run context` checks this automatically. When either condition fails — no active
+task, or this file's Branch/Task doesn't match the active one — the "Latest Review" content is
+historical/stale task metadata only, not the current gate; `PROJECT_STATE.md`'s "Next Authorized
+Action" is authoritative for what's next, not anything below.
+
 ## Latest Review
 
-Task: PROJECT-CONTEXT-REMOTE-STATE-PATCH
-Reviewer: none — a small, mechanical wording fix to two existing state files (removing
-prospective/live GitHub PR wording), which `REVIEW_PROTOCOL.md` exempts from requiring its own
-independent review pass.
+Task: PROJECT-CONTEXT-REVIEW-SCOPE
+Branch: `chore/project-context-review-scope`
+Reviewer: one independent read-only Codex reviewer, focused on stale review-state leakage.
+Reviewer's first pass: **APPROVE WITH REQUIRED CHANGES** — `scripts/dev/project-context.mjs`
+matched `REVIEW_STATE.md` against the active task by branch only, not Task ID, so a REVIEW_STATE
+left over from an earlier task on the *same* branch could still be reported as current.
+Fix applied (exact Task ID matching added, failing closed on any missing/unparseable field);
+reviewer re-reviewed the diff and returned **APPROVED**.
 Claude's final outcome: **APPROVED**.
 
 ## Required Changes
 
-None — this task's own scope defines the fix directly; no reviewer findings to apply.
+- Match `.project/REVIEW_STATE.md`'s declared Task, not just its declared Branch, against
+  `.project/CURRENT_TASK.md`'s active Task ID before treating review state as current — fixed in
+  `scripts/dev/project-context.mjs` (`extractTaskField`, `extractSectionValue`,
+  `reviewStateMatchesActiveTask`).
 
 ## Fixes Applied
 
-Not applicable (no reviewer, no required changes). `npm test` (24/24) and `npm run context`
-verified after the edit.
+Task-ID matching added to `scripts/dev/project-context.mjs` as above. Re-verified: `npm test`
+(24/24), `npm run context` (compact) on this branch, `npm run context -- --full`. Also manually
+verified, via a throwaway git worktree/clone (not by switching this task's own checkout): (a) a
+branch mismatch on a non-`main` branch still warns as before, (b) `main` with a stale
+`CURRENT_TASK.md` now prints INFO instead of WARNING, and (c) a same-branch Task-ID mismatch
+(temporarily simulated in `.project/REVIEW_STATE.md`, then reverted) now correctly warns instead
+of being reported as current.
 
 ## Merge Decision
 
-PR #4 (`chore/project-context-freeze-state` → `main`, task `PROJECT-CONTEXT-FREEZE-STATE`) is
-**APPROVED for merge** — stated directly by the human: "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is
-APPROVED for merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording
-Commit" policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and
-`CURRENT_TASK.md`).
-
-This entry records the decision only. **The merge has not been performed yet.** Per
-`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge is a
-separate, later action requiring its own explicit instruction — this Gate Recording Commit does
-not authorize it. PR #4's live status/mergeability, if relevant, are remote-only GitHub facts and
-are not tracked in this file.
+None yet for this task — no PR opened yet.
 
 ## Pending Human Gate
 
-The merge decision above is recorded. What remains pending is the merge *execution* itself, which
-requires a separate explicit instruction — not implied by this entry or by the commit that records
-it.
+None yet — awaiting PR review once opened; per the task's instructions, do not merge.
 
 ## History
+
+- 2026-08-19 — `PROJECT-CONTEXT-FREEZE-STATE` (PR #4): human approved for merge, stated directly
+  as "PR #4 / PROJECT-CONTEXT-FREEZE-STATE is APPROVED for merge", recorded via a Gate Recording
+  Commit; merge execution itself was not authorized by that commit and remains a separate, later
+  action not yet taken — see `DECISIONS_LOG.md` for the durable record. Moved here from "Merge
+  Decision"/"Pending Human Gate" now that those sections describe the current task
+  (`PROJECT-CONTEXT-REVIEW-SCOPE`) instead, per this file's new branch/task scoping. — branch
+  `chore/project-context-freeze-state`
 
 - 2026-08-19 — M0 Step 02B (Intent schema) — human decision: **APPROVED**, stated directly in
   conversation (not Claude-inferred). This entry is Claude's contemporaneous record of that
