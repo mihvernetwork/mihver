@@ -30,9 +30,10 @@ Base: `main` (`fdc27d4`)
 Complete — implemented (two additive hunks in `CLAUDE.md`'s "Fast Session Bootstrap" section; no
 existing rule removed or rewritten), independently reviewed (one read-only Codex reviewer;
 verdict **APPROVED**, no required changes — see `.project/REVIEW_STATE.md`), and validated
-(`npm test` 24/24, `npm run context` compact). Committed and pushed to
-`chore/project-context-auto-bootstrap`; PR opened against `main`. Not merged — merge requires a
-separate, later human instruction per `AGENT_POLICY.md`'s Authority Hierarchy.
+(`npm test` 24/24, `npm run context` compact). Committed (`66f63ab`) and pushed to
+`chore/project-context-auto-bootstrap`; PR #6 opened against `main`. Not merged — merge requires
+a separate, later human instruction per `AGENT_POLICY.md`'s Authority Hierarchy. Live PR
+status/mergeability is remote-only GitHub state, not tracked here — query GitHub when needed.
 
 ## Allowed Scope
 
@@ -68,6 +69,6 @@ GitHub PR state may be recorded in repository metadata (carry forward the
 
 ## Next Gate
 
-PR opened for `chore/project-context-auto-bootstrap` → `main`. Awaiting human review and merge
+PR #6 (`chore/project-context-auto-bootstrap` → `main`) opened. Awaiting human review and merge
 decision — not started or implied by this task. Actual PR status/mergeability are remote-only
 GitHub facts, not tracked in this file; query GitHub when needed.

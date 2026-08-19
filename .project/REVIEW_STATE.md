@@ -38,13 +38,13 @@ None needed. Validated: `npm test` (24/24), `npm run context` (compact) on this 
 ## Merge Decision
 
 Not yet requested. This task's Git authorization was Commit: yes / Push: yes / PR: yes / Merge:
-explicitly **no** — a PR was opened for `chore/project-context-auto-bootstrap` → `main` but merge
+explicitly **no** — PR #6 (`chore/project-context-auto-bootstrap` → `main`) was opened, but merge
 was neither requested nor performed.
 
 ## Pending Human Gate
 
-PR review and merge decision for `chore/project-context-auto-bootstrap`, per
-`AGENT_POLICY.md`'s Authority Hierarchy — not started or implied by this entry.
+PR #6 review and merge decision, per `AGENT_POLICY.md`'s Authority Hierarchy — not started or
+implied by this entry. Live PR status/mergeability is remote-only GitHub state, not tracked here.
 
 ## History
 
