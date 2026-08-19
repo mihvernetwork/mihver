@@ -98,9 +98,9 @@ randomness. The same input always produces byte-identical output.
 Structural rules, all enforced before any task is simulated:
 
 - `queue_id`: non-empty string.
-- `limits`: all four fields required; `max_runtime_seconds`, `max_tasks`,
-  `per_task_timeout_seconds` must be finite numbers `> 0`; `max_retries` must be a finite
-  integer `>= 0`.
+- `limits`: all four fields required; `max_runtime_seconds` and `per_task_timeout_seconds` must
+  be finite numbers `> 0`; `max_tasks` must be a finite **integer** `> 0`; `max_retries` must be
+  a finite integer `>= 0`.
 - Each task requires `task_id` (non-empty string, unique across the queue), `branch` (non-empty
   string, and **never `"main"`** — see "`main` is never a task branch" below), `authorized`
   (boolean), `human_gated` (boolean), `estimated_runtime_seconds` (number `>= 0`), and
@@ -140,23 +140,37 @@ A task is only eligible to run once every task named in its `depends_on` has rea
 
 ## Limits
 
-Four limits are read from the queue's `limits` block and enforced in this fixed order per task,
-in queue-declared order:
+Four limits are read from the queue's `limits` block.
 
-1. **`max_tasks`** — once scheduling this task would exceed the count of tasks already run, this
-   task and every remaining not-yet-decided task become `STOPPED`.
-2. **`max_runtime_seconds`** — once adding this task's `estimated_runtime_seconds` to the running
-   total would exceed the limit, this task and every remaining not-yet-decided task become
-   `STOPPED`.
-3. **`per_task_timeout_seconds`** — if a task's own `estimated_runtime_seconds` exceeds this, the
-   task times out on every attempt (the estimate doesn't change between attempts). It consumes
-   one `RETRY` per attempt until...
-4. **`max_retries`** — ...retries run out, at which point the task is `FAILED`.
+**`max_tasks`** is checked once per task, before its first attempt: once scheduling this task
+would exceed the count of tasks already started, this task and every remaining not-yet-decided
+task become `STOPPED`. `BLOCKED` tasks (unmet dependency or missing authorization) never count
+against it, since they never actually start.
 
-Once a queue-level limit (1 or 2) trips, **every remaining task is `STOPPED`**, not just the one
-that tripped it — a cascading stop, not a skip-and-continue. `BLOCKED` tasks (unmet dependency or
-missing authorization) never consume `max_tasks` or `max_runtime_seconds` budget, since they
-never actually run.
+**`per_task_timeout_seconds`** and **`max_retries`** govern each individual attempt: if a task's
+own `estimated_runtime_seconds` exceeds `per_task_timeout_seconds`, the attempt times out (the
+estimate doesn't change between attempts, so every attempt of that task times out the same way).
+A timed-out attempt consumes one `RETRY` and tries again, until `max_retries` is exhausted, at
+which point the task is `FAILED`.
+
+**`max_runtime_seconds`** is a global budget charged **per attempt, not per task**:
+
+- Each attempt (the initial one and every retry's) costs
+  `min(estimated_runtime_seconds, per_task_timeout_seconds)` — a timeout-bounded attempt is cut
+  off at the timeout and never costs more than that, no matter how much larger the task's own
+  estimate is. The full estimate is only ever charged when it doesn't exceed the timeout (i.e.
+  when the attempt would have succeeded anyway).
+- The budget is checked **before every attempt**, including retries — so a task can be
+  interrupted between attempts, not only before its first one. A task that used two retries'
+  worth of budget and then can no longer afford a third attempt ends `STOPPED`, with its `history`
+  showing exactly the attempts it got to make (e.g. `["READY", "RUNNING", "RETRY", "RUNNING",
+  "RETRY", "STOPPED"]`) — it is never charged for an attempt it didn't actually make.
+- Once this limit trips (on any task, on any attempt), **every remaining task in the queue is
+  `STOPPED`** — the same cascade as `max_tasks` tripping — not just the attempt or task that
+  tripped it.
+
+`BLOCKED` tasks never consume `max_runtime_seconds` budget either, since they never attempt to
+run.
 
 ## Kill switch
 
@@ -169,9 +183,9 @@ is diagnostic and never executes anything.
 ## Refusal
 
 Night Runner refuses to produce a plan — rather than guessing, skipping, or partially
-simulating — when the queue document itself is structurally unsafe: schema/type violations,
-duplicate `task_id`s, a `"main"` task branch, or a `depends_on` reference that isn't strictly
-earlier in the array. The report's `status` is `"REFUSED"`, `reasons` lists every violation
+simulating — when the queue document itself is structurally unsafe: schema/type violations
+(including a non-integer `max_tasks`), duplicate `task_id`s, a `"main"` task branch, or a
+`depends_on` reference that isn't strictly earlier in the array. The report's `status` is `"REFUSED"`, `reasons` lists every violation
 found, `tasks` is empty, and the CLI exits non-zero. Refusal is a distinct outcome from any
 task's own `BLOCKED`/`FAILED`/`STOPPED` state — those describe a *valid* queue's schedulable
 outcomes; `REFUSED` means the input could not be trusted enough to schedule at all.

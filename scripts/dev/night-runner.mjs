@@ -29,8 +29,12 @@ export function validateQueueStructure(queueDocument) {
     if (!isFiniteNumber(limits.max_runtime_seconds) || limits.max_runtime_seconds <= 0) {
       reasons.push('limits.max_runtime_seconds must be a finite number greater than 0');
     }
-    if (!isFiniteNumber(limits.max_tasks) || limits.max_tasks <= 0) {
-      reasons.push('limits.max_tasks must be a finite number greater than 0');
+    if (
+      !isFiniteNumber(limits.max_tasks) ||
+      limits.max_tasks <= 0 ||
+      !Number.isInteger(limits.max_tasks)
+    ) {
+      reasons.push('limits.max_tasks must be a finite integer greater than 0');
     }
     if (!isFiniteNumber(limits.per_task_timeout_seconds) || limits.per_task_timeout_seconds <= 0) {
       reasons.push('limits.per_task_timeout_seconds must be a finite number greater than 0');
@@ -253,29 +257,31 @@ export function planQueue(queueDocument, { stopSwitchActive } = {}) {
       orderedResults.push(result);
       continue;
     }
-    if (runtimeUsedSeconds + task.estimated_runtime_seconds > limits.max_runtime_seconds) {
-      limitTripped = true;
-      limitTrippedReason = `max_runtime_seconds limit (${limits.max_runtime_seconds}) would be exceeded`;
-      const result = {
-        task_id: task.task_id,
-        branch: task.branch,
-        final_state: 'STOPPED',
-        history: ['READY', 'STOPPED'],
-        retries_used: 0,
-        reasons: [limitTrippedReason]
-      };
-      results.set(task.task_id, result);
-      orderedResults.push(result);
-      continue;
-    }
     tasksRun += 1;
-    runtimeUsedSeconds += task.estimated_runtime_seconds;
+
+    // Each simulated attempt (the initial RUNNING and every RETRY's RUNNING) only ever runs for
+    // min(estimated_runtime_seconds, per_task_timeout_seconds): a timeout-bounded attempt is cut
+    // off at the timeout, so it never costs more runtime budget than that, regardless of how much
+    // longer the task's own estimate says it would otherwise have run. The global runtime budget
+    // is charged per attempt, not pre-charged as the full estimate up front, and is checked before
+    // each attempt — so a task can be interrupted (STOPPED, cascading) between retries, not only
+    // before its first attempt.
+    const attemptRuntimeSeconds = Math.min(task.estimated_runtime_seconds, limits.per_task_timeout_seconds);
 
     let retriesUsed = 0;
     const history = ['READY'];
     let finalState = null;
     let reasons = [];
     for (;;) {
+      if (runtimeUsedSeconds + attemptRuntimeSeconds > limits.max_runtime_seconds) {
+        limitTripped = true;
+        limitTrippedReason = `max_runtime_seconds limit (${limits.max_runtime_seconds}) would be exceeded`;
+        history.push('STOPPED');
+        finalState = 'STOPPED';
+        reasons = [limitTrippedReason];
+        break;
+      }
+      runtimeUsedSeconds += attemptRuntimeSeconds;
       history.push('RUNNING');
       if (task.estimated_runtime_seconds <= limits.per_task_timeout_seconds) {
         history.push('VALIDATING', 'INDEPENDENT_REVIEW', 'READY_FOR_HUMAN');

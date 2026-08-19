@@ -1,0 +1,41 @@
+{
+  "description": "Each retry attempt charges min(estimate, timeout) against max_runtime_seconds; once the budget can't cover another attempt the task STOPS between attempts and the remainder of the queue cascades to STOPPED.",
+  "queue": {
+    "queue_id": "runtime-budget-retries-stop-and-cascade",
+    "limits": {
+      "max_runtime_seconds": 125,
+      "max_tasks": 5,
+      "per_task_timeout_seconds": 50,
+      "max_retries": 3
+    },
+    "tasks": [
+      {
+        "task_id": "task-a",
+        "branch": "chore/task-a",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      },
+      {
+        "task_id": "task-b",
+        "branch": "chore/task-b",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      }
+    ]
+  },
+  "stop_switch_active": false,
+  "expected": {
+    "status": "OK",
+    "task_states": {
+      "task-a": "STOPPED",
+      "task-b": "STOPPED"
+    },
+    "retries_used": {
+      "task-a": 2
+    }
+  }
+}

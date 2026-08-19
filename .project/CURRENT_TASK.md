@@ -5,7 +5,11 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-NIGHT-RUNNER-FOUNDATION
+NIGHT-RUNNER-FOUNDATION-FINAL
+
+A correction pass on `chore/night-runner-foundation`, continuing directly from
+NIGHT-RUNNER-FOUNDATION before its PR receives human review — same branch, same underlying task,
+not a new one.
 
 ## Objective
 
@@ -40,6 +44,20 @@ Claude-authored implementation (see `.project/REVIEW_STATE.md`); its two require
 fixes were applied and two additional fixtures were added to close named test-coverage gaps;
 final verdict **APPROVED**.
 
+**Correction pass (this task, NIGHT-RUNNER-FOUNDATION-FINAL):** before human review of PR #7,
+three issues were fixed: (1) runtime accounting — `max_runtime_seconds` now charges
+`min(estimated_runtime_seconds, per_task_timeout_seconds)` per simulated attempt (including
+retries), checked before every attempt rather than pre-charged once as the full estimate, so a
+task can be `STOPPED` between attempts and correctly cascades to the remainder of the queue; (2)
+`limits.max_tasks` is now validated as a positive integer, not just a positive number; (3)
+`.project/CURRENT_TASK.md` and `.project/REVIEW_STATE.md` were corrected to stop recording
+live/prospective GitHub PR state, per this repo's standing invariant against that (see "Next
+Gate" below). `docs/development/NIGHT_RUNNER.md` was updated to match the corrected runtime
+semantics. A second independent read-only Codex reviewer, focused specifically on runtime-budget
+semantics and state consistency, verdict **APPROVE WITH REQUIRED CHANGES** (the state-metadata
+language above, plus one additional historical entry it flagged); all required changes applied;
+final outcome **APPROVED**.
+
 ## Allowed Scope
 
 Add:
@@ -72,30 +90,33 @@ only, explicitly marked pending human review, not adopted policy.
 
 ## Validation
 
-- `npm run test:night-runner`: 12/12 fixtures passed (10 initial + 2 added in response to the
-  reviewer's named test-coverage gaps: self-referencing dependency, `max_retries: 0` boundary).
+- `npm run test:night-runner`: 15/15 fixtures passed (12 from the first pass + 3 added this pass:
+  two proving the corrected runtime-budget accounting — retries consuming global budget then
+  cascading STOPPED, and a 100s/50s-timeout task correctly running/failing within a 60s budget
+  instead of being prematurely stopped — and one proving fractional `max_tasks` is refused).
 - `npm test` (existing contract suite): 24/24 passed, unaffected.
-- CLI smoke-tested manually (stdout report, correct exit codes for OK/REFUSED); a real Windows
-  portability bug (naive `` file://${process.argv[1]} `` string comparison in the "run as
-  script" guard, which never matches a Windows path) was found and fixed during this manual
-  check, switching to `pathToFileURL(process.argv[1]).href`.
-- One independent read-only Codex reviewer: verdict **APPROVE WITH REQUIRED CHANGES** (two
-  documentation-consistency issues in `NIGHT_RUNNER.md`: a stale `--out` flag mention, and an
-  inaccurate claim that a `STOPPED` dependency reaches the per-dependency `BLOCKED` check — it
-  never does, since the queue-level STOPPED cascade always intercepts it first). Both fixes
-  applied; reviewer found no material algorithmic, determinism, or execution-capability defect,
-  and confirmed the Windows guard fix. Final outcome: **APPROVED**.
-- `git status --short` confirms only files inside Allowed Scope changed:
-  `.project/CURRENT_TASK.md`, `package.json` (modified, additive only);
-  `docs/development/NIGHT_RUNNER.md`, `scripts/dev/night-runner.mjs`, `tests/night-runner/**`
-  (new). No frozen document (`AGENT_POLICY.md`, `REVIEW_PROTOCOL.md`, `TASK_TEMPLATE.md`,
-  `CLAUDE.md`, `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `schemas/**`,
-  `tests/contracts/**`) was touched.
+- `npm run context`: reports this task active and current for this branch.
+- CLI smoke-tested manually in the first pass (stdout report, correct exit codes for OK/REFUSED);
+  a real Windows portability bug (naive `` file://${process.argv[1]} `` string comparison in the
+  "run as script" guard) was found and fixed then, switching to
+  `pathToFileURL(process.argv[1]).href`.
+- First independent read-only Codex reviewer (first pass): verdict **APPROVE WITH REQUIRED
+  CHANGES** (two documentation-consistency issues), both fixed, final outcome **APPROVED**.
+- Second independent read-only Codex reviewer (this pass, focused specifically on runtime-budget
+  semantics and state consistency): hand-traced both new runtime-budget fixtures against the
+  code and confirmed the corrected charging formula, per-attempt budget check, `STOPPED`-not-
+  `FAILED` mid-task outcome, and cascade all behave as intended; confirmed `max_tasks` integer
+  validation and its refusal fixture; confirmed `NIGHT_RUNNER.md` has no remaining stale
+  "charge full estimate once" text. Verdict **APPROVE WITH REQUIRED CHANGES**, limited to the
+  state-metadata language covered under "Next Gate" below; all required changes applied; final
+  outcome **APPROVED**.
+- `git status --short` confirms only files inside Allowed Scope changed. No frozen document
+  (`AGENT_POLICY.md`, `REVIEW_PROTOCOL.md`, `TASK_TEMPLATE.md`, `CLAUDE.md`,
+  `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `schemas/**`, `tests/contracts/**`,
+  `.project/DECISIONS_LOG.md`) was touched.
 
 ## Next Gate
 
-Commit/push/PR are authorized by this task ("Commit/push allowed: yes. PR expected: yes. Do not
-merge. Then stop."). Committed (`4540b32`), pushed to `chore/night-runner-foundation`, and PR #7
-opened (`chore/night-runner-foundation` → `main`). Human review and merge approval are a
-separate, later gate — not authorized by this task. Live PR status/mergeability are remote-only
-GitHub facts not tracked here; query GitHub (e.g. `gh pr view 7`) when needed.
+Commit/push are authorized by this task ("Commit/push allowed: yes."). PR expected: yes — this
+task updates PR #7 only, does not open a new one, and does not merge. Human review and the merge
+gate are pending; live PR status/mergeability are not tracked in this file.
