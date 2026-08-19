@@ -62,13 +62,13 @@ is in place and the bug is not present in any other form.
 ## Merge Decision
 
 Not reached. This task's Git authorization is Commit: yes, Push: yes, PR: yes, **merge: no** —
-"Do not merge. Then stop." No PR has been opened yet as of this entry.
+"Do not merge. Then stop." PR #7 (`chore/night-runner-foundation` → `main`) was opened per that
+authorization; merge itself is not authorized and has not been requested.
 
 ## Pending Human Gate
 
-Once commit/push/PR are performed, the PR itself becomes the pending human gate (review + merge
-approval), per `AGENT_POLICY.md`'s Authority Hierarchy — not yet reached at the time of this
-entry.
+PR #7's review and merge approval are the pending human gate, per `AGENT_POLICY.md`'s Authority
+Hierarchy. Live PR status/mergeability are remote-only GitHub facts not tracked here.
 
 ## History
 

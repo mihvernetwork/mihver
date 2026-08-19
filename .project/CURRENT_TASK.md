@@ -95,5 +95,7 @@ only, explicitly marked pending human review, not adopted policy.
 ## Next Gate
 
 Commit/push/PR are authorized by this task ("Commit/push allowed: yes. PR expected: yes. Do not
-merge. Then stop."). Once the PR is opened, human review and merge approval are a separate,
-later gate — not authorized by this task.
+merge. Then stop."). Committed (`4540b32`), pushed to `chore/night-runner-foundation`, and PR #7
+opened (`chore/night-runner-foundation` → `main`). Human review and merge approval are a
+separate, later gate — not authorized by this task. Live PR status/mergeability are remote-only
+GitHub facts not tracked here; query GitHub (e.g. `gh pr view 7`) when needed.
