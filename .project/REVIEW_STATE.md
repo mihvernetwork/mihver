@@ -38,12 +38,23 @@ actually merge `chore/project-context-bootstrap` into `main` is a separate, late
 `AGENT_POLICY.md`'s Authority Hierarchy and is not granted by this entry or by this task's
 completion.
 
+## Merge Decision
+
+`PROJECT-CONTEXT-BOOTSTRAP` (the `chore/project-context-bootstrap` branch as a whole) is
+**APPROVED for merge** — stated directly by the human: "PROJECT-CONTEXT-BOOTSTRAP is APPROVED for
+merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording Commit"
+policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and `CURRENT_TASK.md`).
+
+This entry records the decision only. **The merge has not been performed.** Per
+`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge (or opening
+a PR and merging it) is a separate, later action requiring its own explicit instruction — this
+Gate Recording Commit does not authorize it.
+
 ## Pending Human Gate
 
-Commit and push are authorized for this task (see `.project/CURRENT_TASK.md`). Once this patch is
-applied and validated, the branch is ready for the human's final merge decision — but that
-decision has not been made yet, and "APPROVED WITH FINAL OPERATIONAL PATCH REQUIRED" above does
-not itself grant it.
+The merge decision above is recorded. What remains pending is the merge *execution* itself (or a
+PR to carry it), which requires a separate explicit instruction — not implied by this entry or by
+the commit that records it.
 
 ## History
 
