@@ -26,8 +26,15 @@ not by reading full git history, and not by relying on prior conversation histor
 - `.project/CURRENT_TASK.md`'s Required Context is the primary read set — read it. Don't re-read,
   in full, whatever `npm run context`'s compact output already summarized (branch, HEAD, dirty
   state, main delta, and the active task's ID/Objective/Status) unless the task needs more than
-  that summary gives. Compact output does not summarize `.project/REVIEW_STATE.md` — read it
-  directly when review/approval history is relevant.
+  that summary gives.
+- `.project/REVIEW_STATE.md` is branch/task-scoped, like `CURRENT_TASK.md` — see
+  `AGENT_POLICY.md`'s Operational State Scope. Its "Latest Review" section is the *current* gate
+  only when `npm run context`'s compact output reports an active task **and** reports the review
+  state as matching that task/branch. If there is no active task (compact output says
+  `Active task: none`) or the review state doesn't match, treat any `REVIEW_STATE.md` content as
+  historical/stale task metadata only — never as the current gate — and use
+  `.project/PROJECT_STATE.md`'s "Next Authorized Action" instead. Read `REVIEW_STATE.md` directly
+  when its history is relevant, but interpret it under this scoping rule, not at face value.
 - `.project/CONTEXT_INDEX.md` is a fallback, not a second required-reading list: consult it only
   when the task in progress reveals context is missing, and read just the topic file(s) that gap
   points to — never pre-read every topic file it lists "just in case."

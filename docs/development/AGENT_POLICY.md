@@ -35,6 +35,14 @@ prompts do not need to restate it per task.
   current branch rather than presenting stale content as current.
 - **`REVIEW_STATE.md`** — record only observed review outcomes (Codex/Claude verdicts, required
   changes, human gate status). Never invent or assume an outcome that wasn't actually observed.
+  Branch/task-scoped, like `CURRENT_TASK.md`: it declares the branch/task its "Latest Review"
+  section describes. That section describes the *current* gate only when both hold: `CURRENT_TASK.md`
+  is active for the checked-out branch, and `REVIEW_STATE.md`'s declared branch/task matches that
+  same branch/task — `npm run context` validates this and flags a mismatch. When there is no
+  active task, or when `REVIEW_STATE.md`'s declared branch/task doesn't match the active one, its
+  "Latest Review" content is historical/stale task metadata only and must not be read as the
+  current gate; `PROJECT_STATE.md`'s "Next Authorized Action" is authoritative for what's next in
+  that case, not `REVIEW_STATE.md`.
 - **`PROJECT_STATE.md`** — change only for human-approved checkpoint/milestone state. Never record
   active-task or branch-specific facts here — those belong in `CURRENT_TASK.md` and go stale the
   moment that branch is merged or abandoned.

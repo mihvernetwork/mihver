@@ -92,12 +92,27 @@ function printHeader(title) {
   console.log(`\n--- ${title} ---`);
 }
 
-function extractDeclaredBranch(currentTaskContent) {
-  for (const line of extractSection(currentTaskContent, 'Branch / Base')) {
+function extractBranchField(content, heading) {
+  for (const line of extractSection(content, heading)) {
     const match = line.match(/^Branch:\s*`([^`]+)`/);
     if (match) return match[1];
   }
   return null;
+}
+
+function extractTaskField(content, heading) {
+  for (const line of extractSection(content, heading)) {
+    const match = line.match(/^Task:\s*(.+)$/);
+    if (match) return match[1].trim();
+  }
+  return null;
+}
+
+function extractSectionValue(content, heading) {
+  const lines = extractSection(content, heading)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.length ? lines[0] : null;
 }
 
 const branch = git('branch --show-current') || '<detached HEAD>';
@@ -125,10 +140,33 @@ const workingTreeChanges = isError(statusPorcelain)
 const projectState = readProjectFile('.project/PROJECT_STATE.md');
 const currentTaskExists = existsSync(join(repoRoot, '.project/CURRENT_TASK.md'));
 const currentTask = readProjectFile('.project/CURRENT_TASK.md');
-const declaredBranch = currentTaskExists ? extractDeclaredBranch(currentTask) : null;
+const declaredBranch = currentTaskExists ? extractBranchField(currentTask, 'Branch / Base') : null;
 // CURRENT_TASK.md is branch-scoped (see AGENT_POLICY.md's "Operational State Scope"): it only
 // describes an active task when its declared branch matches the branch actually checked out.
 const taskActiveForBranch = currentTaskExists && declaredBranch !== null && declaredBranch === branch;
+
+const declaredTaskId = currentTaskExists ? extractSectionValue(currentTask, 'Task ID') : null;
+
+const reviewStateExists = existsSync(join(repoRoot, '.project/REVIEW_STATE.md'));
+const reviewStateContent = readProjectFile('.project/REVIEW_STATE.md');
+const reviewStateDeclaredBranch = reviewStateExists
+  ? extractBranchField(reviewStateContent, 'Latest Review')
+  : null;
+const reviewStateDeclaredTask = reviewStateExists
+  ? extractTaskField(reviewStateContent, 'Latest Review')
+  : null;
+// REVIEW_STATE.md is likewise branch/task-scoped (see AGENT_POLICY.md's "Operational State
+// Scope"): its "Latest Review" section is the current gate only when it matches the active task's
+// branch AND task ID — never inferred from a stale REVIEW_STATE left over from a completed/other
+// branch, or from an earlier task that has since advanced on the same branch. Missing/unparseable
+// fields fail closed (treated as not matching), never fail open.
+const reviewStateMatchesActiveTask =
+  taskActiveForBranch &&
+  reviewStateDeclaredBranch !== null &&
+  reviewStateDeclaredBranch === branch &&
+  declaredTaskId !== null &&
+  reviewStateDeclaredTask !== null &&
+  reviewStateDeclaredTask === declaredTaskId;
 
 console.log('=== MIHVER Project Context Snapshot ===');
 console.log(`Branch:       ${branch}`);
@@ -136,15 +174,52 @@ console.log(`HEAD:         ${head}`);
 console.log(`Working tree: ${dirty ? 'dirty' : 'clean'}`);
 console.log(`Main delta:   ${mainDelta}`);
 if (declaredBranch && declaredBranch !== branch) {
-  console.log(
-    `WARNING: .project/CURRENT_TASK.md declares branch "${declaredBranch}" but HEAD is on ` +
-      `"${branch}" — treating as no active task for this branch.`
-  );
+  if (branch === 'main') {
+    console.log(
+      `INFO: .project/CURRENT_TASK.md declares branch "${declaredBranch}" — expected between ` +
+        'tasks on main; treating as no active task for this branch.'
+    );
+  } else {
+    console.log(
+      `WARNING: .project/CURRENT_TASK.md declares branch "${declaredBranch}" but HEAD is on ` +
+        `"${branch}" — treating as no active task for this branch.`
+    );
+  }
 } else if (currentTaskExists && declaredBranch === null) {
   console.log(
     'WARNING: could not parse a declared branch from .project/CURRENT_TASK.md\'s "Branch / Base" ' +
       'section — treating as no active task for this branch.'
   );
+}
+
+if (taskActiveForBranch && reviewStateExists && !reviewStateMatchesActiveTask) {
+  if (reviewStateDeclaredBranch === null) {
+    console.log(
+      'WARNING: could not parse a declared branch from .project/REVIEW_STATE.md\'s "Latest Review" ' +
+        'section — cannot confirm it matches the active task; treat as historical, not confirmed current.'
+    );
+  } else if (reviewStateDeclaredBranch !== branch) {
+    console.log(
+      `WARNING: .project/REVIEW_STATE.md declares branch "${reviewStateDeclaredBranch}" but the ` +
+        `active task is on "${branch}" — review state is historical, not the current gate.`
+    );
+  } else if (declaredTaskId === null) {
+    console.log(
+      'WARNING: could not parse the active task\'s Task ID from .project/CURRENT_TASK.md — cannot ' +
+        'confirm .project/REVIEW_STATE.md matches it; treat as historical, not confirmed current.'
+    );
+  } else if (reviewStateDeclaredTask === null) {
+    console.log(
+      'WARNING: could not parse a Task field from .project/REVIEW_STATE.md\'s "Latest Review" ' +
+        'section — cannot confirm it matches the active task; treat as historical, not confirmed current.'
+    );
+  } else {
+    console.log(
+      `WARNING: .project/REVIEW_STATE.md's "Latest Review" section is for task "${reviewStateDeclaredTask}" ` +
+        `but the active task is "${declaredTaskId}" (same branch "${branch}") — review state is ` +
+        'historical, not the current gate.'
+    );
+  }
 }
 
 if (full) {
@@ -175,13 +250,24 @@ if (full) {
 
   printHeader('Active Task (branch-scoped)');
   if (taskActiveForBranch) {
-    console.log(`ID:        ${sectionSummary(currentTask, 'Task ID', 80)}`);
+    console.log(`Active task: ${sectionSummary(currentTask, 'Task ID', 80)}`);
     console.log(`Objective: ${sectionSummary(currentTask, 'Objective')}`);
     console.log(`Status:    ${sectionSummary(currentTask, 'Status')}`);
-  } else if (!currentTaskExists) {
-    console.log('No .project/CURRENT_TASK.md found.');
   } else {
-    console.log(`No active task recorded for current branch "${branch}".`);
+    console.log('Active task: none');
+    if (!currentTaskExists) {
+      console.log('No .project/CURRENT_TASK.md found.');
+    }
+    console.log('See PROJECT_STATE.md -> "Next Authorized Action" for what is authorized next.');
+  }
+
+  printHeader('Review State');
+  if (!reviewStateExists) {
+    console.log('No .project/REVIEW_STATE.md found.');
+  } else if (reviewStateMatchesActiveTask) {
+    console.log(`Review state: current (branch "${branch}") - see "Latest Review" in REVIEW_STATE.md.`);
+  } else {
+    console.log('Review state: historical only - not the current gate.');
   }
 
   printHeader('State files (not dumped — read directly, or rerun with --full)');
