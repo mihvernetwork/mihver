@@ -30,11 +30,13 @@ Base: `main` (`fdc27d4`)
 Complete — implemented (two additive hunks in `CLAUDE.md`'s "Fast Session Bootstrap" section; no
 existing rule removed or rewritten), independently reviewed (one read-only Codex reviewer;
 verdict **APPROVED**, no required changes — see `.project/REVIEW_STATE.md`), and validated
-(`npm test` 24/24, `npm run context` compact — see Validation below). Committed (`66f63ab`,
-`8d5461c`) and pushed to `chore/project-context-auto-bootstrap`. PR expected: yes, per this
-task's Git authorization. Human review and merge decision are pending. Actual PR
-existence/status/mergeability is remote-only GitHub state, not tracked here — query GitHub when
-needed.
+(`npm test` 24/24, `npm run context` compact — see Validation below). Committed
+(`66f63ab`, `8d5461c`, `113b7e9`) and pushed to `chore/project-context-auto-bootstrap`. The human
+has since stated: "PR #6 / PROJECT-CONTEXT-AUTO-BOOTSTRAP is APPROVED for merge" — recorded via a
+Gate Recording Commit (see `.project/REVIEW_STATE.md`'s Merge Decision entry). The merge itself
+has not been performed yet and is not authorized by that recording commit. Actual PR existence,
+status, and mergeability remain remote-only GitHub facts not tracked in this file — query GitHub
+(e.g. `gh pr view`, `gh pr list`) when that information is needed.
 
 ## Allowed Scope
 
@@ -71,7 +73,8 @@ GitHub PR state may be recorded in repository metadata (carry forward the
 
 ## Next Gate
 
-PR expected: yes, per this task's Git authorization — the branch has been pushed for that
-purpose. Awaiting human review and merge decision; not started or implied by this task. Actual PR
-existence/status/mergeability is remote-only GitHub state, not tracked in this file; query GitHub
-when needed.
+The human has approved PR #6 / `PROJECT-CONTEXT-AUTO-BOOTSTRAP` for merge (see
+`.project/REVIEW_STATE.md`'s Merge Decision entry). What remains is the merge execution itself — a
+separate action requiring its own explicit instruction; not started by this Gate Recording Commit.
+Actual PR status/mergeability remain remote-only GitHub facts not tracked in this file; query
+GitHub when needed.

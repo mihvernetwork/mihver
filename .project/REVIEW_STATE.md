@@ -37,16 +37,23 @@ None needed. Validated: `npm test` (24/24), `npm run context` (compact) on this 
 
 ## Merge Decision
 
-Not yet requested. This task's Git authorization was Commit: yes / Push: yes / PR: yes / Merge:
-explicitly **no**. Implementation, review, and validation are complete; the branch is committed
-and pushed, and a PR was expected per this task's Git authorization. Actual PR
-existence/status/mergeability is remote-only GitHub state and is not recorded here.
+PR #6 (`chore/project-context-auto-bootstrap` → `main`, task `PROJECT-CONTEXT-AUTO-BOOTSTRAP`) is
+**APPROVED for merge** — stated directly by the human: "PR #6 / PROJECT-CONTEXT-AUTO-BOOTSTRAP is
+APPROVED for merge." Recorded via a Gate Recording Commit per `AGENT_POLICY.md`'s "Gate Recording
+Commit" policy (non-substantive; touches only this file, `DECISIONS_LOG.md`, and
+`CURRENT_TASK.md`).
+
+This entry records the decision only. **The merge has not been performed yet.** Per
+`AGENT_POLICY.md`'s Authority Hierarchy and Git & Branch Workflow, executing the merge is a
+separate, later action requiring its own explicit instruction — this Gate Recording Commit does
+not authorize it. PR #6's live status/mergeability, if relevant, are remote-only GitHub facts and
+are not tracked in this file.
 
 ## Pending Human Gate
 
-Human review and merge decision for this task's branch, per `AGENT_POLICY.md`'s Authority
-Hierarchy — not started or implied by this entry. Actual PR existence/status/mergeability is
-remote-only GitHub state, not tracked here.
+The merge decision above is recorded. What remains pending is the merge *execution* itself, which
+requires a separate explicit instruction — not implied by this entry or by the commit that records
+it.
 
 ## History
 
