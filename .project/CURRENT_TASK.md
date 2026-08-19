@@ -118,5 +118,7 @@ only, explicitly marked pending human review, not adopted policy.
 ## Next Gate
 
 Commit/push are authorized by this task ("Commit/push allowed: yes."). PR expected: yes — this
-task updates PR #7 only, does not open a new one, and does not merge. Human review and the merge
-gate are pending; live PR status/mergeability are not tracked in this file.
+task updates PR #7 only, does not open a new one, and does not merge. Human review is complete:
+PR #7 / NIGHT-RUNNER-FOUNDATION is **APPROVED for merge**, recorded via a Gate Recording Commit
+per `AGENT_POLICY.md`. Merge execution has not been performed — it requires a separate, later
+explicit instruction; live PR status/mergeability are not tracked in this file.

@@ -61,13 +61,17 @@ instruction for this patch. Re-validated: `npm run test:night-runner` 15/15, `np
 
 ## Merge Decision
 
-Not reached. This task's Git authorization is Commit: yes, Push: yes, PR expected: yes,
-**merge: no**. This correction pass updates the existing PR only — it does not open a new one.
+`NIGHT-RUNNER-FOUNDATION` (PR #7) **APPROVED for merge** — human decision stated directly as "PR
+#7 / NIGHT-RUNNER-FOUNDATION is APPROVED for merge"; recorded via a Gate Recording Commit per
+`AGENT_POLICY.md`. The merge itself has not been performed — execution requires a separate, later
+explicit instruction.
 
 ## Pending Human Gate
 
-Human review and merge approval are pending, per `AGENT_POLICY.md`'s Authority Hierarchy. Live PR
-existence/status is a remote-only GitHub fact and is not recorded in this file.
+Human review is complete and merge is approved (see "Merge Decision" above). Execution of the
+actual merge is the remaining pending step, per `AGENT_POLICY.md`'s Authority Hierarchy and Gate
+Recording Commit policy. Live PR existence/status is a remote-only GitHub fact and is not recorded
+in this file.
 
 ## History
 
