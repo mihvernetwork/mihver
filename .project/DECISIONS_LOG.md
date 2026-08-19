@@ -14,3 +14,7 @@ Format: `YYYY-MM-DD — decision — reference`.
   to `main`. — `0683e84`
 - 2026-08-19 — Authorized `PROJECT-CONTEXT-BOOTSTRAP`: build the `.project/` session-bootstrap
   mechanism and `scripts/dev/project-context.mjs`. — branch `chore/project-context-bootstrap`
+- 2026-08-19 — Authorized `PROJECT-CONTEXT-FINAL-PATCH`: harden the bootstrap lifecycle before
+  merge — durable-only `PROJECT_STATE.md`, branch-scoped `CURRENT_TASK.md`, a permanent
+  Operational State Scope policy, and a compact-by-default `npm run context` with `--full`. —
+  branch `chore/project-context-bootstrap`

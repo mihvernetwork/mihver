@@ -7,44 +7,49 @@ assessment, not human sign-off — see `AGENT_POLICY.md`'s Authority Hierarchy.
 
 ## Latest Review
 
-Task: PROJECT-CONTEXT-BOOTSTRAP
-Reviewer: Codex (read-only), adversarial review against 5 risk categories: stale-state,
-duplicated source-of-truth, context explosion, hidden GitHub dependency, ambiguity about human
-approval.
+Task: PROJECT-CONTEXT-FINAL-PATCH
+Reviewer: Codex (read-only), focused review against two failure-mode categories: fresh-session
+(could a session reading only compact `npm run context` output + Required Context end up with an
+incomplete/misleading picture) and stale-state (branch/task-specific facts leaking into durable
+files, or vice versa), plus a doc-consistency sanity check.
 Codex outcome: APPROVE WITH REQUIRED CHANGES.
 Claude's final outcome (after applying required changes below): **APPROVED**.
 
 ## Required Changes
 
 Applied:
-1. Stale-state — `project-context.mjs` did not detect drift between `CURRENT_TASK.md`'s declared
-   branch and the actual checked-out branch. Fixed: the script now warns when they disagree.
-2. Stale-state — "main delta" could be read as freshly-verified remote state. Fixed: output now
-   labels it "(local ref, not fetched)".
-3. Duplicated source-of-truth — `PROJECT_STATE.md`'s ADR-0002 open item paraphrased the ADR's
-   Future Work reasoning, which could drift from the ADR itself. Fixed: trimmed to a pointer.
-4. Ambiguity about human approval — the Step 02B approval history entry didn't state its own
-   evidentiary limits. Fixed: added a note that it's Claude's conversational record, not something
-   git/GitHub can independently confirm.
+1. Fresh-session/stale-state — `project-context.mjs` treated a missing/malformed "Branch / Base"
+   declaration in `CURRENT_TASK.md` the same as a well-formed non-matching branch, with no
+   distinct signal. Fixed: added a separate warning when the branch can't be parsed at all, so a
+   fresh session can tell "no active task" apart from "task file is malformed."
+2. Stale-state — `CURRENT_TASK.md`'s Status field said "Complete — committed and pushed" while the
+   working tree was still dirty and mid-edit, presenting a task-specific fact as true before it
+   was. Fixed: Status set to "In progress" during the edit; flipped to the actual completion state
+   only once the work was committed (see task completion note below).
+3. Doc consistency — `CLAUDE.md`'s Fast Session Bootstrap section claimed compact `npm run
+   context` output summarizes "review status," but the script's compact mode only summarizes
+   branch/HEAD/dirty/main-delta and the active task's ID/Objective/Status — it never touches
+   `REVIEW_STATE.md`. Fixed: reworded to list exactly what's summarized and to say explicitly that
+   review/approval history still needs a direct read.
+4. Doc consistency — `AGENT_POLICY.md`'s "Session Bootstrap" section still described
+   `CONTEXT_INDEX.md` as read "plus" Required Context, contradicting this task's "fallback only"
+   framing added to `CLAUDE.md`. Fixed: reworded to match — index consulted only on a demonstrated
+   context gap.
 
-Rejected as non-material (Claude's assessment, not Codex's):
-- "DECISIONS_LOG.md / REVIEW_STATE.md / CURRENT_TASK.md duplicate facts recorded elsewhere" — this
-  is each file's stated purpose (a log records that something happened; there is no other
-  authoritative file recording task scope or review-gate status for a fresh session to consult).
-- "No enforced size/count bound on state files or Required Context" — the task's own requirement
-  ("keep all state files concise") is a maintenance discipline, not a mechanically enforced limit;
-  adding enforcement machinery wasn't requested and would be scope creep.
-- Hidden GitHub dependency — Codex found no material issue.
+Rejected as non-material (Claude's assessment, not Codex's): none — all four findings were
+accepted and fixed as-is.
 
 ## Fixes Applied
 
-Yes — see above. `npm test` (24/24) and `npm run context` re-verified after the fixes.
+Yes — see above. `npm test` (24/24), `npm run context` (compact, 28 lines), and
+`npm run context -- --full` re-verified after the fixes.
 
 ## Pending Human Gate
 
 Human has not reviewed this task's output yet. Commit and push are authorized for this task
 itself (see `.project/CURRENT_TASK.md`); that authorization does not extend to starting any next
-MIHVER step — that remains gated on explicit human instruction.
+MIHVER step, and does not itself constitute the merge decision for
+`chore/project-context-bootstrap` — that remains gated on explicit human instruction.
 
 ## History
 

@@ -17,10 +17,31 @@ held Claude's integration/review authority.
 ## Session Bootstrap
 
 Fresh sessions start via `CLAUDE.md`'s "Fast Session Bootstrap" rule: run `npm run context`, then
-read only `.project/CURRENT_TASK.md`'s Required Context plus the files named in
-`.project/CONTEXT_INDEX.md` for the topic at hand. This document and the other permanent policy
-documents are themselves indexed there — they are read in full when relevant to the task, not
-re-read wholesale merely because they are "permanent policy."
+read `.project/CURRENT_TASK.md`'s Required Context — the primary read set.
+`.project/CONTEXT_INDEX.md` is a fallback, consulted only when the task in progress reveals a
+context gap, not a second list to read alongside Required Context by default. This document and
+the other permanent policy documents are themselves indexed there — they are read in full when
+relevant to the task, not re-read wholesale merely because they are "permanent policy."
+
+## Operational State Scope
+
+Each `.project/` state file accepts exactly one kind of update. This is permanent policy — task
+prompts do not need to restate it per task.
+
+- **`CURRENT_TASK.md`** — update at task start (objective, scope, branch) and again at task
+  completion (status, outcome). Branch-scoped: describes the task active on the branch it
+  declares, not a history of past tasks. `npm run context` treats it as active only when its
+  declared branch matches the checked-out branch; on mismatch it reports no active task for the
+  current branch rather than presenting stale content as current.
+- **`REVIEW_STATE.md`** — record only observed review outcomes (Codex/Claude verdicts, required
+  changes, human gate status). Never invent or assume an outcome that wasn't actually observed.
+- **`PROJECT_STATE.md`** — change only for human-approved checkpoint/milestone state. Never record
+  active-task or branch-specific facts here — those belong in `CURRENT_TASK.md` and go stale the
+  moment that branch is merged or abandoned.
+- **`DECISIONS_LOG.md`** — append only explicit, durable human decisions. Entries are never edited
+  or removed, and this file never records task-in-progress detail.
+- **`CONTEXT_INDEX.md`** — update only when an authoritative topic → file mapping actually
+  changes (a file is added, renamed, or superseded) — not on every task.
 
 ## Claude Responsibilities
 

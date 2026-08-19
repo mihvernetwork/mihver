@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Prints a compact MIHVER context snapshot so a fresh session doesn't need to scan the
 // repository. Node built-ins + git only — see docs/development/AGENT_POLICY.md and
-// CLAUDE.md's "Fast Session Bootstrap".
+// CLAUDE.md's "Fast Session Bootstrap". Compact by default; pass --full for a detailed dump.
 
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
@@ -10,6 +10,7 @@ import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(dirname(__dirname));
+const full = process.argv.includes('--full');
 
 function git(args) {
   try {
@@ -48,6 +49,15 @@ function extractBulletPaths(lines) {
     if (match) paths.push(match[1]);
   }
   return paths;
+}
+
+function sectionSummary(content, heading, maxLen = 140) {
+  const text = extractSection(content, heading)
+    .filter((l) => l.trim() !== '')
+    .join(' ')
+    .trim();
+  if (!text) return '(none)';
+  return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
 }
 
 function resolveMainRef() {
@@ -91,8 +101,12 @@ const workingTreeChanges = isError(statusPorcelain)
   ? []
   : statusPorcelain.split('\n').filter(Boolean);
 
-const currentTaskForBranchCheck = readProjectFile('.project/CURRENT_TASK.md');
-const declaredBranch = extractDeclaredBranch(currentTaskForBranchCheck);
+const currentTaskExists = existsSync(join(repoRoot, '.project/CURRENT_TASK.md'));
+const currentTask = readProjectFile('.project/CURRENT_TASK.md');
+const declaredBranch = currentTaskExists ? extractDeclaredBranch(currentTask) : null;
+// CURRENT_TASK.md is branch-scoped (see AGENT_POLICY.md's "Operational State Scope"): it only
+// describes an active task when its declared branch matches the branch actually checked out.
+const taskActiveForBranch = currentTaskExists && declaredBranch !== null && declaredBranch === branch;
 
 console.log('=== MIHVER Project Context Snapshot ===');
 console.log(`Branch:       ${branch}`);
@@ -102,30 +116,57 @@ console.log(`Main delta:   ${mainDelta}`);
 if (declaredBranch && declaredBranch !== branch) {
   console.log(
     `WARNING: .project/CURRENT_TASK.md declares branch "${declaredBranch}" but HEAD is on ` +
-      `"${branch}" — CURRENT_TASK.md may be stale.`
+      `"${branch}" — treating as no active task for this branch.`
+  );
+} else if (currentTaskExists && declaredBranch === null) {
+  console.log(
+    'WARNING: could not parse a declared branch from .project/CURRENT_TASK.md\'s "Branch / Base" ' +
+      'section — treating as no active task for this branch.'
   );
 }
 
-printHeader('Changed files (branch vs main)');
-console.log(changedVsMain.length ? changedVsMain.join('\n') : '(none)');
+if (full) {
+  printHeader('Changed files (branch vs main)');
+  console.log(changedVsMain.length ? changedVsMain.join('\n') : '(none)');
 
-printHeader('Working tree changes (uncommitted)');
-console.log(workingTreeChanges.length ? workingTreeChanges.join('\n') : '(none)');
+  printHeader('Working tree changes (uncommitted)');
+  console.log(workingTreeChanges.length ? workingTreeChanges.join('\n') : '(none)');
 
-printHeader('.project/PROJECT_STATE.md');
-console.log(readProjectFile('.project/PROJECT_STATE.md'));
+  printHeader('.project/PROJECT_STATE.md');
+  console.log(readProjectFile('.project/PROJECT_STATE.md'));
 
-const currentTask = currentTaskForBranchCheck;
-printHeader('.project/CURRENT_TASK.md');
-console.log(currentTask);
+  printHeader('.project/CURRENT_TASK.md');
+  console.log(currentTaskExists ? currentTask : '<missing: .project/CURRENT_TASK.md>');
 
-printHeader('.project/REVIEW_STATE.md');
-console.log(readProjectFile('.project/REVIEW_STATE.md'));
+  printHeader('.project/REVIEW_STATE.md');
+  console.log(readProjectFile('.project/REVIEW_STATE.md'));
+} else {
+  console.log(`Changed vs main: ${changedVsMain.length} file(s) (rerun with --full for the list)`);
+  console.log(`Uncommitted:     ${workingTreeChanges.length ? `${workingTreeChanges.length} file(s)` : 'none'}`);
+
+  printHeader('Active Task (branch-scoped)');
+  if (taskActiveForBranch) {
+    console.log(`ID:        ${sectionSummary(currentTask, 'Task ID', 80)}`);
+    console.log(`Objective: ${sectionSummary(currentTask, 'Objective')}`);
+    console.log(`Status:    ${sectionSummary(currentTask, 'Status')}`);
+  } else if (!currentTaskExists) {
+    console.log('No .project/CURRENT_TASK.md found.');
+  } else {
+    console.log(`No active task recorded for current branch "${branch}".`);
+  }
+
+  printHeader('State files (not dumped — read directly, or rerun with --full)');
+  console.log('.project/PROJECT_STATE.md');
+  console.log('.project/CURRENT_TASK.md');
+  console.log('.project/REVIEW_STATE.md');
+}
 
 printHeader('Required Context (from CURRENT_TASK.md)');
-const requiredFiles = extractBulletPaths(extractSection(currentTask, 'Required Context'));
+const requiredFiles = taskActiveForBranch
+  ? extractBulletPaths(extractSection(currentTask, 'Required Context'))
+  : [];
 if (requiredFiles.length === 0) {
-  console.log('(none listed)');
+  console.log(taskActiveForBranch ? '(none listed)' : '(no active task for this branch)');
 } else {
   for (const relPath of requiredFiles) {
     const abs = join(repoRoot, relPath.split(' ')[0]);

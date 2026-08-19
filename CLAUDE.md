@@ -21,9 +21,16 @@ not by reading full git history, and not by relying on prior conversation histor
 - Do not recursively inspect the repository on startup.
 - Do not read the full git history by default.
 - Do not use GitHub to rediscover local repository content.
-- Run `npm run context`.
-- Read only `.project/CURRENT_TASK.md`'s Required Context plus files named for the relevant topic
-  in `.project/CONTEXT_INDEX.md`.
+- Run `npm run context` (compact by default, ~25-40 lines; add `-- --full` only when the detailed
+  state-file dump is actually needed).
+- `.project/CURRENT_TASK.md`'s Required Context is the primary read set — read it. Don't re-read,
+  in full, whatever `npm run context`'s compact output already summarized (branch, HEAD, dirty
+  state, main delta, and the active task's ID/Objective/Status) unless the task needs more than
+  that summary gives. Compact output does not summarize `.project/REVIEW_STATE.md` — read it
+  directly when review/approval history is relevant.
+- `.project/CONTEXT_INDEX.md` is a fallback, not a second required-reading list: consult it only
+  when the task in progress reveals context is missing, and read just the topic file(s) that gap
+  points to — never pre-read every topic file it lists "just in case."
 - Expand context beyond that only when evidence in the current task shows it is necessary.
 - Use GitHub only for remote-only facts — open PRs, CI status, PR review comments, or merge
   state — never to rediscover content that already lives in the local repository.
