@@ -220,6 +220,30 @@ Claude may create a commit only when the current task explicitly authorizes comm
 Intermediate commits are allowed on task branches once commits are authorized for the task — they
 don't each need separate re-authorization.
 
+### Gate Recording Commit
+
+A narrow, separate authority from the general commit rule above: once a human has given
+**explicit approval** for a gate decision (a PR merge, a milestone freeze, a task's completion)
+in conversation, Claude may create exactly **one** commit recording that decision — even if
+nothing in the current exchange set `Commit allowed: yes` the way a full task prompt would,
+because this commit only records the approval; it does not perform or continue the approved work.
+
+- Allowed files for a Gate Recording Commit:
+  - `.project/REVIEW_STATE.md`
+  - `.project/DECISIONS_LOG.md`
+  - `.project/CURRENT_TASK.md`
+- It must change no architecture, code, contract, schema, test, or policy file. A Gate Recording
+  Commit is non-substantive by definition; if recording the decision requires touching anything
+  outside the three files above, it is not a Gate Recording Commit and needs its own task
+  authorization (`Commit allowed: yes`) instead.
+- Exactly one commit per approval — don't split it, and don't fold unrelated changes into it.
+- A pure Gate Recording Commit does not invalidate, supersede, or re-open the human approval it
+  records — it is a record of the decision, not a new decision, and it does not itself constitute
+  approval of anything further (in particular, it never authorizes an actual merge to `main` —
+  see "Pull Requests" below).
+- Push follows the same authorization as any other commit — see "Push" below; a Gate Recording
+  Commit does not implicitly authorize a push.
+
 ### Push
 
 Claude may push a task branch only when the current task explicitly authorizes it (see

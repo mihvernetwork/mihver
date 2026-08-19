@@ -51,13 +51,34 @@ function extractBulletPaths(lines) {
   return paths;
 }
 
+function truncate(text, maxLen) {
+  return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
+}
+
 function sectionSummary(content, heading, maxLen = 140) {
   const text = extractSection(content, heading)
     .filter((l) => l.trim() !== '')
     .join(' ')
     .trim();
-  if (!text) return '(none)';
-  return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
+  return text ? truncate(text, maxLen) : '(none)';
+}
+
+function extractBullets(lines) {
+  const bullets = [];
+  for (const raw of lines) {
+    if (/^-\s/.test(raw)) {
+      bullets.push(raw.replace(/^-\s*/, '').trim());
+    } else if (bullets.length && raw.trim() !== '') {
+      bullets[bullets.length - 1] += ` ${raw.trim()}`;
+    }
+  }
+  return bullets;
+}
+
+function lastBulletSummary(content, heading, maxLen = 140) {
+  const bullets = extractBullets(extractSection(content, heading));
+  if (bullets.length === 0) return '(none)';
+  return truncate(bullets[bullets.length - 1], maxLen);
 }
 
 function resolveMainRef() {
@@ -101,6 +122,7 @@ const workingTreeChanges = isError(statusPorcelain)
   ? []
   : statusPorcelain.split('\n').filter(Boolean);
 
+const projectState = readProjectFile('.project/PROJECT_STATE.md');
 const currentTaskExists = existsSync(join(repoRoot, '.project/CURRENT_TASK.md'));
 const currentTask = readProjectFile('.project/CURRENT_TASK.md');
 const declaredBranch = currentTaskExists ? extractDeclaredBranch(currentTask) : null;
@@ -133,7 +155,7 @@ if (full) {
   console.log(workingTreeChanges.length ? workingTreeChanges.join('\n') : '(none)');
 
   printHeader('.project/PROJECT_STATE.md');
-  console.log(readProjectFile('.project/PROJECT_STATE.md'));
+  console.log(projectState);
 
   printHeader('.project/CURRENT_TASK.md');
   console.log(currentTaskExists ? currentTask : '<missing: .project/CURRENT_TASK.md>');
@@ -143,6 +165,13 @@ if (full) {
 } else {
   console.log(`Changed vs main: ${changedVsMain.length} file(s) (rerun with --full for the list)`);
   console.log(`Uncommitted:     ${workingTreeChanges.length ? `${workingTreeChanges.length} file(s)` : 'none'}`);
+
+  printHeader('Project (parsed from PROJECT_STATE.md, not dumped)');
+  console.log(`Milestone:         ${sectionSummary(projectState, 'Current Milestone')}`);
+  console.log(
+    `Latest checkpoint: ${lastBulletSummary(projectState, 'Frozen Steps / Checkpoints (on `main`)')}`
+  );
+  console.log(`Next action:       ${sectionSummary(projectState, 'Next Authorized Action')}`);
 
   printHeader('Active Task (branch-scoped)');
   if (taskActiveForBranch) {

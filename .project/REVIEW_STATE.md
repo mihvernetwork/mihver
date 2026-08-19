@@ -7,49 +7,43 @@ assessment, not human sign-off — see `AGENT_POLICY.md`'s Authority Hierarchy.
 
 ## Latest Review
 
-Task: PROJECT-CONTEXT-FINAL-PATCH
-Reviewer: Codex (read-only), focused review against two failure-mode categories: fresh-session
-(could a session reading only compact `npm run context` output + Required Context end up with an
-incomplete/misleading picture) and stale-state (branch/task-specific facts leaking into durable
-files, or vice versa), plus a doc-consistency sanity check.
-Codex outcome: APPROVE WITH REQUIRED CHANGES.
-Claude's final outcome (after applying required changes below): **APPROVED**.
+Task: PROJECT-CONTEXT-MERGE-GATE
+Reviewer: Codex (read-only), scoped solely to state-lifecycle consistency: the new Gate Recording
+Commit policy (AGENT_POLICY.md), the new PROJECT_STATE.md-derived summary in `npm run context`
+(accuracy, and that it doesn't dump the file), and whether this file's recorded human-gate status
+overclaims.
+Codex outcome: **APPROVE** — no BLOCKING, SHOULD-FIX, or NIT findings across all four checked
+points (Gate Recording Commit policy consistency, PROJECT_STATE.md summary correctness/safety and
+non-dumping, Human Review Gate wording, CURRENT_TASK.md accuracy).
+Claude's final outcome: **APPROVED**.
 
 ## Required Changes
 
-Applied:
-1. Fresh-session/stale-state — `project-context.mjs` treated a missing/malformed "Branch / Base"
-   declaration in `CURRENT_TASK.md` the same as a well-formed non-matching branch, with no
-   distinct signal. Fixed: added a separate warning when the branch can't be parsed at all, so a
-   fresh session can tell "no active task" apart from "task file is malformed."
-2. Stale-state — `CURRENT_TASK.md`'s Status field said "Complete — committed and pushed" while the
-   working tree was still dirty and mid-edit, presenting a task-specific fact as true before it
-   was. Fixed: Status set to "In progress" during the edit; flipped to the actual completion state
-   only once the work was committed (see task completion note below).
-3. Doc consistency — `CLAUDE.md`'s Fast Session Bootstrap section claimed compact `npm run
-   context` output summarizes "review status," but the script's compact mode only summarizes
-   branch/HEAD/dirty/main-delta and the active task's ID/Objective/Status — it never touches
-   `REVIEW_STATE.md`. Fixed: reworded to list exactly what's summarized and to say explicitly that
-   review/approval history still needs a direct read.
-4. Doc consistency — `AGENT_POLICY.md`'s "Session Bootstrap" section still described
-   `CONTEXT_INDEX.md` as read "plus" Required Context, contradicting this task's "fallback only"
-   framing added to `CLAUDE.md`. Fixed: reworded to match — index consulted only on a demonstrated
-   context gap.
-
-Rejected as non-material (Claude's assessment, not Codex's): none — all four findings were
-accepted and fixed as-is.
+None — Codex found no issues in scope.
 
 ## Fixes Applied
 
-Yes — see above. `npm test` (24/24), `npm run context` (compact, 28 lines), and
-`npm run context -- --full` re-verified after the fixes.
+Not applicable (no required changes). `npm test` (24/24), `npm run context` (compact, 33 lines),
+and `npm run context -- --full` verified independently by Claude, since Codex's sandbox blocked
+`npm`/`node` execution for its own run.
+
+## Human Review Gate
+
+Human review of the `chore/project-context-bootstrap` branch and the project-context bootstrap
+mechanism as a whole: **APPROVED WITH FINAL OPERATIONAL PATCH REQUIRED** — stated directly by the
+human when authorizing `PROJECT-CONTEXT-MERGE-GATE`. This is **not** final merge approval: it
+means the human approved contingent on this task's patch (Gate Recording Commit policy, compact
+`npm run context` project summary, this review-state update) being applied. The decision to
+actually merge `chore/project-context-bootstrap` into `main` is a separate, later gate per
+`AGENT_POLICY.md`'s Authority Hierarchy and is not granted by this entry or by this task's
+completion.
 
 ## Pending Human Gate
 
-Human has not reviewed this task's output yet. Commit and push are authorized for this task
-itself (see `.project/CURRENT_TASK.md`); that authorization does not extend to starting any next
-MIHVER step, and does not itself constitute the merge decision for
-`chore/project-context-bootstrap` — that remains gated on explicit human instruction.
+Commit and push are authorized for this task (see `.project/CURRENT_TASK.md`). Once this patch is
+applied and validated, the branch is ready for the human's final merge decision — but that
+decision has not been made yet, and "APPROVED WITH FINAL OPERATIONAL PATCH REQUIRED" above does
+not itself grant it.
 
 ## History
 

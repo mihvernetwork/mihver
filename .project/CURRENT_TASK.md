@@ -5,14 +5,14 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-PROJECT-CONTEXT-FINAL-PATCH
+PROJECT-CONTEXT-MERGE-GATE
 
 ## Objective
 
-Harden the project-context bootstrap lifecycle before merge: keep `PROJECT_STATE.md` durable/
-global only, make `CURRENT_TASK.md` branch-scoped in `npm run context`, add a permanent
-Operational State Scope policy, and make `npm run context` compact by default with a `--full`
-flag for the detailed dump.
+Final bootstrap fixes ahead of the human's merge decision: define a permanent Gate Recording
+Commit policy, add a compact global-project summary (milestone / latest checkpoint / next
+authorized action) to `npm run context` without dumping `PROJECT_STATE.md`, and record the human's
+current review of the branch as approved contingent on this patch — not yet a merge approval.
 
 ## Branch / Base
 
@@ -22,19 +22,20 @@ Base: `main` (`0683e84`)
 ## Status
 
 Complete — committed and pushed to `chore/project-context-bootstrap`. No PR opened (task's PR
-expected: no). Awaiting human review of this task's output and of the branch as a whole before
-any merge decision.
+expected: no). Awaiting the human's final merge decision.
 
 ## Allowed Scope
 
 Update:
-- `.project/PROJECT_STATE.md`, `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`,
-  `.project/DECISIONS_LOG.md`
-- `CLAUDE.md`, `docs/development/AGENT_POLICY.md`
+- `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `.project/DECISIONS_LOG.md`
+- `docs/development/AGENT_POLICY.md`
 - `scripts/dev/project-context.mjs`
 
 Forbidden: `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `docs/examples/**`,
-`schemas/**`, `tests/**` — no architecture, foundation, contract, or schema changes.
+`schemas/**`, `tests/**` — no architecture, foundation, contract, or schema changes. `CLAUDE.md`
+and `.project/PROJECT_STATE.md` are also out of scope for this task — not requested by this
+task's prompt, so left untouched (reported to the human as a minor, non-blocking follow-up
+instead of edited silently).
 
 ## Required Context
 
@@ -43,21 +44,21 @@ Forbidden: `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `docs/examp
 - `.project/REVIEW_STATE.md`
 - `.project/CONTEXT_INDEX.md`
 - `docs/development/AGENT_POLICY.md` (Task Contract, Git & Branch Workflow, Operational State
-  Scope)
+  Scope, Gate Recording Commit)
 - `docs/development/REVIEW_PROTOCOL.md` (Completion Checklist, Outcomes)
 - `scripts/dev/project-context.mjs`
 
 ## Validation
 
-- `npm run context` runs without error, stays compact (~25-40 lines), and reports "no active
-  task" when `CURRENT_TASK.md`'s declared branch doesn't match the checked-out branch.
+- `npm run context` runs without error, prints the new Project summary (milestone/latest
+  checkpoint/next action) without dumping `PROJECT_STATE.md`, and stays ~30-40 lines.
 - `npm run context -- --full` runs and prints the detailed state-file dump.
 - `npm test` still passes (contract validator untouched).
 - `git status` / `git diff --stat` confirm only files listed under Allowed Scope changed.
-- One read-only Codex review pass focused on fresh-session and stale-state failure modes.
+- One read-only Codex review pass focused solely on state-lifecycle consistency.
 
 ## Next Gate
 
-Human review of this task's outcome, and of the branch as a whole before any merge decision.
-Commit and push are authorized for this task; no PR is expected. No further MIHVER step is
-authorized by this task's completion.
+The human's final decision on whether to merge `chore/project-context-bootstrap` into `main`.
+Commit and push are authorized for this task; no PR is expected. This task's completion is not
+itself merge approval — see `.project/REVIEW_STATE.md`'s Human Review Gate entry.
