@@ -1,0 +1,38 @@
+{
+  "description": "An unauthorized task is BLOCKED; a task depending on it is BLOCKED too.",
+  "queue": {
+    "queue_id": "unauthorized-task-blocks-dependents",
+    "limits": {
+      "max_runtime_seconds": 1000,
+      "max_tasks": 5,
+      "per_task_timeout_seconds": 500,
+      "max_retries": 1
+    },
+    "tasks": [
+      {
+        "task_id": "task-x",
+        "branch": "chore/task-x",
+        "authorized": false,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      },
+      {
+        "task_id": "task-y",
+        "branch": "chore/task-y",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": ["task-x"]
+      }
+    ]
+  },
+  "stop_switch_active": false,
+  "expected": {
+    "status": "OK",
+    "task_states": {
+      "task-x": "BLOCKED",
+      "task-y": "BLOCKED"
+    }
+  }
+}

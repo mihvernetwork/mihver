@@ -5,76 +5,120 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-PROJECT-CONTEXT-AUTO-BOOTSTRAP
+NIGHT-RUNNER-FOUNDATION-FINAL
+
+A correction pass on `chore/night-runner-foundation`, continuing directly from
+NIGHT-RUNNER-FOUNDATION before its PR receives human review — same branch, same underlying task,
+not a new one.
 
 ## Objective
 
-Update `CLAUDE.md`'s "Fast Session Bootstrap" section so it explicitly triggers before answering
-the **first** user message of a fresh session, unconditionally — including a bare greeting
-("hello") with no stated task — not only when the message names a MIHVER task; and so it
-explicitly directs Claude to then answer the user's original message normally afterward,
-surfacing current project state briefly only when useful. Requirements 1–6 of the originating
-task prompt (run `npm run context`; use the compact snapshot as initial state; active-task vs.
-no-active-task REVIEW_STATE handling; no repo/git-history/GitHub scanning by default; GitHub as
-remote-only) were already present in `CLAUDE.md` before this task — this task closed the one gap
-(unconditional trigger + explicit post-bootstrap answer step), as a minimal patch, not an
-architecture change.
+Build the deterministic dry-run foundation for MIHVER Night Runner: a control-plane simulator
+that plans execution of explicitly pre-authorized, queued tasks against a defined state machine
+(READY → RUNNING → VALIDATING → INDEPENDENT_REVIEW → READY_FOR_HUMAN, with RETRY / BLOCKED /
+FAILED / STOPPED paths), dependency support, runtime/task/timeout/retry limits, and a
+`.project/STOP` kill switch. This version is a simulator only — it must never launch Claude,
+Codex, or shell task execution, and must never modify task branches or treat `main` as a
+writable task branch.
 
 ## Branch / Base
 
-Branch: `chore/project-context-auto-bootstrap`
-Base: `main` (`fdc27d4`)
+Branch: `chore/night-runner-foundation`
+Base: `main` (`3f0b53b`)
 
 ## Status
 
-Complete — implemented (two additive hunks in `CLAUDE.md`'s "Fast Session Bootstrap" section; no
-existing rule removed or rewritten), independently reviewed (one read-only Codex reviewer;
-verdict **APPROVED**, no required changes — see `.project/REVIEW_STATE.md`), and validated
-(`npm test` 24/24, `npm run context` compact — see Validation below). Committed
-(`66f63ab`, `8d5461c`, `113b7e9`) and pushed to `chore/project-context-auto-bootstrap`. The human
-has since stated: "PR #6 / PROJECT-CONTEXT-AUTO-BOOTSTRAP is APPROVED for merge" — recorded via a
-Gate Recording Commit (see `.project/REVIEW_STATE.md`'s Merge Decision entry). The merge itself
-has not been performed yet and is not authorized by that recording commit. Actual PR existence,
-status, and mergeability remain remote-only GitHub facts not tracked in this file — query GitHub
-(e.g. `gh pr view`, `gh pr list`) when that information is needed.
+Complete — implemented and validated. `docs/development/NIGHT_RUNNER.md` (design, including a
+"Proposed Policy Additions" section explicitly marked pending human review, not adopted policy)
+and `.project/CURRENT_TASK.md` were authored/updated directly by Claude per `AGENT_POLICY.md`'s
+documentation-authorship pattern. `scripts/dev/night-runner.mjs`, `tests/night-runner/**`, and
+the two additive `package.json` npm scripts were also implemented directly by Claude: two
+successive Codex write-capable implementation attempts both failed on sandbox/approval
+mechanics before any file was written (first: blocked waiting on an interactive approval no one
+could grant; second, after the human explicitly authorized `approval-policy: never`: the Codex
+session's own sandbox still reported read-only, an apparent Codex MCP server-side configuration
+issue outside this session's control) — recorded here rather than hidden, per
+`AGENT_POLICY.md`'s Worker Failure Handling. The human explicitly chose "Claude implements it
+directly" after being asked. One independent read-only Codex reviewer then reviewed the
+Claude-authored implementation (see `.project/REVIEW_STATE.md`); its two required documentation
+fixes were applied and two additional fixtures were added to close named test-coverage gaps;
+final verdict **APPROVED**.
+
+**Correction pass (this task, NIGHT-RUNNER-FOUNDATION-FINAL):** before human review of PR #7,
+three issues were fixed: (1) runtime accounting — `max_runtime_seconds` now charges
+`min(estimated_runtime_seconds, per_task_timeout_seconds)` per simulated attempt (including
+retries), checked before every attempt rather than pre-charged once as the full estimate, so a
+task can be `STOPPED` between attempts and correctly cascades to the remainder of the queue; (2)
+`limits.max_tasks` is now validated as a positive integer, not just a positive number; (3)
+`.project/CURRENT_TASK.md` and `.project/REVIEW_STATE.md` were corrected to stop recording
+live/prospective GitHub PR state, per this repo's standing invariant against that (see "Next
+Gate" below). `docs/development/NIGHT_RUNNER.md` was updated to match the corrected runtime
+semantics. A second independent read-only Codex reviewer, focused specifically on runtime-budget
+semantics and state consistency, verdict **APPROVE WITH REQUIRED CHANGES** (the state-metadata
+language above, plus one additional historical entry it flagged); all required changes applied;
+final outcome **APPROVED**.
 
 ## Allowed Scope
 
+Add:
+- `docs/development/NIGHT_RUNNER.md` (new; Claude-authored directly per `AGENT_POLICY.md`'s
+  documentation/architecture authorship pattern)
+- `scripts/dev/night-runner.mjs` (new; Codex bounded implementation)
+- `tests/night-runner/**` (new; Codex bounded implementation)
+- `package.json` (additive npm script(s) only)
+
 Update:
-- `CLAUDE.md`
 - `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
 
-Forbidden: `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `docs/foundation/**`,
-`docs/adr/**`, `docs/contracts/**`, `docs/examples/**`, `schemas/**`, `tests/**`,
-`docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`,
-`docs/development/TASK_TEMPLATE.md`, `scripts/dev/project-context.mjs`. No live/prospective
-GitHub PR state may be recorded in repository metadata (carry forward the
-`PROJECT-CONTEXT-REMOTE-STATE-PATCH` invariant).
+Forbidden: `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `docs/examples/**`,
+`schemas/**`, `tests/contracts/**`, `docs/development/AGENT_POLICY.md`,
+`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`, `CLAUDE.md`,
+`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `scripts/dev/project-context.mjs`.
+`AGENT_POLICY.md` is not amended by this task — `NIGHT_RUNNER.md` documents *proposed* rules
+only, explicitly marked pending human review, not adopted policy.
 
 ## Required Context
 
 - `CLAUDE.md`
 - `.project/CURRENT_TASK.md`
-- `.project/REVIEW_STATE.md`
 - `.project/PROJECT_STATE.md`
-- `docs/development/AGENT_POLICY.md` (Session Bootstrap, Git & Branch Workflow)
+- `docs/development/AGENT_POLICY.md` (Git & Branch Workflow, Parallel Worker Rules'
+  documentation/architecture authorship pattern)
 - `docs/development/REVIEW_PROTOCOL.md` (Completion Checklist, Outcomes)
+- `tests/contracts/validate-contracts.mjs`, `scripts/dev/project-context.mjs` (existing code
+  style/conventions to match: plain ESM, node built-ins only, assert-based fixture tests)
 
 ## Validation
 
-- `npm run context` (compact), re-run on this branch at HEAD `8d5461c`: reports
-  `Active task: PROJECT-CONTEXT-AUTO-BOOTSTRAP` and `Review state: current (branch
-  "chore/project-context-auto-bootstrap") - see "Latest Review" in REVIEW_STATE.md` — i.e. this
-  task and its review state are correctly recognized as current for this branch.
-- `npm test` passes (24/24 contract fixtures; untouched by this task).
-- One read-only Codex reviewer, focused on requirement coverage (all 7 numbered goals from the
-  task prompt), patch minimality, and consistency with `AGENT_POLICY.md`'s Session Bootstrap
-  section — verdict **APPROVED**.
+- `npm run test:night-runner`: 15/15 fixtures passed (12 from the first pass + 3 added this pass:
+  two proving the corrected runtime-budget accounting — retries consuming global budget then
+  cascading STOPPED, and a 100s/50s-timeout task correctly running/failing within a 60s budget
+  instead of being prematurely stopped — and one proving fractional `max_tasks` is refused).
+- `npm test` (existing contract suite): 24/24 passed, unaffected.
+- `npm run context`: reports this task active and current for this branch.
+- CLI smoke-tested manually in the first pass (stdout report, correct exit codes for OK/REFUSED);
+  a real Windows portability bug (naive `` file://${process.argv[1]} `` string comparison in the
+  "run as script" guard) was found and fixed then, switching to
+  `pathToFileURL(process.argv[1]).href`.
+- First independent read-only Codex reviewer (first pass): verdict **APPROVE WITH REQUIRED
+  CHANGES** (two documentation-consistency issues), both fixed, final outcome **APPROVED**.
+- Second independent read-only Codex reviewer (this pass, focused specifically on runtime-budget
+  semantics and state consistency): hand-traced both new runtime-budget fixtures against the
+  code and confirmed the corrected charging formula, per-attempt budget check, `STOPPED`-not-
+  `FAILED` mid-task outcome, and cascade all behave as intended; confirmed `max_tasks` integer
+  validation and its refusal fixture; confirmed `NIGHT_RUNNER.md` has no remaining stale
+  "charge full estimate once" text. Verdict **APPROVE WITH REQUIRED CHANGES**, limited to the
+  state-metadata language covered under "Next Gate" below; all required changes applied; final
+  outcome **APPROVED**.
+- `git status --short` confirms only files inside Allowed Scope changed. No frozen document
+  (`AGENT_POLICY.md`, `REVIEW_PROTOCOL.md`, `TASK_TEMPLATE.md`, `CLAUDE.md`,
+  `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `schemas/**`, `tests/contracts/**`,
+  `.project/DECISIONS_LOG.md`) was touched.
 
 ## Next Gate
 
-The human has approved PR #6 / `PROJECT-CONTEXT-AUTO-BOOTSTRAP` for merge (see
-`.project/REVIEW_STATE.md`'s Merge Decision entry). What remains is the merge execution itself — a
-separate action requiring its own explicit instruction; not started by this Gate Recording Commit.
-Actual PR status/mergeability remain remote-only GitHub facts not tracked in this file; query
-GitHub when needed.
+Commit/push are authorized by this task ("Commit/push allowed: yes."). PR expected: yes — this
+task updates PR #7 only, does not open a new one, and does not merge. Human review is complete:
+PR #7 / NIGHT-RUNNER-FOUNDATION is **APPROVED for merge**, recorded via a Gate Recording Commit
+per `AGENT_POLICY.md`. Merge execution has not been performed — it requires a separate, later
+explicit instruction; live PR status/mergeability are not tracked in this file.

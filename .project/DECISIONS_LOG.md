@@ -50,3 +50,7 @@ Format: `YYYY-MM-DD — decision — reference`.
   a Gate Recording Commit per `AGENT_POLICY.md`. The merge itself has not been performed —
   execution requires a separate, later explicit instruction. — branch
   `chore/project-context-auto-bootstrap`
+- 2026-08-19 — `NIGHT-RUNNER-FOUNDATION` (PR #7) **APPROVED for merge** — human decision stated
+  directly as "PR #7 / NIGHT-RUNNER-FOUNDATION is APPROVED for merge"; recorded via a Gate
+  Recording Commit per `AGENT_POLICY.md`. The merge itself has not been performed — execution
+  requires a separate, later explicit instruction. — branch `chore/night-runner-foundation`

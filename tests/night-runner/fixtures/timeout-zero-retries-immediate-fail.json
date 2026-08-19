@@ -1,0 +1,32 @@
+{
+  "description": "max_retries: 0 boundary: a timed-out task fails immediately with no RETRY in its history.",
+  "queue": {
+    "queue_id": "timeout-zero-retries-immediate-fail",
+    "limits": {
+      "max_runtime_seconds": 1000,
+      "max_tasks": 5,
+      "per_task_timeout_seconds": 50,
+      "max_retries": 0
+    },
+    "tasks": [
+      {
+        "task_id": "task-a",
+        "branch": "chore/task-a",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      }
+    ]
+  },
+  "stop_switch_active": false,
+  "expected": {
+    "status": "OK",
+    "task_states": {
+      "task-a": "FAILED"
+    },
+    "retries_used": {
+      "task-a": 0
+    }
+  }
+}

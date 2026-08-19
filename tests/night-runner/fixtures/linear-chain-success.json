@@ -1,0 +1,47 @@
+{
+  "description": "Three tasks in a dependency chain, all authorized, generous limits: all reach READY_FOR_HUMAN.",
+  "queue": {
+    "queue_id": "linear-chain-success",
+    "limits": {
+      "max_runtime_seconds": 1000,
+      "max_tasks": 5,
+      "per_task_timeout_seconds": 500,
+      "max_retries": 1
+    },
+    "tasks": [
+      {
+        "task_id": "task-a",
+        "branch": "chore/task-a",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": []
+      },
+      {
+        "task_id": "task-b",
+        "branch": "chore/task-b",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": ["task-a"]
+      },
+      {
+        "task_id": "task-c",
+        "branch": "chore/task-c",
+        "authorized": true,
+        "human_gated": false,
+        "estimated_runtime_seconds": 100,
+        "depends_on": ["task-b"]
+      }
+    ]
+  },
+  "stop_switch_active": false,
+  "expected": {
+    "status": "OK",
+    "task_states": {
+      "task-a": "READY_FOR_HUMAN",
+      "task-b": "READY_FOR_HUMAN",
+      "task-c": "READY_FOR_HUMAN"
+    }
+  }
+}
