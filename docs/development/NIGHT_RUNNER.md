@@ -258,9 +258,68 @@ review them alongside the implementation that motivates them. None are in effect
    skipping only the task that tripped the limit, so a human reviewing a dry-run report sees the
    full blast radius of a limit, not just its first casualty.
 
+## Execution Adapter: Fresh-Claude Single-Task (`scripts/dev/night-runner-executor.mjs`)
+
+Implemented in `NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR`. This is the first execution-capable layer
+built on top of the deterministic planner above. It is a separate module — `night-runner.mjs`
+is untouched and remains a pure simulator.
+
+Scope of this slice only:
+- Executes exactly one task descriptor per call, launching exactly one fresh `claude` task-execution
+  process, plus a `--help` discovery probe used to verify the invocation contract beforehand (no
+  reuse, no pooling, no batching).
+- Creates an executor-owned workspace with `mkdtempSync` beneath the OS temporary directory on
+  every call; a descriptor-supplied execution directory is not accepted as the child `cwd`.
+  Both the workspace and repository are canonicalized with `realpathSync`, and execution is
+  refused if either path contains the other, including equality. This is a structural guarantee
+  about the workspace path: it cannot be inside, equal to, or an ancestor of the repository. It
+  is not a filesystem sandbox and does not prove that a child cannot address other absolute paths.
+- Refuses to execute (no process is spawned) unless, in order: `.project/STOP` is absent, the
+  task descriptor's `authorized` field is `true`, the task's `branch` field is present and not
+  `main`, the executor-created workspace passes the bidirectional containment check, and
+  `timeout_seconds` is a valid positive number.
+- Discovers the installed `claude` CLI's non-interactive invocation at runtime by running
+  `claude --help` with a bounded timeout and checking every exact flag used: `--print`,
+  `--output-format`, `--permission-mode`, `--no-session-persistence`, `--tools`, and
+  `--strict-mcp-config`. Execution is one-shot JSON, defaults to `Read,Write,Edit` and
+  `acceptEdits`, and passes strict MCP configuration without supplying an MCP configuration.
+  Capability validation is a positive allowlist: the only approved tools are `Read`, `Write`, and
+  `Edit`, and the only approved permission mode is `acceptEdits` (input matching is case-insensitive,
+  while canonical values are passed to the CLI). Independent review found that the earlier denylist
+  could be bypassed with `--tools default`; the positive allowlist corrects that gap.
+  If a `shell:false` launch returns `ENOENT`, it resolves the installed command with `where` or
+  `which` (including the native executable behind a Windows npm shim) and retries that path.
+  This resolution depends on the invoking process's `PATH` including the npm global bin directory
+  where `claude` is installed. That is expected in the normal developer or CI environment where
+  `claude` is already set up, but is an explicit operational precondition. The resolver lookup uses
+  the same timeout bound as the `--help` discovery probe (`discoveryTimeoutMs`, default 10 seconds).
+  It deliberately never uses `shell:true`: Node's DEP0190 warning reflects a real injection risk
+  because the task prompt is an arbitrary command argument.
+- Treats those Claude permission/tool controls as best-effort capability reduction, not as an
+  architectural filesystem-isolation proof. Enforcement by the real Claude Code permission
+  system is validated separately by a live adversarial smoke test; stub-based automated tests
+  cannot establish that property.
+- Polls `.project/STOP` while the child runs. Mid-run STOP has the distinct `STOPPED` outcome.
+  STOP and timeout termination target the whole process tree (POSIX process group or Windows
+  `taskkill /t /f`), escalate where applicable, and have a bounded kill grace. If no `close`
+  arrives within that grace, the result resolves with `termination_uncertain: true`.
+- Includes the executor-created `workspace_dir` in every result and captures stdout, stderr,
+  exit code, duration, timeout, and STOP state for executions.
+- Never passes `-c`/`--continue` or `-r`/`--resume`. It passes
+  `--no-session-persistence`, whose CLI help says: "Disable session persistence - sessions will
+  not be saved to disk and cannot be resumed (only works with --print)." No broader behavior is
+  claimed.
+
+Explicitly not built in this slice (same "not yet" list as the planner's Future Work below,
+narrowed to execution specifics):
+- No queue loop — one authorized task per invocation only, no unattended iteration.
+- No git worktree automation; workspace creation is local and executor-owned.
+- No merge or `main`-branch writes of any kind.
+
 ## Future work (not built here)
 
 - An actual execution-capable runner (dispatching real Claude/Codex/shell work), gated behind its
-  own human-authorized task.
+  own human-authorized task. (A minimal single-task fresh-process execution adapter now exists;
+  a queue loop and git worktree automation remain future work.)
 - A clearance mechanism for human-gated tasks so their dependents can become schedulable.
 - Queue *generation* tooling (this foundation only consumes a pre-built queue file).
