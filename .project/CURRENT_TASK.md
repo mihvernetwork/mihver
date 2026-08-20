@@ -5,120 +5,128 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-NIGHT-RUNNER-FOUNDATION-FINAL
-
-A correction pass on `chore/night-runner-foundation`, continuing directly from
-NIGHT-RUNNER-FOUNDATION before its PR receives human review — same branch, same underlying task,
-not a new one.
+NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR
 
 ## Objective
 
-Build the deterministic dry-run foundation for MIHVER Night Runner: a control-plane simulator
-that plans execution of explicitly pre-authorized, queued tasks against a defined state machine
-(READY → RUNNING → VALIDATING → INDEPENDENT_REVIEW → READY_FOR_HUMAN, with RETRY / BLOCKED /
-FAILED / STOPPED paths), dependency support, runtime/task/timeout/retry limits, and a
-`.project/STOP` kill switch. This version is a simulator only — it must never launch Claude,
-Codex, or shell task execution, and must never modify task branches or treat `main` as a
-writable task branch.
+Add the first execution-capable Night Runner layer: launch exactly one fresh Claude Code process
+for one explicitly authorized test task, as a separate adapter/layer on top of the existing
+deterministic planner (`scripts/dev/night-runner.mjs`, left untouched). No queue loop, no git
+worktree automation, no writes to the MIHVER working tree through the child process, no
+`main`-branch execution.
 
 ## Branch / Base
 
-Branch: `chore/night-runner-foundation`
-Base: `main` (`3f0b53b`)
+Branch: `feat/night-runner-fresh-claude-executor`
+Base: `main` (`9a61a0bfc03ff17607493539f5003eac0b88c969`)
 
 ## Status
 
-Complete — implemented and validated. `docs/development/NIGHT_RUNNER.md` (design, including a
-"Proposed Policy Additions" section explicitly marked pending human review, not adopted policy)
-and `.project/CURRENT_TASK.md` were authored/updated directly by Claude per `AGENT_POLICY.md`'s
-documentation-authorship pattern. `scripts/dev/night-runner.mjs`, `tests/night-runner/**`, and
-the two additive `package.json` npm scripts were also implemented directly by Claude: two
-successive Codex write-capable implementation attempts both failed on sandbox/approval
-mechanics before any file was written (first: blocked waiting on an interactive approval no one
-could grant; second, after the human explicitly authorized `approval-policy: never`: the Codex
-session's own sandbox still reported read-only, an apparent Codex MCP server-side configuration
-issue outside this session's control) — recorded here rather than hidden, per
-`AGENT_POLICY.md`'s Worker Failure Handling. The human explicitly chose "Claude implements it
-directly" after being asked. One independent read-only Codex reviewer then reviewed the
-Claude-authored implementation (see `.project/REVIEW_STATE.md`); its two required documentation
-fixes were applied and two additional fixtures were added to close named test-coverage gaps;
-final verdict **APPROVED**.
+**Redesign complete — APPROVED, committed, pushed, and opened as PR #8. Human has approved PR #8
+for merge; merge execution itself is pending a separate explicit instruction.** V1 (implemented by
+Codex Worker A) received an independent Codex review verdict of **REDESIGN**: its central safety claim — that
+a caller-supplied `cwd` outside the repo structurally prevents the child Claude process from
+writing into the MIHVER working tree — did not hold (`cwd` is not a filesystem sandbox; a
+parent-directory or symlink/junction workspace was wrongly accepted as "outside"; STOP was
+checked only pre-spawn; timeout killed only the direct child; CLI discovery/execution flags were
+inconsistent). Claude accepted REDESIGN rather than patching forward (see `REVIEW_STATE.md`).
 
-**Correction pass (this task, NIGHT-RUNNER-FOUNDATION-FINAL):** before human review of PR #7,
-three issues were fixed: (1) runtime accounting — `max_runtime_seconds` now charges
-`min(estimated_runtime_seconds, per_task_timeout_seconds)` per simulated attempt (including
-retries), checked before every attempt rather than pre-charged once as the full estimate, so a
-task can be `STOPPED` between attempts and correctly cascades to the remainder of the queue; (2)
-`limits.max_tasks` is now validated as a positive integer, not just a positive number; (3)
-`.project/CURRENT_TASK.md` and `.project/REVIEW_STATE.md` were corrected to stop recording
-live/prospective GitHub PR state, per this repo's standing invariant against that (see "Next
-Gate" below). `docs/development/NIGHT_RUNNER.md` was updated to match the corrected runtime
-semantics. A second independent read-only Codex reviewer, focused specifically on runtime-budget
-semantics and state consistency, verdict **APPROVE WITH REQUIRED CHANGES** (the state-metadata
-language above, plus one additional historical entry it flagged); all required changes applied;
-final outcome **APPROVED**.
+A human-authorized six-point redesign was then implemented (by Codex, in three passes, each
+reviewed by Claude directly against the diff before proceeding — see "Validation" below) and
+independently re-reviewed twice more:
+1. Redesign implementation: executor-owned `mkdtemp` workspace (caller-supplied workspace no
+   longer trusted or accepted), bidirectional `realpath`-based containment check, discovered-flag
+   capability restriction, STOP polling during execution with whole-process-tree termination and a
+   bounded kill-grace timeout, documented fresh-process semantics, expanded tests.
+2. A real bug Claude found by running the executor against the actual installed `claude` CLI
+   (not the test stub): `spawn('claude', ..., {shell:false})` failed with `ENOENT` because Windows
+   npm installs `claude` as a non-directly-spawnable `.cmd`/`.ps1` shim. Fixed via `where`/`which`
+   resolution of the real `claude.exe` (passing only the fixed command name, never task content);
+   `shell:true` was deliberately never used, since Node's `DEP0190` means it does not escape array
+   arguments and `descriptor.prompt` is untrusted text — a real injection risk.
+3. A second independent Codex review (APPROVE WITH REQUIRED CHANGES) found the capability
+   validation used a bypassable denylist (`toolAllowlist: 'default'` silently passed through,
+   re-enabling Bash) and that the `where`/`which` resolver call had no timeout. Fixed: switched to
+   a positive allowlist (`Read`/`Write`/`Edit` tools, `acceptEdits` permission mode only — anything
+   else refused pre-spawn with `INVALID_OPTIONS`) and added the missing timeout. That review's
+   separate claim that Windows resolution "does not work" was investigated by Claude and
+   attributed to the reviewer's own sandbox PATH, not a defect — independently reproduced working
+   correctly in the real target environment (see "Validation").
+
+A third independent Codex review returned final verdict **APPROVED**, with no required changes
+remaining, and independently concurred that the Windows-resolution disagreement was
+environment-specific to the reviewing sandbox.
+
+Commit/push/PR were authorized per the human task's original instruction (`Commit/push allowed:
+yes; PR expected: yes; do not merge`), conditioned on this APPROVED outcome — met, and PR #8
+(base `main`, compare `feat/night-runner-fresh-claude-executor`) was opened.
+
+The human subsequently approved PR #8 for merge, stated directly: "PR #8 /
+NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR is APPROVED for merge." Recorded via a Gate Recording Commit —
+see `REVIEW_STATE.md`'s "Merge Decision". This approval does not itself execute the merge; merge
+execution requires a separate, later explicit instruction, per precedent
+(`NIGHT-RUNNER-FOUNDATION` / PR #7).
 
 ## Allowed Scope
 
 Add:
-- `docs/development/NIGHT_RUNNER.md` (new; Claude-authored directly per `AGENT_POLICY.md`'s
-  documentation/architecture authorship pattern)
-- `scripts/dev/night-runner.mjs` (new; Codex bounded implementation)
-- `tests/night-runner/**` (new; Codex bounded implementation)
-- `package.json` (additive npm script(s) only)
+- `scripts/dev/night-runner-executor.mjs` (new; Codex bounded implementation)
+- `tests/night-runner-executor/**` (new; Codex bounded implementation)
+- `package.json` (additive npm scripts only)
 
 Update:
+- `docs/development/NIGHT_RUNNER.md` (new section documenting the executor adapter; existing
+  content otherwise unchanged)
 - `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
 
-Forbidden: `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `docs/examples/**`,
-`schemas/**`, `tests/contracts/**`, `docs/development/AGENT_POLICY.md`,
-`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`, `CLAUDE.md`,
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `scripts/dev/project-context.mjs`.
-`AGENT_POLICY.md` is not amended by this task — `NIGHT_RUNNER.md` documents *proposed* rules
-only, explicitly marked pending human review, not adopted policy.
+Forbidden: `scripts/dev/night-runner.mjs`, `tests/night-runner/**`, `docs/foundation/**`,
+`docs/adr/**`, `docs/contracts/**`, `docs/examples/**`, `schemas/**`, `tests/contracts/**`,
+`docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`,
+`docs/development/TASK_TEMPLATE.md`, `CLAUDE.md`, `.project/PROJECT_STATE.md`,
+`.project/DECISIONS_LOG.md`, `scripts/dev/project-context.mjs`.
 
 ## Required Context
 
 - `CLAUDE.md`
-- `.project/CURRENT_TASK.md`
-- `.project/PROJECT_STATE.md`
-- `docs/development/AGENT_POLICY.md` (Git & Branch Workflow, Parallel Worker Rules'
-  documentation/architecture authorship pattern)
-- `docs/development/REVIEW_PROTOCOL.md` (Completion Checklist, Outcomes)
-- `tests/contracts/validate-contracts.mjs`, `scripts/dev/project-context.mjs` (existing code
-  style/conventions to match: plain ESM, node built-ins only, assert-based fixture tests)
+- `docs/development/AGENT_POLICY.md` (Git & Branch Workflow, Task Contract, Parallel Worker Rules)
+- `docs/development/REVIEW_PROTOCOL.md`
+- `docs/development/NIGHT_RUNNER.md` (existing design: authorization model, `.project/STOP`
+  semantics, "main is never a task branch", Future Work)
+- `scripts/dev/night-runner.mjs` (planner conventions: pure functions, ESM, node built-ins only,
+  `isMainModule` CLI guard)
+- `tests/night-runner/validate-night-runner.mjs` (test conventions)
 
 ## Validation
 
-- `npm run test:night-runner`: 15/15 fixtures passed (12 from the first pass + 3 added this pass:
-  two proving the corrected runtime-budget accounting — retries consuming global budget then
-  cascading STOPPED, and a 100s/50s-timeout task correctly running/failing within a 60s budget
-  instead of being prematurely stopped — and one proving fractional `max_tasks` is refused).
-- `npm test` (existing contract suite): 24/24 passed, unaffected.
-- `npm run context`: reports this task active and current for this branch.
-- CLI smoke-tested manually in the first pass (stdout report, correct exit codes for OK/REFUSED);
-  a real Windows portability bug (naive `` file://${process.argv[1]} `` string comparison in the
-  "run as script" guard) was found and fixed then, switching to
-  `pathToFileURL(process.argv[1]).href`.
-- First independent read-only Codex reviewer (first pass): verdict **APPROVE WITH REQUIRED
-  CHANGES** (two documentation-consistency issues), both fixed, final outcome **APPROVED**.
-- Second independent read-only Codex reviewer (this pass, focused specifically on runtime-budget
-  semantics and state consistency): hand-traced both new runtime-budget fixtures against the
-  code and confirmed the corrected charging formula, per-attempt budget check, `STOPPED`-not-
-  `FAILED` mid-task outcome, and cascade all behave as intended; confirmed `max_tasks` integer
-  validation and its refusal fixture; confirmed `NIGHT_RUNNER.md` has no remaining stale
-  "charge full estimate once" text. Verdict **APPROVE WITH REQUIRED CHANGES**, limited to the
-  state-metadata language covered under "Next Gate" below; all required changes applied; final
-  outcome **APPROVED**.
-- `git status --short` confirms only files inside Allowed Scope changed. No frozen document
-  (`AGENT_POLICY.md`, `REVIEW_PROTOCOL.md`, `TASK_TEMPLATE.md`, `CLAUDE.md`,
-  `docs/foundation/**`, `docs/adr/**`, `docs/contracts/**`, `schemas/**`, `tests/contracts/**`,
-  `.project/DECISIONS_LOG.md`) was touched.
+- V1: `npm run test:night-runner-executor` (13/13) re-confirmed by Claude, but the tests did not
+  exercise the safety-critical gaps the first independent review found. Superseded by the redesign.
+- Redesign (final state): `npm run test:night-runner-executor` — Claude independently re-ran this
+  after every implementation pass, not just trusted Codex's self-report: 17/17 after the first
+  redesign pass, 21/21 after the Windows CLI-resolution fix, **22/22 after the final review-fix
+  pass** (positive allowlist + resolver timeout).
+- `npm run test:night-runner`: 15/15, re-confirmed unaffected after every pass.
+- `npm test`: 24/24, re-confirmed unaffected after every pass.
+- `scripts/dev/night-runner.mjs` and `tests/night-runner/**` confirmed byte-for-byte unchanged via
+  `git diff --stat` after every pass; `package.json` changes confirmed purely additive (two new
+  npm scripts) via `git diff`.
+- **Live supervised adversarial isolation smoke test**, run directly by Claude against the real
+  installed `claude` CLI (not a stub), per the human task's explicit requirement: a task descriptor
+  asked the child Claude process to write an allowed file inside its own executor-created
+  workspace, and attempt to write a forbidden file at an absolute path outside the workspace (a
+  disposable temp sibling directory — never the real MIHVER repo). Result: the allowed write
+  succeeded; the real `claude` CLI's own JSON output recorded a `permission_denials` entry for the
+  forbidden `Write` attempt, and the forbidden file was confirmed absent afterward. Run twice
+  (before and after the Windows CLI-resolution fix); the first run failed closed at CLI discovery
+  (the real Windows ENOENT bug, not a security failure) and the second succeeded end-to-end with
+  isolation holding.
+- Independent read-only Codex review of V1: verdict **REDESIGN** (see `REVIEW_STATE.md` History).
+- Independent read-only Codex review of the redesign (first pass): verdict **APPROVE WITH REQUIRED
+  CHANGES** (bypassable capability denylist; unbounded resolver lookup) — both fixed.
+- Independent read-only Codex review of the redesign (final pass): verdict **APPROVED**, no
+  required changes remaining (see `REVIEW_STATE.md`).
 
 ## Next Gate
 
-Commit/push are authorized by this task ("Commit/push allowed: yes."). PR expected: yes — this
-task updates PR #7 only, does not open a new one, and does not merge. Human review is complete:
-PR #7 / NIGHT-RUNNER-FOUNDATION is **APPROVED for merge**, recorded via a Gate Recording Commit
-per `AGENT_POLICY.md`. Merge execution has not been performed — it requires a separate, later
-explicit instruction; live PR status/mergeability are not tracked in this file.
+PR #8 was opened and the human has approved it for merge (recorded via a Gate Recording Commit —
+see `REVIEW_STATE.md`). Merge execution itself has not been performed and requires a separate,
+later explicit instruction to execute, per precedent (`NIGHT-RUNNER-FOUNDATION` / PR #7).

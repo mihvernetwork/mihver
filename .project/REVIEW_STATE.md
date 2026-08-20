@@ -15,65 +15,129 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: NIGHT-RUNNER-FOUNDATION-FINAL
-Branch: `chore/night-runner-foundation`
+Task: NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR
+Branch: `feat/night-runner-fresh-claude-executor`
 
-A correction pass on this branch, before PR #7 receives human review.
-Reviewer: one independent read-only Codex reviewer, focused specifically on runtime-budget
-semantics and state consistency: hand-traced the corrected per-attempt runtime charging (
-`min(estimated_runtime_seconds, per_task_timeout_seconds)`, checked before every attempt
-including retries) against both new runtime-budget fixtures line-by-line, confirmed the
-`max_tasks` integer-validation fixture and code, confirmed `NIGHT_RUNNER.md` has no remaining
-stale "charge the full estimate once" description, and audited `.project/CURRENT_TASK.md` /
-`.project/REVIEW_STATE.md` for any remaining live/prospective PR-state language.
-Reviewer's verdict: **APPROVE WITH REQUIRED CHANGES** — no algorithmic, determinism, or
-documentation defect found; all required changes were state-metadata language quoted verbatim
-from `CURRENT_TASK.md`'s "Next Gate" and `REVIEW_STATE.md`'s then-current "Merge Decision" /
-"Pending Human Gate" sections (PR number, "opened", a `gh pr view 7` suggestion), plus one
-additional pre-existing History entry (the PR #4 entry's "remains a separate, later action not
-yet taken" clause) that the reviewer identified as the same category of live-state claim.
-Claude's final outcome: **APPROVED** (after rewriting all flagged sections to state only that a
-PR is expected/authorized and that human review/merge approval is a pending gate, with no PR
-number, status, or GitHub-query pointer recorded).
+Three independent read-only Codex review passes, plus one live supervised smoke test run directly
+by Claude against the real `claude` CLI. Final outcome: **APPROVED**.
+
+**Pass 1 (on V1, implemented by Codex Worker A):** dispatched by Claude after a power interruption
+left this task's prior status ambiguous/uncorroborated — no review outcome had actually been
+recorded for this task/branch before this pass. Verdict **REDESIGN**: V1's central safety claim —
+that a caller-supplied `cwd` outside the repo structurally prevents the child Claude process from
+writing into the MIHVER working tree — did not hold. `cwd` is not a filesystem sandbox; a
+parent-directory or symlink/junction workspace was lexically accepted as "outside"; STOP was
+checked only pre-spawn; timeout killed only the direct child; CLI discovery/execution flags were
+inconsistent (`--print` discovered, `-p` executed). Claude independently verified findings 1, 3, 5,
+and 6 directly against the code before accepting the verdict, per `REVIEW_PROTOCOL.md`'s
+instruction to treat a worker verdict as a claim to check, not relay. Outcome: **REDESIGN
+accepted**, not patched forward — a human-authorized six-point redesign was specified and
+implemented (executor-owned `mkdtemp` workspace, bidirectional `realpath` containment, discovered-
+flag capability restriction, STOP polling + whole-process-tree termination with a bounded
+kill-grace timeout, documented fresh-process semantics, expanded tests).
+
+**Windows CLI resolution bug (found by Claude, not a review pass):** running the redesigned
+executor against the real installed `claude` CLI (not the test stub) failed with `ENOENT` —
+Windows npm installs `claude` as a `.cmd`/`.ps1` shim, not directly spawnable via `shell:false`.
+Claude verified `shell:true` "fixes" this but rejected it: Node's `DEP0190` means array arguments
+are not escaped under `shell:true`, and `descriptor.prompt` is untrusted text — a real injection
+risk. Fixed instead via `where`/`which` resolution of the real `claude.exe`, passing only the
+fixed command name (never task content) to the resolver subprocess.
+
+**Pass 2 (on the redesign + Windows fix):** verdict **APPROVE WITH REQUIRED CHANGES** — found the
+capability validation used a bypassable denylist (`toolAllowlist: 'default'` silently passed
+through, re-enabling Bash, since `'default'` was never on the denylist) and that the `where`/
+`which` resolver subprocess had no timeout (unbounded, unlike the `--help` probe). Separately
+claimed Windows executable resolution "does not work" — reproduced in the reviewer's own sandbox,
+but Claude independently re-verified resolution working correctly in the real target environment
+(Git Bash, native PowerShell/Node, and a full live `executeTask` run all succeeded) and attributed
+the reviewer's failure to that sandbox's own `PATH` lacking the npm global bin directory, not a
+code defect — documented as an explicit operational precondition rather than changed. Required
+changes (denylist → positive allowlist restricted to `Read`/`Write`/`Edit` tools and `acceptEdits`
+permission mode only; resolver timeout added) were implemented and re-validated.
+
+**Pass 3 (final):** verdict **APPROVED**, no required changes remaining. Independently re-traced
+the positive-allowlist rejection paths, confirmed the resolver timeout, confirmed test coverage,
+confirmed the documentation is accurate and non-overclaiming, and independently concurred that the
+Windows-resolution disagreement from Pass 2 was specific to that reviewer's own sandbox `PATH`, not
+a live risk in the real target environment.
+
+**Live adversarial isolation smoke test (run directly by Claude, per the human task's explicit
+requirement, against the real `claude` CLI — not a stub):** a task descriptor asked the child
+Claude process to write an allowed file inside its own executor-created workspace, and attempt to
+write a forbidden file at an absolute path outside the workspace (a disposable temp sibling
+directory — never the real MIHVER repo, per instruction). Result: the allowed write succeeded; the
+real CLI's own JSON output recorded a `permission_denials` entry for the forbidden `Write`
+attempt; the forbidden file was confirmed absent afterward. This is the empirical validation the
+capability-restriction mechanism needed, since stub-based automated tests cannot exercise real
+Claude Code's actual permission enforcement.
 
 ## Required Changes
 
-1. `CURRENT_TASK.md`'s "Next Gate" section asserted PR #7 was opened and suggested `gh pr view 7`
-   to check live status. Fixed: now states only that a PR is expected/authorized for this task
-   and that human review/the merge gate are pending — no PR number or status claim.
-2. `REVIEW_STATE.md`'s "Merge Decision" and "Pending Human Gate" sections made the same PR #7
-   live-existence/status claims. Fixed the same way.
-3. `REVIEW_STATE.md`'s History entry for `PROJECT-CONTEXT-AUTO-BOOTSTRAP` (PR #6) was stale and
-   asserted current, unresolved status ("The merge itself was not performed as of this entry").
-   Per explicit human instruction, corrected to record the now-confirmed fact: PR #6 was
-   squash-merged to `main` at `3f0b53b`.
-4. `REVIEW_STATE.md`'s History entry for `PROJECT-CONTEXT-FREEZE-STATE` (PR #4) similarly
-   asserted unresolved current status ("remains a separate, later action not yet taken") rather
-   than a settled historical fact. Fixed to record only what was authorized at the time, without
-   asserting present-day status.
+None remaining as of Pass 3 (final). Pass 1's REDESIGN and Pass 2's required changes were both
+resolved — see History for the full record and "Fixes Applied" below.
 
 ## Fixes Applied
 
-All four required changes above applied to `.project/CURRENT_TASK.md` and
-`.project/REVIEW_STATE.md`. `.project/DECISIONS_LOG.md` was not modified, per explicit
-instruction for this patch. Re-validated: `npm run test:night-runner` 15/15, `npm test` 24/24,
-`npm run context` (reports this task active/current for this branch).
+- Pass 1 (REDESIGN → redesign implementation): workspace isolation via executor-owned `mkdtemp` +
+  bidirectional `realpath` containment (closes parent-directory and symlink/junction bypasses);
+  discovered-flag capability restriction (`--tools`, `--strict-mcp-config`, no bypass-permissions);
+  STOP polled during execution with whole-process-tree termination (POSIX process group / Windows
+  `taskkill /t /f`) and a bounded kill-grace timeout; consistent `--print` in discovery and
+  execution; documented fresh-process semantics; expanded tests (13 → 17 executor tests).
+- Windows CLI resolution fix: `where`/`which`-based real-executable resolution, `shell:true` never
+  used (17 → 21 executor tests).
+- Pass 2 required changes: denylist → positive allowlist (`Read`/`Write`/`Edit`, `acceptEdits`
+  only); resolver lookup timeout added; Windows-resolution documentation precondition added (21 →
+  22 executor tests).
+- Re-validated after every pass: `npm run test:night-runner` 15/15, `npm test` 24/24, unaffected.
+  `scripts/dev/night-runner.mjs` and `tests/night-runner/**` confirmed unchanged after every pass.
 
 ## Merge Decision
 
-`NIGHT-RUNNER-FOUNDATION` (PR #7) **APPROVED for merge** — human decision stated directly as "PR
-#7 / NIGHT-RUNNER-FOUNDATION is APPROVED for merge"; recorded via a Gate Recording Commit per
-`AGENT_POLICY.md`. The merge itself has not been performed — execution requires a separate, later
-explicit instruction.
+Human approved PR #8 for merge, stated directly in conversation: "PR #8 /
+NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR is APPROVED for merge." Recorded here via a Gate Recording
+Commit per `AGENT_POLICY.md`'s Gate Recording Commit clause — this commit records the approval
+only; it does not itself execute the merge, per that same clause ("it never authorizes an actual
+merge to `main`"). Merge execution remains a separate, later action requiring its own explicit
+instruction, per precedent (`NIGHT-RUNNER-FOUNDATION` / PR #7, and `PROJECT-CONTEXT-BOOTSTRAP` /
+PR #3).
 
 ## Pending Human Gate
 
-Human review is complete and merge is approved (see "Merge Decision" above). Execution of the
-actual merge is the remaining pending step, per `AGENT_POLICY.md`'s Authority Hierarchy and Gate
-Recording Commit policy. Live PR existence/status is a remote-only GitHub fact and is not recorded
-in this file.
+Human merge approval has been given and is recorded above. The remaining step is merge execution
+itself (squash and merge to `main`, per `AGENT_POLICY.md`'s Pull Requests section) — not yet
+performed, and requires a separate explicit instruction to execute.
 
 ## History
+
+- 2026-08-19/2026-08-20 — `NIGHT-RUNNER-FOUNDATION-FINAL` (correction pass on
+  `chore/night-runner-foundation`, before PR #7 received human review): one independent read-only
+  Codex reviewer, focused specifically on runtime-budget semantics and state consistency:
+  hand-traced the corrected per-attempt runtime charging
+  (`min(estimated_runtime_seconds, per_task_timeout_seconds)`, checked before every attempt
+  including retries) against both new runtime-budget fixtures line-by-line, confirmed the
+  `max_tasks` integer-validation fixture and code, confirmed `NIGHT_RUNNER.md` has no remaining
+  stale "charge the full estimate once" description, and audited `.project/CURRENT_TASK.md` /
+  `.project/REVIEW_STATE.md` for any remaining live/prospective PR-state language. Verdict
+  **APPROVE WITH REQUIRED CHANGES** — no algorithmic, determinism, or documentation defect found;
+  all required changes were state-metadata language quoted verbatim from `CURRENT_TASK.md`'s
+  "Next Gate" and `REVIEW_STATE.md`'s then-current "Merge Decision" / "Pending Human Gate"
+  sections (PR number, "opened", a `gh pr view 7` suggestion), plus one additional pre-existing
+  History entry (the PR #4 entry's "remains a separate, later action not yet taken" clause) that
+  the reviewer identified as the same category of live-state claim. Claude's final outcome:
+  **APPROVED** (after rewriting all flagged sections to state only that a PR is
+  expected/authorized and that human review/merge approval is a pending gate, with no PR number,
+  status, or GitHub-query pointer recorded). All four required changes applied to
+  `.project/CURRENT_TASK.md` and `.project/REVIEW_STATE.md`; `.project/DECISIONS_LOG.md` was not
+  modified, per explicit instruction for this patch. Re-validated: `npm run test:night-runner`
+  15/15, `npm test` 24/24, `npm run context` (reported this task active/current for that branch).
+  Separately: `NIGHT-RUNNER-FOUNDATION` (PR #7) was human-approved for merge ("PR #7 /
+  NIGHT-RUNNER-FOUNDATION is APPROVED for merge"), recorded via a Gate Recording Commit; merge
+  execution itself had not been performed as of this entry and required a separate, later explicit
+  instruction. Moved here from "Latest Review"/"Merge Decision"/"Pending Human Gate" now that those
+  sections describe `NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR` instead, per this file's branch/task
+  scoping. — branch `chore/night-runner-foundation`
 
 - 2026-08-19 — `NIGHT-RUNNER-FOUNDATION` (first pass, PR #7): one independent read-only Codex
   reviewer, focused on requirement coverage against `docs/development/NIGHT_RUNNER.md`,
