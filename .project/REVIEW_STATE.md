@@ -95,15 +95,19 @@ resolved — see History for the full record and "Fixes Applied" below.
 
 ## Merge Decision
 
-Not applicable yet. `NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR` has reached independent-review APPROVED
-and commit/push/PR are now authorized per the human task's original fields (`Commit/push allowed:
-yes; PR expected: yes; do not merge`) — but there has been no human PR-merge decision, and none is
-claimed here.
+Human approved PR #8 for merge, stated directly in conversation: "PR #8 /
+NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR is APPROVED for merge." Recorded here via a Gate Recording
+Commit per `AGENT_POLICY.md`'s Gate Recording Commit clause — this commit records the approval
+only; it does not itself execute the merge, per that same clause ("it never authorizes an actual
+merge to `main`"). Merge execution remains a separate, later action requiring its own explicit
+instruction, per precedent (`NIGHT-RUNNER-FOUNDATION` / PR #7, and `PROJECT-CONTEXT-BOOTSTRAP` /
+PR #3).
 
 ## Pending Human Gate
 
-A PR is being opened for human review (not merge). Human review/merge approval is the remaining
-gate, per `AGENT_POLICY.md`'s Authority Hierarchy — not reached yet as of this entry.
+Human merge approval has been given and is recorded above. The remaining step is merge execution
+itself (squash and merge to `main`, per `AGENT_POLICY.md`'s Pull Requests section) — not yet
+performed, and requires a separate explicit instruction to execute.
 
 ## History
 

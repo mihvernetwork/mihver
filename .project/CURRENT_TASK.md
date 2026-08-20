@@ -22,8 +22,9 @@ Base: `main` (`9a61a0bfc03ff17607493539f5003eac0b88c969`)
 
 ## Status
 
-**Redesign complete — APPROVED, not yet committed/pushed/PR'd.** V1 (implemented by Codex Worker
-A) received an independent Codex review verdict of **REDESIGN**: its central safety claim — that
+**Redesign complete — APPROVED, committed, pushed, and opened as PR #8. Human has approved PR #8
+for merge; merge execution itself is pending a separate explicit instruction.** V1 (implemented by
+Codex Worker A) received an independent Codex review verdict of **REDESIGN**: its central safety claim — that
 a caller-supplied `cwd` outside the repo structurally prevents the child Claude process from
 writing into the MIHVER working tree — did not hold (`cwd` is not a filesystem sandbox; a
 parent-directory or symlink/junction workspace was wrongly accepted as "outside"; STOP was
@@ -56,9 +57,15 @@ A third independent Codex review returned final verdict **APPROVED**, with no re
 remaining, and independently concurred that the Windows-resolution disagreement was
 environment-specific to the reviewing sandbox.
 
-Commit/push/PR are now authorized to proceed per the human task's original instruction
-(`Commit/push allowed: yes; PR expected: yes; do not merge`), conditioned on this APPROVED outcome
-— now met.
+Commit/push/PR were authorized per the human task's original instruction (`Commit/push allowed:
+yes; PR expected: yes; do not merge`), conditioned on this APPROVED outcome — met, and PR #8
+(base `main`, compare `feat/night-runner-fresh-claude-executor`) was opened.
+
+The human subsequently approved PR #8 for merge, stated directly: "PR #8 /
+NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR is APPROVED for merge." Recorded via a Gate Recording Commit —
+see `REVIEW_STATE.md`'s "Merge Decision". This approval does not itself execute the merge; merge
+execution requires a separate, later explicit instruction, per precedent
+(`NIGHT-RUNNER-FOUNDATION` / PR #7).
 
 ## Allowed Scope
 
@@ -120,6 +127,6 @@ Forbidden: `scripts/dev/night-runner.mjs`, `tests/night-runner/**`, `docs/founda
 
 ## Next Gate
 
-The redesign reached an **APPROVED** independent review outcome. Commit/push/PR are authorized per
-the human task (`Commit/push allowed: yes; PR expected: yes; do not merge`). Claude opens a PR;
-does not merge; human review/merge approval remains a separate, later gate.
+PR #8 was opened and the human has approved it for merge (recorded via a Gate Recording Commit —
+see `REVIEW_STATE.md`). Merge execution itself has not been performed and requires a separate,
+later explicit instruction to execute, per precedent (`NIGHT-RUNNER-FOUNDATION` / PR #7).
