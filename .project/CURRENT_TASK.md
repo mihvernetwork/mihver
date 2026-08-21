@@ -78,6 +78,6 @@ Forbidden (frozen, none touched): `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.
 
 ## Next Gate
 
-PR to `mihvernetwork/mihver:main` to be opened, pushed via the `devSerdar` fork (per this task's
-explicit instruction — not `mihvernetwork`, reserved for other work). Do not merge. `ADR-0003`
-remains Proposed. Human review of the PR is the next gate.
+PR #13 opened (base `mihvernetwork/mihver:main`, compare `devSerdar:m0/step-03a-requirement-contract`
+— pushed via the `devSerdar` fork per this task's explicit instruction, not `mihvernetwork`). Do not
+merge. `ADR-0003` remains Proposed. Human review of the PR is the next gate.
