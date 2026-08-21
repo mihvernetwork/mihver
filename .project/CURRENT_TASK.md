@@ -5,21 +5,21 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-M0-STEP-03A-BRAIN-ASSISTED-FINAL-AUDIT
+M0-STEP-03A-FINAL-INTRINSIC-CONSISTENCY-FIX
 
 ## Objective
 
-A final audit of the M0 Step 03A draft (`REQUIREMENT_SPEC.md`, `ADR-0003`, `REQUIREMENT_CASES.md`),
-informed by MIHVER Brain (`../mihver-brain`) engineering-lesson retrieval before planning the review.
-Retrieved and applied two `mihver`-scope lessons: "Review coverage should be decomposed by invariant
-axis" and "Cross-axis invariants require explicit review contracts" (both treated as advisory, not
-authoritative). Dispatched four independent read-only Codex reviewers by invariant *interaction*
-(A: normative × epistemic; B: resolution authority × lifecycle; C: testability × completeness ×
-examples; D: cross-document contradiction matrix) rather than file range, and — per the Brain
-lessons — added an explicit six-named-axis coverage checklist plus applied pairwise-interaction
-scrutiny to Claude's own independent verification, not only to reviewer instructions. Frozen
-boundaries respected: `ADR-0002`, `INTENT_SPEC.md`, `USER_IDEA.md`, existing schemas/validator, and
-`INTENT_CASES.md` were not modified. `ADR-0003`'s Status remains Proposed throughout.
+Fix three remaining issues an external final review found in the M0 Step 03A draft
+(`REQUIREMENT_SPEC.md`, `ADR-0003`, `REQUIREMENT_CASES.md`): (1) "What Qualifies as a Requirement"
+contradicted R-20 by implying a binding/constraining Claim with unresolved force could already become
+a Requirement; (2) R-21's Complete/Partial test used future-candidate-population phrases
+("overwhelming majority of candidates," "narrow boundary zone") instead of being decidable from the
+artifact's own semantics alone — re-derived from an intrinsic principle and rebuilt around an explicit
+SATISFIED/NOT_SATISFIED/INDETERMINATE satisfaction-procedure model, re-deriving Case 4 rather than
+preserving it by default; (3) "User-Selected Technology" implied resolving a named technology's
+*negotiability* could, by itself, revise its normative *strength* — these are independent axes.
+Frozen boundaries respected: `ADR-0002`, `INTENT_SPEC.md`, `USER_IDEA.md`, existing
+schemas/validator, and `INTENT_CASES.md` were not modified. `ADR-0003`'s Status remains Proposed.
 
 ## Branch / Base
 
@@ -28,40 +28,44 @@ Base: `main` (`a20d647` — includes merged PR #10, #11, #12; `ADR-0002` Status:
 
 ## Status
 
-**Complete.** Four axis-interaction Codex reviewers found real, independently-verified defects the
-prior (file-range and first invariant-axis) rounds had missed. Confirmed and fixed: (1) the
-"Requirement-Level Inference" mechanism had no rule pinning its strength to its premise's strength or
-requiring provisional marking, unlike the parallel R-03/R-04 rules for `IntentSpec`-level
-Inferred/Assumed Claims — closed with new **R-22**; (2) Case 8 was an unfilled placeholder
-("`[behavior implied by the assumed referent]`") that couldn't ground its own Complete/strength claims
-and read as if Requirement Derivation decides force from the resolved content rather than compiling a
-pre-recorded force — rewritten concretely; (3) Case 7a ("minimize data-locality exposure generally")
-and Case 11's positive clause ("academic-performance-based indicators... who may need support") each
-had zero recorded metric/comparator — the same missing-oracle defect class Case 16's "fast" fix had
-addressed, but not caught there — both reclassified Partial for that clause, independent of their
-(correct) strength; (4) R-21 itself had real wording tension between its first-sentence
-no-invented-scope test and its boundary-refinement carve-out, sharpened into an explicit two-situation
-test (genuine metric/threshold-with-boundary-refinement remains Complete vs. no-metric-at-all is
-Partial) — this sharper test is what correctly separated the confirmed Case 7a/11 defects from the
-still-rejected Case 4 reclassification; (5)-(9) five smaller cross-document clarity fixes (a stray
-lowercase "ambiguity" in Case 4 risking confusion with the formal term; ADR-0003's compact force-map
-summary implying all preferences map to SHOULD, missing the weak-preference→MAY tier; the "Partial"
-prose over-narrowing revision to "an `IntentSpec` clarification" when an R-19-fillable Unknown can
-instead be closed by Requirement Derivation alone; ADR-0003's "usable now" phrasing sitting awkwardly
-next to "not authorized"; an ADR Open Question conflated with the already-resolved multi-clause
-cardinality rule). **One reviewer disagreement resolved again, for a second independent round, by
-re-derivation rather than majority vote**: two more reviewers (this round's B and C) independently
-argued Case 4's cost-category Unknown should flip to Partial/non-fillable, joining last round's
-Reviewer B — Claude re-derived the question a second time, this time articulating the crisp
-metric-exists-vs-doesn't dividing line now in R-21, and kept Case 4 Complete/fillable; that same
-sharpened line is what caught the genuinely different Case 7a/11 defects, which is itself evidence the
-line is correctly drawn rather than merely defended. `npm test`: 32/32 throughout.
+**Complete.** All three findings fixed at the source, then three independent read-only Codex reviewers
+dispatched (A: eligibility × force/R-20; B: completeness/testability intrinsicness × Case 4/R-21; C:
+force × negotiability × cross-document consistency) found further real defects in Claude's own fixes,
+all independently re-verified before being applied:
 
-Final recommendation: **APPROVED** — not `REDESIGN`; not `APPROVE_WITH_REQUIRED_CHANGES` (all
-confirmed defects were fixed in this same task, then re-verified against the edited text, before this
-verdict was reached — nothing is left open pending a further round). See
-`.project/REVIEW_STATE.md`'s "Latest Review" for the full defect list, the six-axis Brain-derived
-coverage checklist, and the Brain Retrieval Impact report.
+- (Reviewer A) A second instance of the same R-20 contradiction survived in the Information-Loss
+  Rules bullet ("a user-named technology survives as a stated constraint") — reworded to cover both
+  the force-resolved and force-unresolved branches instead of overclaiming the former unconditionally.
+- (Reviewer B) The newly-written R-21 was gameable: nothing required the SATISFIED/NOT_SATISFIED/
+  INDETERMINATE procedure to be *faithful* — a trivial "always INDETERMINATE" procedure technically
+  satisfied the letter of the rule. Closed with an explicit faithfulness/maximal-determinacy
+  requirement: the procedure must return SATISFIED or NOT_SATISFIED whenever every recorded reading
+  agrees, and may only return INDETERMINATE where the readings genuinely disagree for that candidate —
+  itself an intrinsic, per-candidate test, not a population claim.
+- (Reviewer B) Case 4's worked procedure had a strict-vs-inclusive threshold bug: "under $100/month"
+  is a strict inequality, but the procedure used ≤/> instead of </≥, misclassifying a candidate priced
+  at exactly $100 as SATISFIED. Fixed, and re-verified the corrected procedure is airtight and
+  faithful (never returns INDETERMINATE where readings agree).
+- (Reviewer B) Four more instances of stale population-dependent completeness language ("...for
+  essentially every candidate") survived in Cases 7b, 8, and 11's prohibition clauses — reworded to
+  intrinsic, per-candidate procedure language.
+- (Reviewer C) Three more force/negotiability conflations survived Claude's own initial fix: R-19's
+  "Note on terminology" said resolving negotiability "directly decides whether a stated constraint is
+  binding" (should be exclusivity, not bindingness); the same phrase recurred inside "User-Selected
+  Technology" itself ("binding to only this option"); ADR-0003's Decision item 3 repeated the same
+  coupling; Case 15 presented "negotiable" as a third force category alongside "obligation" and
+  "preferred." All four reworded to keep force (→ strength) and negotiability (→
+  exclusivity/substitutability) as genuinely independent axes, matching the already-fixed closing
+  paragraph they had been inconsistent with.
+
+`npm test`: 32/32 throughout.
+
+Final recommendation: **APPROVED** — not `REDESIGN` (no reviewer found the model's basic shape
+unsound; every confirmed defect was a wording/rigor gap, including the R-21 gaming loophole, which was
+a rigor gap in a rule's own definition, not evidence the underlying three-valued model is wrong); not
+`APPROVE_WITH_REQUIRED_CHANGES` (all confirmed defects — including the ones the reviewers found in
+Claude's own same-task fixes — were fixed and re-verified before this verdict was reached). See
+`.project/REVIEW_STATE.md`'s "Latest Review" for the full defect list.
 
 ## Allowed Scope
 
@@ -87,13 +91,10 @@ Forbidden (frozen, none touched): `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.
 ## Validation
 
 - `npm test`: 32/32 throughout (unaffected by this task's prose-only, no-schema-touched changes).
-- Four independent Codex reviewers by invariant *interaction* (A/B/C/D), all findings independently
-  verified by Claude against the actual text before any fix was applied. One reviewer disagreement
-  (Case 4, now argued independently by three reviewers across two rounds) resolved a second time by
-  Claude's own re-derivation, not by majority vote — this round's re-derivation produced a sharper,
-  independently-useful rule (R-21's two-situation test) rather than just repeating the prior
-  conclusion. MIHVER Brain (`../mihver-brain`) queried for review-planning lessons before dispatch;
-  see `.project/REVIEW_STATE.md` for the retrieval and its concrete effect on the review plan.
+- Three independent Codex reviewers (A/B/C), each finding real residual defects in Claude's own
+  same-task fixes — including a gaming loophole in the newly-written R-21 and a strict-inequality math
+  bug in Case 4's worked procedure — all independently re-verified by Claude against the actual text
+  before being fixed.
 
 ## Next Gate
 

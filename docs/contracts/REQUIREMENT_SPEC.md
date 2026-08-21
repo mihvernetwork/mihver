@@ -70,13 +70,22 @@ the Claim(s) or Open Item(s) that support it. A Requirement is not a restatement
 formal words; it is a *compiled* value: something a later stage can check a candidate architecture
 against without re-reading prose.
 
-A Claim is eligible to become the basis of a Requirement only when it carries **normative or
-desiderative force** (obligation, prohibition, permission, or preference — `INTENT_SPEC.md`'s force
-axis) **or** is a directly-stated constraint whose absence of force does not remove its binding
-character (e.g. an explicitly named required technology — see "User-Selected Technology" below,
-which is a constraint even though its own force may be a plain, unhedged statement rather than an
-"I want" preference). A purely descriptive Claim (force absent, e.g. "we have five engineers") is
-never, by itself, sufficient basis for a Requirement — see "What Must Not Become a Requirement."
+Whether, and what, a Claim compiles to depends on its force, in exactly three ways — never a fourth:
+
+- **Resolved normative or desiderative force** (obligation, prohibition, permission, or preference —
+  `INTENT_SPEC.md`'s force axis) — the Claim **may become the basis of a Requirement**, mapped per
+  "Force → Requirement Strength Mapping" below.
+- **Genuinely force-absent (purely descriptive)** — e.g. "we have five engineers" — the Claim **never
+  becomes a Requirement**, by itself; see "What Must Not Become a Requirement."
+- **Constraining or binding content whose own force did not resolve to any of the four categories**
+  (e.g. an explicitly named required technology stated as a plain, unhedged method rather than as an
+  "I want" preference or a stated obligation — see "User-Selected Technology" below) — the Claim is
+  **not** thereby eligible to become a Requirement with an assigned strength; per **R-20**, it is
+  preserved as an **unresolved constraint-candidate**, and the affected portion of `RequirementSpec` is
+  Partial, not Complete, until a new Intent Parsing pass resolves the force. This is a different case
+  from the first bullet, not a variant of it: the Claim's binding *character* being evident from its
+  wording does not mean its binding *strength* (MUST/SHOULD/MAY) is already settled — those are the
+  two different questions R-20 exists to keep separate.
 
 ## What Must NOT Become a Requirement
 
@@ -403,9 +412,12 @@ this is the single most load-bearing distinction in this contract, directly exte
   [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md), which apply R-19 to opposite outcomes, and
   Case 4's own reasoning for why a boundary-straddling candidate doesn't change that conclusion.
   Whether a named technology's negotiability is resolved is a canonical example of the *forbidden*
-  kind under R-19 as well: resolving it directly decides whether a stated constraint is binding, so
-  it can never be filled by Requirement Derivation at any confidence or convenience level (see
-  "User-Selected Technology" below).
+  kind under R-19 as well: resolving it directly decides the stated constraint's **exclusivity** —
+  whether a substitute may satisfy it, or only the named technology itself may — which is a
+  user-facing scope question, not an internal parameter, even though it never touches the constraint's
+  normative **strength** (that is force's question alone, kept fully independent — see "User-Selected
+  Technology" below). Negotiability can never be filled by Requirement Derivation at any confidence or
+  convenience level, for that reason, regardless of whether the Claim's force separately resolved.
 
   Where filling genuinely *is* permitted under R-19, it remains Requirement Derivation's **choice**,
   not a default it must take, per `INTENT_SPEC.md`'s Assumption Policy ("For an operational gap that
@@ -527,19 +539,22 @@ eligible):
 - **Complete.** Every Claim in the consumed `IntentSpec` that carries derivable content either became
   one or more Requirements, or was explicitly excluded with a stated reason (descriptive, no force;
   redundant with an existing Requirement; etc.) — **and every derived Requirement supplies or
-  authorizes a satisfaction procedure an evaluator can apply without inventing one itself** (per
-  R-21). Completeness has two distinct ways to fail, not one: (a) *interpretive* blockage — a
-  surviving Ambiguity or Conflict prevents deriving a candidate Requirement at all (see "LOW/MEDIUM
-  Open Items and Conflicts" above); and (b) *testability* blockage — a Requirement was derived, but
-  its own recorded content supplies no metric, comparator, or procedure at all, so an evaluator would
-  have to invent the test itself rather than merely apply an imprecise one. Both make the affected
-  area Partial, not Complete, even though only (a) involves an Ambiguity/Conflict in the formal sense
-  — (b) can be triggered by an Unknown, or by a Claim whose own force never resolved (R-20). A
-  Complete
-  `RequirementSpec` may still carry forward unresolved LOW/MEDIUM Unknowns that merely *refine* an
-  already-testable Requirement's scope or accounting boundary (e.g. Case 4's cost-category Unknown) —
-  those don't block testability, only precision; "Complete" describes the absence of *both* kinds of
-  blockage, not the absence of every open question.
+  authorizes a SATISFIED/NOT_SATISFIED/INDETERMINATE satisfaction procedure an evaluator can apply
+  without inventing one itself** (per R-21). Completeness has two distinct ways to fail, not one:
+  (a) *interpretive* blockage — a surviving Ambiguity or Conflict prevents deriving a candidate
+  Requirement at all (see "LOW/MEDIUM Open Items and Conflicts" above); and (b) *testability*
+  blockage — a Requirement was derived, but its own recorded content supplies no metric, comparator,
+  or procedure at all — not even one with an INDETERMINATE branch — so an evaluator would have to
+  invent the test itself rather than merely apply one. Both make the affected area Partial, not
+  Complete, even though only (a) involves an Ambiguity/Conflict in the formal sense — (b) can be
+  triggered by an Unknown, or by a Claim whose own force never resolved (R-20). A Complete
+  `RequirementSpec` may still carry forward unresolved LOW/MEDIUM Unknowns that a fully-specified
+  satisfaction procedure already routes to INDETERMINATE (e.g. Case 4's cost-category Unknown, where
+  the procedure itself — not an appeal to how many candidates would be affected — is what determines
+  which candidates land on INDETERMINATE) — that routing does not block testability, because the
+  procedure itself is still complete and content-derived; "Complete" describes the absence of *both*
+  kinds of blockage, not the absence of every open question, and never depends on how many candidates
+  a surviving Unknown actually affects.
 - **Partial.** At least one Requirement that could otherwise be derived instead remains explicitly
   unresolved — because it depends on a surviving Ambiguity or Conflict Requirement Derivation has no
   authority to resolve, because a value it materially depends on for testability is wholly unresolved
@@ -600,8 +615,10 @@ extending `INTENT_SPEC.md`'s own framing of this rule one stage later:
   merely because Requirement Derivation judges it infeasible — feasibility is a downstream concern
   (Technology Candidate Identification, Architecture Synthesis), not something that retroactively
   changes a Requirement's stated strength.
-- **A user-named technology survives as a stated constraint**, not as an evaluated or endorsed
-  choice — see "User-Selected Technology" below.
+- **A user-named technology is never silently dropped** — it survives as a strength-bearing stated
+  constraint only if its Claim's own force resolved, or otherwise as an unresolved
+  constraint-candidate carried forward per R-20 — in neither case as an evaluated or endorsed choice —
+  see "User-Selected Technology" below.
 - **Origin survives**, per "Treatment of Claim Origin" above — collapsing a User-Provided, Inferred,
   and Assumed basis into indistinguishable Requirements is exactly the provenance-laundering failure
   this document exists to prevent.
@@ -626,9 +643,10 @@ named:
   preference — exactly mirroring "Force → Strength Mapping" above. Whether *alternatives* would also
   be acceptable (negotiability) is a separate question from whether *this* strength is correct: if
   negotiability is itself an unresolved Unknown, it is carried forward attached to the Requirement,
-  never filled (per R-19 — resolving whether a stated constraint is binding to only this option is
-  exactly the forbidden kind of Unknown), but does not by itself change the Requirement's own already-
-  resolved strength.
+  never filled (per R-19 — resolving whether the constraint is **exclusive to this option** or
+  **substitutable** is exactly the forbidden kind of Unknown), but does not by itself change the
+  Requirement's own already-resolved strength: negotiability governs exclusivity/substitutability
+  semantics only, never the constraint's binding strength.
 - **If force did not resolve** — the wording is a direct, unhedged statement of method that Intent
   Parsing correctly declined to categorize as obligation, prohibition, permission, or preference (see
   `INTENT_CASES.md` Case 7 for the worked example this pattern comes from) — `RequirementSpec` **must
@@ -647,9 +665,18 @@ In neither case does `RequirementSpec` evaluate, endorse, or determine the named
 suitability, compare it to alternatives, or decide whether it is technically appropriate for the
 stated goal — that evaluation belongs to Technology Candidate Identification and Architecture
 Synthesis, informed by `EvidenceBundle`, governed by Principle 2 (Evidence Before Recommendation).
-Only a new Intent Parsing pass that resolves the Claim's force (or its negotiability) produces a new
-`IntentSpec` version from which the Requirement's strength may then be revisited, per "Requirement
-Identity and Versioning."
+
+Force and negotiability remain independent axes here exactly as they do above, and each is revisited
+only by the kind of Intent Parsing pass that actually resolves *it*, not by either resolving the
+other: a new `IntentSpec` version that resolves the Claim's **force** is what may cause the
+Requirement's **strength** to be revisited (per "Requirement Identity and Versioning") — a
+negotiability resolution, by itself, does not. A new `IntentSpec` version that resolves
+**negotiability** instead changes only the Requirement's recorded **exclusivity/substitutability**
+semantics (e.g. from "negotiability unresolved" to "no substitute acceptable" or to "a substitute
+satisfying the same criteria is acceptable") — it does not, by itself, revise the strength a prior
+force resolution already settled, and it does not retroactively resolve force for a Claim whose force
+never resolved in the first place (that still requires its own, separate force-resolving Intent
+Parsing pass, per R-20). Resolving one of the two never automatically resolves or revises the other.
 
 ### Common Violations
 
@@ -739,26 +766,48 @@ Identity and Versioning."
   those are governed by R-02 instead (no Requirement derived at all, Complete either way per R-17):
   a Claim with nothing normative being asserted is a different case from a Claim asserting something
   binding whose normative category just wasn't settled.
-- **R-21** A Requirement is genuinely Complete only if it supplies, or explicitly authorizes, a
-  satisfaction procedure a downstream evaluator can apply without inventing the metric, comparator,
-  threshold, or scope itself. The test is not "does *some* reasonable operational reading exist in
-  the abstract" (almost anything admits one) but "does the Requirement's own recorded content already
-  point to one." This resolves into two, and only two, distinguishable situations, not a sliding
-  scale: (a) the Requirement's recorded content supplies **at least one genuine metric, comparator, or
-  procedure** that produces a definite verdict for the overwhelming majority of candidates, with only
-  a narrow boundary zone left to refine (e.g. Case 4's dollar threshold — the boundary of which cost
-  categories count is open, but "$100/month" itself is a real, applicable test for nearly every
-  candidate) — this **remains Complete**, because the refinement narrows precision for edge cases
-  rather than supplying the missing test itself (see Case 4's own reasoning for why this holds even
-  for a boundary-straddling candidate); or (b) the Requirement's recorded content supplies **no**
-  metric, comparator, or procedure at all for *essentially any* candidate — where literally nothing in
-  the record indicates what "satisfied" would even look like, not merely at the edges (e.g. "fast," or
-  "minimize exposure generally," with no stated number, benchmark, or comparator anywhere) — this **is
-  Partial**, even though the unresolved item is technically an Unknown rather than an Ambiguity or
-  Conflict. An evaluator filling in a completely unauthorized oracle for case (b) (e.g. picking its own
-  latency threshold for "fast") is not evaluating the Requirement, it is inventing a different, more
-  specific one. The dividing line is whether a real yardstick already exists in the record (case a) or
-  not (case b) — not whether every possible candidate is already resolvable under that yardstick.
+- **R-21** A Requirement is genuinely Complete only if its own recorded content supplies, or
+  explicitly authorizes, a **satisfaction procedure** — a fixed rule, fully determined by the
+  Requirement's own recorded content, that a downstream evaluator can apply to **one candidate at a
+  time, considered entirely on its own**, without inventing the metric, comparator, threshold, or
+  scope itself. Completeness is a property of the Requirement's own recorded content alone, decidable
+  at authoring time — **before any candidate exists to evaluate** — and must never be defined by
+  appeal to what a future candidate population happens to look like (not "the overwhelming majority of
+  candidates," not "a narrow boundary zone," not any other claim about how many real candidates would
+  land where). A test phrased in terms of a candidate population is not decidable from the Requirement
+  alone and is therefore not this test.
+
+  The satisfaction procedure a Complete Requirement supplies or authorizes returns exactly one of
+  three outcomes for any given candidate: **SATISFIED**, **NOT_SATISFIED**, or **INDETERMINATE**.
+  INDETERMINATE is a legitimate, first-class outcome of a Complete Requirement's own procedure — not a
+  symptom of Partial status by itself — for a candidate whose classification depends on an
+  Unknown, Ambiguity, or Conflict the Requirement's provenance already, explicitly carries forward
+  (e.g. Case 4's cost-category boundary). But the procedure must be **faithful and maximally
+  determinate**, not merely well-typed: a procedure that returns one of the three labels is not, by
+  itself, sufficient — for a candidate where every recorded reading of the carried-forward Unknown,
+  Ambiguity, or Conflict agrees on the same verdict, the procedure **must** return that verdict
+  (SATISFIED or NOT_SATISFIED), never INDETERMINATE; INDETERMINATE may be returned only for a
+  candidate where the readings genuinely disagree — i.e. where the open item's eventual resolution
+  would actually change *that specific candidate's* verdict. A procedure that returns INDETERMINATE
+  regardless of whether the readings agree (e.g. "always INDETERMINATE, because the cost-category
+  Unknown remains open") is not a satisfaction procedure under this invariant at all — it never applies
+  the Requirement's own recorded content, and does not make the Requirement Complete. This
+  faithfulness test is itself intrinsic and per-candidate, not a population claim: it asks whether the
+  procedure's output for *this* candidate matches what *this* candidate's own recorded facts, read
+  under every recorded reading, actually say — never how many other candidates would be affected. What
+  makes a Requirement genuinely Complete is that the *procedure itself*, including exactly which
+  recorded open item routes a candidate to INDETERMINATE and why, and satisfying the faithfulness test
+  above, is fully specified by the Requirement's own recorded content — so an evaluator never has to
+  invent that routing rule, only apply it. A Requirement is **Partial** (testability-blocked) when no
+  such faithful procedure — not even one with an INDETERMINATE branch — can be written down from its
+  own recorded content without the evaluator supplying its own metric, comparator, threshold, or scope
+  from nothing (e.g. "fast," or "minimize exposure generally," with no stated number, benchmark, or
+  comparator anywhere to route *any* candidate, in *any* branch — not even to INDETERMINATE, since
+  there is no recorded reading for INDETERMINATE to be conditioned on). The test is binary and
+  content-only: either the Requirement's own recorded content is sufficient to fully specify a
+  faithful SATISFIED/NOT_SATISFIED/INDETERMINATE procedure (Complete — see Case 4's own worked
+  procedure for exactly this shape), or it is not (Partial) — never a question of how many real-world
+  candidates would fall into which branch.
 - **R-22** A Requirement-Derivation-level inference's strength is exactly the strength already
   established by the Requirement or Claim it derives from — never independently chosen, strengthened,
   or weakened — because the operational test governing such an inference already requires it to hold

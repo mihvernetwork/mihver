@@ -124,25 +124,55 @@ capability, actor, or target — it only changes which dollar amounts count towa
 has already stated. Contrast competitor identity, which changes the research capability's own target
 scope.
 
-**A candid check against a boundary-straddling candidate:** consider a candidate costing $80/month
-in infrastructure and model usage plus $60/month in third-party licenses ($140/month total). Under an
-"infrastructure and model usage only" reading it satisfies the Requirement; under an "all recurring
-costs" reading it does not — the category boundary genuinely changes the verdict for this specific
-candidate. This does not make the Requirement untestable in the R-21 sense, though: "cost under
-$100/month" already supplies a real metric and threshold, so the *overwhelming majority* of
-candidates (well under or well over, regardless of which reading applies) are evaluable immediately
-without needing the boundary resolved at all — the unresolved category boundary narrows precision for
-a boundary zone (this is an Unknown, not a formal Ambiguity — no wording in the source Claim itself
-supports competing readings; the category question is simply unaddressed), it does not remove the
-test itself, unlike Case 16's "fast," which supplies no metric or comparator for *any* candidate. A candidate that actually falls in the disputed zone should be
-flagged by the evaluating stage as boundary-sensitive and requiring the Unknown's resolution before a
-verdict is given for *that specific candidate* — that is a normal, expected consequence of an
-unresolved-but-testable Requirement, not evidence the Requirement itself is Partial.
+**A candidate-independent satisfaction procedure (per R-21):** if Requirement Derivation fills the
+cost-category Unknown with a marked default, the Requirement becomes an ordinary two-valued test
+(SATISFIED if the candidate's cost under that definition is strictly under $100/month, NOT_SATISFIED
+otherwise) and Completeness is immediate — no further argument is needed. The harder, more instructive
+case is when Requirement Derivation instead carries the Unknown forward unresolved: even then, the
+Requirement's own recorded content — "under $100/month" (a strict, not inclusive, threshold — $100.00
+exactly does not satisfy it under either reading), together with the carried-forward Unknown's own two
+recorded candidate readings ("infrastructure and model-usage costs only," and "all recurring costs") —
+already fully specifies a three-valued procedure, applicable to any one candidate considered entirely
+on its own, with no reference to any other candidate or to how many candidates would land in which
+branch. The procedure presumes the candidate under evaluation supplies the cost figures it needs (its
+own infrastructure/model-usage cost and its own total recurring cost); a candidate description that
+omits a figure the procedure requires is an evaluation-input completeness problem for the downstream
+evaluating stage to resolve, not a defect in this Requirement's own Completeness:
 
-**Eligibility:** Complete either way (filling the Unknown with a marked default, or carrying it
-forward as an attached open item on an otherwise-derived Requirement, both keep this Complete — only
-an unresolved *Ambiguity or Conflict*, or a testability-blocking Unknown per R-21, would make it
-Partial, and this Claim carries neither, per the boundary-candidate reasoning above).
+- Let `C_narrow` = the candidate's infrastructure-and-model-usage monthly cost (Reading 1).
+- Let `C_wide` = the candidate's total recurring monthly cost, including third-party licenses etc.
+  (Reading 2). `C_wide` is always ≥ `C_narrow`, since Reading 2's total is a superset of Reading 1's.
+- If `C_wide` < $100 → **SATISFIED** (both readings agree the candidate is strictly under budget).
+- If `C_narrow` ≥ $100 → **NOT_SATISFIED** (both readings agree the candidate is not under budget —
+  this correctly includes a candidate priced at exactly $100 under either reading, which is not
+  "under" $100 by either reading's own strict threshold).
+- Otherwise (`C_narrow` < $100 ≤ `C_wide`) → **INDETERMINATE** (the two recorded readings disagree;
+  *which* applies is exactly the carried-forward Unknown — not something this procedure, or the
+  evaluator, may pick on its own). This is the only branch where the readings actually disagree; the
+  first two branches are exactly where they agree, so the procedure is faithful and maximally
+  determinate per R-21 — it never returns INDETERMINATE for a candidate the recorded readings already
+  agree on.
+
+This procedure is derived entirely from the Requirement's own recorded content (the threshold plus
+the Unknown's own two recorded readings); it requires the evaluator to invent nothing, and it is
+defined once, applied identically to every candidate one at a time. A candidate costing $80/month in
+infrastructure/model usage plus $60/month in third-party licenses (`C_narrow` = $80, `C_wide` = $140)
+lands **INDETERMINATE** — not a defect in the procedure, but its own correctly-specified output for a
+candidate whose classification genuinely depends on the still-open Unknown. A candidate at $30/month
+total (`C_narrow` = `C_wide` = $30) is **SATISFIED**; one at $500/month total is **NOT_SATISFIED** —
+resolved without needing the Unknown at all, not because such candidates happen to be common, but
+because the procedure's own structure (`C_wide` < threshold, or `C_narrow` ≥ threshold) determines it
+for that candidate alone, considered in isolation. Nothing in this procedure, or in the Requirement's
+Complete status, depends on how many real candidates would fall into SATISFIED, NOT_SATISFIED, or
+INDETERMINATE — the procedure is fixed and content-derived before any candidate exists to apply it to.
+
+**Eligibility:** Complete either way. Filling the Unknown with a marked default collapses the
+procedure above to an ordinary two-valued test; carrying it forward unresolved keeps the three-valued
+procedure above, which is itself a fully-specified satisfaction procedure per R-21 — INDETERMINATE is
+a legitimate output of that procedure, not evidence of Partial status. This is a genuinely different
+situation from Case 16's "fast," which supplies no metric, comparator, or reading at all from which
+*any* SATISFIED/NOT_SATISFIED/INDETERMINATE procedure could be written down — there, no version of the
+procedure above could even be stated, which is what actually makes a Requirement Partial under R-21.
 
 ---
 
@@ -208,9 +238,11 @@ exposure generally (Inference-derived, moderate confidence)." SHOULD because the
 SHOULD. Confidence and provisional standing are recorded in provenance alongside the origin marker,
 not folded into the strength. Separately from strength, this Requirement's own recorded content
 supplies no metric, comparator, or procedure for "data-locality exposure" or "minimize... generally"
-— structurally the same testability gap as Case 16's "fast," not a boundary-refinement gap like Case
-4's dollar threshold (per R-21's two-way test): nothing here gives a downstream evaluator a real
-yardstick for *any* candidate, not merely an edge case. Strength (SHOULD) and testability (whether a
+— structurally the same testability gap as Case 16's "fast," not the faithful, fully-specified
+SATISFIED/NOT_SATISFIED/INDETERMINATE procedure Case 4's dollar threshold supports (per R-21): no
+version of that procedure could be written down here, for any single candidate considered on its own
+— there is no recorded reading to route even one candidate to a definite branch. Strength (SHOULD) and
+testability (whether a
 satisfaction procedure exists) are independent questions — this Requirement's strength classification
 is correct precisely because it does not depend on, and is not weakened by, its separate testability
 gap.
@@ -246,9 +278,11 @@ compilation, and independently of — not substituting for — the Requirement's
 Requirement's own content supplies no metric/comparator/procedure for "data-locality exposure" or
 "generally," per R-21's testability-blockage branch; this is a defect in the worked example caught on
 final audit, distinct from the strength question 7a exists to demonstrate. Complete for 7b — "transmit
-build artifacts or dependency-lock files containing source content" is a real, applicable binary check
-(inspect the transmitted artifact for embedded source content) for essentially every candidate, the
-same pattern as Case 2's boundary-refinement Completeness, not the missing-oracle pattern.
+build artifacts or dependency-lock files containing source content" fully specifies a two-valued,
+candidate-independent procedure (per R-21): for any one candidate considered on its own, inspect the
+transmitted artifact for embedded source content — SATISFIED if none is found, NOT_SATISFIED if it is
+— with no INDETERMINATE branch needed, since nothing in the Requirement's content records a disputed
+reading. The same pattern as Case 2's Completeness, not the missing-oracle pattern.
 
 ---
 
@@ -299,9 +333,11 @@ recorded gap, rationale, scope, and `reversible: true` property; these are part 
 actual basis and must remain visible to a downstream consumer, not compressed into the word
 "provisional" alone.
 
-**Eligibility:** Complete — "replace the existing record" is a real, applicable binary check (did a
-conflicting upload's existing record get replaced, yes/no) for essentially every candidate; this case
-is not testing the testability axis (contrast Case 7a/Case 11, which are).
+**Eligibility:** Complete — "replace the existing record" fully specifies a two-valued,
+candidate-independent procedure per R-21: for any one candidate considered on its own, did a
+conflicting upload's existing record get replaced, yes/no — no INDETERMINATE branch needed, since
+nothing in the Requirement's content records a disputed reading; this case is not testing the
+testability axis (contrast Case 7a/Case 11, which are).
 
 ---
 
@@ -398,12 +434,14 @@ with two prohibitions does not inflate its own force), MUST NOT for each prohibi
 (c) are themselves prohibitions). Mixed strength within one combined Requirement is expected here,
 per "Requirement Cardinality and Granularity" in `REQUIREMENT_SPEC.md` — it is not an error to
 correct toward a single uniform strength. Strength and testability are, however, independent
-questions (per R-21): the two prohibitions are each a real, applicable binary check (does the output
-contain a per-student ranking or numeric score, yes/no) for essentially every candidate, but the
-positive clause's "academic-performance-based indicators... who may need support" supplies no metric,
-comparator, or threshold — no reading of it says what counts as an "indicator" or what performance
-level triggers "may need support" — the same missing-oracle pattern as Case 7a and Case 16's "fast,"
-not the boundary-refinement pattern of Case 4. The prohibitions being Complete does not make the
+questions (per R-21): the two prohibitions each fully specify a two-valued, candidate-independent
+procedure — for any one candidate considered on its own, does the output contain a per-student ranking
+or numeric score, yes/no — but the positive clause's "academic-performance-based indicators... who may
+need support" supplies no metric, comparator, or threshold — no reading of it says what counts as an
+"indicator" or what performance level triggers "may need support," so no version of even a
+three-valued procedure could be written down for it. The same missing-oracle pattern as Case 7a and
+Case 16's "fast," not the pattern Case 4's dollar threshold supports. The prohibitions being Complete
+does not make the
 positive clause Complete; each clause's testability, like its strength, is assessed independently.
 
 **Prohibited transformations:** Mapping Claim (a)'s preference to SHALL/MUST because it appears
@@ -553,9 +591,13 @@ method" — never resolved to obligation, prohibition, permission, or preference
 choosing any single strength now, including SHOULD, would be Requirement Derivation resolving that
 open question on the Claim's behalf, which R-20 forbids. What is preserved instead: an **unresolved
 constraint-candidate** — "The user explicitly named LangGraph, GPT-5, Pinecone, and Kubernetes as the
-intended technologies; whether this is binding (obligation), merely preferred, or negotiable has not
+intended technologies; whether this is binding as an obligation or merely preferred (force) has not
 been established, and separately, whether substitutes would be acceptable even if some strength is
-established (negotiability) is also unresolved." Both open questions — force and negotiability — are
+established (negotiability) is also unresolved." Negotiability is not a third force category
+alongside obligation and preference — a technology can, in a different case, be obligatory yet
+substitutable under stated equivalence criteria, or preferred yet exclusive; here, both are unresolved
+simultaneously, but they remain two independent open questions, not one merged "how negotiable is
+this" spectrum. Both open questions — force and negotiability — are
 carried forward attached to the constraint-candidate, not merged into one vague "unresolved" label:
 they are genuinely separate (a resolved-obligation-but-unresolved-negotiability Claim is a different,
 and more common, situation — see "User-Selected Technology" in `REQUIREMENT_SPEC.md`).

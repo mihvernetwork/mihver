@@ -94,12 +94,13 @@ structural commitments, detailed in full in
 3. **Interpretive authority over surviving Ambiguities and Conflicts never transfers to this stage,
    regardless of Decision Impact level — and not every Unknown is Requirement Derivation's to fill
    either.** Only Unknowns whose resolution is a genuine technical/operational parameter — not a
-   decision about what the user wants, requires, permits, prohibits, or whether a stated constraint
-   is binding — may legitimately be filled with a working default here, and only when marked as
+   decision about what the user wants, requires, permits, prohibits, whether a stated constraint is
+   binding, or (a distinct question from bindingness) whether it is exclusive to one option or
+   substitutable — may legitimately be filled with a working default here, and only when marked as
    Requirement-Derivation-introduced. An Unknown whose resolution would answer one of those questions
-   (e.g. a named technology's negotiability, or the actual scope of what a goal targets) must remain
-   unresolved exactly as an Ambiguity or Conflict would, regardless of its formal Unknown
-   classification. These interpretive/scope gaps, together with Ambiguities and Conflicts, are
+   (e.g. a named technology's negotiability — its exclusivity/substitutability, never its binding
+   strength — or the actual scope of what a goal targets) must remain unresolved exactly as an
+   Ambiguity or Conflict would, regardless of its formal Unknown classification. These interpretive/scope gaps, together with Ambiguities and Conflicts, are
    carried forward unresolved, producing a **Partial** `RequirementSpec` rather than a
    silently-resolved one.
 4. **`RequirementSpec` gets its own Complete/Partial/Failed output model**, defined around genuine
