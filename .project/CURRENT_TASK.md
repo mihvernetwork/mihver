@@ -5,11 +5,24 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX
+M0-STEP-03A-FINAL-CROSS-REFERENCE-CLEANUP
 
 ## Objective
 
-Fix three residual issues an external verification of head `3866304` found in the M0 Step 03A draft:
+Fix one stale cross-reference a final independent verification found in `REQUIREMENT_CASES.md`: Case
+7b's Eligibility paragraph said "the same pattern as Case 2's Completeness," but Case 2 is now
+explicitly Partial (from the prior `M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX` round). Replaced with a
+genuinely equivalent Complete binary-check example (Case 8). A deterministic sweep of the whole file
+for every "Case X's Complete/Completeness/Partial"-style reference then found two more instances of the
+same staleness the sweep's own regex missed on a literal match (broader phrasing: "Case 1's 'approval
+gate' (testable now...)" in Case 16, and "Case 1's or Case 9's (those have a testable Requirement with
+an open scope/trigger detail)" in Case 15) — both referencing Case 1's/Case 9's pre-fix "testable now"
+framing, which the same prior round had already corrected (Case 1 and Case 9's own Requirements are
+individually Partial too, not "testable now" with only a detail open). Both fixed. No semantics,
+invariants, ADR decisions, or frozen files changed — prose-only cross-reference corrections.
+
+This task supersedes the prior task's own record of what remained; for context on the three residual
+issues that round fixed, see below:
 (1) R-21 allowed a surviving Ambiguity or Conflict — not just an Unknown — to legitimately route a
 candidate to a Complete Requirement's INDETERMINATE branch, contradicting R-08 and "LOW/MEDIUM Open
 Items and Conflicts" (which give Requirement Derivation no authority over Ambiguity/Conflict at any
@@ -28,7 +41,16 @@ Base: `main` (`a20d647` — includes merged PR #10, #11, #12; `ADR-0002` Status:
 
 ## Status
 
-**Complete.** All three findings fixed at the source, then three independent read-only Codex reviewers
+**Complete (this cleanup task).** The stale Case 7b → Case 2 cross-reference is fixed, plus two more
+instances of the same staleness the deterministic sweep surfaced (Case 16 → Case 1, Case 15 → Case
+1/Case 9), all now referencing cases whose current Eligibility genuinely matches the claim being made.
+No reviewers were dispatched for this narrow, mechanical cleanup, per the task's own instructions.
+`npm test`: 32/32. Verdict: **CLEAN**.
+
+---
+
+Status of the prior `M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX` round, retained for context: **Complete.**
+All three findings fixed at the source, then three independent read-only Codex reviewers
 dispatched (A: Ambiguity/Conflict × R-21 lifecycle consistency; B: Case 4 provenance/domain-of-Unknown
 consistency; C: cardinality examples × unstated-responsibility leakage) found further real, deeper
 instances of the same three patterns, all independently re-verified before being applied:

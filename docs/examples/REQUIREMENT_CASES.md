@@ -310,7 +310,8 @@ build artifacts or dependency-lock files containing source content" fully specif
 candidate-independent procedure (per R-21): for any one candidate considered on its own, inspect the
 transmitted artifact for embedded source content — SATISFIED if none is found, NOT_SATISFIED if it is
 — with no INDETERMINATE branch needed, since nothing in the Requirement's content records a disputed
-reading. The same pattern as Case 2's Completeness, not the missing-oracle pattern.
+reading. The same pattern as Case 8's Completeness ("replace the existing record" — a real binary
+check with no disputed reading), not the missing-oracle pattern.
 
 ---
 
@@ -669,8 +670,10 @@ two different open questions, not one.
 **Eligibility:** Partial (per R-20/R-21) — the constraint-candidate cannot be evaluated as "satisfied"
 or "not satisfied" by any candidate architecture, because its own binding strength is unresolved, not
 merely its precision or its scope. This is a genuinely different reason for Partial than Case 1's or
-Case 9's (those have a testable Requirement with an open scope/trigger detail); here, nothing testable
-has actually been produced yet for this Claim.
+Case 9's (those have a settled, legitimately-derived Requirement — an obligation or a conditional
+permission with its own recorded strength — that is nonetheless not independently Complete because an
+unresolved Ambiguity blocks evaluating it against a candidate, per R-21 condition 1); here, no strength
+is assigned at all, and nothing testable has actually been produced yet for this Claim.
 
 ---
 
@@ -692,8 +695,9 @@ at any impact level, exactly as for any other Ambiguity in this corpus. Recordin
 respond quickly enough to be perceived as fast" without picking a reading would also fail R-21
 independently: with no metric or comparator recorded for *any* reading, there is nothing a downstream
 evaluator could apply without inventing one — contrast Case 4's "$100/month" (a real metric and
-threshold; only the accounting *category* is unresolved) or Case 1's "approval gate" (testable now;
-only its environment *scope* is open). Both defects point the same direction here: the Ambiguity is
+threshold; only the accounting *category* is unresolved) or Case 8's "replace the existing record" (a
+real, immediately applicable binary check, with nothing left open). Both defects point the same
+direction here: the Ambiguity is
 recorded and carried forward, unresolved, rather than compiled into any single reading. No
 architecture, framework, or technology is named or implied either way — "modern" is recorded as an
 open preference, not compiled into any implementation pattern.

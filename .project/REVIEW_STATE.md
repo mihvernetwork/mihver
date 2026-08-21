@@ -15,8 +15,27 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX
+Task: M0-STEP-03A-FINAL-CROSS-REFERENCE-CLEANUP
 Branch: `m0/step-03a-requirement-contract`
+
+**This cleanup task's own scope (no reviewers dispatched, per its own instructions):** a final
+independent verification found one stale cross-reference — Case 7b's Eligibility said "the same
+pattern as Case 2's Completeness," but Case 2 is now explicitly Partial (from the round summarized
+below). Fixed by replacing the reference with Case 8, a genuinely equivalent, unconditionally Complete
+binary-check example. A deterministic sweep of `REQUIREMENT_CASES.md` for every "Case X's
+Complete/Completeness/Partial"-style reference then surfaced two more instances of the same staleness
+under broader phrasing the literal regex missed: Case 16 cited "Case 1's 'approval gate' (testable
+now...)" and Case 15 cited "Case 1's or Case 9's (those have a testable Requirement with an open
+scope/trigger detail)" — both using the pre-fix framing that Case 1/9's own Requirement is "testable
+now" except for an attached open item, which the prior round had already corrected (their Requirements
+are individually Partial too, not merely Complete-with-an-open-item). Both reworded to accurately
+describe Case 1/9's current status. Every remaining `Case N` cross-reference in the file was checked
+against that case's own current Eligibility line and found accurate. `npm test`: 32/32. No semantics,
+invariants, ADR decisions, or frozen files changed. **Verdict: CLEAN.**
+
+---
+
+Prior round summarized below, retained for context (this task did not re-review it):
 
 External verification of head `3866304` found three residual issues. Claude fixed each at the source
 first, then dispatched three independent read-only Codex reviewers (A: Ambiguity/Conflict × R-21
