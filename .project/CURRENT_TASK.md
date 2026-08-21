@@ -84,6 +84,7 @@ explicitly reported first), `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG
 
 ## Next Gate
 
-PR to `mihvernetwork/mihver:main` expected once remediation is complete and validated (push to
-personal fork, per PR #10's precedent — same push-access constraint applies). Do not merge. Do not
-change `ADR-0002` Status in this task.
+PR #11 opened (base `mihvernetwork/mihver:main`, compare
+`devSerdar:fix/adr-0002-adversarial-remediation` — pushed via the same fork as PR #10, same
+push-access constraint). Human review of the report and its `REQUIRED_CHANGES_REMAIN`
+recommendation is the next gate. Not merged, per task instruction.
