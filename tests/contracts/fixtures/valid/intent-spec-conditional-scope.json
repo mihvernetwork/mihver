@@ -1,0 +1,19 @@
+{
+  "contract": "intent-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-conditional-cloud-v1", "version": 1,
+    "created_at": "2026-08-21T09:00:00Z", "user_idea_refs": [{ "idea_id": "idea-conditional-cloud", "version": 1 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [
+      { "claim_id": "claim-cloud-condition", "proposition": "Cloud execution may be used only if local execution cannot support the workload.", "origin": "user_provided", "force": { "modality": "permission" }, "discourse_role": "operative", "scope_condition": "Local execution cannot support the workload.", "provenance": { "kind": "user_statement", "idea_id": "idea-conditional-cloud", "user_idea_version": 1, "turn_id": "turn-1", "statement_quote": "Only use cloud execution if local execution can't support the workload.", "speaker": { "kind": "submitting_user" } } }
+    ],
+    "open_items": [
+      { "open_item_id": "unknown-workload-threshold", "kind": "unknown", "question": "What quantitatively counts as local execution being unable to support the workload?", "relevance_rationale": "The fallback mechanism's design depends on this threshold, though the mechanism's existence is already established by the claim.", "decision_impact": { "level": "medium", "unresolved_item": "Workload threshold definition", "downstream_decision": "Fallback trigger design, within an already-determined hybrid-capable architecture", "level_rationale": "The claim already commits to building a conditional fallback; only its tuning is unresolved, which shifts detail, not architecture shape." } }
+    ],
+    "conflicts": [],
+    "clarification_decisions": [
+      { "subject_kind": "open_item", "subject_id": "unknown-workload-threshold", "needed": false, "rationale": "Medium-impact detail deferrable to Requirement Derivation." }
+    ]
+  }
+}

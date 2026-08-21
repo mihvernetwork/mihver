@@ -1,0 +1,14 @@
+{
+  "contract": "intent-spec",
+  "expected_error": "minLength",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-conditional-cloud-bad", "version": 1,
+    "created_at": "2026-08-21T09:01:00Z", "user_idea_refs": [{ "idea_id": "idea-conditional-cloud", "version": 1 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [
+      { "claim_id": "claim-cloud-condition-bad", "proposition": "Cloud execution may be used only if local execution cannot support the workload.", "origin": "user_provided", "force": { "modality": "permission" }, "discourse_role": "operative", "scope_condition": "", "provenance": { "kind": "user_statement", "idea_id": "idea-conditional-cloud", "user_idea_version": 1, "turn_id": "turn-1", "statement_quote": "Only use cloud execution if local execution can't support the workload.", "speaker": { "kind": "submitting_user" } } }
+    ],
+    "open_items": [], "conflicts": [], "clarification_decisions": []
+  }
+}

@@ -347,6 +347,41 @@ no open impact to assess):
   architecture would be substantially MIHVER's invention rather than attributable to stated
   intent — the goal itself, not just an architectural detail, is what's missing.
 
+### Decision Impact Is Outcome-Relative
+
+Decision Impact measures the consequence of proceeding while an Open Item or Conflict remains
+unresolved on the eventual downstream requirement/architecture decision — never how soon, or at
+which pipeline stage, the item happens to get resolved. These are different questions, and only the
+first governs the level assigned here:
+
+- An item can be perfectly safe to *defer procedurally* (Intent Parsing need not resolve it itself;
+  Requirement Derivation or a later stage will) while still carrying HIGH or CRITICAL Decision
+  Impact, if an unresolved wrong answer would materially reshape the eventual architecture. Being
+  deferrable and being low-impact are not the same fact, and an assessment must not infer the second
+  from the first.
+- Conversely, an item can be resolvable immediately and still be LOW impact, if resolving it either
+  way would not change which architecture is appropriate.
+- The practical test: ask what happens to the *eventual* architecture recommendation if this item
+  is never resolved and a later stage has to proceed on the least favorable *materially plausible*
+  reading — bounded the same way the Open Item Relevance Test already bounds Open Items generally
+  (necessary to interpret, safely compile, or preserve a directly implicated boundary of the stated
+  intent), not any imaginable worst case a similar system might someday face. If that bounded worst
+  case forces a materially different or more expensive architecture, the item is at least HIGH —
+  regardless of whether a mechanism exists to safely postpone answering it right now. "Safely
+  postponable" describes *when* MIHVER must act on the answer, not *how much the answer matters*
+  once given.
+- An item whose eventual answer only tunes or scopes a capability whose existence is already
+  established by an accepted Claim (e.g. a precise cost category within an already-stated budget
+  ceiling) is a detail-level question even when the eventual number matters — because no reading of
+  the answer changes *whether* that capability exists, only how it is configured. An item whose
+  eventual answer determines *whether* an entire capability, subsystem, or architecture branch
+  exists at all is shape-level, not detail-level, even when a placeholder or fixed-capacity starting
+  point could technically be built and revised later.
+
+HIGH/CRITICAL Decision Impact is what triggers the Blocked handoff consequence (see "Handoff
+Status: Blocked vs. Failed" below) — the outcome-relative reading above is what that trigger is
+meant to measure, not a separate, stricter test layered on top of it.
+
 ### Decision Impact Provenance
 
 A LOW/MEDIUM/HIGH/CRITICAL assignment is itself a claim that needs a basis, not a label applied by
