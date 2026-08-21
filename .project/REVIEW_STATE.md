@@ -15,101 +15,65 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR
-Branch: `feat/night-runner-fresh-claude-executor`
+Task: ADR-0002-ACCEPTANCE
+Branch: `docs/adr-0002-acceptance`
 
-Three independent read-only Codex review passes, plus one live supervised smoke test run directly
-by Claude against the real `claude` CLI. Final outcome: **APPROVED**.
+One independent read-only Codex reviewer verified the `ADR-0002` Status transition
+(Proposed → Accepted). Overall verdict: **CLEAN AND READY**, all three checks PASS:
 
-**Pass 1 (on V1, implemented by Codex Worker A):** dispatched by Claude after a power interruption
-left this task's prior status ambiguous/uncorroborated — no review outcome had actually been
-recorded for this task/branch before this pass. Verdict **REDESIGN**: V1's central safety claim —
-that a caller-supplied `cwd` outside the repo structurally prevents the child Claude process from
-writing into the MIHVER working tree — did not hold. `cwd` is not a filesystem sandbox; a
-parent-directory or symlink/junction workspace was lexically accepted as "outside"; STOP was
-checked only pre-spawn; timeout killed only the direct child; CLI discovery/execution flags were
-inconsistent (`--print` discovered, `-p` executed). Claude independently verified findings 1, 3, 5,
-and 6 directly against the code before accepting the verdict, per `REVIEW_PROTOCOL.md`'s
-instruction to treat a worker verdict as a claim to check, not relay. Outcome: **REDESIGN
-accepted**, not patched forward — a human-authorized six-point redesign was specified and
-implemented (executor-owned `mkdtemp` workspace, bidirectional `realpath` containment, discovered-
-flag capability restriction, STOP polling + whole-process-tree termination with a bounded
-kill-grace timeout, documented fresh-process semantics, expanded tests).
+1. **Status transition justified by verifiable evidence.** Confirmed
+   `docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md` and `.../ADR-0002-ADVERSARIAL-REMEDIATION.md`
+   exist, reach real (non-ceremonial) conclusions, and their commits (`548bb75`, `63429c9`) are
+   ancestors of `main`. Independently re-ran `npm test`: 32/32, matching the ADR's new
+   "Acceptance basis" claim.
+2. **No substantive semantic/model change slipped into this "acceptance housekeeping" patch.**
+   `git diff main --stat` showed only `.project/DECISIONS_LOG.md` and
+   `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md` changed; the ADR diff touched only Status, the
+   new Acceptance-basis paragraph, and Future Work — Context/Decision/Rationale/Consequences/
+   Alternatives Considered/Risks/Open Questions confirmed untouched. `INTENT_SPEC.md`,
+   `INTENT_CASES.md`, `schemas/**`, and the validator confirmed unchanged vs. `main`.
+3. **Future Work accurately separates completed gates from remaining work.** Schema design
+   (M0 Step 02B, `0683e84`) and the "revisit Status" gate (this review) correctly marked complete;
+   the genuinely open items (RequirementSpec-side contract design; an origin-classification
+   validation approach) remain listed as open; Open Questions confirmed word-for-word unchanged.
 
-**Windows CLI resolution bug (found by Claude, not a review pass):** running the redesigned
-executor against the real installed `claude` CLI (not the test stub) failed with `ENOENT` —
-Windows npm installs `claude` as a `.cmd`/`.ps1` shim, not directly spawnable via `shell:false`.
-Claude verified `shell:true` "fixes" this but rejected it: Node's `DEP0190` means array arguments
-are not escaped under `shell:true`, and `descriptor.prompt` is untrusted text — a real injection
-risk. Fixed instead via `where`/`which` resolution of the real `claude.exe`, passing only the
-fixed command name (never task content) to the resolver subprocess.
-
-**Pass 2 (on the redesign + Windows fix):** verdict **APPROVE WITH REQUIRED CHANGES** — found the
-capability validation used a bypassable denylist (`toolAllowlist: 'default'` silently passed
-through, re-enabling Bash, since `'default'` was never on the denylist) and that the `where`/
-`which` resolver subprocess had no timeout (unbounded, unlike the `--help` probe). Separately
-claimed Windows executable resolution "does not work" — reproduced in the reviewer's own sandbox,
-but Claude independently re-verified resolution working correctly in the real target environment
-(Git Bash, native PowerShell/Node, and a full live `executeTask` run all succeeded) and attributed
-the reviewer's failure to that sandbox's own `PATH` lacking the npm global bin directory, not a
-code defect — documented as an explicit operational precondition rather than changed. Required
-changes (denylist → positive allowlist restricted to `Read`/`Write`/`Edit` tools and `acceptEdits`
-permission mode only; resolver timeout added) were implemented and re-validated.
-
-**Pass 3 (final):** verdict **APPROVED**, no required changes remaining. Independently re-traced
-the positive-allowlist rejection paths, confirmed the resolver timeout, confirmed test coverage,
-confirmed the documentation is accurate and non-overclaiming, and independently concurred that the
-Windows-resolution disagreement from Pass 2 was specific to that reviewer's own sandbox `PATH`, not
-a live risk in the real target environment.
-
-**Live adversarial isolation smoke test (run directly by Claude, per the human task's explicit
-requirement, against the real `claude` CLI — not a stub):** a task descriptor asked the child
-Claude process to write an allowed file inside its own executor-created workspace, and attempt to
-write a forbidden file at an absolute path outside the workspace (a disposable temp sibling
-directory — never the real MIHVER repo, per instruction). Result: the allowed write succeeded; the
-real CLI's own JSON output recorded a `permission_denials` entry for the forbidden `Write`
-attempt; the forbidden file was confirmed absent afterward. This is the empirical validation the
-capability-restriction mechanism needed, since stub-based automated tests cannot exercise real
-Claude Code's actual permission enforcement.
+One caveat the reviewer raised — local git history alone couldn't confirm the PR #10/#11 number
+mapping (no merge commits explicitly naming them) — was independently resolved by Claude via
+`gh pr view`: PR #10's merge commit is `548bb75` (matches), PR #11's merge commit is `63429c9`
+(matches), both confirmed `MERGED` via the GitHub API, not just local git.
 
 ## Required Changes
 
-None remaining as of Pass 3 (final). Pass 1's REDESIGN and Pass 2's required changes were both
-resolved — see History for the full record and "Fixes Applied" below.
+None.
 
 ## Fixes Applied
 
-- Pass 1 (REDESIGN → redesign implementation): workspace isolation via executor-owned `mkdtemp` +
-  bidirectional `realpath` containment (closes parent-directory and symlink/junction bypasses);
-  discovered-flag capability restriction (`--tools`, `--strict-mcp-config`, no bypass-permissions);
-  STOP polled during execution with whole-process-tree termination (POSIX process group / Windows
-  `taskkill /t /f`) and a bounded kill-grace timeout; consistent `--print` in discovery and
-  execution; documented fresh-process semantics; expanded tests (13 → 17 executor tests).
-- Windows CLI resolution fix: `where`/`which`-based real-executable resolution, `shell:true` never
-  used (17 → 21 executor tests).
-- Pass 2 required changes: denylist → positive allowlist (`Read`/`Write`/`Edit`, `acceptEdits`
-  only); resolver lookup timeout added; Windows-resolution documentation precondition added (21 →
-  22 executor tests).
-- Re-validated after every pass: `npm run test:night-runner` 15/15, `npm test` 24/24, unaffected.
-  `scripts/dev/night-runner.mjs` and `tests/night-runner/**` confirmed unchanged after every pass.
-
-## Merge Decision
-
-Human approved PR #8 for merge, stated directly in conversation: "PR #8 /
-NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR is APPROVED for merge." Recorded here via a Gate Recording
-Commit per `AGENT_POLICY.md`'s Gate Recording Commit clause — this commit records the approval
-only; it does not itself execute the merge, per that same clause ("it never authorizes an actual
-merge to `main`"). Merge execution remains a separate, later action requiring its own explicit
-instruction, per precedent (`NIGHT-RUNNER-FOUNDATION` / PR #7, and `PROJECT-CONTEXT-BOOTSTRAP` /
-PR #3).
+N/A — no defects found; no fix required.
 
 ## Pending Human Gate
 
-Human merge approval has been given and is recorded above. The remaining step is merge execution
-itself (squash and merge to `main`, per `AGENT_POLICY.md`'s Pull Requests section) — not yet
-performed, and requires a separate explicit instruction to execute.
+PR expected per task instruction (not yet opened at the time of this review); not to be merged by
+this task. Human review of the PR, and a separate later instruction to merge, are the next gates.
 
 ## History
+
+- 2026-08-19/2026-08-20 — `NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR` (PR #8): three independent read-only
+  Codex review passes plus one live supervised smoke test against the real `claude` CLI. Pass 1
+  (on V1) verdict **REDESIGN** — a caller-supplied `cwd` did not actually sandbox the child
+  process (parent-directory/symlink bypass, pre-spawn-only STOP check, inconsistent CLI flags);
+  accepted and redesigned (executor-owned `mkdtemp` workspace, bidirectional `realpath`
+  containment, discovered-flag capability restriction, STOP polling with whole-process-tree
+  termination, expanded tests). A Windows CLI-resolution `ENOENT` bug (found by Claude directly,
+  not a review pass) was fixed via `where`/`which` resolution, deliberately avoiding `shell:true`
+  (Node `DEP0190` injection risk). Pass 2 verdict **APPROVE WITH REQUIRED CHANGES** — bypassable
+  capability denylist and an unbounded resolver lookup, both fixed (denylist → positive allowlist;
+  timeout added). Pass 3 verdict **APPROVED**, no required changes remaining. Live smoke test
+  against the real CLI confirmed the allowed write succeeded and the forbidden write was denied
+  and absent. Human approved PR #8 for merge ("PR #8 / NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR is
+  APPROVED for merge"), recorded via a Gate Recording Commit; merge execution itself had not been
+  performed as of this entry and required a separate, later explicit instruction. Moved here from
+  "Latest Review" now that those sections describe `ADR-0002-ACCEPTANCE` instead, per this file's
+  branch/task scoping. — branch `feat/night-runner-fresh-claude-executor`
 
 - 2026-08-19/2026-08-20 — `NIGHT-RUNNER-FOUNDATION-FINAL` (correction pass on
   `chore/night-runner-foundation`, before PR #7 received human review): one independent read-only

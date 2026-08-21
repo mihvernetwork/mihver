@@ -54,3 +54,10 @@ Format: `YYYY-MM-DD — decision — reference`.
   directly as "PR #7 / NIGHT-RUNNER-FOUNDATION is APPROVED for merge"; recorded via a Gate
   Recording Commit per `AGENT_POLICY.md`. The merge itself has not been performed — execution
   requires a separate, later explicit instruction. — branch `chore/night-runner-foundation`
+- 2026-08-21 — `ADR-0002` (Epistemic Provenance Model) Status: **Accepted** — human decision stated
+  directly ("ADR-0002 is approved to move from Proposed to Accepted"), citing merged PR #10
+  (adversarial review) and PR #11 (remediation, final consistency sweep, and handoff-consistency
+  fix) as evidence, plus a 32/32 passing contract test suite and no representability or
+  epistemic-model redesign blocker found across four independent review rounds. Implemented as task
+  `ADR-0002-ACCEPTANCE`. The merge of that change to `main` has not been performed — execution
+  requires a separate, later explicit instruction. — branch `docs/adr-0002-acceptance`

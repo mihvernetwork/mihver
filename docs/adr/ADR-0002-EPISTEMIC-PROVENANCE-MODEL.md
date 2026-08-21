@@ -2,7 +2,20 @@
 
 ## Status
 
-Proposed
+Accepted
+
+**Acceptance basis:** revisited per this ADR's own Future Work condition — schema design plus at
+least one adversarial review pass exercising the model against real cases. Schema design completed
+in M0 Step 02B (`schemas/m0/*.json`, `SCHEMA_MAPPING.md`, `tests/contracts/**`, merged `0683e84`).
+Adversarial review, remediation, a full-corpus consistency sweep, and a handoff-consistency fix were
+completed and merged to `main`: PR #10 (adversarial review;
+[ADR-0002-ADVERSARIAL-REVIEW](../reviews/ADR-0002-ADVERSARIAL-REVIEW.md)) and PR #11 (remediation,
+final consistency sweep, and handoff-consistency fix;
+[ADR-0002-ADVERSARIAL-REMEDIATION](../reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md)). Current
+contract test suite: 32/32 passing. No representability failure or epistemic-model redesign
+requirement was found across four independent review rounds. The genuinely unresolved questions
+from this ADR's original review are preserved below in "Open Questions" — this Status change does
+not resolve them; see that section for what remains open.
 
 ## Context
 
@@ -250,12 +263,20 @@ shape was chosen, not the shape itself in full detail.
 
 ## Future Work
 
+Genuinely still open:
+
 - Design the RequirementSpec-side contract (Requirement Derivation's semantic model), consuming
-  `IntentSpec`'s Claims/Open Items/Conflicts per the boundary defined here.
-- Design the schema (field names, cardinality, serialization) for `IntentSpec`'s epistemic records,
-  per the M0-internal schema design work referenced in [M0_SCOPE](../foundation/M0_SCOPE.md) and
-  the Requirement IR / Architecture IR future work already listed in
-  [ADR-0001](./ADR-0001-ARCHITECTURE-COMPILER-MODEL.md).
+  `IntentSpec`'s Claims/Open Items/Conflicts per the boundary defined here. The Requirement IR /
+  Architecture IR future work already listed in
+  [ADR-0001](./ADR-0001-ARCHITECTURE-COMPILER-MODEL.md) is a separate, still-open item unaffected
+  by this ADR's acceptance.
 - Define a validation approach for origin-classification correctness (see Open Questions).
+
+Completed — recorded here for traceability, not as remaining work:
+
+- Design the schema (field names, cardinality, serialization) for `IntentSpec`'s epistemic
+  records — completed in M0 Step 02B (`schemas/m0/*.json`, `SCHEMA_MAPPING.md`,
+  `tests/contracts/**`, merged `0683e84`).
 - Revisit this ADR's Status once the schema design work and at least one adversarial review pass
-  (see [INTENT_CASES](../examples/INTENT_CASES.md)) have exercised the model against real cases.
+  (see [INTENT_CASES](../examples/INTENT_CASES.md)) have exercised the model against real cases —
+  completed; see "Acceptance basis" under Status above for the specific evidence.
