@@ -75,6 +75,9 @@ this task), `.project/CONTEXT_INDEX.md`, `CLAUDE.md`, `docs/development/**`, and
 
 ## Next Gate
 
-PR to `mihvernetwork/mihver:main` to be opened (push to personal fork, same push-access constraint
-as PRs #10/#11). Do not merge. Human review of the PR is the next gate; a separate, later explicit
-instruction is required to merge.
+PR #12 opened directly on `mihvernetwork/mihver:main` (compare `docs/adr-0002-acceptance`). A newly
+authenticated `mihvernetwork` GitHub account (full push access, confirmed via `gh api`) became
+available on this machine during this task, superseding the fork-based push workflow PRs #10/#11
+used — pushed directly to `origin`/`mihvernetwork/mihver` instead of a personal fork. Do not merge.
+Human review of the PR is the next gate; a separate, later explicit instruction is required to
+merge.
