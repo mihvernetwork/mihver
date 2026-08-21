@@ -80,8 +80,10 @@ Forbidden (read-only for this task): `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MOD
 
 ## Next Gate
 
-PR expected once the review report is written and committed; human review of the report and its
-recommendation is the next gate. Do not merge. Stop after PR is opened.
+PR #10 opened (base `mihvernetwork/mihver:main`, compare `devSerdar:review/adr-0002-adversarial-review`
+— pushed via a fork under `devSerdar` since neither the SSH nor `gh` identity available in this
+session had direct push access to `mihvernetwork/mihver`). Human review of the report and its
+recommendation is the next gate. Not merged, per task instruction.
 
 ---
 
