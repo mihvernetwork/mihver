@@ -61,3 +61,42 @@ Format: `YYYY-MM-DD — decision — reference`.
   epistemic-model redesign blocker found across four independent review rounds. Implemented as task
   `ADR-0002-ACCEPTANCE`. The merge of that change to `main` has not been performed — execution
   requires a separate, later explicit instruction. — branch `docs/adr-0002-acceptance`
+
+---
+
+The entries below were appended during `PROJECT-STATE-RECONCILE-POST-STEP-03A` to record merges of
+previously-logged-but-then-still-pending decisions above, plus two merges with no prior entry at
+all. Every fact below was verified directly against `git log` and `gh pr list --state merged`
+before being recorded — none is inferred, reconstructed, or restated from stale `.project` prose.
+Entries above this line are unmodified, per this log's append-only policy.
+
+- 2026-08-19 — `PROJECT-CONTEXT-FREEZE-STATE` (PR #4) merged to `main`: verified via `git log` and
+  `gh pr list --state merged`. Fulfills the merge decision recorded above (that entry recorded
+  approval only; this entry is the follow-up confirming execution happened). — squash commit
+  `6a399c7`
+- 2026-08-19 — `PROJECT-CONTEXT-REVIEW-SCOPE` (PR #5) merged to `main`: verified via `git log` and
+  `gh pr list --state merged`. Fulfills the merge decision recorded above. — squash commit
+  `fdc27d4`
+- 2026-08-19 — `PROJECT-CONTEXT-AUTO-BOOTSTRAP` (PR #6) merged to `main`: verified via `git log`
+  and `gh pr list --state merged`. Fulfills the merge decision recorded above. — squash commit
+  `3f0b53b`
+- 2026-08-19 — `NIGHT-RUNNER-FOUNDATION` (PR #7) merged to `main`: verified via `git log` and
+  `gh pr list --state merged`. Fulfills the merge decision recorded above. — squash commit
+  `9a61a0b`
+- 2026-08-20 — `NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR` (PR #8) merged to `main`: verified via
+  `git log` and `gh pr list --state merged` — squash commit `4590f7a`. No prior Gate Recording
+  Commit entry exists in this log for this PR's merge-approval; this entry records only the
+  verified merge fact from git/GitHub, not a reconstructed human quote.
+- 2026-08-21 — `ADR-0002-ACCEPTANCE` (PR #12) merged to `main`: verified via `git log` and
+  `gh pr list --state merged` — squash commit `a20d647`. Fulfills the `ADR-0002` Status: Accepted
+  decision recorded above. `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`'s own `## Status`
+  field on `main` now reads **Accepted**, confirmed by direct read of the file at this commit.
+- 2026-08-21 — `M0-STEP-03A-REQUIREMENT-SPEC-SEMANTIC-CONTRACT` (PR #13) merged to `main`: verified
+  via `git log` and `gh pr list --state merged` — squash commit `fe79098`. Produced
+  `docs/contracts/REQUIREMENT_SPEC.md`, `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`
+  (Status: Proposed, confirmed by direct read of the file at this commit),
+  `docs/examples/REQUIREMENT_CASES.md`. No prior entry in this log recorded an approval decision
+  for this merge. This entry records only the merge fact independently verified via `git log` and
+  `gh pr list --state merged`; the merge-authorization decision itself is not something `git log`
+  or `gh pr list` can show, is not independently verifiable from those sources, and is not claimed
+  as Claude-witnessed here.
