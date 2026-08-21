@@ -1,0 +1,13 @@
+{
+  "contract": "intent-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-third-party-v1", "version": 1,
+    "created_at": "2026-08-21T09:05:00Z", "user_idea_refs": [{ "idea_id": "idea-third-party", "version": 1 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [
+      { "claim_id": "claim-cto-compliance", "proposition": "The user's CTO says SOC 2 compliance is needed before launch.", "origin": "user_provided", "force": { "modality": "obligation" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-third-party", "user_idea_version": 1, "turn_id": "turn-1", "statement_quote": "my CTO says we need SOC 2 compliance before launch", "speaker": { "kind": "reported_third_party", "attribution": "the submitting user's CTO" } } }
+    ],
+    "open_items": [], "conflicts": [], "clarification_decisions": []
+  }
+}

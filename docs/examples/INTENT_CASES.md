@@ -92,17 +92,24 @@ bugs."
   automatically without review.
 - **Unknowns:** competitor list; source scope; delivery channel; report depth/format.
 - **Conflicts:** none.
-- **Clarification needs:** competitor identity stays Unknown, deferrable without an Assumption —
-  naming a provisional competitor list (e.g. "assume the top 3-5 by public visibility") would be an
-  invented operational default, not an interpretive gap, and the Assumption Policy forbids that;
-  Unknown is the correct, complete result here, MEDIUM impact and carried forward as-is. Source
-  legitimacy could become HIGH if inferred sources include anything requiring
-  authentication/licensing MIHVER can't assume access to.
-- **Decision-impact reasoning:** the unresolved item is which competitors and sources are in scope;
-  the downstream decision it changes is whether the architecture needs authenticated/licensed data
-  access at all, versus purely public sources; MEDIUM applies (not HIGH) because no irreversible or
-  sensitive action is implied — cadence and output shape are load-bearing for architecture
-  (recurring scheduling vs. on-demand) but not safety-critical.
+- **Clarification needs:** competitor identity and source scope both stay Unknown, deferrable
+  without an Assumption — naming a provisional competitor list (e.g. "assume the top 3-5 by public
+  visibility") or a provisional source scope would be an invented operational default, not an
+  interpretive gap, and the Assumption Policy forbids that. They carry different Decision Impact,
+  assessed separately (see reasoning below): source scope is HIGH; competitor identity alone is
+  MEDIUM.
+- **Decision-impact reasoning:** two distinct unresolved items, assessed separately rather than
+  bundled under one rating. Source scope's downstream decision is whether the architecture needs
+  authenticated/licensed data access at all, versus purely public sources — a materially different
+  architecture (credential management, licensing compliance, paid-data integration), not a detail
+  within one architecture shape, so HIGH applies; this is assessed by that downstream consequence,
+  not by whether an irreversible or sensitive action is implied today (that threshold governs
+  CRITICAL, not HIGH). Competitor identity alone is a different question: which specific
+  competitors are targeted tunes the scope of the already-established research-and-report
+  capability (naming Acme instead of Contoso doesn't by itself change whether authenticated access
+  is needed — that's what the separate source-scope item governs), so MEDIUM applies to identity on
+  its own. The overall `IntentSpec` is Blocked because source scope's HIGH rating governs, not
+  because identity independently reaches that level.
 - **What IntentSpec must NOT decide:** whether this uses a scheduled job, an agent with memory, or
   a simple periodic script (zero-agent is plausible here — see Case 11); any specific search or
   data provider.
@@ -160,17 +167,23 @@ bugs."
   Unknown, since the user's own wording is what generates the multiple readings.
 - **Unknowns:** whether derived artifacts (not raw source) are covered by the same prohibition —
   this is a genuine Unknown, since nothing in the wording addresses derived artifacts at all.
-- **Conflicts:** none in isolation — but see Case 8 for this same statement in contradiction with a
-  later one.
+- **Conflicts:** none in isolation — but see Case 8 for a structurally analogous conflict between a
+  local-execution constraint and a cloud-only request (a different `UserIdea`, not this same
+  statement, but the same Conflict pattern).
 - **Clarification needs:** the exact boundary of "my computer" is CRITICAL if any architecture
   candidate would involve any external processing at all — this is exactly the kind of ambiguity
   that must not be silently resolved by picking the most convenient reading.
 - **Decision-impact reasoning:** the unresolved item is what boundary "my computer" actually draws
   (device/network/premises); the downstream decision it changes is which candidate architectures
   are even eligible — anything involving external processing is disqualified under one reading and
-  permitted under another; CRITICAL applies (not HIGH) because misreading this in the permissive
-  direction risks an architecture that violates an explicit, strongly-stated user prohibition —
-  not merely a suboptimal fit, but a recommendation the user directly ruled out.
+  permitted under another. CRITICAL applies (not HIGH) because the least favorable materially
+  plausible misreading permits the user's source code to cross their intended confidentiality
+  boundary — a potentially unauthorized, non-reversible disclosure of sensitive code, not just an
+  architecturally suboptimal fit. It is this data-exposure consequence that reaches CRITICAL, not
+  the bare fact that the user phrased the constraint as a prohibition — an explicit prohibition
+  alone doesn't automatically imply CRITICAL (contrast Cases 10 and 15, both HIGH, where an
+  unfavorable reading could also violate an explicit prohibition but without this same
+  confidentiality-disclosure consequence).
 - **What IntentSpec must NOT decide:** `execution_location = LOCAL` or any other formal deployment
   constraint; any specific on-device technology.
 
@@ -233,12 +246,17 @@ follow-up."
   scope Assumption — "assume this covers infrastructure and model usage, excluding setup" would be
   a manufactured operational default (what's included in a budget is a cost-category decision the
   user never addressed, not an interpretive gap in what they meant), which the Assumption Policy
-  forbids. Deferring with the gap left open is correct here; would become HIGH if later stages find
-  no architecture can plausibly satisfy the constraint alongside other stated needs.
+  forbids. Deferring with the gap left open is correct here.
 - **Decision-impact reasoning:** the unresolved item is which cost categories the ceiling covers;
-  the downstream decision it changes is which architecture candidates are even cost-eligible;
-  MEDIUM applies (not HIGH) because the ceiling matters architecturally but doesn't yet threaten
-  safety or validity, only cost-fit.
+  the downstream decision it changes is which architecture candidates are cost-eligible under an
+  already-established $100/month constraint — this tunes the scope of a capability (a budget
+  ceiling) whose existence the Claim already settles, rather than determining whether the
+  constraint exists at all, so MEDIUM applies, not HIGH. (Contrast Case 2, where the unresolved
+  item determines whether an entire capability — authenticated/licensed data access — exists in
+  the first place.) A separately discovered conflict between this constraint and some other stated
+  need — e.g. if a later `UserIdea` version adds a requirement no architecture can satisfy under
+  $100/month — would be a new Conflict with its own Decision Impact assessment in a new version, not
+  a reason this same unresolved cost-category item is rated differently now.
 - **What IntentSpec must NOT decide:** `max_monthly_cost = 100` as a formal requirement; which
   specific services fit the budget.
 
@@ -275,18 +293,21 @@ follow-up."
   "example" or toward "mandatory"; why each was chosen; whether the user would accept an
   evidence-backed alternative.
 - **Conflicts:** none.
-- **Clarification needs:** MEDIUM while the technologies are only preserved claims, not yet
-  evaluated — deferrable, and negotiability stays Unknown rather than being resolved by default in
-  either direction. The rating could later move to HIGH (not remain MEDIUM) *in a subsequent
-  version* if a later stage finds the named stack technically inappropriate, since at that point
-  the unresolved question becomes whether the user will accept deviation — a different, higher-
-  stakes item than "are these binding," which is what MEDIUM assesses here.
+- **Clarification needs:** HIGH — negotiability stays Unknown rather than being resolved by default
+  in either direction, and the unresolved answer determines whether Pinecone-, Kubernetes-,
+  LangGraph-, and GPT-5-specific architecture branches are mandatory or may be omitted/replaced.
 - **Decision-impact reasoning:** the unresolved item is whether the four named technologies are
-  binding constraints or negotiable — recorded as Unknown, not defaulted either way; the downstream
-  decision it changes is how much freedom Architecture Synthesis has to deviate from them; MEDIUM
-  applies because, absent evidence they're technically inappropriate, there's no immediate need to
-  resolve negotiability before proceeding — but that's a reason to defer the question, not a reason
-  to quietly answer it as "negotiable."
+  binding constraints or negotiable — recorded as Unknown, not defaulted either way. Unlike Case 6's
+  budget ceiling (where a constraint's existence is already settled and only its scope is
+  unresolved), nothing else in this `UserIdea` independently establishes that a vector-search
+  component, a container-orchestration component, or this specific workflow/model integration are
+  needed at all — that expectation exists only because these particular technologies were named. On
+  the least favorable materially plausible reading (all four binding, non-negotiable), Architecture
+  Synthesis must build specifically around Pinecone/Kubernetes/LangGraph/GPT-5 regardless of
+  technical fit; on the other reading, it has ordinary freedom to select components on their
+  merits. That is a materially different architecture, not a detail within one, so HIGH applies —
+  this version is Blocked and permanently ineligible for Requirement Derivation; resolving
+  negotiability must produce a new, superseding version, the same as any other HIGH-impact item.
 - **What IntentSpec must NOT decide:** whether LangGraph/GPT-5/Pinecone/Kubernetes are
   *appropriate* — IntentSpec preserves "user explicitly requested X" and nothing more (see "No
   Architecture Leakage" in `INTENT_SPEC.md`).
@@ -349,18 +370,31 @@ easiest."
   basis ("the conditional framing itself, not any separate preference statement") — not treated as
   settled. It is not an absolute prohibition on cloud either way.
 - **Unsafe assumptions:** resolving the condition one way or the other now (`cloud_execution =
-  true` or `= false`) instead of preserving it as a condition; assuming "can't support the
-  workload" has an agreed technical meaning (e.g. throughput vs. memory vs. latency) without
-  flagging that as unresolved.
-- **Unknowns:** what workload characteristics would trigger the fallback; what "can't support"
-  means quantitatively.
+  true` or `= false`) instead of preserving it as a condition; silently picking one of throughput,
+  memory, or latency as "what 'can't support' means" instead of preserving the Ambiguity.
+- **Ambiguity:** what "can't support the workload" means technically — the phrase itself bears on
+  the question but supports multiple materially different readings (throughput exhaustion? memory
+  exhaustion? latency degradation? some combination?), so this is an Ambiguity, not an Unknown.
+- **Unknowns:** the actual workload characteristics the criterion would be evaluated against, once
+  a reading is chosen — nothing in the `UserIdea` addresses expected load at all.
 - **Conflicts:** none — this is a single coherent conditional claim, not two contradictory ones.
-- **Clarification needs:** LOW to proceed with intent capture (the condition itself is clear enough
-  to preserve as stated); the quantitative trigger becomes relevant at Requirement Derivation, not
-  here.
-- **Decision-impact reasoning:** LOW at this stage specifically because the condition can be
-  faithfully preserved without needing to be resolved yet — the risk is architectural only if the
-  condition gets collapsed into an unconditional claim (see I-12 in `INTENT_SPEC.md`).
+- **Clarification needs:** HIGH — the condition itself is clear enough for Intent Parsing to
+  produce a valid `IntentSpec` (this is not a Failure), but the unresolved Ambiguity it depends on
+  determines whether the eventual architecture needs a dynamic local/cloud switching capability at
+  all, not merely how that capability is tuned, so this version is Blocked and permanently
+  ineligible for Requirement Derivation; resolving the Ambiguity must produce a new, superseding
+  version.
+- **Decision-impact reasoning:** the unresolved item is what "can't support the workload" means
+  quantitatively; the downstream decision it changes is whether the architecture needs a runtime
+  monitoring-and-fallback subsystem (dynamic hybrid deployment) at all, or whether the workload is
+  knowable enough in advance to settle local-vs-cloud once, statically, at design time — a
+  materially different architecture, not a detail within one. The Claim ("only use cloud if local
+  can't support the workload") states a necessary condition for cloud use; it does not settle that
+  a runtime-switching mechanism must be built — a statically-resolved deployment choice can equally
+  satisfy a conditional preference if the workload turns out to be knowable in advance without
+  runtime monitoring. HIGH applies for the same reason it applies to Case 11's extraction-mechanics
+  fork: the unresolved item determines whether an entire capability exists, not merely how an
+  already-necessary one is configured.
 - **What IntentSpec must NOT decide:** the workload threshold; whether the fallback, if triggered,
   is automatic or requires approval.
 
@@ -378,19 +412,25 @@ scores."
 - **Unsafe assumptions:** that an unlabeled numeric output ("not a score, just a number") satisfies
   the prohibition; that the positive goal and the prohibitions are in tension and one must be
   weakened to satisfy the other.
+- **Ambiguity:** what "struggling" means operationally — the word itself bears on the question but
+  supports multiple materially different readings (academic performance? attendance? engagement?
+  some combination?), so this is an Ambiguity, not an Unknown.
 - **Unknowns:** what form of output would be acceptable (alerts? qualitative flags? trend
-  descriptions?); what "struggling" means operationally.
+  descriptions?) beyond what the prohibitions already rule out.
 - **Conflicts:** none logically — "identify possible need" and "don't rank/score" are not mutually
   exclusive, though they constrain the solution space together.
-- **Clarification needs:** MEDIUM — the acceptable output form isn't specified, but this doesn't
-  block capturing intent; it does need resolution before Requirement Derivation can produce a
-  testable requirement.
+- **Clarification needs:** HIGH — the acceptable output form isn't specified, and which output
+  mechanisms are even eligible depends on resolving it, since getting it wrong risks building
+  against an explicit prohibition, not merely leaving a detail underspecified. This version is
+  Blocked and permanently ineligible for Requirement Derivation, not merely deferred within an
+  otherwise-eligible artifact; resolving the Ambiguity must produce a new, superseding version.
 - **Decision-impact reasoning:** the unresolved item is what output form counts as compliant with
   the prohibitions; the downstream decision it changes is which output mechanisms are even eligible
-  (a raw numeric score is out; qualitative flags may be in); MEDIUM applies (not HIGH) because
-  getting it wrong would violate an explicit prohibition — a meaningful failure — but not one that
-  is unsafe, irreversible, or non-compliant with an external standard the way HIGH/CRITICAL cases
-  are.
+  (a raw numeric score is out; qualitative flags may be in) — a materially different output
+  architecture, not a detail within one, so HIGH applies. This does not reach CRITICAL: nothing here
+  is unsafe, irreversible, or non-compliant with an external regulatory standard the way Cases 4/5/17's
+  CRITICAL ratings are — but HIGH does not require that bar, only a materially different
+  architecture, which proceeding on the wrong output form would produce.
 - **What IntentSpec must NOT decide:** the acceptable output format; whether any per-student
   numeric value is permissible in any form.
 
@@ -421,20 +461,29 @@ scores."
   extraction is even a solved input or a real technical problem; what should happen when a field is
   missing or malformed; how filename collisions are handled.
 - **Conflicts:** none.
-- **Clarification needs:** LOW for the core goal (the renaming pattern itself is clear); the
-  extraction-mechanics Unknown is MEDIUM — deferrable, but must be carried forward rather than
-  silently assumed solved; MEDIUM for edge-case behavior (missing fields, collisions).
+- **Clarification needs:** none for the core renaming-pattern goal itself — it is a resolved Claim,
+  not an Open Item, and carries no Decision Impact (`INTENT_SPEC.md`'s levels apply "to an Open Item
+  or Conflict — not to Claims in general"). Edge-case behavior (missing fields, collisions) is LOW.
+  The extraction-mechanics Unknown is HIGH: this version is Blocked and permanently ineligible for
+  Requirement Derivation, not merely deferred to a later stage on this same artifact — Intent
+  Parsing must not silently assume it solved, but resolving it requires a new Intent
+  Parsing/revision pass producing a new, superseding version, since the answer determines whether
+  an entire document-parsing/OCR subsystem is needed at all.
 - **Decision-impact reasoning:** the unresolved item is how field values get extracted from the
   source invoice; the downstream decision it changes is whether the architecture needs any
   document-parsing/OCR capability at all, versus operating on already-structured data — a
-  potentially significant architectural difference, not a cosmetic one — so this is MEDIUM, not the
-  LOW it would be if extraction were genuinely a non-issue. Collision/missing-field handling is
-  separately LOW: well-specified, low-risk, and reversible regardless of how extraction resolves.
+  materially different architecture, not a detail within one, so HIGH applies (not the MEDIUM this
+  case previously carried: extraction is not "genuinely a non-issue" precisely because the
+  architecture fork is real). Collision/missing-field handling is separately, and consistently,
+  LOW: well-specified, low-risk, and reversible regardless of how extraction resolves — a detail
+  within whichever extraction architecture is eventually chosen, not a fork of its own.
 - **What IntentSpec must NOT decide:** whether an LLM, an OCR pipeline, a rules engine, or a plain
-  script performs the extraction and renaming — that determination (which may or may not conclude
-  "zero agents needed," per Principle 14 — zero-agent is one *possible* later architecture, not a
-  conclusion reached here) belongs to Architecture Synthesis, informed by Requirement Derivation,
-  not to Intent Parsing.
+  script performs the extraction and renaming. That determination belongs to Architecture Synthesis,
+  informed by Requirement Derivation — but only once a new, superseding `IntentSpec` version has
+  resolved the HIGH-impact question of whether extraction is even required at all (this Blocked
+  version's own extraction Unknown does not reach Requirement Derivation or Architecture Synthesis
+  directly). Zero-agent is one *possible* later architecture on that eventual eligible version, per
+  Principle 14 — not a conclusion reached here.
 
 ---
 
@@ -485,18 +534,28 @@ scores."
 - **Unknowns:** approver identity/role; whether any automated exception path is acceptable.
 - **Conflicts:** none stated, though this would conflict with a separately stated desire for fully
   autonomous deployment (see how Case 8 models such a conflict).
-- **Clarification needs:** MEDIUM initially, staying Unknown rather than assuming "production
-  deployments only" — which environments are covered is an operational scope question the user
-  never addressed, not an interpretive gap, so inventing a default for it would violate the
-  Assumption Policy; HIGH if any other claim implies autonomous deployment, which would surface as
-  a Conflict.
-- **Decision-impact reasoning:** the unresolved items are which environments "deployment" covers
-  and whether "I need approval" is self-directed or system-enforced; the downstream decision they
-  change is whether any approval-gate mechanism needs to exist in the architecture at all, and for
-  which environments; MEDIUM applies in this `UserIdea` alone because nothing yet establishes a
-  competing claim that makes the gap unsafe to defer — it would escalate to HIGH specifically if
-  another claim implied autonomous deployment (making the scope ambiguity load-bearing for a real
-  Conflict, as in Case 8), not merely because approval-related claims are generically sensitive.
+- **Clarification needs:** HIGH overall, from two Ambiguities with different downstream
+  consequences, assessed separately rather than bundled: the self-directed-vs-system-enforced
+  Ambiguity is HIGH — it determines whether any approval-gate mechanism needs to exist in the
+  architecture at all. The environment-scope Ambiguity is MEDIUM on its own — once a gate is
+  established as needed, which environments it covers scopes that already-necessary capability
+  rather than determining whether it exists; it is carried forward unresolved rather than collapsed
+  into "production deployments only" (picking one reading here would violate the Ambiguity's own
+  candidate-readings model, see "Unsafe assumptions" above). The overall `IntentSpec` is Blocked
+  because the self-directed-vs-system-enforced item reaches HIGH, not because environment scope
+  independently does.
+- **Decision-impact reasoning:** two distinct Ambiguities, not one bundled item. (1) Whether "I need
+  approval" is self-directed process discipline or a system-enforced requirement: the downstream
+  decision is whether any approval-gate mechanism needs to exist in the architecture at all — a
+  materially different architecture, not a detail within one, so HIGH applies regardless of whether
+  a competing claim happens to exist yet. A competing claim implying autonomous deployment would
+  additionally surface as a Conflict (as in Case 8), but is not required to reach HIGH here —
+  needing a competing claim to justify HIGH would be exactly the stage-/conflict-relative reasoning
+  "Decision Impact Is Outcome-Relative" in `INTENT_SPEC.md` rejects. (2) Which environments
+  "deployment" covers: the downstream decision is only where an already-necessary gate applies, not
+  whether one exists — a detail within an already-determined capability (contrast (1)), so MEDIUM
+  applies on its own, though it does not lower the case's overall HIGH/Blocked disposition, which
+  (1) alone already establishes.
 - **What IntentSpec must NOT decide:** `human_approval = REQUIRED` as a formal requirement; the
   specific approval mechanism (CI gate, two-person rule, manual sign-off, etc.).
 
@@ -512,22 +571,37 @@ we go viral."
 - **Permissible inferences:** the user has a scale concern, but "viral" gives no usable magnitude.
 - **Unsafe assumptions:** assigning any specific number of users, requests/sec, or geographic
   footprint; treating "viral" as internet-scale by default.
-- **Unknowns:** actual expected number of instructors/customers/bookings; what "local" bounds
-  geographically; whether "viral" readiness is essential now or aspirational for later.
+- **Ambiguity:** what "local" bounds geographically — the word itself bears on the question but
+  supports multiple materially different readings (a neighborhood? a city? a metro area?), so this
+  is an Ambiguity, not an Unknown.
+- **Unknowns:** actual expected number of instructors/customers/bookings; whether "viral" readiness
+  is essential now or aspirational for later.
 - **Conflicts:** none.
-- **Clarification needs:** LOW for the primary booking-platform intent (clear enough to proceed);
-  the scale question stays Unknown — no Assumption is recorded for it. A capacity/scale figure
-  ("design for moderate headroom by default") is exactly the kind of technical/operational default
-  the Assumption Policy forbids Intent Parsing from inventing: the user raised a scale concern
-  without giving a number, and MIHVER has no interpretive basis to convert that into a working
-  figure — only Requirement Derivation (or a later stage) has the standing to decide how to handle
-  an unresolved capacity question, whether that's a default, a range, or a clarification request.
+- **Clarification needs:** the booking-platform Claim itself is clear enough for Intent Parsing to
+  produce a valid `IntentSpec` — that is not in question. But that clarity does not offset the
+  separately HIGH-impact scale Unknown (see reasoning below), which makes this version Blocked and
+  permanently ineligible for Requirement Derivation, regardless of how clear the rest of the intent
+  is. A capacity/scale figure ("design for moderate headroom by default") is exactly the kind of
+  technical/operational default the Assumption Policy forbids Intent Parsing from inventing: the
+  user raised a scale concern without giving a number, and MIHVER has no interpretive basis to
+  convert that into a working figure. Because this item is HIGH-impact, resolving it does not mean
+  handing the same live Unknown to Requirement Derivation on this version — per "Handoff Status:
+  Blocked vs. Failed" in `INTENT_SPEC.md`, Requirement Derivation never consumes a Blocked version.
+  Resolution requires clarification, additional context, or another Intent Parsing/revision pass
+  that produces a new, superseding `IntentSpec` version; only that new version, and only if its own
+  scale assessment no longer carries HIGH/CRITICAL impact, may reach Requirement Derivation.
 - **Decision-impact reasoning:** the unresolved item is expected scale/magnitude; the downstream
   decision it changes is whether the architecture needs elastic/distributed capacity or a simpler
-  fixed-capacity design; MEDIUM applies because scale affects architecture significantly, but not
-  HIGH/CRITICAL since a fixed-capacity starting point can be revised later without an unsafe or
-  irreversible outcome in the meantime — Requirement Derivation carries the live Unknown forward
-  and decides how to handle it, rather than Intent Parsing pre-empting that with a guessed default.
+  fixed-capacity design — a materially different architecture, not a detail within one, so HIGH
+  applies. Reversibility (a fixed-capacity starting point can later be revised) is why this does not
+  reach CRITICAL, not why it stays below HIGH: HIGH requires only a materially different or
+  significantly more expensive architecture, which this case's own downstream-decision description
+  already states — it does not additionally require an unsafe or irreversible outcome, which is
+  CRITICAL's bar. Because this is HIGH, not MEDIUM, the live Unknown cannot be carried forward for
+  Requirement Derivation to pick up on this same version, the way a MEDIUM item legitimately could
+  (contrast Case 6's cost-scope Unknown); Intent Parsing still must not pre-empt resolution with a
+  guessed default, but what actually clears this Unknown is a new Intent Parsing/revision pass
+  producing a new version — not a downstream stage resolving it on the Blocked one.
 - **What IntentSpec must NOT decide:** any concurrency, traffic, or capacity figures; any elastic
   or distributed-architecture decision.
 
@@ -581,22 +655,31 @@ who will quit, and automatically adjusts their pay."
 - **Unsafe assumptions:** collapsing the four goals into a single generic "HR platform" label that
   loses their distinctness; assuming automatic pay adjustment is authorized merely because it was
   requested; assuming all four goals share equal priority.
+- **Ambiguity:** what "monitors employee productivity" means operationally — the phrase itself
+  bears on the question but supports materially different readings (output/results tracking? time
+  tracking? application activity? communications monitoring?), with real stakes since some readings
+  carry surveillance/privacy implications others don't, so this is an Ambiguity, not an Unknown.
 - **Unknowns:** relative priority among the four goals; whether they must ship together or could be
-  phased; what "monitors productivity" means operationally; what governs automatic pay changes.
+  phased; what governs automatic pay changes.
 - **Conflicts:** none stated between the goals themselves, though automatic pay adjustment and
   (if present) any separately stated human-approval requirement would conflict — not present in
   this UserIdea alone.
 - **Clarification needs:** CRITICAL specifically for automatic pay adjustment (compensation actions
-  taken without described oversight); MEDIUM for the other three regarding priority/phasing.
+  taken without described oversight); MEDIUM for the three remaining priority/phasing Unknowns;
+  MEDIUM separately for the productivity-monitoring Ambiguity (see reasoning below).
 - **Decision-impact reasoning:** the unresolved item driving the top-line rating is what governs
   automatic pay changes (authorization, approval, limits — none stated); the downstream decision it
   changes is whether the architecture needs a human-in-the-loop compensation-change safeguard at
   all; CRITICAL applies because unauthorized, unreviewed pay changes are the kind of outcome the
-  Decision Impact model's CRITICAL tier exists for. The other three goals' priority/phasing Unknowns
-  are individually MEDIUM by the same three-part reasoning (unresolved: sequencing; changes: whether
+  Decision Impact model's CRITICAL tier exists for. The three priority/phasing Unknowns are
+  individually MEDIUM by the same three-part reasoning (unresolved: sequencing; changes: whether
   phased delivery is architecturally acceptable; MEDIUM because getting it wrong shifts delivery
-  shape, not safety) — but they are not averaged down against the pay-adjustment component; the
-  highest-impact component governs the overall clarification need.
+  shape, not safety). The productivity-monitoring Ambiguity is assessed separately: which reading
+  applies changes what kind of monitoring infrastructure and privacy/compliance safeguards are
+  needed, which is more than a scheduling detail, but nothing in the `UserIdea` establishes that any
+  reading crosses into unsafe or non-compliant territory the way the pay-adjustment item does, so
+  MEDIUM applies rather than HIGH or CRITICAL. None of the MEDIUM items are averaged down against
+  the pay-adjustment component; the highest-impact component governs the overall clarification need.
 - **What IntentSpec must NOT decide:** whether a one-system architecture is technically
   appropriate, feasible, or the one Architecture Synthesis ultimately recommends — that evaluation
   belongs downstream, per Principle 2 (Evidence Before Recommendation). To be precise about what
@@ -621,8 +704,11 @@ database that looks obsolete."
 - **Unsafe assumptions:** any specific definition of "obsolete" (old? unused? unreferenced?
   duplicated?); that backups make the deletion effectively reversible; that the requester has
   authority to authorize permanent deletion of production data.
-- **Unknowns:** obsolescence criteria; data ownership/authorization; retention, audit, or legal
-  constraints that might apply; whether "permanently" and "autonomous" are both truly non-negotiable.
+- **Ambiguity:** what "looks obsolete" means as a deletion criterion — the phrase itself bears on
+  eligibility but supports multiple materially different readings (old? unused? unreferenced?
+  duplicated?), so this is an Ambiguity, not an Unknown.
+- **Unknowns:** data ownership/authorization; retention, audit, or legal constraints that might
+  apply; whether "permanently" and "autonomous" are both truly non-negotiable.
 - **Conflicts:** none stated, though this would conflict with a separately stated approval
   requirement (see Case 13) if one existed in the same UserIdea.
 - **Clarification needs:** CRITICAL — irreversible destructive action on production data, triggered
@@ -634,14 +720,21 @@ database that looks obsolete."
   other means) produces a new `IntentSpec` version; this version remains Blocked, permanently, in
   the history. Outright failure (no `IntentSpec` produced at all) would only apply if the input
   were additionally incoherent, not merely dangerous.
-- **Decision-impact reasoning:** CRITICAL — irreversibility plus autonomy plus an undefined
-  eligibility rule is exactly the combination the Decision Impact model's CRITICAL tier exists for.
+- **Decision-impact reasoning:** the unresolved items are what "looks obsolete" permits the bot to
+  delete and whether the requester has authority to authorize that deletion; the downstream
+  decisions they change are which production records are eligible for permanent deletion and
+  whether any autonomous deletion path may exist at all. On the least favorable materially
+  plausible reading, an undefined criterion authorizes unattended, permanent deletion of production
+  data without established authority — irreversibility plus autonomy plus an undefined eligibility
+  rule is exactly the combination the Decision Impact model's CRITICAL tier exists for, since the
+  risk is an unauthorized and irreversible outcome, not merely a different or more expensive
+  architecture (which would only reach HIGH).
 - **What IntentSpec must NOT decide:** any concrete obsolescence rule; any confirmation, backup, or
   safety-mechanism design; whether the action proceeds at all.
 
 ---
 
-## 18. False technical premise from user
+## 18. User-selected technical means with unresolved negotiability
 
 **UserIdea:** "Make a blockchain so our employees can edit the same policy document at once without
 conflicts."
@@ -666,23 +759,39 @@ conflicts."
   "mismatch," both of which are suitability judgments); silently dropping claim (b) because it
   looks technically dubious; silently merging (a) and (b) into a single requirement that presumes
   blockchain satisfies (a).
-- **Unknowns:** why the user specifically wants blockchain (auditability? decentralized trust among
-  departments? no reason beyond familiarity with the term?) — nothing in the `UserIdea` says, so
-  this stays an Unknown rather than an unsupported Inference about the user's motivation.
+- **Unknowns:** whether "blockchain" is a hard, non-negotiable constraint or whether the user would
+  accept a technically justified alternative — the direct imperative preserves it as a strong
+  User-Provided Claim but does not itself establish negotiability either way; why the user
+  specifically wants blockchain (auditability? decentralized trust among departments? no reason
+  beyond familiarity with the term?) — nothing in the `UserIdea` says, so this stays an Unknown
+  rather than an unsupported Inference about the user's motivation.
 - **Conflicts:** none — claims (a) and (b) are not logically incompatible; whether blockchain
   technically satisfies (a) is an open technical question for later stages, not a Conflict between
   two IntentSpec claims.
-- **Clarification needs:** LOW at the intent-capture stage itself — both claims can be
-  preserved as stated without Intent Parsing needing to resolve anything. The open question (why
-  blockchain, and whether it's negotiable) is real, but it is a Requirement Derivation /
-  Architecture Synthesis concern, not a block on producing `IntentSpec`.
-- **Decision-impact reasoning:** LOW for Intent Parsing specifically, precisely because the
-  suitability question doesn't need answering here — recording both claims faithfully and flagging
-  the motivation as Unknown fully discharges this stage's responsibility.
+- **Clarification needs:** HIGH — negotiability is genuinely unresolved, and on the least favorable
+  materially plausible reading (blockchain treated as non-negotiable), Architecture Synthesis must
+  build around distributed-ledger/consensus infrastructure rather than a conventional
+  collaborative-editing approach, regardless of technical fit. Intent Parsing can still produce a
+  valid `IntentSpec` (both claims are fully statable, and this is not a Failure), but this version
+  is Blocked and permanently ineligible for Requirement Derivation; resolving negotiability must
+  produce a new, superseding version — not a case where deferring past Intent Parsing lowers the
+  impact.
+- **Decision-impact reasoning:** the unresolved item is whether the explicitly requested blockchain
+  is binding or negotiable; the downstream decision it changes is whether the architecture must
+  include a distributed-ledger/consensus branch — with its associated identity, state-
+  representation, latency, and cost implications — or may instead use a conventional
+  collaborative-editing architecture (e.g. CRDT/OT-based synchronization with ordinary document
+  storage and versioning). On the least favorable materially plausible reading, blockchain is
+  non-negotiable, producing a materially different and likely more expensive architecture than the
+  alternative — the same test that makes Case 7's named-technology negotiability HIGH applies here.
+  It does not reach CRITICAL: nothing in this `UserIdea` establishes an unsafe, invalid,
+  non-compliant, or irreversible consequence, only an architecturally costly one if resolved
+  unfavorably.
 - **What IntentSpec must NOT decide:** whether blockchain is technically appropriate for goal (a);
-  whether "blockchain" is negotiable or a hard requirement, if that's not stated — that's a
-  separate Open Item (the Claim's force is as explicit as the user made it, no more); any
-  characterization of the user's request as mistaken.
+  whether a blockchain-based or a CRDT/OT-based design should ultimately be recommended; any
+  characterization of the user's request as mistaken, a "misconception," or a "mismatch" — those are
+  suitability judgments reserved for downstream stages, not conclusions Intent Parsing draws to
+  justify its own Decision Impact rating.
 
 ---
 
@@ -697,13 +806,16 @@ conflicts."
 - **Unsafe assumptions:** selecting any specific business function (accounting, scheduling,
   inventory, CRM, all of the above) as the intended scope; treating "best" as license to add
   maximal complexity or features MIHVER judges impressive.
+- **Ambiguity:** what "best possible" would mean to this user — the phrase itself bears on the
+  question but supports multiple materially different readings (cheapest? simplest? most
+  feature-rich?), so this is an Ambiguity, not an Unknown.
 - **Unknowns:** what the business actually does; which management activities are painful enough to
-  be worth addressing; what "best" would mean to this user (cheapest? simplest? most feature-rich?).
+  be worth addressing.
 - **Conflicts:** none.
 - **Clarification needs:** CRITICAL — the request is too underspecified to support any accepted
   intent beyond "the user wants business-management help." Intent Parsing should not manufacture
   scope. This *is* representable, though: the domain, the "best possible" claim, and the
-  under-specification itself are all statable Claims and Unknowns — so the correct outcome is a
+  under-specification itself are all statable Claims and Open Items — so the correct outcome is a
   **Blocked** `IntentSpec` (see "Handoff Status" in `INTENT_SPEC.md`), not a best-effort guess and
   not outright failure. Outright Intent Parsing failure would only apply to something even thinner
   than this — input so minimal that not even "domain: small-business management" could be
@@ -739,10 +851,18 @@ actually up to $500/month."
 - **Conflicts:** none — this is explicit supersession, not an unresolved Conflict. The v1 Claim is
   marked superseded, not deleted, and remains part of the historical record; only the current
   (v2) `IntentSpec` treats $500/month as the live budget claim.
-- **Clarification needs:** LOW — the correction is unambiguous and self-resolving; no clarification
-  is needed to act on it.
-- **Decision-impact reasoning:** LOW for the correction mechanics themselves; the underlying budget
-  figure's impact is assessed the same way as in Case 6 (MEDIUM), just with the corrected value.
+- **Clarification needs:** none for the correction event itself — the explicit, unambiguous
+  supersession is a resolved revision, not an Open Item or Conflict, so there is nothing here for a
+  clarification decision to be computed from. `INTENT_SPEC.md`'s Decision Impact levels apply "to an
+  Open Item or Conflict (not to Claims in general — a resolved Claim has no open impact to
+  assess)"; assigning any level, including LOW, to the correction mechanics would be a category
+  error, not a low-impact judgment. The surviving cost-scope Unknown carried over from Case 6 is
+  separately assessed below and does need a clarification decision.
+- **Decision-impact reasoning:** no Decision Impact level applies to the correction mechanics
+  themselves, for the reason above. The live $500/month figure's cost-scope Unknown is assessed the
+  same way as in Case 6 — MEDIUM, because it tunes the scope of an already-established budget
+  ceiling rather than determining whether that constraint exists — just carried forward with the
+  corrected value.
 - **What IntentSpec must NOT decide:** silently discarding the historical v1 claim rather than
   marking it superseded (violates provenance/reproducibility); anything about which dependent
   Inferences or Assumptions from v1 need reconsideration — that reconsideration must happen, per

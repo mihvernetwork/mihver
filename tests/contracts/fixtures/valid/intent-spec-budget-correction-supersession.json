@@ -1,0 +1,20 @@
+{
+  "contract": "intent-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-budget-correction-v2", "version": 2,
+    "created_at": "2026-08-21T09:15:00Z",
+    "user_idea_refs": [{ "idea_id": "idea-budget-correction", "version": 1 }, { "idea_id": "idea-budget-correction", "version": 2 }],
+    "supersedes_intent_spec_id": "intent-budget-correction-v1",
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [
+      { "claim_id": "claim-budget-500", "proposition": "The monthly budget ceiling is $500.", "origin": "user_provided", "force": { "modality": "preference", "strength": "strong" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-budget-correction", "user_idea_version": 2, "turn_id": "turn-2", "statement_quote": "it's actually up to $500/month", "speaker": { "kind": "submitting_user" } } }
+    ],
+    "open_items": [
+      { "open_item_id": "unknown-cost-scope", "kind": "unknown", "question": "Which cost categories count toward the $500/month ceiling?", "relevance_rationale": "Cost-eligible architecture candidates cannot be determined without knowing what the ceiling covers.", "decision_impact": { "level": "medium", "unresolved_item": "Cost category scope", "downstream_decision": "Which architecture candidates are cost-eligible", "level_rationale": "The ceiling's existence and rough magnitude are already known; only precise scope is unresolved, which shifts detail rather than architecture shape." } }
+    ],
+    "conflicts": [],
+    "clarification_decisions": [
+      { "subject_kind": "open_item", "subject_id": "unknown-cost-scope", "needed": false, "rationale": "Medium-impact scope question deferrable to Requirement Derivation." }
+    ]
+  }
+}

@@ -5,92 +5,85 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-ADR-0002-ADVERSARIAL-REVIEW
+ADR-0002-HANDOFF-CONSISTENCY-FIX
 
 ## Objective
 
-Determine whether ADR-0002's remaining status gate is satisfied. `ADR-0002` (Status: Proposed)
-names two conditions in its "Future Work" for revisiting Status: schema design work, and at least
-one adversarial review pass exercising the model against real cases. Schema design already
-happened (M0 Step 02B, merged `0683e84`: `schemas/m0/*.json`, `SCHEMA_MAPPING.md`,
-`tests/contracts/**`) — this task does not repeat it. This task performs the second condition: an
-adversarial review of the epistemic model (`ADR-0002`, `INTENT_SPEC.md`) against every scenario in
-`INTENT_CASES.md`, cross-checked against the schemas, the deterministic validator, and existing
-fixtures, producing a PASS/FAIL-per-category report and a final recommendation (`ACCEPT_ADR` /
-`KEEP_PROPOSED_WITH_REQUIRED_CHANGES` / `REDESIGN`).
+Fix a contradiction an external human review found, surviving all prior review rounds:
+`INTENT_SPEC.md`'s "Decision Impact Is Outcome-Relative" subsection said a HIGH/CRITICAL item could
+be safely deferred because "Requirement Derivation or a later stage will" resolve it — directly
+contradicting the contract's own "Handoff Status: Blocked vs. Failed" section, which states
+Requirement Derivation never consumes a Blocked version. Fix without changing the outcome-relative
+Decision Impact model itself (level definitions, practical test unchanged). Fix Case 14 (identical
+contradiction), then grep/review all 20 cases for the same pattern. Continued on the same branch,
+updating PR #11 in place — not a new PR.
 
 ## Branch / Base
 
-Branch: `review/adr-0002-adversarial-review`
-Base: `main`
+Branch: `fix/adr-0002-adversarial-remediation` (unchanged, continued from prior tasks)
+Base: `main` (`3bedeb856fe8e0886042add4427d9828d6978908`)
 
 ## Status
 
-**Complete.** Two independent read-only Codex reviewers (A: epistemic/semantic correctness; B:
-schema/validator coverage) each independently reached **KEEP_PROPOSED_WITH_REQUIRED_CHANGES**.
-Claude critically re-verified their most material claims directly against the repository (not
-merely relayed) before synthesizing — see `docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md` for the
-full report, including which specific claims were independently confirmed versus taken on the
-reviewer's stated basis.
+**Complete.** Fixed the core contradiction in `INTENT_SPEC.md`'s outcome-relative subsection:
+rewrote the bullet claiming "Requirement Derivation or a later stage will" resolve a HIGH/CRITICAL
+item to state the correct rule (permanently Blocked; resolution requires a new Intent
+Parsing/revision pass producing a new, superseding version; only that new version, if eligible, may
+reach Requirement Derivation), explicitly contrasted with MEDIUM/LOW's legitimate same-version
+downstream handling. Fixed Case 14's identical contradiction (two bullets rewritten). Two
+independent Codex reviewers (A: `INTENT_SPEC.md` handoff/Decision Impact consistency; B: corpus-wide
+HIGH/CRITICAL handoff consistency across all 20 cases) found, and Claude independently verified and
+fixed: Case 11's ambiguous "must be carried forward" attached to its HIGH extraction-mechanics item
+(reworded, plus a light clarification to its adjacent "What IntentSpec must NOT decide" bullet);
+three further `INTENT_SPEC.md` passages with the same latent ambiguity (Assumption Policy's generic
+Requirement-Derivation-decides-operational-gaps statement, now qualified to LOW/MEDIUM; the
+"Backward leakage" Common Violations bullet, now distinguishing interpretive resolution from
+operational gap-filling; an Examples-section entry that backwards-said Decision Impact is "assessed
+downstream"). Case 3's similar-looking phrase was independently evaluated by both reviewers and
+confirmed to describe an unrelated future risk note, not resolution of its HIGH item — left
+unchanged. `npm test`: 32/32 throughout (prose-only changes; no fixture/schema/validator file
+touched). Comprehensive `grep -n "Requirement Derivation"` sweep of both files re-run after all
+fixes; every remaining occurrence confirmed consistent. Full report:
+`docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md` (section 6, "Handoff Consistency Fix").
 
-Headline findings: `INTENT_CASES.md` Case 13 is internally self-contradictory (classifies the same
-gap as both Ambiguity and Unknown — confirmed by direct quote comparison); Decision Impact ratings
-in at least Cases 2 and 14 (confirmed) contradict the contract's own MEDIUM/HIGH definitions, with
-the same pattern plausible in Cases 6, 9, 10, 11 (Reviewer A's claim, not individually
-re-verified); fixture coverage for `scope_condition`, `reported_third_party` speaker attribution,
-and non-`operative` `discourse_role` values is confirmed absent (direct `grep`); no structural
-representability failure was found in the schema/validator for any of the 20 cases; `SCHEMA_MAPPING.md`'s
-enforcement classifications hold as written; `npm test` passes 24/24.
-
-Final recommendation: **KEEP_PROPOSED_WITH_REQUIRED_CHANGES** — the model's basic shape is sound
-(no `REDESIGN`), but `ACCEPT_ADR` is premature while the corpus meant to demonstrate the model
-contains a confirmed self-contradiction and confirmed Decision Impact miscalibration. No ADR,
-contract, or schema file was modified in this task, per its explicit scope. Report written to
-`docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md`; PR to follow per task instruction. Human review of
-the report and its recommendation is the next gate — this task does not itself flip ADR-0002's
-Status or apply any of the report's suggested required changes.
+Final recommendation: **READY_TO_RECONSIDER_ADR_ACCEPTANCE** (reaffirmed) — not
+`REDESIGN_REQUIRED` (no representability/model-shape failure across four full review rounds), not
+`REQUIRED_CHANGES_REMAIN` (the contradiction is fixed at its source and re-verified corpus-wide, no
+new confirmed defect remains open). `ADR-0002`'s Status was **not** changed by this task, per its
+explicit instruction — that decision belongs to the human.
 
 ## Allowed Scope
 
-Add:
-- `docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md` (new)
+Update (explicitly authorized, narrow scope only):
+- `docs/contracts/INTENT_SPEC.md` — fix the specific handoff/Decision-Impact contradiction only;
+  the outcome-relative model's level definitions and practical test are not to be changed.
+- `docs/examples/INTENT_CASES.md` — fix Case 14 and any other case found to contain the identical
+  contradiction pattern; no Decision Impact level recalibration unless a direct contradiction
+  requires it.
+- `docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md` — update in place (not a new report file).
 
-Update:
-- `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
+Update: `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
 
-Forbidden (read-only for this task): `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`,
-`docs/contracts/INTENT_SPEC.md`, `docs/contracts/SCHEMA_MAPPING.md`, `docs/examples/INTENT_CASES.md`,
-`schemas/**`, `tests/contracts/**`, `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`,
-`CLAUDE.md`, `docs/development/**`.
+Forbidden: `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md` (Status unchanged), `schemas/**`,
+`tests/contracts/validate-contracts.mjs`, model shape changes of any kind, `.project/PROJECT_STATE.md`,
+`.project/DECISIONS_LOG.md`, `CLAUDE.md`, `docs/development/**`, and anything Night
+Runner/RRF-related or otherwise unrelated to this task.
 
 ## Required Context
 
 - `CLAUDE.md`, `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`
-- `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`
-- `docs/contracts/INTENT_SPEC.md`
-- `docs/examples/INTENT_CASES.md`
-- `docs/contracts/SCHEMA_MAPPING.md`
-- `schemas/m0/intent-spec.schema.json`, `schemas/m0/user-idea.schema.json`
-- `tests/contracts/validate-contracts.mjs` and `tests/contracts/fixtures/**`
+- `docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md` (prior work this task extends)
+- `docs/contracts/INTENT_SPEC.md`, `docs/examples/INTENT_CASES.md` (all 20 cases)
 
 ## Validation
 
-- `npm test`: 24/24 fixtures pass (baseline, before this review's own analysis).
-- Two independent read-only Codex reviewers dispatched (in progress).
+- `npm test`: 32/32 throughout (unaffected by prose-only changes).
+- Two independent reviewers (contract consistency; corpus-wide consistency), both independently
+  verified by Claude against the actual text before any fix was applied.
 
 ## Next Gate
 
-PR #10 opened (base `mihvernetwork/mihver:main`, compare `devSerdar:review/adr-0002-adversarial-review`
-— pushed via a fork under `devSerdar` since neither the SSH nor `gh` identity available in this
-session had direct push access to `mihvernetwork/mihver`). Human review of the report and its
-recommendation is the next gate. Not merged, per task instruction.
-
----
-
-## Prior task on this repository (different branch, not superseded by this file)
-
-`NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR` remains open on its own branch
-(`feat/night-runner-fresh-claude-executor`, PR #8): human-approved for merge, merge execution
-itself still pending a separate explicit instruction. That task's full record lives in this file
-as committed on that branch, and in `.project/REVIEW_STATE.md`'s History — not restated here, per
-this file's branch-scoping (see `AGENT_POLICY.md`'s Operational State Scope).
+PR #11 updated in place (same branch, same PR — not a new one), reaffirming
+`READY_TO_RECONSIDER_ADR_ACCEPTANCE`. Human review of the updated report is the next gate. Not
+merged, per task instruction. `ADR-0002`'s Status change (if the human agrees) is a separate, later
+action this task does not itself perform.
