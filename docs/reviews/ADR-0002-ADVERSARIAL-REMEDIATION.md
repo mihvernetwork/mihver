@@ -251,24 +251,92 @@ no other file references the old title.
 `docs/examples/INTENT_CASES.md`; no fixture or schema/validator file was touched). Re-run after
 every batch of edits, including after the final self-caught Case 16 fix.
 
+## 6. Handoff Consistency Fix (`ADR-0002-HANDOFF-CONSISTENCY-FIX`)
+
+An external human review, after the final consistency sweep above had already reached
+`READY_TO_RECONSIDER_ADR_ACCEPTANCE`, found one more real contradiction that survived all four
+prior reviewers and Claude's own passes: `INTENT_SPEC.md`'s new "Decision Impact Is
+Outcome-Relative" subsection said a HIGH/CRITICAL item could be safely deferred because
+"Requirement Derivation or a later stage will" resolve it — directly contradicting the contract's
+own "Handoff Status: Blocked vs. Failed" section, which states Requirement Derivation never
+consumes a Blocked version at all. This is a genuine gap in the prior sweep's coverage: all four
+previous reviewers checked Decision Impact *calibration* (is the level right?) and
+Unknown/Ambiguity *classification*, but not this specific handoff-mechanics question — worth
+recording plainly rather than glossing over, since it means the previous `READY` recommendation was
+reached without this contradiction having been caught.
+
+### Fix applied
+
+Required semantic rule (specified by the task, implemented without touching the outcome-relative
+Decision Impact model itself — the LOW/MEDIUM/HIGH/CRITICAL definitions and the practical test are
+unchanged): HIGH/CRITICAL → the current `IntentSpec` is permanently Blocked → the item may be
+resolved through clarification, additional context, correction, or another Intent Parsing/revision
+pass → resolution creates a new, superseding `IntentSpec` → only an eligible new version may reach
+Requirement Derivation. "Procedurally deferrable" (safe for Intent Parsing itself to leave
+unresolved) must not be read as deferrable *into* Requirement Derivation while the artifact is
+Blocked.
+
+- **`INTENT_SPEC.md`**, "Decision Impact Is Outcome-Relative": rewrote the bullet that said
+  "Requirement Derivation or a later stage will" resolve a HIGH/CRITICAL item — it now says
+  resolution requires a new Intent Parsing/revision pass producing a new version, and explicitly
+  contrasts this with MEDIUM/LOW, where a downstream stage legitimately may pick up a still-open
+  item on the *same*, eligible version.
+- **Case 14**: had the identical contradiction — "only Requirement Derivation (or a later stage) has
+  the standing to decide how to handle an unresolved capacity question" and "Requirement Derivation
+  still carries the live Unknown forward and decides how to handle it," both attached to its
+  HIGH-impact scale Unknown. Rewrote both bullets to state the correct resolution path.
+- **Case 11**, found by Reviewer B (corpus-wide check) and independently verified: "the
+  extraction-mechanics Unknown is HIGH — deferrable in the sense that Intent Parsing need not
+  resolve it, but it must be carried forward" — "carried forward," left unqualified next to a HIGH
+  item, repeats the same ambiguous pattern. Reworded to state explicitly this version is Blocked and
+  permanently ineligible, and lightly clarified the adjacent "What IntentSpec must NOT decide" bullet
+  so the eventual Architecture Synthesis/Requirement Derivation technology decision is clearly
+  described as happening only on a future, resolved, eligible version — not on this Blocked one.
+- Three further `INTENT_SPEC.md` passages found by Reviewer A, independently verified and fixed:
+  the Assumption Policy's generic "it is Requirement Derivation's job... to decide whether and how
+  to fill an operational gap" (now qualified to LOW/MEDIUM-impact gaps, with an explicit sentence
+  that a HIGH/CRITICAL gap instead Blocks the version); the "Common Violations" → "Backward leakage"
+  bullet's unqualified "silently resolving an Ambiguity or Conflict" (now distinguishes interpretive
+  resolution — never Requirement Derivation's job at any impact level — from legitimate operational
+  gap-filling at LOW/MEDIUM, which is a different thing); and an Examples-section entry that said
+  Decision Impact is "assessed downstream" (backwards — Intent Parsing assesses it before handoff;
+  a downstream stage cannot assess eligibility for a version it hasn't received yet).
+
+### Findings evaluated and not actioned
+
+- **Case 3**'s "flagged as a risk area for Requirement Derivation, not recorded as IntentSpec
+  Conflict" — both reviewers independently concluded this describes a *separate*, not-yet-existing
+  future risk (whether literal automation could produce poor-quality replies), not resolution of the
+  case's actual HIGH-impact autonomous-send Ambiguity. Left unchanged.
+- **Case 11**'s "What IntentSpec must NOT decide" bullet, on its own — judged a generic,
+  still-accurate stage-ownership statement (Architecture Synthesis, informed by Requirement
+  Derivation, eventually picks the extraction technology) rather than an independent contradiction;
+  lightly clarified anyway alongside the adjacent confirmed fix, for belt-and-suspenders precision.
+
+### Validation
+
+`npm test`: 32/32 fixtures pass (prose-only changes; no fixture, schema, or validator file touched).
+Comprehensive `grep -n "Requirement Derivation"` sweep of both `INTENT_SPEC.md` and
+`INTENT_CASES.md` re-run after all fixes — every remaining occurrence checked and confirmed
+consistent with the Blocked/permanently-ineligible/new-version-required pattern for HIGH/CRITICAL
+items, or legitimately describing MEDIUM/LOW same-version downstream handling.
+
 ## Final Recommendation
 
-**`READY_TO_RECONSIDER_ADR_ACCEPTANCE`**
+**`READY_TO_RECONSIDER_ADR_ACCEPTANCE`** (reaffirmed after this handoff-consistency fix)
 
-Not `REDESIGN_REQUIRED` — across three full review rounds (the original adversarial review, the
-first remediation, and this final sweep), no case was found structurally unrepresentable by the
-existing schema, and no finding required re-architecting the Claim/Open Item/Conflict model itself.
+Not `REDESIGN_REQUIRED` — across four full review rounds (the original adversarial review, the
+first remediation, the final consistency sweep, and this handoff-consistency fix), no case was
+found structurally unrepresentable by the existing schema, and no finding required re-architecting
+the Claim/Open Item/Conflict model or the outcome-relative Decision Impact test itself.
 
-Not `REQUIRED_CHANGES_REMAIN` — the one confirmed, named blocker from the prior round (Case 18) is
-now fixed and independently re-derived from first principles, not merely patched to match a
-predetermined target. All 20 cases have now been checked against the outcome-relative Decision
-Impact rule by independent reviewers covering disjoint ranges plus a dedicated cross-corpus
-consistency pass, and every confirmed defect found — including several pre-existing ones outside
-this task's originally-named scope (Case 11's and Case 20's category errors, Case 17's provenance
-gap, Case 4's calibration language and a stale cross-reference, terminology imprecision this pass's
-own edits introduced) — was fixed and re-verified, not left for a future task. Remaining flagged
-items (above) were evaluated and are genuine, defensible judgment calls or out-of-scope completeness
-suggestions, not confirmed defects blocking reconsideration.
+Not `REQUIRED_CHANGES_REMAIN` — the contradiction an external human review found (HIGH/CRITICAL
+items described as resolvable by Requirement Derivation, contradicting the permanent-Blocked
+handoff rule) is now fixed at its source (`INTENT_SPEC.md`) and re-verified across the entire
+corpus, not just the one case that prompted the report. Two independent reviewers (handoff
+consistency in the contract; corpus-wide handoff consistency across all 20 cases) confirmed the fix
+and surfaced three additional passages with the same latent ambiguity, all independently verified
+and corrected rather than left outstanding.
 
 `ADR-0002`'s Status field was **not** changed by this task, per its explicit instruction — that
 remains the human's decision to make, informed by this report.
@@ -280,9 +348,13 @@ fixture/schema/validator coverage), dispatched in parallel from disjoint task co
 
 **Final consistency sweep:** three independent read-only Codex MCP sessions dispatched in parallel
 over disjoint case ranges (Cases 1–7, 8–14, 15–20), followed by a fourth independent read-only
-session for cross-corpus consistency — all per `AGENT_POLICY.md`'s Task Contract and Parallel
-Worker Rules. Full verbatim reports retained in this session's transcript; this document is
-Claude's critically-reviewed synthesis throughout, including material self-corrections made after
-independently verifying reviewer findings against the actual edited text (never relayed
-uncritically), and at least one finding (Case 16's dangling Ambiguity impact assignment) caught by
-Claude's own final read-through rather than by any dispatched reviewer.
+session for cross-corpus consistency.
+
+**Handoff consistency fix:** two independent read-only Codex MCP sessions (`INTENT_SPEC.md`
+handoff/Decision Impact consistency; corpus-wide HIGH/CRITICAL handoff consistency across all 20
+cases) — all per `AGENT_POLICY.md`'s Task Contract and Parallel Worker Rules. Full verbatim reports
+retained in this session's transcript; this document is Claude's critically-reviewed synthesis
+throughout, including material self-corrections made after independently verifying reviewer
+findings against the actual edited text (never relayed uncritically), and findings caught by
+Claude's own read-throughs rather than by any dispatched reviewer (Case 16's dangling Ambiguity
+impact assignment in the prior round).

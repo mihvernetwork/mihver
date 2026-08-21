@@ -463,10 +463,12 @@ scores."
 - **Conflicts:** none.
 - **Clarification needs:** none for the core renaming-pattern goal itself — it is a resolved Claim,
   not an Open Item, and carries no Decision Impact (`INTENT_SPEC.md`'s levels apply "to an Open Item
-  or Conflict — not to Claims in general"). Edge-case behavior (missing fields, collisions) is LOW;
-  the extraction-mechanics Unknown is HIGH — deferrable in the sense that Intent Parsing need not
-  resolve it, but it must be carried forward rather than silently assumed solved, since the answer
-  determines whether an entire document-parsing/OCR subsystem is needed at all.
+  or Conflict — not to Claims in general"). Edge-case behavior (missing fields, collisions) is LOW.
+  The extraction-mechanics Unknown is HIGH: this version is Blocked and permanently ineligible for
+  Requirement Derivation, not merely deferred to a later stage on this same artifact — Intent
+  Parsing must not silently assume it solved, but resolving it requires a new Intent
+  Parsing/revision pass producing a new, superseding version, since the answer determines whether
+  an entire document-parsing/OCR subsystem is needed at all.
 - **Decision-impact reasoning:** the unresolved item is how field values get extracted from the
   source invoice; the downstream decision it changes is whether the architecture needs any
   document-parsing/OCR capability at all, versus operating on already-structured data — a
@@ -476,10 +478,12 @@ scores."
   LOW: well-specified, low-risk, and reversible regardless of how extraction resolves — a detail
   within whichever extraction architecture is eventually chosen, not a fork of its own.
 - **What IntentSpec must NOT decide:** whether an LLM, an OCR pipeline, a rules engine, or a plain
-  script performs the extraction and renaming — that determination (which may or may not conclude
-  "zero agents needed," per Principle 14 — zero-agent is one *possible* later architecture, not a
-  conclusion reached here) belongs to Architecture Synthesis, informed by Requirement Derivation,
-  not to Intent Parsing.
+  script performs the extraction and renaming. That determination belongs to Architecture Synthesis,
+  informed by Requirement Derivation — but only once a new, superseding `IntentSpec` version has
+  resolved the HIGH-impact question of whether extraction is even required at all (this Blocked
+  version's own extraction Unknown does not reach Requirement Derivation or Architecture Synthesis
+  directly). Zero-agent is one *possible* later architecture on that eventual eligible version, per
+  Principle 14 — not a conclusion reached here.
 
 ---
 
@@ -575,14 +579,17 @@ we go viral."
 - **Conflicts:** none.
 - **Clarification needs:** the booking-platform Claim itself is clear enough for Intent Parsing to
   produce a valid `IntentSpec` — that is not in question. But that clarity does not offset the
-  separately HIGH-impact scale Unknown (see reasoning below), which makes this version Blocked for
-  Requirement Derivation regardless of how clear the rest of the intent is. A capacity/scale figure
-  ("design for moderate headroom by default") is exactly the kind of technical/operational default
-  the Assumption Policy forbids Intent Parsing from inventing: the user raised a scale concern
-  without giving a number, and MIHVER has no interpretive basis to convert that into a working
-  figure — only Requirement Derivation (or a later stage) has the standing to decide how to handle
-  an unresolved capacity question, whether that's a default, a range, or a clarification request.
-  Deferring the value to that later stage does not lower this item's own Decision Impact.
+  separately HIGH-impact scale Unknown (see reasoning below), which makes this version Blocked and
+  permanently ineligible for Requirement Derivation, regardless of how clear the rest of the intent
+  is. A capacity/scale figure ("design for moderate headroom by default") is exactly the kind of
+  technical/operational default the Assumption Policy forbids Intent Parsing from inventing: the
+  user raised a scale concern without giving a number, and MIHVER has no interpretive basis to
+  convert that into a working figure. Because this item is HIGH-impact, resolving it does not mean
+  handing the same live Unknown to Requirement Derivation on this version — per "Handoff Status:
+  Blocked vs. Failed" in `INTENT_SPEC.md`, Requirement Derivation never consumes a Blocked version.
+  Resolution requires clarification, additional context, or another Intent Parsing/revision pass
+  that produces a new, superseding `IntentSpec` version; only that new version, and only if its own
+  scale assessment no longer carries HIGH/CRITICAL impact, may reach Requirement Derivation.
 - **Decision-impact reasoning:** the unresolved item is expected scale/magnitude; the downstream
   decision it changes is whether the architecture needs elastic/distributed capacity or a simpler
   fixed-capacity design — a materially different architecture, not a detail within one, so HIGH
@@ -590,9 +597,11 @@ we go viral."
   reach CRITICAL, not why it stays below HIGH: HIGH requires only a materially different or
   significantly more expensive architecture, which this case's own downstream-decision description
   already states — it does not additionally require an unsafe or irreversible outcome, which is
-  CRITICAL's bar. Requirement Derivation still carries the live Unknown forward and decides how to
-  handle it, rather than Intent Parsing pre-empting that with a guessed default — that division of
-  labor is unaffected by the impact level assigned here.
+  CRITICAL's bar. Because this is HIGH, not MEDIUM, the live Unknown cannot be carried forward for
+  Requirement Derivation to pick up on this same version, the way a MEDIUM item legitimately could
+  (contrast Case 6's cost-scope Unknown); Intent Parsing still must not pre-empt resolution with a
+  guessed default, but what actually clears this Unknown is a new Intent Parsing/revision pass
+  producing a new version — not a downstream stage resolving it on the Blocked one.
 - **What IntentSpec must NOT decide:** any concurrency, traffic, or capacity figures; any elastic
   or distributed-architecture decision.
 

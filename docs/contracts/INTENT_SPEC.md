@@ -265,9 +265,13 @@ was clearly meant to be. A technical or operational default is about *filling in
 parameter the user never addressed at all* — a competitor list, a cost-category scope, an approval
 mechanism, a capacity/scale figure. Intent Parsing must not invent the latter kind, even to be
 helpful to a downstream stage that will eventually need a working value. **Unknown should normally
-remain Unknown.** It is Requirement Derivation's job (or a later stage's) to decide whether and how
-to fill an operational gap — with a working default, a clarification, or research — not Intent
-Parsing's job to pre-empt that by manufacturing one under the label "Assumption."
+remain Unknown.** For an operational gap that keeps the produced `IntentSpec` eligible (LOW/MEDIUM
+impact), it is Requirement Derivation's job (or a later stage's) to decide whether and how to fill
+it — with a working default, a clarification, or research — not Intent Parsing's job to pre-empt
+that by manufacturing one under the label "Assumption." A HIGH/CRITICAL operational gap instead
+makes the produced version Blocked (see "Handoff Status: Blocked vs. Failed" below); Requirement
+Derivation does not fill that gap on this version at all — resolution requires a new, superseding
+`IntentSpec` version first.
 
 Any Assumption that is retained must be:
 
@@ -354,11 +358,19 @@ unresolved on the eventual downstream requirement/architecture decision — neve
 which pipeline stage, the item happens to get resolved. These are different questions, and only the
 first governs the level assigned here:
 
-- An item can be perfectly safe to *defer procedurally* (Intent Parsing need not resolve it itself;
-  Requirement Derivation or a later stage will) while still carrying HIGH or CRITICAL Decision
-  Impact, if an unresolved wrong answer would materially reshape the eventual architecture. Being
-  deferrable and being low-impact are not the same fact, and an assessment must not infer the second
-  from the first.
+- An item can be perfectly safe for *Intent Parsing itself* to leave unresolved — producing a
+  Blocked `IntentSpec` rather than fabricating an answer — while still carrying HIGH or CRITICAL
+  Decision Impact, if an unresolved wrong answer would materially reshape the eventual architecture.
+  This is not the same as deferring the item *into* Requirement Derivation: per "Handoff Status:
+  Blocked vs. Failed" below, Requirement Derivation never consumes a Blocked version, so a
+  HIGH/CRITICAL item cannot be "carried forward" for a later stage to resolve on the same artifact.
+  Its resolution — clarification, additional context, a correction, or another Intent
+  Parsing/revision pass — must instead produce a new, superseding `IntentSpec` version; only that
+  new version, if it is itself eligible, may reach Requirement Derivation. Being safe for Intent
+  Parsing to leave unresolved and being low-impact are not the same fact, and an assessment must not
+  infer the second from the first. (Contrast MEDIUM and below, where the produced `IntentSpec` is
+  eligible and a downstream stage legitimately may pick up the still-open item on that same version
+  — see "Decision Impact" above and the Assumption Policy.)
 - Conversely, an item can be resolvable immediately and still be LOW impact, if resolving it either
   way would not change which architecture is appropriate.
 - The practical test: ask what happens to the *eventual* architecture recommendation if this item
@@ -540,9 +552,12 @@ Architecture Synthesis), governed by Principle 2 (Evidence Before Recommendation
   decision; inventing unstated best-practice requirements (GDPR, 99.9% uptime) that the user never
   raised.
 - **Backward leakage** (Requirement Derivation overreaching): reinterpreting what the user meant
-  once `IntentSpec` has recorded it; silently resolving an Ambiguity or Conflict that `IntentSpec`
-  left open instead of failing or requesting a revision; treating a Claim's presence in
-  `IntentSpec` as license to decide its truth or feasibility.
+  once `IntentSpec` has recorded it; silently deciding *what the user meant* on an Ambiguity or
+  Conflict `IntentSpec` left open, instead of failing or requesting a revision — this is about
+  interpretive authority, which is never Requirement Derivation's regardless of Decision Impact
+  level, and is distinct from the operational gap-filling a downstream stage may legitimately do for
+  a LOW/MEDIUM Unknown (see Assumption Policy above); treating a Claim's presence in `IntentSpec` as
+  license to decide its truth or feasibility.
 
 ## Information-Loss Rules
 
@@ -678,8 +693,10 @@ to force an output where the input does not support one.
   force = prohibition. Permitted Inference (separately recorded, with basis and moderate
   confidence): "the user appears to have a data-locality or privacy constraint" — kept distinct
   from the Claim itself.
-- Deployment region never mentioned. → Open Item: Unknown. Decision Impact assessed downstream
-  (likely MEDIUM unless another Claim makes it HIGH/CRITICAL, e.g. a data-residency prohibition).
+- Deployment region never mentioned. → Open Item: Unknown. Decision Impact assessed by Intent
+  Parsing itself, before handoff — not by a downstream stage, which never sees this assessment
+  until it exists (likely MEDIUM unless another Claim makes it HIGH/CRITICAL, e.g. a data-residency
+  prohibition).
 - "Everything must run locally" earlier, "use a managed cloud-only service" later in the same
   `UserIdea` (no supersession stated). → Conflict recorded, both Claims preserved, no side chosen.
 - User: "I think we have about 10,000 users, but I'm not sure." → Claim, origin = User-Provided,
