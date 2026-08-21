@@ -15,59 +15,84 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-STEP-03A-REQUIREMENT-SPEC-SEMANTIC-CONTRACT
+Task: M0-STEP-03A-CROSS-AXIS-REMEDIATION
 Branch: `m0/step-03a-requirement-contract`
 
-Three independent read-only Codex reviewers (A: provenance/epistemic boundary; B: requirement
-semantics — force mapping, conditions, leakage; C: lifecycle/handoff — eligibility,
-Complete/Partial/Failed, versioning), each reviewing the first draft of `REQUIREMENT_SPEC.md`,
-`ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, and `REQUIREMENT_CASES.md` (17 cases) against the
-already-Accepted `INTENT_SPEC.md`/`ADR-0002` model. All three found real, independently-verified
-defects; several were found by two or three reviewers independently, which strengthened confidence
-in those specific findings. Claude verified every material finding directly against the actual text
-before fixing (not relayed uncritically), then applied targeted fixes across all three documents.
+Four independent read-only Codex reviewers, dispatched by **invariant axis, not file range** (per
+this task's explicit instruction, since prior file-range reviewers had missed cross-cutting issues):
+A — normative strength vs. epistemic standing (origin/confidence/provisionality) independence; B —
+resolution authority (which surviving Unknowns Requirement Derivation may fill); C —
+completeness/testability of the Complete/Partial/Failed model; D — cross-document contradiction
+hunting across `REQUIREMENT_SPEC.md`, `ADR-0003`, and `REQUIREMENT_CASES.md`. Each reviewed the full
+corpus as revised in this task's first pass (the five externally-reported findings already fixed).
+Claude independently verified every material finding directly against the actual text before fixing
+(not relayed uncritically), then applied targeted fixes across all three documents.
 
 Confirmed and fixed (verified by Claude against the cited text in each case):
 
-- **Force-inflation bugs** (preference silently mapped to SHALL/MUST) in three cases — Case 10
-  ("obligation-adjacent SHALL" invented, not part of the mapping table), Case 11 (positive-clause
-  strength inflated by proximity to two prohibitions), Case 15 (SHALL asserted while negotiability
-  was explicitly still an unresolved Unknown — an implicit resolution of that Unknown, forbidden by
-  the contract's own text). Found independently by Reviewers A and B for 10/11/15.
-- **Condition-strengthening bug**: both the main `REQUIREMENT_SPEC.md` text and Case 9 compiled
-  "only if C" into "if and only if C," manufacturing an unstated converse. Found independently by
-  Reviewers A and B.
-- **Self-contradiction in the Complete/Partial/Failed model**: the Failed definition's own example
-  was verbatim identical to the Complete-with-zero-Requirements example. Found by Reviewer C;
-  redefined Failed around structural malformedness (a genuinely different kind of problem) instead.
-- **Overclaim**: `REQUIREMENT_SPEC.md` asserted downstream stages "may partially consume" a Partial
-  `RequirementSpec`, while `ADR-0003`'s own Open Questions explicitly left that undecided. Found by
-  Reviewer C; softened to not authorize consumption mechanics this document doesn't own.
-- **Interpretive-leap bug in Case 12**: the original scenario split a Claim into two Requirements
-  based on what a phrase "plausibly covers" — itself an unauthorized interpretive judgment. Found
-  independently by Reviewers A and B; replaced with a scenario whose split is mechanically entailed,
-  not interpretive.
-- **Invalid MEDIUM-Conflict scenario in Case 13**: the original data-isolation example was, under
-  `INTENT_SPEC.md`'s own Decision Impact test, actually HIGH (a materially different architecture
-  fork), making it an invalid input for this stage. Found independently by Reviewers A and C;
-  replaced with a genuinely detail-level (report-delivery-day) Conflict.
-- Smaller fixes: a dangling internal cross-reference to non-existent sections (caught by Claude, not
-  a reviewer, while fixing the cardinality finding); a missing "Provenance expectations" section in
-  Case 8; an ambiguous "marked invalid" phrasing in Case 14 that could imply mutating a historical
-  artifact; an underspecified rationale/normative-content boundary for descriptive Claims; an
-  unbounded Requirement-Level Inference concept, now given an explicit operational entailment test;
-  a near-circular re-derivation trigger, now enumerated; a missing multi-Claim-partial-supersession
-  rule in the main contract body (previously left entirely to an ADR Open Question).
+- **Residual strength-weakening sentence**: the "Force → Requirement Strength Mapping" section's own
+  intro sentence still said a mapping "may only preserve or (for provisional/lower-confidence Claims)
+  weaken strength" — a direct leftover contradicting the axis-independence fix already applied
+  elsewhere (R-03, R-04, the "Downgrading is permitted" paragraph). Found independently by Reviewers A
+  and D; rewritten to state strength is never weakened by origin/confidence either.
+- **Case 7 force/result mismatch**: Case 7b stated "force = obligation" but derived a MUST NOT
+  (prohibition-mapped) result — an internal contradiction in the very case built to demonstrate the
+  axis-independence fix. Found independently by Reviewers A and D; relabeled force to "prohibition"
+  throughout (source semantics, result, prohibited-transformations bullet, closing sentence).
+- **ADR-0003 confidence overclaim**: "Origin, force, and confidence are first-class, mandatory,
+  independently-inspectable properties of every Requirement" — but confidence is an Inferred-Claim-
+  specific property, not universal. Found independently by Reviewers A and D; corrected to scope
+  confidence to Inference-derived Requirements and mention provisional/reversible standing "wherever
+  applicable."
+- **R-20 overbroad scope**: as originally worded, R-20 also literally captured genuinely force-absent
+  descriptive Claims (already correctly handled by R-02/R-17), contradicting Cases 6 and 17. Found by
+  Reviewer D; fixed with an explicit carve-out ("R-20 does not apply to a genuinely force-absent
+  descriptive Claim").
+- **Case 17 Failed-contrast contradicting R-17**: the "nothing to compile from at all" contrast
+  phrasing directly contradicted R-17's own tolerance for a well-formed, entirely-descriptive,
+  zero-Requirement `IntentSpec` being Complete, not Failed. Found independently by Reviewers C and D;
+  rewritten to define Failed strictly around structural malformedness.
+- **Case 16 Unknown/Ambiguity mislabeling**: "fast" was originally treated as an Unknown when, per
+  `INTENT_SPEC.md`'s own practical test (wording that itself supports multiple readings is an
+  Ambiguity, not a blank gap), it should be an Ambiguity — the same pattern repeatedly fixed earlier
+  in `INTENT_CASES.md`. Found by Reviewer B; reclassified and restructured around both R-08
+  (Ambiguity never resolvable here) and R-21 (no metric even after picking a reading).
+- **Anti-Example misciting R-01**: the microservices-from-vague-preference Anti-Example cited
+  "(Violates R-01, R-11)," but R-01 only requires *some* provenance reference exists, which a
+  fabricated Requirement could still technically carry. Found by Reviewer D; corrected to cite R-11
+  alone, with an explanatory clause.
+- **Cross-reference bug** (found by Claude, not a reviewer, during the final read-through sweep after
+  all reviewer fixes were applied): the Examples section's source-code-prohibition example pointed at
+  "Case 4-derived worked example, Case 1" in `REQUIREMENT_CASES.md`; the matching worked example is
+  actually Case 2. Corrected.
+- **R-19 tightened and given a terminology note**: Reviewer B's structural test (does a materially
+  different value change what the Requirement covers, not what vocabulary describes it) sharpened the
+  Unknown-fillability rule; a new "Note on terminology" paragraph reconciles R-19's narrower test
+  against `INTENT_SPEC.md`'s broader "technical or operational default" phrase, since the two
+  documents use the same words for differently-scoped concepts.
+- **R-21 tightened to an oracle-based test**: "does the Requirement's own recorded content already
+  point to a satisfaction procedure" replacing a looser "does some reasonable reading exist"
+  formulation Reviewer C flagged as too permissive.
+- **R-09 explicitly subordinated to R-19**: provenance marking alone was previously readable as
+  sufficient to make an Unknown fillable; now explicitly conditioned on passing R-19 first.
 
-Not actioned: Reviewer A's broader suggestion to add literal example IDs (`claim_id`s) throughout
-all 17 cases — evaluated and judged a stylistic preference, not a confirmed defect, since
-`INTENT_CASES.md` (this corpus's own established precedent) uses the same "the Claim" prose style
-throughout without literal IDs.
+**Reviewer disagreement, resolved by independent re-derivation, not majority vote:** Reviewer B
+argued Case 4's cost-category Unknown should be reclassified as non-fillable/Partial (same as Case
+10's competitor-identity Unknown), citing a concrete boundary-straddling counterexample
+($80 infra + $60 licenses = $140, which passes under one cost-category reading and fails under
+another). Reviewers C and D did not flag Case 4 as incorrect. Claude independently re-derived the
+question from the contract text and concluded Case 4 should keep its Complete/fillable
+classification — it has a real metric and threshold, and only the category boundary is ambiguous, so
+most candidates are evaluable regardless of interpretation, unlike Case 16's "fast," which has zero
+anchor for any candidate. Case 4 was not reclassified, but its text was substantially strengthened
+with a new "A candid check against a boundary-straddling candidate" paragraph that explicitly and
+honestly engages Reviewer B's exact counterexample rather than leaving it unaddressed.
 
 ## Required Changes
 
-None remaining — every confirmed defect from all three reviewers was fixed and re-verified
-(`npm test`: 32/32 throughout, unaffected since no schema/validator/fixture file was touched).
+None remaining — every confirmed defect from all four axis reviewers was fixed and re-verified, plus
+one additional cross-reference bug Claude caught independently (`npm test`: 32/32 throughout,
+unaffected since no schema/validator/fixture file was touched).
 
 ## Fixes Applied
 
@@ -76,12 +101,31 @@ See "Latest Review" above for the full list; applied directly to `docs/contracts
 
 ## Pending Human Gate
 
-PR to be opened per task instruction (push to the `devSerdar` fork, not `mihvernetwork` — per this
-task's explicit instruction to use the fork for this task's development). Not to be merged by this
-task. `ADR-0003`'s Status remains **Proposed**, per task instruction — human review of the PR is the
-next gate.
+PR #13 to be updated in place (pushed to the `devSerdar` fork, not `mihvernetwork` — per this task's
+explicit instruction). Not to be merged by this task. `ADR-0003`'s Status remains **Proposed**, per
+task instruction — human review of the PR is the next gate.
 
 ## History
+
+- 2026-08-21 — `M0-STEP-03A-REQUIREMENT-SPEC-SEMANTIC-CONTRACT` (PR #13, first draft pass): three
+  independent read-only Codex reviewers (A: provenance/epistemic boundary; B: requirement
+  semantics — force mapping, conditions, leakage; C: lifecycle/handoff — eligibility,
+  Complete/Partial/Failed, versioning), each reviewing the first draft of `REQUIREMENT_SPEC.md`,
+  `ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, and `REQUIREMENT_CASES.md` (17 cases) against the
+  already-Accepted `INTENT_SPEC.md`/`ADR-0002` model. All three found real, independently-verified
+  defects; several were found by two or three reviewers independently. Confirmed and fixed:
+  force-inflation bugs in three cases (Case 10/11/15, preference silently mapped to SHALL/MUST);
+  a condition-strengthening bug ("only if" compiled to "if and only if") in both the main contract
+  and Case 9; a self-contradiction in the Complete/Partial/Failed model (Failed's example identical
+  to Complete-with-zero-Requirements'); an overclaim about downstream Partial-consumption
+  authorization contradicting the ADR's own Open Questions; an interpretive-leap bug in Case 12 and
+  an invalid Decision-Impact-level bug in Case 13 (both replaced with cleaner scenarios); plus
+  smaller fixes (a dangling cross-reference, a missing provenance section, ambiguous invalidation
+  wording, an unbounded inference-boundary concept given an operational test, a near-circular
+  re-derivation trigger enumerated). `npm test`: 32/32. Moved here from "Latest Review" now that
+  those sections describe `M0-STEP-03A-CROSS-AXIS-REMEDIATION` instead, per this file's branch/task
+  scoping (both entries share branch `m0/step-03a-requirement-contract` and PR #13, since this was a
+  continuation, not a new branch). — branch `m0/step-03a-requirement-contract`
 
 - 2026-08-21 — `ADR-0002-ACCEPTANCE` (PR #12, merged `a20d647`): one independent read-only Codex
   reviewer verified the `ADR-0002` Status transition (Proposed → Accepted). Overall verdict

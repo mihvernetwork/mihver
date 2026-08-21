@@ -26,8 +26,10 @@ version).
 **Defensible RequirementSpec result:** Requirement: "The system MUST enforce an approval gate before
 deployment; the scope of 'deployment' (which environments) is an unresolved, carried-forward Open
 Item, not yet 'all environments' or 'production only.'" Force mapped directly (obligation → MUST) at
-full strength, since the basis is a plain User-Provided Claim with no weaker origin to cap it — but
-the Requirement's own text must not assert a specific coverage ("any deployment," "all
+full strength. (User-Provided origin is recorded independently in provenance; it neither increases
+nor caps the Requirement's strength — strength comes from the force alone, per "Treatment of Claim
+Origin" in `REQUIREMENT_SPEC.md`.) The Requirement's own text must not assert a specific coverage
+("any deployment," "all
 environments") that the surviving Ambiguity has not actually settled; asserting the broadest reading
 would itself be silently resolving that Ambiguity.
 
@@ -115,11 +117,31 @@ carrying the Unknown forward.
 filled with an explicit, marked working default (e.g. "infrastructure and model-usage costs only,
 Requirement-Derivation-introduced default, excluding one-time setup") or carried forward unresolved
 — both are valid per `REQUIREMENT_SPEC.md`; whichever is chosen must be visible in the Requirement's
-provenance, not silently assumed.
+provenance, not silently assumed. Filling is legitimate here, unlike Case 10's competitor-identity
+Unknown, because cost-category scope selects an accounting parameter *within* an already-settled
+preference (per R-19's tightened test): no reading of it adds, removes, or narrows a user-facing
+capability, actor, or target — it only changes which dollar amounts count toward a ceiling the user
+has already stated. Contrast competitor identity, which changes the research capability's own target
+scope.
+
+**A candid check against a boundary-straddling candidate:** consider a candidate costing $80/month
+in infrastructure and model usage plus $60/month in third-party licenses ($140/month total). Under an
+"infrastructure and model usage only" reading it satisfies the Requirement; under an "all recurring
+costs" reading it does not — the category boundary genuinely changes the verdict for this specific
+candidate. This does not make the Requirement untestable in the R-21 sense, though: "cost under
+$100/month" already supplies a real metric and threshold, so the *overwhelming majority* of
+candidates (well under or well over, regardless of which reading applies) are evaluable immediately
+without needing the boundary resolved at all — the ambiguity narrows precision for a boundary
+zone, it does not remove the test itself, unlike Case 16's "fast," which supplies no metric or
+comparator for *any* candidate. A candidate that actually falls in the disputed zone should be
+flagged by the evaluating stage as boundary-sensitive and requiring the Unknown's resolution before a
+verdict is given for *that specific candidate* — that is a normal, expected consequence of an
+unresolved-but-testable Requirement, not evidence the Requirement itself is Partial.
 
 **Eligibility:** Complete either way (filling the Unknown with a marked default, or carrying it
 forward as an attached open item on an otherwise-derived Requirement, both keep this Complete — only
-an unresolved *Ambiguity or Conflict* would make it Partial, and this Claim carries neither).
+an unresolved *Ambiguity or Conflict*, or a testability-blocking Unknown per R-21, would make it
+Partial, and this Claim carries neither, per the boundary-candidate reasoning above).
 
 ---
 
@@ -174,27 +196,45 @@ expected outcome, not a gap.
 
 ## 7. Inferred Claim
 
-**Source IntentSpec semantics:** Inferred Claim, premise = "I don't want our source code sent to
-external providers" (User-Provided, prohibition), reasoning = "the user appears to have a
-data-locality or privacy constraint," `derivation_confidence` = moderate (`INTENT_SPEC.md`'s own
-worked example).
+**Source IntentSpec semantics (7a — preference-force Inference):** Inferred Claim, force =
+preference, premise = "I don't want our source code sent to external providers" (User-Provided,
+prohibition), reasoning = "the user appears to have a data-locality or privacy constraint,"
+`derivation_confidence` = moderate (`INTENT_SPEC.md`'s own worked example).
 
-**Defensible RequirementSpec result:** At most a SHOULD-level supporting Requirement — "The system
-SHOULD minimize data locality exposure generally (data-locality preference, Inference-derived,
-moderate confidence)" — clearly marked as Inference-derived, capped below MUST regardless of how
-confidently the Inference reads.
+**Defensible RequirementSpec result (7a):** Requirement: "The system SHOULD minimize data-locality
+exposure generally (Inference-derived, moderate confidence)." SHOULD because the Inferred Claim's
+**own force is a preference** — not because moderate confidence capped a stronger force down to
+SHOULD. Confidence and provisional standing are recorded in provenance alongside the origin marker,
+not folded into the strength.
 
-**Prohibited transformations:** Compiling the Inference into a MUST-level Requirement, or into a
-Requirement indistinguishable in presentation from the User-Provided prohibition it was derived
-from (both exercise R-03); treating the Inference's moderate confidence as license to state it with
-the same certainty as the prohibition itself.
+**Source IntentSpec semantics (7b — prohibition-force Inference, contrast case):** Inferred Claim,
+force = prohibition, premise = the same source-code prohibition, reasoning = "the stated prohibition
+on transmitting source code externally extends to build artifacts and dependency-lock files that
+themselves embed source content" (a technical-scope extension, not a weaker motivational reading),
+`derivation_confidence` = moderate.
 
-**Provenance expectations:** Traces to the Inferred Claim (not directly to the User-Provided Claim it
-was inferred from, though that chain is inspectable transitively through the Inferred Claim's own
-premises, per `INTENT_SPEC.md`'s I-05); the Requirement's provenance states the Inference's
-`derivation_confidence` and reasoning kind, carried forward rather than discarded at compilation.
+**Defensible RequirementSpec result (7b):** Requirement: "The system MUST NOT transmit build
+artifacts or dependency-lock files containing source content to external providers
+(Inference-derived, moderate confidence, provisional/reversible if the extension is later found
+unsupported)." **MUST NOT, not SHOULD NOT** — moderate confidence does not weaken a prohibition-force
+Inference's strength; it only affects whether Requirement Derivation chooses to derive a Requirement
+from it at all, and (having chosen to) makes the result provisional/reversible. This is the specific
+case R-03/R-06 consistency depends on: an Inferred prohibition is still at least MUST NOT/SHALL NOT.
 
-**Eligibility:** Complete.
+**Prohibited transformations:** Compiling either Inference into a Requirement without marking its
+Inference origin, so it reads as user-stated (violates R-03); in 7a, inflating the preference-derived
+SHOULD to MUST because the underlying privacy concern feels important (violates R-05); in 7b,
+**weakening the prohibition-derived MUST NOT to SHOULD NOT because confidence is only moderate** —
+this is the confidence-into-normative-weakness conflation this case pair exists to test, and the
+specific error the prior draft of this document made (violates R-03/R-06).
+
+**Provenance expectations:** Both trace to their respective Inferred Claim (not directly to the
+User-Provided Claim inferred from, though that chain is inspectable transitively through the
+Inferred Claim's own premises, per `INTENT_SPEC.md`'s I-05); each Requirement's provenance states its
+Inference's `derivation_confidence` and reasoning kind, carried forward rather than discarded at
+compilation, and independently of — not substituting for — the Requirement's own strength.
+
+**Eligibility:** Complete (both 7a and 7b).
 
 ---
 
@@ -206,16 +246,23 @@ a pronoun points to," rationale = "the nearest-noun reading permits continued in
 `intent-spec-ambiguity-conflict.json`).
 
 **Defensible RequirementSpec result:** If the Assumption's resolved reading is itself something the
-system must do or avoid, a Requirement may be derived from it — but marked **provisional and
-reversible**, e.g. "The system SHOULD \[behavior implied by the assumed referent\] (provisional —
-based on an Assumption, reversible if the referent is later clarified otherwise)." If the
-Assumption's content is too narrowly interpretive to support any independent system behavior on its
-own, no Requirement is derived from it at all, and that is the correct, expected outcome.
+system must do or avoid, the resulting Requirement's **strength follows that force, unweakened** —
+e.g. "The system MUST \[behavior implied by the assumed referent\] (provisional — based on an
+Assumption, reversible if the referent is later clarified otherwise)." Assumed origin requires the
+provisional/reversible marking; it does not require, or justify, softening MUST to SHOULD — that
+would be the same confidence/origin-into-normative-weakness conflation Case 7b tests, applied to
+Assumed rather than Inferred origin. If the assumed reading is instead something merely preferred
+(not obligatory), SHOULD is correct — but because the reading's own force is a preference, not
+because Assumed origin caps it there. If the Assumption's content is too narrowly interpretive to
+support any independent system behavior on its own, no Requirement is derived from it at all, and
+that is the correct, expected outcome.
 
 **Prohibited transformations:** Presenting an Assumption-derived Requirement with the same standing
-as a User-Provided one; treating the Assumption's "reversible: true" property as satisfied by simply
-noting it once, rather than actually re-examining the Requirement if a later `IntentSpec` version
-resolves the referent differently (this connects forward to "IntentSpec Supersession Effects").
+as a User-Provided one; weakening an obligation-level assumed reading to SHOULD merely because its
+origin is Assumed (the origin justifies the provisional/reversible marking, not a lower strength);
+treating the Assumption's "reversible: true" property as satisfied by simply noting it once, rather
+than actually re-examining the Requirement if a later `IntentSpec` version resolves the referent
+differently (this connects forward to "IntentSpec Supersession Effects").
 
 **Provenance expectations:** If a Requirement is derived, it traces to the single Assumed Claim, and
 carries forward — not merely references — that Claim's own recorded gap, rationale, scope, and
@@ -268,30 +315,38 @@ HIGH — for this eligible input, assume a revision has resolved source scope do
 no licensed access," leaving competitor identity as the sole surviving MEDIUM Unknown).
 
 **Defensible RequirementSpec result:** Requirement: "The system SHOULD produce a weekly competitor
-research report (recurring cadence, per the user's stated preference)." The source Claim's force is
-a preference, not an obligation — the recurring-cadence Inference and the report-output Claim
-together establish *what* is wanted and *how often*, but neither adds obligatory force the Claim
-itself never expressed; there is no "obligation-adjacent SHALL" tier in the force → strength mapping,
-and being unhedged is not the same axis as force (`INTENT_SPEC.md`'s I-22). Competitor identity is
-either carried forward as an open item ("which competitors: unresolved") attached to this
-Requirement's scope, or filled with a Requirement-Derivation-introduced default (e.g. "top 3
-competitors by public visibility, Requirement-Derivation default, reversible") — both valid, must be
-marked either way.
+research report (recurring cadence, per the user's stated preference); which competitors is an
+unresolved, carried-forward Open Item." The source Claim's force is a preference, not an obligation —
+the recurring-cadence Inference and the report-output Claim together establish *what* is wanted and
+*how often*, but neither adds obligatory force the Claim itself never expressed; there is no
+"obligation-adjacent SHALL" tier in the force → strength mapping, and being unhedged is not the same
+axis as force (`INTENT_SPEC.md`'s I-22). **Competitor identity is not fillable by Requirement
+Derivation** — unlike Case 4's cost-category Unknown, *which* competitors to research is not a
+technical/operational accounting parameter; it defines *what the user's stated goal actually
+targets*, i.e. part of what the user wants (per R-19's semantic test: filling it would decide the
+goal's own scope, not merely how compliance with an already-settled goal is measured). Only carrying
+it forward is defensible here — there is no legitimate "fill with a default" branch for this
+particular Unknown, in contrast to Case 4.
 
 **Prohibited transformations:** Mapping the source preference to SHALL/MUST instead of SHOULD (the
 error this case's own text originally modeled, corrected above — silent force inflation, directly
-exercising R-05); silently inventing a specific competitor list and presenting it as though the user
-named them; dropping the Unknown without any record, leaving a later stage unable to tell the scope
-was ever open.
+exercising R-05); **filling competitor identity with any default** ("top 3 by public visibility" or
+similar) and presenting the resulting Requirement as though its scope were settled — this is the
+error R-19 exists to forbid: competitor identity is not a technical parameter, so no
+Requirement-Derivation-introduced default is legitimate here, unlike Case 4; silently inventing a
+specific competitor list and presenting it as though the user named them; dropping the Unknown
+without any record, leaving a later stage unable to tell the scope was ever open.
 
-**Provenance expectations:** If filled: the default's rationale and its Requirement-Derivation origin
-are stated explicitly, distinct from the underlying Claim's own User-Provided provenance. If carried
-forward: the open item is attached to the Requirement it scopes, not left as a free-floating,
-unconnected note.
+**Provenance expectations:** The Requirement traces to the preference Claim; the competitor-identity
+Unknown is attached to it as a carried-forward, never-filled open item — not left as a free-floating,
+unconnected note, and never accompanied by a Requirement-Derivation-introduced value the way Case 4's
+cost-category Unknown may legitimately be.
 
-**Eligibility:** Complete either way — an Unknown, unlike an Ambiguity or Conflict, does not force
-Partial status; Requirement Derivation's choice to fill or carry it forward is a legitimate design
-decision, not a completeness gap.
+**Eligibility:** Partial — the cadence/output-format portion of the Requirement is genuinely testable
+now ("does the system produce a weekly report" can be evaluated independently of which competitors);
+the *target scope* of that report cannot be, so this area remains open rather than Complete, per
+R-19/R-21. Contrast Case 4, which stays Complete either way because its surviving Unknown is a
+genuine technical parameter, not a scope-of-intent question.
 
 ---
 
@@ -333,26 +388,32 @@ statement.
 ## 12. One Claim producing multiple defensible Requirements
 
 **Source IntentSpec semantics:** Claim, origin = User-Provided, force = preference (strong) — "I want
-the system to email me whenever a deployment fails," with no surviving Ambiguity or Conflict
-touching this Claim (chosen deliberately so the split below is testable purely against what the
-Claim mechanically entails, not against any unresolved reading of it — contrast Case 2/9, where a
-split or scope would instead depend on an unresolved Ambiguity).
+the system to log every user action and let me search those logs afterward," with no surviving
+Ambiguity or Conflict touching this Claim (chosen deliberately so the split below is testable purely
+against what the Claim mechanically entails, not against any unresolved reading of it, and so that
+*both* resulting Requirements are unambiguously this system's own responsibility — contrast an
+earlier, rejected version of this case that used "email me whenever a deployment fails": splitting
+that into "the system SHOULD detect deployment failures" silently assigned detection responsibility
+to *this* system, when the Claim never said who or what detects the failure — an external system, a
+CI/CD platform's own webhook, or a human could equally be the source of that event. Assigning
+unstated architectural responsibility that way would itself violate "Requirement-Level Inference"'s
+operational test above; this case is deliberately built so no such assignment is needed.)
 
 **Defensible RequirementSpec result:** Two independently testable Requirements from the one Claim:
-(i) "The system SHOULD detect deployment failures" and (ii) "The system SHOULD send an email
-notification when a deployment failure is detected." Both are mechanically entailed by the single
-Claim — you cannot email about a failure without first detecting it, and the Claim explicitly asks
-for the email — not an interpretive stretch the way "does 'leaving my computer' plausibly cover
-storage too" would be (see `REQUIREMENT_SPEC.md`'s "Requirement Cardinality and Granularity"). Both
-carry the source Claim's own strength (preference → SHOULD), since neither is a further inference
-beyond what "email me whenever X fails" already directly asks for.
+(i) "The system SHOULD log every user action" and (ii) "The system SHOULD provide a way to search the
+logged actions." Both are directly, textually named in the single compound statement — "log... and
+let me search" — not an inference about which system does what (unlike the rejected deployment-email
+version, both actions are explicitly, unambiguously actions of *this* system, since the user is
+describing what they want *this* system to do), and not an interpretive stretch the way "does
+'leaving my computer' plausibly cover storage too" would be (see `REQUIREMENT_SPEC.md`'s "Requirement
+Cardinality and Granularity"). Both carry the source Claim's own strength (preference → SHOULD).
 
-**Prohibited transformations:** Merging both into one vague Requirement ("the system SHOULD notify
-about failures") that a downstream stage cannot cleanly test detection capability against
-notification-delivery capability separately; inventing a third Requirement (e.g. about *which*
-notification channel, retry behavior, or alerting SLA) that the Claim's own wording doesn't support;
-splitting the Claim on a reading it doesn't settle (e.g. treating "fails" as covering only some
-failure types) rather than on what it mechanically and uncontroversially entails.
+**Prohibited transformations:** Merging both into one vague Requirement ("the system SHOULD support
+log review") that a downstream stage cannot cleanly test logging capability against search capability
+separately; inventing a third Requirement (e.g. about retention period, log format, or access
+control) that the Claim's own wording doesn't support; splitting a Claim into Requirements that assign
+responsibility the Claim didn't state — the specific error this case's own construction is designed
+to avoid, and which any replacement example must keep avoiding.
 
 **Provenance expectations:** Both Requirements independently list the same single Claim ID as their
 basis — this is the expected, valid shape for this cardinality, not a duplication error.
@@ -443,70 +504,90 @@ impact down to MEDIUM, e.g. because a later `UserIdea` turn clarified these are 
 stack but not stated as strictly non-substitutable, without fully resolving whether substitution is
 acceptable).
 
-**Defensible RequirementSpec result:** Requirement: "The system SHOULD use LangGraph, GPT-5,
-Pinecone, and Kubernetes as its orchestration, model, vector-store, and deployment components, per
-explicit user request (negotiability unresolved — see attached Unknown)." SHOULD, not SHALL: a firm
-SHALL/MUST would itself assert that a candidate substituting a different technology fails the
-Requirement — exactly the negotiability question the source `IntentSpec` leaves open. Emitting SHALL
-here would be an *implicit* resolution of that Unknown toward "non-negotiable," which is exactly as
-forbidden as resolving it explicitly (per `REQUIREMENT_SPEC.md`'s "User-Selected Technology"). The
-Requirement still preserves the Claim as a real, stated constraint — not softened into a bare
-preference either — it simply carries the honest strength an unresolved-negotiability constraint
-actually has. The negotiability Unknown is carried forward, attached to this Requirement, unresolved;
-if a later `IntentSpec` revision resolves negotiability toward "non-substitutable," the Requirement's
-strength may then be revised to SHALL in a new `RequirementSpec` version.
+**Defensible RequirementSpec result:** Requirement Derivation does **not** assign any strength
+(MUST, SHOULD, or MAY) to this Claim. The source's own force — "a direct unhedged statement of
+method" — never resolved to obligation, prohibition, permission, or preference at Intent Parsing;
+choosing any single strength now, including SHOULD, would be Requirement Derivation resolving that
+open question on the Claim's behalf, which R-20 forbids. What is preserved instead: an **unresolved
+constraint-candidate** — "The user explicitly named LangGraph, GPT-5, Pinecone, and Kubernetes as the
+intended technologies; whether this is binding (obligation), merely preferred, or negotiable has not
+been established, and separately, whether substitutes would be acceptable even if some strength is
+established (negotiability) is also unresolved." Both open questions — force and negotiability — are
+carried forward attached to the constraint-candidate, not merged into one vague "unresolved" label:
+they are genuinely separate (a resolved-obligation-but-unresolved-negotiability Claim is a different,
+and more common, situation — see "User-Selected Technology" in `REQUIREMENT_SPEC.md`).
 
-**Prohibited transformations:** Compiling this Requirement as SHALL/MUST while negotiability remains
-an unresolved Unknown (the error this case's own text originally modeled, corrected above — strength
-inflation that implicitly resolves an Unknown, directly exercising R-05 and the User-Selected
-Technology rule); evaluating, endorsing, or second-guessing whether these four technologies are
-actually well-suited to a customer-support system (that is Technology Candidate Identification's and
-Architecture Synthesis's job, governed by Principle 2); silently resolving negotiability either
-direction (treating it as fully substitutable, or as absolutely fixed) instead of carrying the
-Unknown forward; deriving a *different* Requirement not authorized by anything stated (e.g. inventing
-a "the system MUST support horizontal scaling" requirement merely because Kubernetes was named, when
-nothing in the `IntentSpec` states a scaling requirement independently).
+**Prohibited transformations:** Assigning **any** strength — SHALL/MUST, SHOULD, or even MAY — to
+manufacture a testable Requirement from a Claim whose own force never resolved (the specific error an
+earlier draft of this case made, by settling on SHOULD as a "safer middle ground": that is still an
+unauthorized interpretive choice, not a neutral compilation default, and directly violates R-20);
+reading "direct and unhedged" as implying obligation, or reading "no explicit obligation language" as
+implying mere preference — both are unsupported readings the wording doesn't settle either way;
+evaluating, endorsing, or second-guessing whether these four technologies are actually well-suited to
+a customer-support system (Technology Candidate Identification's and Architecture Synthesis's job,
+governed by Principle 2); silently resolving negotiability in either direction; deriving a *different*
+Requirement not authorized by anything stated (e.g. inventing a "the system MUST support horizontal
+scaling" requirement merely because Kubernetes was named).
 
-**Provenance expectations:** Traces to the single named-technology Claim; the negotiability Unknown
-is attached as an explicit open item on this Requirement, carrying forward exactly the uncertainty
-`IntentSpec` recorded, neither resolved nor discarded.
+**Provenance expectations:** The constraint-candidate traces to the single named-technology Claim;
+its provenance records that the Claim's own force did not resolve (distinct from, and in addition to,
+the separately-unresolved negotiability Unknown) — a downstream reader must be able to tell these are
+two different open questions, not one.
 
-**Eligibility:** Complete — an Unknown (not an Ambiguity/Conflict) attached to an otherwise fully
-statable Requirement does not, by itself, force Partial status; the constraint itself derives
-cleanly, only its future negotiability is open.
+**Eligibility:** Partial (per R-20/R-21) — the constraint-candidate cannot be evaluated as "satisfied"
+or "not satisfied" by any candidate architecture, because its own binding strength is unresolved, not
+merely its precision or its scope. This is a genuinely different reason for Partial than Case 1's or
+Case 9's (those have a testable Requirement with an open scope/trigger detail); here, nothing testable
+has actually been produced yet for this Claim.
 
 ---
 
 ## 16. Requirement that would cause architecture leakage if over-normalized
 
 **Source IntentSpec semantics:** Claim, origin = User-Provided, force = preference (moderate) — "I
-want it to feel modern and fast," with no further specification anywhere in the `IntentSpec` of what
-"modern" or "fast" mean operationally (an Unknown, LOW/MEDIUM impact, carried in the source
-`IntentSpec`).
+want it to feel modern and fast." The word "fast" itself bears directly on the performance question
+and supports multiple materially different readings (latency? throughput? perceived
+responsiveness?), so per `INTENT_SPEC.md`'s practical test ("if specific wording addresses it but
+that wording itself supports more than one reading, it's an Ambiguity") this is an **Ambiguity**, not
+an Unknown — nothing about it is a blank gap; the word itself is what generates the multiple readings.
+"Modern" is vaguer still and doesn't invite a comparably bounded set of readings; it is carried as a
+separate, even-less-formalizable open preference.
 
-**Defensible RequirementSpec result:** Requirement: "The system SHOULD respond to user-facing
-interactions quickly enough to be perceived as fast (performance preference; specific latency
-threshold unresolved)." No architecture, framework, or technology is named or implied. "Modern" is
-either dropped as too vague to support any testable Requirement at all (a legitimate, honest
-non-outcome — see Case 6 for the same posture toward under-specified content) or retained only as an
-attached, explicitly-unresolved qualitative note, never compiled into a specific implementation
-pattern.
+**Defensible RequirementSpec result:** Requirement Derivation does **not** compile "fast" into a
+strength-bearing testable Requirement by picking one of its candidate readings (e.g. defaulting to
+"low latency") — per R-08, resolving a surviving Ambiguity is never Requirement Derivation's to do,
+at any impact level, exactly as for any other Ambiguity in this corpus. Recording "the system SHOULD
+respond quickly enough to be perceived as fast" without picking a reading would also fail R-21
+independently: with no metric or comparator recorded for *any* reading, there is nothing a downstream
+evaluator could apply without inventing one — contrast Case 4's "$100/month" (a real metric and
+threshold; only the accounting *category* is unresolved) or Case 1's "approval gate" (testable now;
+only its environment *scope* is open). Both defects point the same direction here: the Ambiguity is
+recorded and carried forward, unresolved, rather than compiled into any single reading. No
+architecture, framework, or technology is named or implied either way — "modern" is recorded as an
+open preference, not compiled into any implementation pattern.
 
 **Prohibited transformations:** Deriving "the system SHALL use a microservices architecture with
-asynchronous messaging and a modern JavaScript framework" from "modern and fast" — this is the
-canonical over-normalization failure this case exists to test: nothing in the source `IntentSpec`
-names an architecture, yet a plausible-sounding one gets invented to make the vague preference feel
-"actionable." Also prohibited: inventing a specific numeric latency threshold (e.g. "under 200ms")
-that no Claim or Open Item supports — that would be a fabricated Requirement-Derivation default
-presented without being marked as such, and without honest grounding even as a marked default.
+asynchronous messaging and a modern JavaScript framework" from "modern and fast" — the canonical
+over-normalization failure this case exists to test: nothing in the source `IntentSpec` names an
+architecture, yet a plausible-sounding one gets invented to make the vague preference feel
+"actionable." Also prohibited: silently picking one reading of "fast" (e.g. "low latency") to produce
+*some* testable Requirement (violates R-08, the same error as resolving any other surviving
+Ambiguity); inventing a specific numeric latency threshold (e.g. "under 200ms") that no Claim or Open
+Item supports — a fabricated Requirement-Derivation default without honest grounding; and (the error
+an earlier draft of this case made, by mislabeling "fast" as a bare Unknown rather than an Ambiguity)
+recording a strength-bearing SHOULD Requirement with zero quantification and calling that "Complete."
 
-**Provenance expectations:** Traces to the single preference Claim; the absence of a resolved,
-testable performance threshold is either an attached open item or explicitly noted as
-too-underspecified-to-formalize-further — either way, no invented specificity papers over the gap.
+**Provenance expectations:** Traces to the single preference Claim; the "fast" Ambiguity is carried
+forward with its candidate readings (latency/throughput/perceived responsiveness), not collapsed into
+one; "modern" is recorded as a separate open preference. Neither is compiled into a testable
+Requirement yet (contrast Case 4, where a testable Requirement *was* produced and only its accounting
+boundary remains open).
 
-**Eligibility:** Complete — the honest, narrow Requirement is fully derivable; there is no
-Ambiguity or Conflict here, only an Unknown (what "fast" quantitatively means) that Requirement
-Derivation is not obligated to resolve.
+**Eligibility:** Partial — for two independently sufficient reasons: the surviving Ambiguity in
+"fast" is never Requirement Derivation's to resolve (R-08), and even setting that aside, no reading of
+"fast" supplies any metric or comparator to test against (R-21). Resolving either requires a new
+Intent Parsing pass — one that picks a reading for "fast," and (separately) one that quantifies
+whichever reading is chosen, or confirms no quantification is available.
 
 ---
 
@@ -524,15 +605,17 @@ tolerance for an empty Claims array.
 
 **Prohibited transformations:** Manufacturing Requirements from the descriptive Claims to avoid
 producing an "empty-looking" artifact (e.g. inventing "the system MUST be usable by five people" from
-the team-size statement); reporting this as a Failure merely because nothing was derived — Failure is
-reserved for inputs that support no defensible structure *at all*, and an `IntentSpec` with
-well-formed (if entirely descriptive) Claims is a perfectly defensible, if requirement-empty,
-structure.
+the team-size statement); reporting this as a Failure merely because nothing was derived — per
+`REQUIREMENT_SPEC.md`'s Failed definition, Failure is reserved for a *structurally malformed* eligible
+`IntentSpec` (e.g. a Requirement's would-be basis citing a Claim/Open-Item ID that doesn't resolve),
+not for a well-formed input that simply supports no formal Requirements; an emptiness-driven "Failed"
+verdict is itself the error this prohibition exists to catch.
 
 **Provenance expectations:** The empty Requirement set's absence of content is itself the artifact —
 no fabricated provenance is needed or permitted to justify it.
 
-**Eligibility:** Complete, with zero Requirements. (Contrast: if the source `IntentSpec` had instead
-supported *no coherent structure whatsoever* — not even descriptive Claims, nothing to compile from
-at all — that would be the narrower Failed case; this case's well-formed-but-requirement-empty input
-does not meet that bar.)
+**Eligibility:** Complete, with zero Requirements. (Contrast: Failed would require the source
+`IntentSpec` to be internally malformed in a way that blocks processing — broken cross-references,
+structure inconsistent with `INTENT_SPEC.md`'s own invariants — not merely thin or entirely
+descriptive. This case's Claims are well-formed and exhaustively accounted for; there is no structural
+defect to trigger Failed, however little normative content the input happened to contain.)

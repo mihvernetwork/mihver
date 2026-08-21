@@ -197,38 +197,71 @@ error, as long as each clause's strength is independently correct per its own ba
 
 `IntentSpec` Claims carry one of three origins — User-Provided, Inferred, Assumed
 (`INTENT_SPEC.md`'s "Epistemic Model"). Requirement Derivation must preserve, not collapse, this
-distinction when compiling a Claim into a Requirement:
+distinction when compiling a Claim into a Requirement. Doing so correctly requires keeping **four
+conceptually independent properties** separate — none of them substitutes for, caps, or is derived
+from another:
 
-- **User-Provided Claims** are the primary, strongest basis for a Requirement. A Requirement derived
-  from one preserves the Claim's force and conditions at their stated strength (see "Force → Strength
-  Mapping" below) without adding or removing certainty.
-- **Inferred Claims** may become the basis of a Requirement, but the resulting Requirement must
-  carry a **distinct origin marker** — "derived from an Inference," never "user-stated" — and its
-  strength must be capped by the Inference's own `derivation_confidence` (`INTENT_SPEC.md`'s
-  Inference Policy): a low- or moderate-confidence Inference must not produce a firm, unconditional
-  Requirement the way a User-Provided Claim would; it should instead produce a weaker or explicitly
-  provisional Requirement, or remain an open item pending corroboration, at Requirement Derivation's
-  own judgment — but that judgment must be visible in the Requirement's provenance, not silently
-  exercised. `INTENT_SPEC.md`'s I-16 (repetition doesn't increase confidence) applies with equal
-  force here: an Inference's confidence does not increase merely because Requirement Derivation
-  finds it convenient to treat as settled. The origin marker and the strength cap are **independent**
-  requirements, not substitutes for each other: lowering a Requirement's strength does not excuse
-  omitting its Inference-derived origin marker, and stating the origin marker does not excuse
-  inflating strength beyond what the confidence supports. Both — the source Claim's own ID and the
-  Inference's premises/confidence — must remain part of the Requirement's recorded provenance and
-  visible to every downstream consumer, not conveyed solely through a weaker strength label.
+1. **Normative strength** (MUST/SHOULD/MAY/MUST NOT) — determined *solely* by the Claim's own force
+   (obligation/prohibition/permission/preference), per "Force → Requirement Strength Mapping" below.
+2. **Origin** (User-Provided/Inferred/Assumed) — which epistemic category the Claim belongs to in
+   `IntentSpec`.
+3. **Derivation confidence** (low/moderate/high) — a property of Inferred Claims specifically,
+   describing how strongly the premises support the *conclusion*, per `INTENT_SPEC.md`'s Inference
+   Policy — not how urgently the resulting Requirement should be treated.
+4. **Provisional/reversible standing** — whether the Requirement may need reconsideration if
+   corroborating information changes, per "Requirement Invalidation and Re-Derivation" below.
+
+**Confidence and provisional standing are never converted into normative weakness.** An Inferred
+Claim carrying obligation force at moderate confidence compiles to a **MUST**-level Requirement,
+exactly as a User-Provided obligation would — moderate confidence does not, by itself, downgrade
+that to SHOULD. Doing so would smuggle epistemic uncertainty into the normative axis, which is
+exactly the confusion `INTENT_SPEC.md`'s I-22 (force, self-reported uncertainty, and discourse role
+are independent axes, none collapsed into another) already forbids one stage earlier — this document
+extends that same discipline to the origin/confidence axes at the Requirement level. What confidence
+and origin *do* govern is separate from strength:
+
+- **User-Provided Claims** are the primary basis for a Requirement. A Requirement derived from one
+  preserves the Claim's force and conditions at their stated strength (see "Force → Strength Mapping"
+  below) without adding or removing certainty.
+- **Inferred Claims** may become the basis of a Requirement. The resulting Requirement's **strength
+  is set by the Inferred Claim's own force**, the same as for a User-Provided Claim — it is **not**
+  capped or weakened by `derivation_confidence`. What confidence governs instead: (a) whether
+  Requirement Derivation chooses to derive a Requirement from this Inference *at all* — a low- or
+  very weakly-grounded Inference may be judged too thin a basis to formalize into any Requirement yet,
+  in which case it is carried forward as an open item instead, per "LOW/MEDIUM Open Items and
+  Conflicts That Survive Into This Stage"; and (b) whether the resulting Requirement (whatever its
+  strength) is marked provisional/reversible — lower confidence makes reconsideration more likely to
+  be warranted, but does not itself change MUST to SHOULD. **Default:** an Inference-derived
+  Requirement is marked provisional/reversible; Requirement Derivation may instead record it as
+  settled only when it states why continued reconsideration isn't warranted (e.g. the same conclusion
+  is independently corroborated by a separate, live User-Provided Claim) — silence is not that
+  statement. Every Inference-derived Requirement, at
+  whatever strength, carries a **distinct origin marker** — "derived from an Inference," never
+  "user-stated" — and its confidence and premises remain recorded in provenance, visible to every
+  downstream consumer, never conveyed solely through a weaker strength label (there is no such label
+  to convey it through, since strength does not encode confidence). `INTENT_SPEC.md`'s I-16
+  (repetition doesn't increase confidence) applies with equal force here: an Inference's confidence
+  does not increase merely because Requirement Derivation finds it convenient to treat as settled.
 - **Assumed Claims** are the narrowest, most provisional basis. `INTENT_SPEC.md` already restricts
   Assumptions to narrowly interpretive gaps, never operational defaults — so an Assumption-based
-  Requirement should be rare. When one exists, the resulting Requirement must be marked
-  **provisional and reversible**, carrying the Assumption's own rationale and scope forward, and must
-  never be presented with the same standing as a User-Provided-derived Requirement. `INTENT_SPEC.md`'s
-  I-02 ("an assumption cannot become a user-provided claim") has a direct analogue here: an
-  Assumption-derived Requirement must never present itself as user-authorized.
+  Requirement should be rare. When one exists, its **strength still follows whatever force the
+  assumed reading itself carries** (if the assumed content is something the system must do or avoid,
+  the Requirement is MUST/MUST NOT-level) — Assumed origin does not by itself weaken MUST to SHOULD
+  any more than Inferred origin does. What Assumed origin *does* require: the Requirement is marked
+  **provisional and reversible**, carrying the Assumption's own gap, rationale, and scope forward, and
+  must never be presented with the same standing as a User-Provided-derived Requirement.
+  `INTENT_SPEC.md`'s I-02 ("an assumption cannot become a user-provided claim") has a direct analogue
+  here: an Assumption-derived Requirement must never present itself as user-authorized — regardless of
+  its strength.
 
 In all three cases, **I-01/I-02's prohibition on provenance laundering carries forward unchanged**:
 an Inference or Assumption can never be read back, at the Requirement level, as though the user had
 stated it directly. This is the single most important failure mode this document exists to prevent,
-matching `INTENT_SPEC.md`'s own framing of the equivalent rule one stage earlier.
+matching `INTENT_SPEC.md`'s own framing of the equivalent rule one stage earlier. Provenance
+laundering and strength inflation/deflation are two *different* failure modes — the first is about
+misrepresenting *where* a Requirement came from, the second about misrepresenting *how strong* it is
+— and neither one's fix should compromise the other: correctly labeling an Inferred MUST as
+Inference-derived does not require, and must not produce, softening it to SHOULD.
 
 ### Requirement-Level Inference
 
@@ -263,8 +296,10 @@ for a Requirement-Level Inference.
 
 `INTENT_SPEC.md`'s force axis (obligation / prohibition / permission / preference, with strength for
 preference) maps to requirement strength as follows. This mapping is deliberately **one-directional
-and non-inflationary** — a mapping may only preserve or (for provisional/lower-confidence Claims)
-weaken strength, never strengthen it beyond what the Claim's own force stated:
+and non-inflationary** — a mapping preserves exactly the strength the Claim's own force stated, never
+strengthening it, and — per "Treatment of Claim Origin" above — **never weakening it either on
+account of origin or derivation confidence**. Origin and confidence govern provenance and
+provisional/reversible marking, not strength; see R-03/R-04/R-06 below:
 
 ```text
 obligation             → MUST / SHALL       (mandatory)
@@ -281,10 +316,14 @@ including a strong one — this is the direct continuation of `INTENT_SPEC.md`'s
 drift" rule ("I want it to cost under $100/month" must not become an obligatory ceiling merely
 because the underlying desire seems important). A permission must likewise never be inflated into an
 obligation — "may retain logs for 30 days if legal approves" must become a **MAY**, conditioned on
-approval, never a **MUST**. Downgrading is permitted where the basis itself is weaker than
-User-Provided (a low-confidence Inference producing a SHOULD instead of a MUST, for example) but must
-be recorded as a deliberate strength adjustment tied to that weaker basis, not an unexplained
-mismatch between the Claim's stated force and the Requirement's strength.
+approval, never a **MUST**. Strength maps *only* from the Claim's own force — never from origin
+(User-Provided/Inferred/Assumed) or from derivation confidence. An Inferred or Assumed Claim carrying
+obligation force still compiles to MUST, not a weaker strength "because the basis is weaker": origin
+and confidence are separate axes, tracked in provenance (see "Treatment of Claim Origin" above), not
+folded into the strength mapping. There is no such thing as a legitimate strength *downgrade* driven
+by origin or confidence alone — only a legitimate decision not to derive a Requirement at all from a
+sufficiently weak Inference (carrying it forward as an open item instead), which is a different
+choice than deriving a weakened one.
 
 A Claim with **no force** (purely descriptive) has no strength mapping at all, because it produces no
 direct Requirement — see "What Must NOT Become a Requirement."
@@ -320,17 +359,52 @@ categorically different kinds of surviving item exist, and this document treats 
 this is the single most load-bearing distinction in this contract, directly extending the same split
 `INTENT_SPEC.md`'s "Backward leakage" rule already draws:
 
-- **A surviving Unknown (operational gap).** Requirement Derivation **may** — this is a decision for
-  this stage to make, not a default it must take — fill it with a working value to produce a
-  concrete Requirement, per `INTENT_SPEC.md`'s Assumption Policy ("For an operational gap that keeps
-  the produced `IntentSpec` eligible \[LOW/MEDIUM impact\], it is Requirement Derivation's job \[...\]
-  to decide whether and how to fill it"). If it does, the resulting Requirement's provenance must
-  mark the value as **Requirement-Derivation-introduced**, distinct from anything the user or Intent
-  Parsing asserted, with its own stated rationale — never presented as though it traces to a
-  User-Provided Claim. Requirement Derivation may instead choose **not** to fill the gap and carry
-  the Unknown forward unresolved into `RequirementSpec` (as an explicit open item attached to
-  whichever candidate Requirements depend on it) — both choices are valid; silently doing neither
-  (dropping the Unknown without a Requirement or a carried-forward record) is not.
+- **A surviving Unknown (operational gap) — but not every Unknown is fillable.** An Unknown being
+  the *kind of Open Item* that Requirement Derivation is structurally permitted to touch (as opposed
+  to an Ambiguity or Conflict, never touchable here) does not, by itself, mean any given Unknown is
+  actually fillable. **Semantic test (R-19):** Requirement Derivation may fill an Unknown with a
+  working value only when the value selects an internal implementation, execution, or measurement
+  detail *within* an already-settled Requirement — not when choosing among materially plausible
+  values would add, remove, or narrow any user-facing actor, target, capability, output, condition,
+  permission, prohibition, obligation, preference, or the boundary of a stated constraint itself.
+  Calling a value "technical" or "operational" is not sufficient on its own — the test is whether a
+  materially different choice would change what the Requirement actually covers, not what vocabulary
+  describes the value. An Unknown that fails this test is, in substance, an intent-level or
+  normative-authority question wearing an Unknown's shape — it must remain unresolved and carried
+  forward exactly as an Ambiguity or Conflict would be, even though it is technically categorized as
+  an Unknown in the source `IntentSpec`.
+
+  **Note on terminology:** `INTENT_SPEC.md`'s Assumption Policy uses "technical or operational
+  default" more broadly than R-19 does — there, the term marks anything Intent Parsing itself must
+  not invent (competitor lists, cost scopes, capacity figures all appear as examples in that policy),
+  contrasted with genuinely interpretive gaps Intent Parsing *may* resolve. That policy correctly
+  leaves the question of *whether and how* to fill such a gap to "Requirement Derivation (or a later
+  stage)" — it does not itself decide that every such gap is safely fillable *at this specific
+  stage*. R-19 is the narrower test this document applies at that later decision point: some of
+  `INTENT_SPEC.md`'s "operational defaults" (a cost-accounting boundary) turn out to be genuine
+  internal parameters under R-19; others (a competitor list, which defines what the user's stated
+  goal actually targets) turn out, on inspection, to be intent-scope questions despite the shared
+  label — see Case 4 versus Case 10 in
+  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md), which apply R-19 to opposite outcomes, and
+  Case 4's own reasoning for why a boundary-straddling candidate doesn't change that conclusion.
+  Whether a named technology's negotiability is resolved is a canonical example of the *forbidden*
+  kind under R-19 as well: resolving it directly decides whether a stated constraint is binding, so
+  it can never be filled by Requirement Derivation at any confidence or convenience level (see
+  "User-Selected Technology" below).
+
+  Where filling genuinely *is* permitted under R-19, it remains Requirement Derivation's **choice**,
+  not a default it must take, per `INTENT_SPEC.md`'s Assumption Policy ("For an operational gap that
+  keeps the produced `IntentSpec` eligible \[LOW/MEDIUM impact\], it is Requirement Derivation's job
+  \[...\] to decide whether and how to fill it"). If it fills the gap, the resulting Requirement's
+  provenance must mark the value as **Requirement-Derivation-introduced** (per R-09, which is
+  conditioned on R-19 — provenance marking never by itself makes an R-19-forbidden Unknown fillable),
+  distinct from anything the user or Intent Parsing asserted, with its own stated rationale — never
+  presented as though it traces to a User-Provided Claim. Requirement Derivation may instead choose
+  **not** to fill a permitted-to-fill gap and carry the Unknown forward unresolved into
+  `RequirementSpec` (as an explicit open item attached to whichever candidate Requirements depend on
+  it) — both choices are valid for a genuinely technical/operational parameter; silently doing neither
+  (dropping the Unknown without a Requirement or a carried-forward record) is not, and filling an
+  Unknown the semantic test forbids is not, regardless of how the resulting Requirement is labeled.
 - **A surviving Ambiguity or Conflict (interpretive gap).** Requirement Derivation **must not**
   resolve it, at any surviving impact level — this is not a judgment call the way filling an Unknown
   is. It must be carried forward into `RequirementSpec` as an explicit unresolved item, and any
@@ -437,19 +511,32 @@ eligible):
 
 - **Complete.** Every Claim in the consumed `IntentSpec` that carries derivable content either became
   one or more Requirements, or was explicitly excluded with a stated reason (descriptive, no force;
-  redundant with an existing Requirement; etc.) — and no surviving Ambiguity or Conflict blocks any
-  candidate Requirement from being derived. A Complete `RequirementSpec` may still carry forward
-  unresolved LOW/MEDIUM Unknowns Requirement Derivation chose not to fill (see above) — "Complete"
-  describes the absence of *interpretive* blockage, not the absence of every open question.
+  redundant with an existing Requirement; etc.) — **and every derived Requirement supplies or
+  authorizes a satisfaction procedure an evaluator can apply without inventing one itself** (per
+  R-21). Completeness has two distinct ways to fail, not one: (a) *interpretive* blockage — a
+  surviving Ambiguity or Conflict prevents deriving a candidate Requirement at all (see "LOW/MEDIUM
+  Open Items and Conflicts" above); and (b) *testability* blockage — a Requirement was derived, but
+  its own recorded content supplies no metric, comparator, or procedure at all, so an evaluator would
+  have to invent the test itself rather than merely apply an imprecise one. Both make the affected
+  area Partial, not Complete, even though only (a) involves an Ambiguity/Conflict in the formal sense
+  — (b) can be triggered by an Unknown, or by a Claim whose own force never resolved (R-20). A
+  Complete
+  `RequirementSpec` may still carry forward unresolved LOW/MEDIUM Unknowns that merely *refine* an
+  already-testable Requirement's scope or accounting boundary (e.g. Case 4's cost-category Unknown) —
+  those don't block testability, only precision; "Complete" describes the absence of *both* kinds of
+  blockage, not the absence of every open question.
 - **Partial.** At least one Requirement that could otherwise be derived instead remains explicitly
-  unresolved because it depends on a surviving Ambiguity or Conflict that Requirement Derivation has
-  no authority to resolve. A Partial `RequirementSpec` is still a valid, versioned, usable artifact —
-  every Requirement that *could* be derived independently of the blocked area is derived normally; the
-  blocked area is recorded as an explicit open item, not silently dropped and not silently guessed.
-  Downstream stages must treat a Partial `RequirementSpec`'s open items as a signal that a revision
-  cycle (an `IntentSpec` clarification/correction) is needed before that specific area can be
-  compiled — the mechanics of triggering that revision are deferred, per `M0_SCOPE.md`, to
-  implementation, not fixed here.
+  unresolved — because it depends on a surviving Ambiguity or Conflict Requirement Derivation has no
+  authority to resolve, because a value it materially depends on for testability is wholly unresolved
+  (see "Complete" above), or because its own force never resolved to an assignable strength (R-20). A
+  Partial `RequirementSpec` is still a valid, versioned, usable artifact — every Requirement that
+  *could* be derived independently of the blocked area is derived normally; the blocked area is
+  recorded as an explicit open item (or an unresolved constraint-candidate, for the R-20 case), not
+  silently dropped and not silently guessed into a false appearance of testability. Downstream stages
+  must treat a Partial `RequirementSpec`'s open items as a signal that a revision cycle (an
+  `IntentSpec` clarification/correction) is needed before that specific area can be compiled — the
+  mechanics of triggering that revision are deferred, per `M0_SCOPE.md`, to implementation, not fixed
+  here.
 - **Failed.** Reserved for a narrower and different situation than "nothing to derive": Requirement
   Derivation cannot even attempt honest compilation because the consumed `IntentSpec`, despite having
   passed `IntentSpec`'s own eligibility gate, is internally malformed in a way that blocks processing
@@ -507,26 +594,42 @@ principle, now applied to the next stage down:
 
 ### User-Selected Technology
 
-If the user explicitly named a technology (`IntentSpec` preserved this as "user explicitly requested
-X," per `INTENT_SPEC.md`'s No Architecture Leakage rule), `RequirementSpec` may preserve it as a
-**stated constraint** — "the system shall use PostgreSQL, per explicit user request" — exactly
-mirroring the Claim's own force (obligation if stated as a requirement, preference if merely
-desired, etc., per "Force → Strength Mapping" above). What `RequirementSpec` must not do is evaluate,
-endorse, or determine that named technology's suitability, compare it to alternatives, or decide
-whether it is technically appropriate for the stated goal — that evaluation belongs to Technology
-Candidate Identification and Architecture Synthesis, informed by `EvidenceBundle`, governed by
-Principle 2 (Evidence Before Recommendation). Where the Claim's own negotiability is itself an
-unresolved (surviving MEDIUM) Unknown or Ambiguity, that unresolved status is preserved and carried
-forward exactly per "LOW/MEDIUM Open Items and Conflicts That Survive Into This Stage" above — it is
-not resolved here either implicitly (by silently treating the constraint as binding) or explicitly.
-**A firm requirement strength (MUST/SHALL) itself asserts that a candidate substituting a different
-technology fails the requirement — which is exactly what an unresolved negotiability Unknown means
-is not yet known.** Emitting MUST/SHALL while negotiability is unresolved is therefore itself an
-implicit resolution, forbidden by the previous sentence, not a neutral compilation choice: where
-negotiability is unresolved, the compiled Requirement's own strength must reflect that (e.g. SHOULD,
-with the negotiability Unknown attached and visible) rather than asserting the unqualified firmness
-MUST/SHALL would carry. Only once negotiability is itself resolved — by a later `IntentSpec` version —
-may the Requirement's strength be revisited accordingly, per "Requirement Identity and Versioning."
+If the user explicitly named a technology, `IntentSpec` preserves this as "user explicitly requested
+X," per `INTENT_SPEC.md`'s No Architecture Leakage rule. What `RequirementSpec` does with it next
+depends on whether the Claim's own **force** actually resolved to one of the four categories
+(obligation/prohibition/permission/preference) — this is not automatic just because a technology was
+named:
+
+- **If force resolved** (e.g. the user stated a clear preference or requirement for the technology),
+  `RequirementSpec` preserves it as a **stated constraint** at that strength — "the system SHALL use
+  PostgreSQL, per explicit user request" for an obligation, "the system SHOULD use PostgreSQL" for a
+  preference — exactly mirroring "Force → Strength Mapping" above. Whether *alternatives* would also
+  be acceptable (negotiability) is a separate question from whether *this* strength is correct: if
+  negotiability is itself an unresolved Unknown, it is carried forward attached to the Requirement,
+  never filled (per R-19 — resolving whether a stated constraint is binding to only this option is
+  exactly the forbidden kind of Unknown), but does not by itself change the Requirement's own already-
+  resolved strength.
+- **If force did not resolve** — the wording is a direct, unhedged statement of method that Intent
+  Parsing correctly declined to categorize as obligation, prohibition, permission, or preference (see
+  `INTENT_CASES.md` Case 7 for the worked example this pattern comes from) — `RequirementSpec` **must
+  not manufacture a strength merely to produce a testable Requirement** (per R-20). Assigning MUST
+  because the wording is unhedged, or SHOULD because that feels like a safer middle ground, are both
+  unauthorized interpretive choices: neither is what the force axis actually settled, and choosing
+  either is itself an implicit resolution of the very question (is this binding?) that remains open.
+  In this case, `RequirementSpec` preserves the named-technology statement verbatim as an **unresolved
+  constraint-candidate** — the fact that the user named it is recorded and carried forward — without
+  assigning it MUST, SHOULD, or MAY. This makes the affected portion of `RequirementSpec` **Partial**,
+  not Complete (per R-21 and "Failure vs. Blocked/Partial Output Semantics" below): the
+  constraint-candidate cannot yet be evaluated as satisfied or not by a candidate architecture,
+  because its own binding strength is unresolved, not merely its scope.
+
+In neither case does `RequirementSpec` evaluate, endorse, or determine the named technology's
+suitability, compare it to alternatives, or decide whether it is technically appropriate for the
+stated goal — that evaluation belongs to Technology Candidate Identification and Architecture
+Synthesis, informed by `EvidenceBundle`, governed by Principle 2 (Evidence Before Recommendation).
+Only a new Intent Parsing pass that resolves the Claim's force (or its negotiability) produces a new
+`IntentSpec` version from which the Requirement's strength may then be revisited, per "Requirement
+Identity and Versioning."
 
 ### Common Violations
 
@@ -548,11 +651,14 @@ may the Requirement's strength be revisited accordingly, per "Requirement Identi
 - **R-02** A descriptive Claim (force absent) never becomes a Requirement's normative content by
   itself; it may only serve as rationale attached to a Requirement derived from a different,
   force-bearing Claim.
-- **R-03** An Inferred-Claim-derived Requirement carries a distinct origin marker and a strength no
-  greater than its Inference's `derivation_confidence` supports; it is never presented as
-  User-Provided.
-- **R-04** An Assumed-Claim-derived Requirement is marked provisional/reversible and is never
-  presented with User-Provided standing.
+- **R-03** An Inferred-Claim-derived Requirement's strength is set by the Inferred Claim's own force,
+  exactly as for a User-Provided Claim — never capped, weakened, or otherwise adjusted by
+  `derivation_confidence`. It carries a distinct origin marker and its confidence/premises in
+  provenance; it is never presented as User-Provided. (Consistent with R-06: an Inferred obligation
+  is still at least MUST.)
+- **R-04** An Assumed-Claim-derived Requirement's strength is set by the assumed content's own force,
+  the same way; Assumed origin requires the Requirement be marked provisional/reversible, not that
+  its strength be weakened. It is never presented with User-Provided standing.
 - **R-05** A preference, at any strength, never maps to MUST/SHALL. A permission never maps to
   MUST/SHALL or SHOULD.
 - **R-06** An obligation never maps to a weaker strength than MUST/SHALL; a prohibition never maps to
@@ -564,9 +670,10 @@ may the Requirement's strength be revisited accordingly, per "Requirement Identi
 - **R-08** Requirement Derivation never resolves an Ambiguity or Conflict surviving in the consumed
   `IntentSpec`, at any Decision Impact level — interpretive authority remains exclusively Intent
   Parsing's.
-- **R-09** Requirement Derivation may fill a surviving Unknown with a working default only when doing
-  so is marked as Requirement-Derivation-introduced, with its own stated rationale, distinct from any
-  `IntentSpec`-recorded provenance.
+- **R-09** *Subject to R-19's eligibility test* — provenance marking never by itself makes an
+  R-19-forbidden Unknown fillable — Requirement Derivation may fill an eligible surviving Unknown
+  with a working default only when doing so is marked as Requirement-Derivation-introduced, with its
+  own stated rationale, distinct from any `IntentSpec`-recorded provenance.
 - **R-10** A Requirement-Derivation-level inference states its premise (the accepted Claim or
   Requirement it derives from) and reasoning, and is labeled as a Requirement Derivation inference,
   never folded into or presented as an `IntentSpec` Inference.
@@ -592,13 +699,46 @@ may the Requirement's strength be revisited accordingly, per "Requirement Identi
 - **R-18** Confidence, strength, or certainty in a derived Requirement never increases merely because
   the same underlying Claim was repeated, paraphrased, or agreed on across multiple `IntentSpec`
   versions — mirroring `INTENT_SPEC.md`'s I-16 one stage later.
+- **R-19** Requirement Derivation may fill a surviving Unknown only when the value selects an
+  internal implementation, execution, or measurement detail *within* an already-settled Requirement
+  — not when choosing among materially plausible values would add, remove, or narrow any user-facing
+  actor, target, capability, output, condition, permission, prohibition, obligation, preference, or
+  the boundary of a stated constraint itself. Labeling a value "technical," "operational," or
+  "accounting" is not sufficient by itself — the test is whether a materially different choice would
+  change what the requirement actually covers or requires, not what vocabulary describes the value.
+  An Unknown that fails this test must remain unresolved and carried forward, exactly as an Ambiguity
+  or Conflict would be, regardless of its Unknown/Ambiguity classification in the source `IntentSpec`.
+- **R-20** A Claim that asserts binding or constraining content — the user is stating a method,
+  requirement, or means, not merely describing a fact — but whose own force does not resolve to one
+  of obligation/prohibition/permission/preference, must not be assigned a Requirement strength by
+  Requirement Derivation choosing one on its behalf; it is preserved as an unresolved
+  constraint-candidate, and the portion of `RequirementSpec` depending on it is Partial, not Complete,
+  until a new Intent Parsing pass resolves the force. **R-20 does not apply to a genuinely
+  force-absent descriptive Claim** ("we have five engineers," "we currently use spreadsheets") —
+  those are governed by R-02 instead (no Requirement derived at all, Complete either way per R-17):
+  a Claim with nothing normative being asserted is a different case from a Claim asserting something
+  binding whose normative category just wasn't settled.
+- **R-21** A Requirement is genuinely Complete only if it supplies, or explicitly authorizes, a
+  satisfaction procedure a downstream evaluator can apply without inventing the metric, comparator,
+  threshold, or scope itself. The test is not "does *some* reasonable operational reading exist in
+  the abstract" (almost anything admits one) but "does the Requirement's own recorded content already
+  point to one" — an evaluator filling in a completely unauthorized oracle (e.g. picking its own
+  latency threshold for "fast," with no stated number or comparator anywhere) is not evaluating the
+  Requirement, it is inventing a different, more specific one. A Requirement whose recorded content
+  supplies at least a metric and threshold (even with an unresolved boundary refining which values
+  count toward it) remains Complete: most candidates are evaluable without needing that refinement,
+  and the refinement narrows precision rather than supplying the missing test itself (see Case 4's
+  own reasoning for why this holds even for a boundary-straddling candidate). A Requirement with no
+  metric, comparator, or procedure at all — where literally nothing in the record indicates what
+  "satisfied" would even look like — is Partial, even though the unresolved item is technically an
+  Unknown rather than an Ambiguity or Conflict.
 
 ## Examples
 
 - Claim: "I don't want my source code leaving my computer" (User-Provided, prohibition) → Requirement:
   "The system MUST NOT transmit source code outside the user's designated execution boundary,"
   condition/scope carried from the Claim's own unresolved boundary Ambiguity as an attached open
-  item (see Case 4-derived worked example, Case 1 in
+  item (see Case 2 in
   [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md)).
 - Claim: "I want it to cost under $100/month" (User-Provided, preference, strong) → Requirement: "The
   system SHOULD cost under $100/month (high-priority preference)" — never "MUST cost under
@@ -609,17 +749,27 @@ may the Requirement's strength be revisited accordingly, per "Requirement Identi
 - Claim: "We have five engineers" (User-Provided, force absent, descriptive) → no Requirement derived
   directly; may be recorded as rationale for a separately-derived operational-simplicity preference
   Requirement, if one exists.
-- Inferred Claim: "the user appears to have a data-locality or privacy constraint" (moderate
-  confidence, premise = the source-code prohibition above) → at most a SHOULD-level supporting
-  Requirement about data locality generally, explicitly marked as Inference-derived — never
-  presented as though the user directly stated a general data-locality requirement.
+- Inferred Claim: "the user appears to have a data-locality or privacy constraint" (force =
+  preference, moderate confidence, premise = the source-code prohibition above) → Requirement:
+  "The system SHOULD minimize data-locality exposure generally" — SHOULD *because the Inferred
+  Claim's own force is a preference*, not because moderate confidence capped a stronger force down.
+  Explicitly marked as Inference-derived with its confidence recorded — never presented as though the
+  user directly stated a general data-locality requirement.
+- Inferred Claim carrying **obligation** force at moderate confidence (contrast the previous example)
+  → still a **MUST**-level Requirement, marked Inference-derived and provisional, moderate confidence
+  recorded in provenance — moderate confidence does not downgrade it to SHOULD (see Case 7 in
+  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md)).
 
 ## Anti-Examples
 
 - Compiling "we have five engineers" directly into a Requirement about team size or process. (Violates
   R-02.)
-- Compiling an Inferred Claim into a MUST-level Requirement without marking its Inference origin or
-  capping its strength to the Inference's confidence. (Violates R-03.)
+- Compiling an Inferred Claim into a Requirement without marking its Inference origin, so it reads as
+  though the user stated it directly. (Violates R-03.) Equally a violation in the other direction:
+  weakening an Inferred Claim's obligation force to a SHOULD-level Requirement *because* its
+  confidence is only moderate — confidence governs whether to derive a Requirement at all and whether
+  to mark it provisional, not its strength. (Also violates R-03, and R-06 if the resulting strength
+  falls below MUST/SHALL.)
 - Resolving a surviving MEDIUM Ambiguity about environment scope by picking "production only" because
   it is the more common case, then deriving a Requirement against that reading. (Violates R-08.)
 - Compiling "I want it to cost under $100/month" into "the system MUST cost under $100/month."
@@ -631,7 +781,9 @@ may the Requirement's strength be revisited accordingly, per "Requirement Identi
   unconditional `cloud_execution = true` or `= false`. (Violates R-07.)
 - Deriving "the system shall use a microservices architecture with a message queue" from "I want it
   to feel fast and modern," where nothing in the `IntentSpec` names an architecture at all. (Violates
-  R-01, R-11 — architecture leakage from an under-specified qualitative preference.)
+  R-11 — architecture leakage from an under-specified qualitative preference; R-01 alone would not
+  catch this, since the Requirement could still cite the "fast and modern" Claim as a bare provenance
+  reference despite bearing no real semantic relationship to it.)
 - Silently dropping a Requirement whose originating Claim was superseded, instead of marking it
   invalid in a new version. (Violates R-14.)
 - Treating a user-named technology's presence as an endorsement of its technical fit for the stated

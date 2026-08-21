@@ -67,36 +67,60 @@ Requirement Derivation will compile `RequirementSpec` from an eligible `IntentSp
 structural commitments, detailed in full in
 [REQUIREMENT_SPEC](../contracts/REQUIREMENT_SPEC.md):
 
-1. **Provenance and origin survive the compilation, never collapsed.** Every Requirement traces to
-   the specific Claim(s)/Open Item(s) it derives from, in the specific `IntentSpec` version consumed.
-   A Requirement derived from an Inferred or Assumed Claim carries a distinct, visible origin marker
-   and a strength ceiling tied to that weaker basis — never presented with User-Provided standing.
-   Requirement Derivation's own inferences (about technical implications, not about intent) are a
-   separate, independently-labeled provenance layer on top of whatever `IntentSpec` already recorded.
-2. **Force maps to strength one-directionally, never inflated.** Obligation/prohibition/permission/
-   preference map to MUST/MUST NOT/MAY/SHOULD with an explicit non-inflation rule: a mapping may only
-   preserve or (for a weaker basis) reduce strength, never raise it — closing the same "modality
-   drift" gap `ADR-0002` closed for Intent Parsing, one stage later.
+1. **Provenance and origin survive the compilation, never collapsed — but strength is never derived
+   from origin or confidence.** Every Requirement traces to the specific Claim(s)/Open Item(s) it
+   derives from, in the specific `IntentSpec` version consumed. A Requirement derived from an
+   Inferred or Assumed Claim carries a distinct, visible origin marker and (for Inferred Claims) its
+   `derivation_confidence` — but its **strength is set by the Claim's own force, exactly as for a
+   User-Provided Claim, never capped or weakened by origin or confidence**. Confidence and origin
+   govern whether Requirement Derivation chooses to derive a Requirement at all, and whether the
+   result is marked provisional/reversible — never the requirement's normative strength. Conflating
+   epistemic confidence with normative weakness was an early defect in this model's own drafting,
+   caught by external review; keeping the two strictly separate is now load-bearing (see
+   `REQUIREMENT_SPEC.md`'s "Treatment of Claim Origin"). Requirement Derivation's own inferences
+   (about technical implications, not about intent) are a separate, independently-labeled provenance
+   layer on top of whatever `IntentSpec` already recorded.
+2. **Force maps to strength one-directionally, never inflated — and a Claim whose force never
+   resolved gets no strength at all.** Obligation/prohibition/permission/preference map to
+   MUST/MUST NOT/MAY/SHOULD with an explicit non-inflation rule: strength may only reflect what the
+   Claim's own force actually stated, never more. A Claim whose wording is direct but doesn't resolve
+   to any of the four categories (e.g. a named technology stated as a bare method with no
+   obligation/preference language) is not assigned a manufactured strength either — Requirement
+   Derivation preserves it as an unresolved constraint-candidate instead, closing the same "modality
+   drift" gap `ADR-0002` closed for Intent Parsing, one stage later, including the subtler drift of
+   inventing a strength where none was actually settled.
 3. **Interpretive authority over surviving Ambiguities and Conflicts never transfers to this stage,
-   regardless of Decision Impact level.** Only *operational* gaps (Unknowns) may legitimately be
-   filled with a working default here, and only when marked as Requirement-Derivation-introduced.
-   Interpretive gaps (Ambiguity, Conflict) are carried forward unresolved, producing a **Partial**
-   `RequirementSpec` rather than a silently-resolved one.
-4. **`RequirementSpec` gets its own Complete/Partial/Failed output model**, distinct from
+   regardless of Decision Impact level — and not every Unknown is Requirement Derivation's to fill
+   either.** Only Unknowns whose resolution is a genuine technical/operational parameter — not a
+   decision about what the user wants, requires, permits, prohibits, or whether a stated constraint
+   is binding — may legitimately be filled with a working default here, and only when marked as
+   Requirement-Derivation-introduced. An Unknown whose resolution would answer one of those questions
+   (e.g. a named technology's negotiability, or the actual scope of what a goal targets) must remain
+   unresolved exactly as an Ambiguity or Conflict would, regardless of its formal Unknown
+   classification. These interpretive/scope gaps, together with Ambiguities and Conflicts, are
+   carried forward unresolved, producing a **Partial** `RequirementSpec` rather than a
+   silently-resolved one.
+4. **`RequirementSpec` gets its own Complete/Partial/Failed output model**, defined around genuine
+   *testability*, not merely the presence or absence of an Ambiguity/Conflict — distinct from
    `IntentSpec`'s Blocked/Failed pair, because the two stages guard against different risks:
    `IntentSpec`'s gate protects the *next* stage from decision-critical gaps; `RequirementSpec`'s
    Complete/Partial distinction describes *this* stage's own completeness, given that its input was
-   already past that gate. A Partial `RequirementSpec` is a valid, well-formed, versioned artifact —
+   already past that gate. A Requirement that cannot be meaningfully evaluated against a candidate
+   architecture at all — because a value it depends on is wholly unresolved, not merely imprecise —
+   is Partial even when the surviving gap is technically an Unknown rather than an interpretive one;
+   a formal, testable-sounding Requirement is not actually Complete if nothing about it can be
+   checked. A Partial `RequirementSpec` is a valid, well-formed, versioned artifact —
    not a degraded or second-class output, and not a permanently non-consumable one the way a Blocked
    `IntentSpec` is — but this model stops short of authorizing *how* a downstream stage may consume
    it; that consumption behavior is a separate, later decision (see Open Questions).
 
 ## Rationale
 
-- **Prevents requirement inflation.** Origin, force, and confidence are first-class, mandatory,
-  independently-inspectable properties of every Requirement, not optional annotations a compiler
-  implementation could drop under time pressure. An Inference or Assumption can never be read back as
-  a firm, user-authorized Requirement.
+- **Prevents requirement inflation.** Origin and force are first-class, mandatory,
+  independently-inspectable properties of every Requirement; derivation confidence is additionally
+  preserved wherever the basis is an Inferred Claim, and provisional/reversible standing wherever
+  applicable — none of them optional annotations a compiler implementation could drop under time
+  pressure. An Inference or Assumption can never be read back as a firm, user-authorized Requirement.
 - **Keeps interpretive authority where `ADR-0002` already put it.** By extending the
   Ambiguity/Conflict-resolution prohibition to *every* Decision Impact level, not just HIGH/CRITICAL,
   this decision closes a gap a level-based rule alone would have left open: nothing about a MEDIUM
