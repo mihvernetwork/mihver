@@ -15,47 +15,86 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: ADR-0002-ACCEPTANCE
-Branch: `docs/adr-0002-acceptance`
+Task: M0-STEP-03A-REQUIREMENT-SPEC-SEMANTIC-CONTRACT
+Branch: `m0/step-03a-requirement-contract`
 
-One independent read-only Codex reviewer verified the `ADR-0002` Status transition
-(Proposed → Accepted). Overall verdict: **CLEAN AND READY**, all three checks PASS:
+Three independent read-only Codex reviewers (A: provenance/epistemic boundary; B: requirement
+semantics — force mapping, conditions, leakage; C: lifecycle/handoff — eligibility,
+Complete/Partial/Failed, versioning), each reviewing the first draft of `REQUIREMENT_SPEC.md`,
+`ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, and `REQUIREMENT_CASES.md` (17 cases) against the
+already-Accepted `INTENT_SPEC.md`/`ADR-0002` model. All three found real, independently-verified
+defects; several were found by two or three reviewers independently, which strengthened confidence
+in those specific findings. Claude verified every material finding directly against the actual text
+before fixing (not relayed uncritically), then applied targeted fixes across all three documents.
 
-1. **Status transition justified by verifiable evidence.** Confirmed
-   `docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md` and `.../ADR-0002-ADVERSARIAL-REMEDIATION.md`
-   exist, reach real (non-ceremonial) conclusions, and their commits (`548bb75`, `63429c9`) are
-   ancestors of `main`. Independently re-ran `npm test`: 32/32, matching the ADR's new
-   "Acceptance basis" claim.
-2. **No substantive semantic/model change slipped into this "acceptance housekeeping" patch.**
-   `git diff main --stat` showed only `.project/DECISIONS_LOG.md` and
-   `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md` changed; the ADR diff touched only Status, the
-   new Acceptance-basis paragraph, and Future Work — Context/Decision/Rationale/Consequences/
-   Alternatives Considered/Risks/Open Questions confirmed untouched. `INTENT_SPEC.md`,
-   `INTENT_CASES.md`, `schemas/**`, and the validator confirmed unchanged vs. `main`.
-3. **Future Work accurately separates completed gates from remaining work.** Schema design
-   (M0 Step 02B, `0683e84`) and the "revisit Status" gate (this review) correctly marked complete;
-   the genuinely open items (RequirementSpec-side contract design; an origin-classification
-   validation approach) remain listed as open; Open Questions confirmed word-for-word unchanged.
+Confirmed and fixed (verified by Claude against the cited text in each case):
 
-One caveat the reviewer raised — local git history alone couldn't confirm the PR #10/#11 number
-mapping (no merge commits explicitly naming them) — was independently resolved by Claude via
-`gh pr view`: PR #10's merge commit is `548bb75` (matches), PR #11's merge commit is `63429c9`
-(matches), both confirmed `MERGED` via the GitHub API, not just local git.
+- **Force-inflation bugs** (preference silently mapped to SHALL/MUST) in three cases — Case 10
+  ("obligation-adjacent SHALL" invented, not part of the mapping table), Case 11 (positive-clause
+  strength inflated by proximity to two prohibitions), Case 15 (SHALL asserted while negotiability
+  was explicitly still an unresolved Unknown — an implicit resolution of that Unknown, forbidden by
+  the contract's own text). Found independently by Reviewers A and B for 10/11/15.
+- **Condition-strengthening bug**: both the main `REQUIREMENT_SPEC.md` text and Case 9 compiled
+  "only if C" into "if and only if C," manufacturing an unstated converse. Found independently by
+  Reviewers A and B.
+- **Self-contradiction in the Complete/Partial/Failed model**: the Failed definition's own example
+  was verbatim identical to the Complete-with-zero-Requirements example. Found by Reviewer C;
+  redefined Failed around structural malformedness (a genuinely different kind of problem) instead.
+- **Overclaim**: `REQUIREMENT_SPEC.md` asserted downstream stages "may partially consume" a Partial
+  `RequirementSpec`, while `ADR-0003`'s own Open Questions explicitly left that undecided. Found by
+  Reviewer C; softened to not authorize consumption mechanics this document doesn't own.
+- **Interpretive-leap bug in Case 12**: the original scenario split a Claim into two Requirements
+  based on what a phrase "plausibly covers" — itself an unauthorized interpretive judgment. Found
+  independently by Reviewers A and B; replaced with a scenario whose split is mechanically entailed,
+  not interpretive.
+- **Invalid MEDIUM-Conflict scenario in Case 13**: the original data-isolation example was, under
+  `INTENT_SPEC.md`'s own Decision Impact test, actually HIGH (a materially different architecture
+  fork), making it an invalid input for this stage. Found independently by Reviewers A and C;
+  replaced with a genuinely detail-level (report-delivery-day) Conflict.
+- Smaller fixes: a dangling internal cross-reference to non-existent sections (caught by Claude, not
+  a reviewer, while fixing the cardinality finding); a missing "Provenance expectations" section in
+  Case 8; an ambiguous "marked invalid" phrasing in Case 14 that could imply mutating a historical
+  artifact; an underspecified rationale/normative-content boundary for descriptive Claims; an
+  unbounded Requirement-Level Inference concept, now given an explicit operational entailment test;
+  a near-circular re-derivation trigger, now enumerated; a missing multi-Claim-partial-supersession
+  rule in the main contract body (previously left entirely to an ADR Open Question).
+
+Not actioned: Reviewer A's broader suggestion to add literal example IDs (`claim_id`s) throughout
+all 17 cases — evaluated and judged a stylistic preference, not a confirmed defect, since
+`INTENT_CASES.md` (this corpus's own established precedent) uses the same "the Claim" prose style
+throughout without literal IDs.
 
 ## Required Changes
 
-None.
+None remaining — every confirmed defect from all three reviewers was fixed and re-verified
+(`npm test`: 32/32 throughout, unaffected since no schema/validator/fixture file was touched).
 
 ## Fixes Applied
 
-N/A — no defects found; no fix required.
+See "Latest Review" above for the full list; applied directly to `docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, and `docs/examples/REQUIREMENT_CASES.md`.
 
 ## Pending Human Gate
 
-PR expected per task instruction (not yet opened at the time of this review); not to be merged by
-this task. Human review of the PR, and a separate later instruction to merge, are the next gates.
+PR to be opened per task instruction (push to the `devSerdar` fork, not `mihvernetwork` — per this
+task's explicit instruction to use the fork for this task's development). Not to be merged by this
+task. `ADR-0003`'s Status remains **Proposed**, per task instruction — human review of the PR is the
+next gate.
 
 ## History
+
+- 2026-08-21 — `ADR-0002-ACCEPTANCE` (PR #12, merged `a20d647`): one independent read-only Codex
+  reviewer verified the `ADR-0002` Status transition (Proposed → Accepted). Overall verdict
+  **CLEAN AND READY** on all three checks: the transition was justified by verifiable evidence
+  (`docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md` and `.../ADR-0002-ADVERSARIAL-REMEDIATION.md`
+  exist, reach real conclusions, and their commits `548bb75`/`63429c9` are ancestors of `main`;
+  `npm test` independently re-run at 32/32); no substantive semantic/model change slipped into the
+  "acceptance housekeeping" patch (`git diff main --stat` showed only the ADR file and
+  `.project/DECISIONS_LOG.md` changed); Future Work accurately separated completed gates from
+  remaining work. One reviewer caveat (PR #10/#11 number mapping unconfirmable from local git
+  alone) was independently resolved by Claude via `gh pr view`. Moved here from "Latest Review" now
+  that those sections describe `M0-STEP-03A-REQUIREMENT-SPEC-SEMANTIC-CONTRACT` instead, per this
+  file's branch/task scoping. — branch `docs/adr-0002-acceptance`
 
 - 2026-08-19/2026-08-20 — `NIGHT-RUNNER-FRESH-CLAUDE-EXECUTOR` (PR #8): three independent read-only
   Codex review passes plus one live supervised smoke test against the real `claude` CLI. Pass 1
