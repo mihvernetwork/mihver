@@ -15,133 +15,150 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: PROJECT-STATE-RECONCILE-POST-STEP-03A
-Branch: `chore/project-state-reconcile-post-step-03a`
+Task: M0-ADR-0004-MEMORY-CONTEXT-AUTHORITY
+Branch: `m0/adr-0004-memory-context-authority`
 
-### Phase 1–2 summary
+Semantic/architectural design task: integrate MIHVER Brain / durable memory into Mihver Architect
+without violating `ADR-0001`/`ADR-0002`/`ADR-0003`. Full design detail (Phases 0–11: memory
+retrieval, authority map, threat model, integration-model comparison, authority model, historical-
+user-memory rule, current-input precedence, procedural/semantic split, evidence boundary,
+reproducibility model, 20-case corpus, foundation impact) is recorded in `ADR-0004`,
+`MEMORY_CONTEXT.md`, and `MEMORY_CONTEXT_CASES.md` themselves — not duplicated here. This entry
+records the Phase 12 review round and its outcome.
 
-M0 Step 03A (PR #13) squash-merged to `main` at `fe79098` — confirmed exactly matching this task's
-stated expectation via `git log`, `git rev-parse HEAD`, and `gh pr list --repo mihvernetwork/mihver
---state merged --limit 30 --json number,title,mergeCommit,mergedAt` (all 13 merged PRs enumerated and
-cross-checked against `.project/PROJECT_STATE.md`'s claims). `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`
-and `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md` were read directly for their own `## Status`
-fields (Accepted / Proposed respectively) rather than trusted from `.project` prose. `PROJECT_STATE.md`
-was reconciled: removed the stale "ADR-0002 Status: Proposed" claim (both the M0 Step 02A checkpoint
-line and the Open Items entry); added three missing frozen checkpoints actually present on `main` —
-Night Runner (PR #7 `9a61a0b`, PR #8 `4590f7a`), `ADR-0002` Acceptance (PR #10 `548bb75`, PR #11
-`63429c9`, PR #12 `a20d647`), and M0 Step 03A (PR #13 `fe79098`); replaced the resolved ADR-0002 Open
-Item with the genuinely-still-open `ADR-0003`-Proposed one; rewrote Next Authorized Action to
-explicitly *not* pre-authorize `ADR-0004` or Step 03B. `DECISIONS_LOG.md` was appended (never edited)
-with verified-only merge-confirmation entries for PR #4/#5/#6/#7 (previously logged only as "approved,
-not yet merged"), PR #8 and PR #13 (no prior entry existed at all), and PR #12 (`ADR-0002` acceptance
-merge) — every PR number, commit SHA, and merge date cross-checked against the `gh pr list` output
-above before being recorded.
+### Phase 12 — Four independent read-only Codex reviewers, dispatched by interaction axis
 
-### Phase 3 — Drift analysis
+A (memory × epistemic provenance), B (memory × stage isolation), C (memory × evidence/architecture),
+D (cross-axis adversarial, building a contradiction matrix across `ADR-0004`, `MEMORY_CONTEXT.md`,
+all 20 cases, `ADR-0002`, `ADR-0003`, `PRINCIPLES.md`, `M0_SCOPE.md`). All four found real,
+independently-verified defects; Claude independently verified every material finding against the
+actual frozen text before acting on it — not accepted by reviewer majority vote.
 
-1. **Which facts became stale?** `PROJECT_STATE.md`'s claim that `ADR-0002` Status is "Proposed"
-   (stale the moment PR #12 merged, `a20d647`); `PROJECT_STATE.md`'s "Frozen Steps / Checkpoints" list
-   (incomplete the moment PR #7/#8/#13 merged without a corresponding state-update task ever running);
-   `DECISIONS_LOG.md`'s "the merge has not been performed... requires a separate, later explicit
-   instruction" claims for PR #4/#5/#6/#7 (stale the moment those merges actually happened, since no
-   follow-up entry was ever appended); `DECISIONS_LOG.md`'s complete silence on PR #8 and PR #13's
-   merges (not staleness exactly — an outright gap, since no entry was ever created to go stale).
-2. **Which file was supposed to be authoritative for each?** None of `.project/*.md` is actually
-   authoritative for any of these facts — `PROJECT_STATE.md` and `DECISIONS_LOG.md` are both
-   explicitly *interpretive summaries* of live truth (per `PROJECT_STATE.md`'s own header: "If the two
-   disagree, trust the live git/gh output and update this file — do not trust this file over
-   reality"). The actual authoritative sources are: each ADR's own `## Status` field for ADR status;
-   `git log` / `gh pr list --state merged` for merge state. `.project/*.md` files are meant to be
-   *derived* from those sources at reconciliation time, not maintained as a live mirror automatically.
-3. **Was the problem human process, missing validation, or both?** Both, weighted toward missing
-   validation. Process side: every M0-STEP-03A-* task's own "Allowed Scope" deliberately excluded
-   `PROJECT_STATE.md`/`DECISIONS_LOG.md` (correct scope discipline for those narrow tasks), and the
-   actual merges of PR #4–#8, #12, #13 all happened outside any task that was itself scoped to update
-   durable state afterward — i.e. no task was ever issued specifically to reconcile state immediately
-   after each of those merges; this reconciliation task is that missing step, arriving late.
-   Validation side: no automated check exists (in `npm run context`, `npm test`, or CI) that
-   cross-references `PROJECT_STATE.md`'s status claims against the ADRs' own `## Status` fields or
-   against `gh pr list --state merged` — so this class of drift is invisible until someone manually
-   diffs prose against reality, which is exactly what this task just did.
-4. **What deterministic invariant could catch this class of drift later?** The task's own suggested
-   wording ("PROJECT_STATE assertions about accepted ADR status and frozen checkpoints must not
-   contradict authoritative repository artifacts") is directionally right but under-specifies *how* —
-   and misses the parallel `DECISIONS_LOG.md` failure mode (a PR logged as "merge not yet performed"
-   that GitHub now shows as merged). A more actionable, repo-structure-grounded version: **extend
-   `scripts/dev/project-context.mjs`'s existing pattern** (it already flags exactly this class of
-   drift for `CURRENT_TASK.md`'s declared branch — see its `WARNING:` output) **to (a) parse every
-   `docs/adr/ADR-*.md`'s own `## Status` field and flag any `PROJECT_STATE.md` prose that names that
-   ADR with a different status, and (b) flag any `DECISIONS_LOG.md` entry containing "has not been
-   performed" / "not yet merged" whose cited PR number appears in a fresh `gh pr list --state merged`
-   call.** This is proposed only, per this task's explicit instruction — not implemented here.
+**Most significant finding (Reviewer A, corroborated by Reviewer D's Contradiction #1):** an earlier
+draft of `ADR-0004` mis-cited `INTENT_SPEC.md`'s Inference Policy and classified the dependency
+("may a `MemoryContext` entry serve as an Inference's premise?") as `CLARIFICATION_ONLY`. On
+independent re-verification against the actual frozen Provenance section — which requires every
+emitted Claim's chain to point back through `IntentSpec` to *the* `UserIdea` it came from — this did
+not hold up: a `MemoryContext` entry is not a Claim and traces to a *different* `UserIdea`, from a
+different run. Reclassified as **`SEMANTIC_AMENDMENT_REQUIRED`**, and, on checking the parallel case,
+found to apply identically to `REQUIREMENT_SPEC.md`'s Requirement-Level Inference mechanism
+(R-10/R-22). Both are now correctly named as required future amendments, distinct from and additional
+to the already-expected `M0_SCOPE.md` stage-input-declaration amendment.
 
-### Phase 4 — Validation and review
+**Other confirmed findings, all fixed:**
 
-`npm test`: 32/32 (unaffected — no contract/schema file touched). `git diff --check`: clean. `git diff
-main --stat` (after this phase's fixes below): four `.project/*.md` files changed, nothing else.
+- (Reviewer A) A real Inferred/Assumed blurring risk: a memory-derived LOW/MEDIUM "default" was
+  ambiguously described in a way that could be read as eligible for Assumed origin at Intent Parsing
+  — categorically forbidden by Assumption Policy for operational defaults. Closed with an explicit
+  "No Assumed-Origin Path for Memory" section in `MEMORY_CONTEXT.md`, and a stage-specific rewrite
+  distinguishing Intent Parsing's Inferred-only path from Requirement Derivation's separate,
+  already-existing R-19 default mechanism.
+- (Reviewer A, Reviewer D's Contradiction #4) A cross-project loophole in Case 3: an earlier draft
+  let content-inspection judge a Project-A-scoped record "genuinely project-agnostic" and admit it
+  into Project B — silently overriding a recorded, specific scope, a materially weaker boundary than
+  the design's own rule for `global`-scoped records. Fixed: a project-scoped record is now excluded
+  from a different project's `MemoryContext` on scope alone, unconditionally, with no
+  content-inspection override path.
+- (Reviewer A) M-07's invariant text said repetition never increases "authority or standing" but
+  omitted "confidence" specifically, even though the design's own axis-independence principle (and
+  I-16 itself) requires it named explicitly. Fixed.
+- (Reviewer B, Reviewer D's Contradiction #9) Several "Always allowed"/"freely" phrases, read
+  literally, contradicted the hard "no stage may consume `MemoryContext` at all" rule. Fixed
+  throughout (including the two Evidence-boundary table rows), plus a strengthened corpus-wide
+  preamble in `MEMORY_CONTEXT_CASES.md` closing the gap across all 20 cases at once rather than
+  patching each individually.
+- (Reviewer B) Phase 11's stage list under-counted: only Intent Parsing and Research Planning were
+  named as plausible `M0_SCOPE.md`-amendment candidates, but the cases themselves (7, 8, 20) describe
+  Architecture Synthesis making comparable use — corrected to name it as a third stage requiring its
+  own amendment, and the list explicitly reframed as illustrative, not exhaustive.
+- (Reviewer B) A reproducibility gap: a bare hash/pointer into Brain's mutable vault cannot
+  reconstruct content Brain later edits or supersedes out from under it. Fixed: production must
+  retain an actual content copy, not merely an identity reference.
+- (Reviewer C) Principle 5's five required properties (source, **version**, date, confidence,
+  freshness) had been understated as four in M-12 and the Evidence-boundary table/cases — version
+  omitted throughout. Fixed in the invariant, the table, and Cases 9/10.
+- (Reviewer C) A subtle risk: "procedural" search-strategy influence could functionally exclude
+  candidates from ever being generated, without ever formally "excluding" any — disguising a semantic
+  effect as a procedural one. Closed with an explicit additive-never-substitutive constraint on all
+  procedural search-strategy influence, in both `ADR-0004` and `MEMORY_CONTEXT.md`.
+- (Reviewer D's Contradictions #6/#7) The frozen-`MemoryContext`-snapshot model directly conflicted
+  with also requiring two facts only knowable after production — "did this actually influence
+  output" and "was this later found stale by contradiction." Resolved by splitting the Reproducibility
+  section and M-09/M-14 into two explicit categories: facts fixed at production time (in the frozen
+  snapshot) versus facts recorded in the *consuming artifact's own* provenance once known — never by
+  mutating the already-frozen snapshot.
+- (Reviewer D's cross-document authority conflict) Case 16 offered Requirement Derivation's R-19
+  default mechanism as an alternative path for a historically-preferred reporting *cadence* — but
+  which cadence the user prefers is a want-level question, exactly what R-19 excludes
+  (`ADR-0003`'s own authority boundary), not a measurement/implementation detail of an
+  already-settled requirement. The R-19 alternative was removed from Case 16 entirely.
+- (Reviewer D's Contradiction #8) A terminology slip in Case 14 conflated "authority" (the strict
+  technical axis `MemoryContext` explicitly disclaims having) with a `project` record's ordinary role
+  as an identity anchor. Reworded to avoid the word "authority" for this narrower, structural role.
+- (Reviewer C's Finding C-3, Reviewer D adjacent) Case 20 incorrectly implied Architecture Synthesis
+  could reason from `EvidenceBundle` directly — it cannot; that is Technology Candidate
+  Identification's and Evaluation's declared input, not Synthesis's (`M0_SCOPE.md`). Corrected to
+  attribute the Evidence-grounded conclusion to the stages that actually own it.
+- (Reviewer D) Case 17 allowed a narrow "inference from absence" ("no memory exists, so no prior
+  preference") under stated conditions — on independent review this does not hold even narrowly: an
+  empty retrieval only establishes that *this query* found nothing, never that the topic was never
+  discussed. Fixed to disallow any inference from absence, full stop.
+- (Reviewer B) Added an Open Question naming the specific gap that Research Planning makes several
+  distinct decisions (per `M0_SCOPE.md`) and this design does not yet specify which, if any, memory
+  may influence — deferred explicitly to the future `M0_SCOPE.md` amendment task, not resolved here.
 
-One independent read-only Codex reviewer (state authority / historical integrity) was dispatched.
-Findings, each independently re-verified by Claude:
+`npm test`: 32/32 throughout (unaffected — no contract/schema/runtime file touched). `git diff main
+--stat`: exactly the three new allowed files; no foundation document modified.
 
-- **Confirmed and fixed:** `CURRENT_TASK.md` claimed Phase 3/4 content "are recorded in
-  `.project/REVIEW_STATE.md`'s 'Latest Review'" at a point when this file hadn't been updated yet —
-  true at time of review, resolved by this very update. Also confirmed and fixed: `CURRENT_TASK.md`
-  claimed `git diff main --stat` showed "the four allowed `.project` files changed" when at review
-  time only three had — resolved now that this file is also updated, making the count literally
-  accurate.
-- **Confirmed and fixed:** the newly-appended `DECISIONS_LOG.md` entry for PR #13 asserted "every
-  `M0-STEP-03A-*` task instruction in this session's own record explicitly said 'do not merge'" — the
-  reviewer correctly noted this is not verifiable from `git log`/`gh pr list` the way the entry's own
-  preamble promised ("verified directly against `git log` and `gh pr list`... none is inferred").
-  Removed the claim; the entry now states only the merge fact and that the authorization decision
-  itself is not independently verifiable from git/GitHub, without asserting what it can't source from
-  those tools.
-- **Verified clean, with Claude independently closing a gap the reviewer's own sandbox couldn't:** the
-  reviewer's sandbox could not reach `api.github.com` (network blocked, escalation rejected), so it
-  could not independently confirm PR-number-to-commit mappings against live GitHub — it verified SHAs
-  and dates against local `git log` only. Claude had already run `gh pr list --state merged` directly
-  in Phase 1 (full JSON output captured) and re-cross-checked every PR-number/SHA pair used in
-  `PROJECT_STATE.md` and `DECISIONS_LOG.md` against that output line by line: all 13 mappings (PR
-  #1–#13) match exactly.
-- **Verified clean (reviewer's own independent check, re-confirmed by Claude):** `git diff main --
-  .project/DECISIONS_LOG.md` shows only added lines — zero deletions, zero modifications to any
-  pre-existing entry. Append-only integrity intact.
-- **Verified clean:** `CURRENT_TASK.md` correctly declares `Branch: chore/project-state-reconcile-post-step-03a`
-  and stays scoped to this specific task; no durable global fact was smuggled into it that belongs in
-  `PROJECT_STATE.md` instead.
-- **Verified clean:** `PROJECT_STATE.md`'s "Next Authorized Action" explicitly excludes advancing
-  `ADR-0003`, beginning M0 Step 03B, and starting `ADR-0004` or any new ADR — no future work was
-  silently authorized.
-- **Verified clean:** `git diff main --stat` / `git diff --name-status main` show only `.project/*.md`
-  files changed — nothing under `docs/contracts/`, `docs/adr/`, `schemas/`, `tests/`, or runtime
-  tooling.
-
-`npm test`: 32/32 throughout.
-
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** No new architecture decision was introduced;
-`ADR-0004` was not started; every confirmed reviewer finding was fixed and re-verified against the
-edited text before this recommendation was reached.
+**Final recommendation: `FOUNDATION_AMENDMENT_REQUIRED`** — not `REDESIGN_REQUIRED` (no reviewer,
+across any axis, found Model C's fundamental approach unsound; every confirmed defect was a scoping,
+wording, or cross-reference error corrected without changing the selected model); not
+`READY_FOR_HUMAN_REVIEW` either: this design's own corrected analysis established that citing a
+`MemoryContext` entry as an Inference's premise requires genuine `SEMANTIC_AMENDMENT_REQUIRED`
+changes to **both** `INTENT_SPEC.md` and `REQUIREMENT_SPEC.md`, not merely the already-expected
+`M0_SCOPE.md` stage-input amendment. Recording this honestly, rather than as `READY_FOR_HUMAN_REVIEW`,
+is the correct application of this task's own Phase 11 instruction.
 
 ## Required Changes
 
-None remaining — the reviewer's confirmed findings (CURRENT_TASK.md's premature "recorded in
-REVIEW_STATE.md" / file-count claims, and DECISIONS_LOG.md's non-git/gh-verifiable sourcing claim)
-were fixed and re-verified (`npm test`: 32/32 throughout; `git diff main -- .project/DECISIONS_LOG.md`
-re-confirmed zero deletions after the fix).
+None remaining — every confirmed finding from all four reviewers was fixed and re-verified against
+the edited text (`npm test`: 32/32 throughout).
 
 ## Fixes Applied
 
-See "Phase 4 — Validation and review" above for the full list; applied to `.project/CURRENT_TASK.md`
-and `.project/DECISIONS_LOG.md` (append-only edit to this task's own just-added entry, not to any
-pre-existing entry).
+See "Phase 12" above for the full list; applied to `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-
+BOUNDARY.md`, `docs/contracts/MEMORY_CONTEXT.md`, and `docs/examples/MEMORY_CONTEXT_CASES.md` — no
+frozen foundation document touched.
 
 ## Pending Human Gate
 
-A PR to `mihvernetwork/mihver:main` (from the `devSerdar` fork), title `chore: reconcile durable
-project state after Step 03A`, is to be opened per this task's explicit instruction. Not to be merged
-by this task — human review of the PR is the next gate.
+A PR to `mihvernetwork/mihver:main` (from the `devSerdar` fork), title `M0: define memory context
+authority boundary`, is to be opened per this task's explicit instruction. Not to be merged by this
+task. `ADR-0004` remains Proposed — the `M0_SCOPE.md`/`INTENT_SPEC.md`/`REQUIREMENT_SPEC.md`
+amendments this design identifies as required are each their own separate, future, explicitly
+human-authorized task. Human review of the PR is the next gate.
 
 ## History
+
+- 2026-08-21 — `PROJECT-STATE-RECONCILE-POST-STEP-03A` (PR #14): reconciled `.project/PROJECT_STATE.md`
+  and `.project/DECISIONS_LOG.md` with actual `main` after M0 Step 03A (PR #13, `fe79098`) merged.
+  Verified against live git/`gh` state, not stale `.project` prose: `ADR-0002`'s recorded status
+  ("Proposed") was stale (it is Accepted); three merged checkpoints (Night Runner PR #7/#8, `ADR-0002`
+  Acceptance PR #10/#11/#12, M0 Step 03A PR #13) were missing from "Frozen Steps / Checkpoints";
+  `DECISIONS_LOG.md` had four "approved, not yet merged" entries (PR #4/#5/#6/#7) that are actually
+  merged, plus two merges (PR #8, PR #13) with no entry at all — all fixed by appending verified-only
+  facts, zero existing entries edited or removed. Drift analysis: both files are interpretive
+  summaries of live truth, never authoritative themselves; the actual gap was that no task was ever
+  scoped to reconcile state immediately after each of those merges (process), and no automated check
+  cross-references `PROJECT_STATE.md`/`DECISIONS_LOG.md` claims against ADR `## Status` fields or
+  `gh pr list --state merged` (validation) — proposed future invariant: extend
+  `scripts/dev/project-context.mjs`'s existing drift-detection pattern to check both. One independent
+  Codex reviewer (state authority / historical integrity) found two issues, both fixed: a premature
+  cross-reference in `CURRENT_TASK.md`, and a `DECISIONS_LOG.md` entry asserting a claim not
+  verifiable from git/GitHub the way its own preamble promised. `npm test`: 32/32. Verdict:
+  `READY_FOR_HUMAN_REVIEW`. Moved here from "Latest Review" now that those sections describe
+  `M0-ADR-0004-MEMORY-CONTEXT-AUTHORITY` instead, per this file's branch/task scoping. — branch
+  `chore/project-state-reconcile-post-step-03a`
 
 - 2026-08-21 — `M0-STEP-03A-FINAL-CROSS-REFERENCE-CLEANUP` (PR #13, sixth pass, no reviewers per its
   own instructions): a final independent verification found Case 7b's Eligibility citing "Case 2's
