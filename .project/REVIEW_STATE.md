@@ -15,128 +15,118 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-ADR-0004-CROSS-BOUNDARY-REMEDIATION
+Task: M0-ADR-0004-AUTHORITY-PROVENANCE-CLOSURE
 Branch: `m0/adr-0004-memory-context-authority`
 PR: `mihvernetwork/mihver#15` (updated in place — not a new PR)
 
-Continuation of the same branch/PR: an external human review of the prior round's draft accepted
-Model C but found six cross-boundary issues (circular scope anchor, undefined producer authority,
-admissibility-vs-interpretation conflation, a false procedural/semantic binary, undefined lifecycle/
-invalidation, ambiguous cross-project corpus language) requiring resolution before any foundation-
-amendment work begins. Before editing, Brain was re-queried for the same four lessons (`4250a08b`,
-`96500b29`, `37a0ce2b`, `64d5e902`) — no new memories exist since the prior round; `64d5e902` (the
-CWD-is-not-a-filesystem-isolation-boundary lesson) proved more precisely on-point this round, framing
-the fix for Issue 1's exact circularity. All six issues were fixed by introducing `RunContext` (a
-non-memory, non-Brain run-identity anchor), a full "MemoryContext Producer: Role and Authority"
-contract, an admissibility-vs-interpretation split, a three-tier Influence Taxonomy
-(`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`) replacing the old two-way split, a full
-Lifecycle/Invalidation model, and a deterministic scope restatement across all 20 (now 21) cases —
-all recorded in `ADR-0004`, `MEMORY_CONTEXT.md`, and `MEMORY_CONTEXT_CASES.md` themselves, not
-duplicated here. This entry records the second-pass review round (four fresh reviewers, dispatched
-after those fixes to check them) and its outcome.
+A narrow semantic-closure pass, before any foundation-amendment work begins. Before editing, Brain
+was re-queried for the same four lessons (`4250a08b`, `96500b29`, `37a0ce2b`, `64d5e902`) — no new
+memories exist since the prior round; all four remain advisory only. Closed six further gaps:
+Historical User Provenance Gate (Category A direct / Category B derived-unverified historical user
+statements, new M-18), Classification Fail-Closed Rule (new M-19), removal of residual producer
+semantic-judgment wording, an explicit Identity Boundary for memory-never-becomes-Evidence, an R-19
+memory-informed-default Foundation Impact item, and a Historical Force Is Not Current Force rule (new
+M-20, new Case 22) plus an M-07 correction restoring I-16's "not by itself" qualifier. Full detail
+recorded in `ADR-0004`, `MEMORY_CONTEXT.md`, and `MEMORY_CONTEXT_CASES.md` (now 22 cases) themselves,
+not duplicated here. This entry records the review round that checked those six fixes.
 
-### Second-pass review — four independent read-only Codex reviewers, dispatched by interaction axis
+### Review round — four independent read-only Codex reviewers, dispatched by interaction axis
 
-A (Scope Anchor × Producer Authority), B (Lifecycle × Reproducibility), C (Process × Discovery ×
-Semantic Authority, across Research Planning/Evidence/Technology Candidate Identification/
-Architecture Synthesis/reviews), D (cross-document/corpus contradiction sweep across `ADR-0004`,
-`MEMORY_CONTEXT.md`, all 21 cases, `M0_SCOPE.md`, `INTENT_SPEC.md`, `REQUIREMENT_SPEC.md`,
+A (Historical Provenance × Normative Force), B (Producer Classification × Least Authority), C (Memory
+× Evidence × Requirement Defaults), D (cross-document/corpus contradiction sweep across `ADR-0004`,
+`MEMORY_CONTEXT.md`, all 22 cases, `M0_SCOPE.md`, `INTENT_SPEC.md`, `REQUIREMENT_SPEC.md`,
 `PRINCIPLES.md`). All four found real, independently-verified defects; Claude independently
 re-verified every finding against the actual current text before acting — not accepted by reviewer
 majority vote.
 
-**Reviewer A (Scope Anchor × Producer Authority):**
-- A stale table row in `ADR-0004` itself (a separate copy from the one already fixed in
-  `MEMORY_CONTEXT.md`) still described `project` records as a "Durable project-identity/context
-  anchor" rather than a corroborating description. Fixed.
-- A genuine self-contradiction: the Producer's new "mechanical scope admissibility only, never
-  inference about applicability" authority limit directly conflicted with pre-existing text requiring
-  production to judge whether `global`-scoped content is "genuinely project-agnostic" — a semantic,
-  not mechanical, judgment. Resolved by deferring that specific content-genuineness judgment to the
-  *consuming stage*, mirroring how semantic-contradiction detection is already deferred there —
-  `global`-scope admission at production is now scope-tag equality only.
-- The Producer's declared input list didn't account for what backs "freshness for this run" or
-  "genuinely project-agnostic" judgments. Resolved by narrowing "freshness" to a purely mechanical,
-  age/lifecycle-based fact (never a truth judgment) and deferring project-agnosticism as above.
-- Stale "produced by one stage... at a specific point in a run" language throughout `ADR-0004`'s
-  Model C description, contradicting the cross-cutting/repeatedly-invoked conclusion reached
-  elsewhere in the same document. Fixed.
-- A coverage gap: no case exercised `RunContext`'s explicit absence. Closed with new Case 21
-  (projectless run).
+**Reviewer A (Historical Provenance × Normative Force):**
+- Case 19 cited two `decision` records as premises for two candidate Inferred Claims with no
+  Category A/B designation at all — a direct bypass of M-18, not a stylistic gap. Fixed: both records
+  made explicit Category A, with a note on what would change if either were Category B instead.
+- Cases 3 and 12 describe historical-user-statement records without stating that Category A/B is
+  immaterial to their outcome (scope mismatch excludes them first) — contradicting the corpus
+  preamble's promise that every applicable case states this. Fixed with explicit immateriality notes.
+- Case 22's worked example was internally self-contradictory: it derived a preference-strength
+  "SHOULD NOT" Inferred Claim but called it "the same prohibition-shaped force" as the historical
+  statement — simultaneously claiming and denying force inheritance. Fixed: the example now derives
+  a genuinely weaker, explicitly-labeled preference-strength conclusion as the defensible outcome
+  absent additional current-run confirmation, with reaching actual prohibition force requiring an
+  independent basis beyond the citation alone (e.g. a clarification answer).
+- M-03 stated the Inferred-Claim-premise path without carrying the new Category A restriction,
+  contradicting M-18 by omission. Fixed to gate M-03's premise path to Category A explicitly.
+- M-07's correction and its interaction with I-16/Case 4 were confirmed clean — no defect.
 
-**Reviewer B (Lifecycle × Reproducibility):**
-- The Lifecycle section's supersession trigger was qualified by "in a way that materially changes the
-  context" — an undefined, semantic exception contradicting the unconditional rule stated elsewhere.
-  Fixed to unconditional.
-- `ADR-0004`'s own Phase 6/9 duplicated the pre-fix "marked stale-for-this-run in `MemoryContext`'s
-  own record" and "whether it actually influenced output... a production step must preserve" language
-  that `MEMORY_CONTEXT.md` had already corrected to the frozen-snapshot-vs-consuming-artifact-
-  provenance split — the ADR's own copy was never updated. Fixed.
-- Case 14 implied a single `MemoryContext` production record could cover both a corroboration
-  purpose and a concurrent topical purpose, contradicting the Producer's "exactly one purpose per
-  invocation" output contract. Fixed to state these are two separate productions.
-- A cross-run reuse gap: "`MemoryContext` does not expire on a clock" was broad enough to permit
-  reusing an old snapshot across separate runs bound to the same identity, never recomputing
-  freshness. Fixed with an explicit cross-run-reuse prohibition (also added to M-17).
-- Confirmed stale "per-run" production-trigger framing in `ADR-0004`'s Open Questions, contradicting
-  the settled per-invocation cardinality. Reworded to an implementation-scheduling-only question.
+**Reviewer B (Producer Classification × Least Authority):**
+- A second, unfixed instance of the "artifact supplied = judgment supplied" conflation survived in
+  the Producer's own "Not allowed to decide" bullet (a different spot from the "Inputs" bullet and
+  Category B text already tightened) and in `ADR-0004`'s Phase 6 prose. Fixed both to require the
+  specific, already-computed verdict itself, never merely an artifact/version reference.
+- `ADR-0004`'s Phase 4 axis 4 still described production judging freshness as "stale for the current
+  project's current state" — a semantic truth-judgment M-05 explicitly forbids production from
+  making. Fixed to match M-05's mechanical, age/lifecycle-only framing.
+- The Reproducibility section and M-14's snapshot inventories weren't updated to include the new
+  classification-basis/method/ambiguity facts the Classification Fail-Closed Rule requires recording —
+  a real audit-contract gap (an implementation could satisfy the old inventory while losing exactly
+  the facts M-19 needs visible). Fixed in both `MEMORY_CONTEXT.md` and `ADR-0004`.
+- The Classification Fail-Closed Rule itself, and the Purpose-section fix removing MemoryContext's
+  residual "whether it actually mattered" claim, were both confirmed clean — no defect.
 
-**Reviewer C (Process × Discovery × Semantic Authority):**
-- `MEMORY_CONTEXT.md`'s own `PROCESS_ONLY` definition listed "retrieval query construction" as an
-  example, which can change the search space — self-contradicting the tier's "zero content effect"
-  definition. Fixed.
-- Cases 7, 8 mislabeled genuine search-space-shaping influence as "procedural, free" instead of
-  `DISCOVERY_ATTENTION` — a substantive misclassification, not a terminology slip. Fixed.
-- Case 8 allowed a functional-exclusion loophole: memory could be cited as one of several
-  contributing reasons a candidate "wasn't pursued," which can omit a candidate before Evaluation ever
-  sees it despite the prose disclaiming exclusion "by fiat." Fixed: memory may now contribute zero
-  negative weight toward any candidate's omission, under any framing.
-- Case 10's "the memory only shortens how much searching is needed" risked early termination of
-  otherwise-required research coverage. Fixed to prohibit narrowing or shortening the ordinary check.
-- The Semantic Authority Classes table's `incident` row and the old two-way procedural/semantic
-  terminology survived in several places (`MEMORY_CONTEXT.md` and `MEMORY_CONTEXT_CASES.md`) after
-  the three-tier taxonomy was introduced. Migrated throughout (Cases 5, 6, 20 relabeled;
-  historical "earlier draft" framing intentionally left describing the superseded model).
+**Reviewer C (Memory × Evidence × Requirement Defaults):**
+- `MEMORY_CONTEXT.md`'s own worked "pattern memory illustrates the full chain" example, and `ADR-0004`'s
+  duplicate of it, still had the memory itself as the grammatical subject of "before reaching
+  `SEMANTIC_PREMISE` standing" — the exact stale transition model the Identity Boundary fix was meant
+  to remove. Fixed to make a wholly new artifact the subject, in both documents.
+- Phase 11's consuming-stage list didn't name Requirement Derivation despite `MEMORY_CONTEXT.md`
+  granting it a concrete memory-informed-R-19-default capability requiring its own `M0_SCOPE.md`
+  amendment — Foundation Impact Analysis was silently incomplete for a capability the ADR itself
+  keeps. Fixed by adding Requirement Derivation to the list.
+- Case 8's amendment-status note claimed Architecture Synthesis was "not named among the plausible
+  candidates in `ADR-0004`'s Phase 11" — stale from before an earlier round had already added it,
+  now factually contradicting the ADR. Fixed.
+- Verified directly against `REQUIREMENT_SPEC.md`'s actual R-09/R-10/R-19/R-22 text: the R-19
+  default-provenance item's "narrower amendment" framing holds up — R-09's existing open rationale
+  mechanism can accommodate a memory citation, unlike R-10/R-22's closed "accepted Claim or
+  Requirement" premise definition. No defect in that classification, or in the technology-memory vs.
+  historical-user-memory asymmetry (confirmed principled, not ad hoc).
 
 **Reviewer D (cross-document/corpus contradiction sweep):**
-- Confirmed Reviewer A/B/C's ADR-0004-specific findings independently (the ADR's own Phase 6/7/8/9
-  content was a stale, un-synced duplicate of what had already been fixed in `MEMORY_CONTEXT.md`).
-- Case 18 simultaneously said "the run proceeds without `MemoryContext`" and required a "production
-  record" noting `retrieval-unavailable" — a genuine cardinality contradiction about whether the
-  Producer emits an artifact on failure. Fixed: the Producer always emits exactly one `MemoryContext`
-  per invocation, with a `retrieval-unavailable` outcome and zero admitted entries on failure.
-- Case 12 had production itself excluding a record for "scope mismatch, domain-specific content" —
-  the second clause is a content judgment outside the Producer's mechanical authority. Fixed to
-  scope-mismatch alone.
-- Cross-referenced `M0_SCOPE.md`/`INTENT_SPEC.md`/`REQUIREMENT_SPEC.md`/`PRINCIPLES.md` directly
-  (not via the ADR's own paraphrase): no silent contradiction of any frozen document found; the
-  Foundation Impact Analysis was independently confirmed complete.
-- A scope-ambiguity sweep found Cases 5, 6, 9, 10, 13, 16, 20 still lacked an explicit Brain-`scope`
-  statement for their memory input. Fixed with explicit scope phrases in each.
+- Independently confirmed Reviewers B and C's `ADR-0004`-specific findings (Phase 4 freshness
+  judgment; Phase 7/8's stale "memory reaches `SEMANTIC_PREMISE`" wording) — the same recurring
+  pattern this branch has hit every round: `ADR-0004` duplicates content `MEMORY_CONTEXT.md` fixes
+  and isn't always updated in lockstep.
+- Independently confirmed Reviewer A's Cases 3/12 immateriality gap and Case 19's M-18 bypass.
+- Verified `M0_SCOPE.md`/`INTENT_SPEC.md`'s actual I-16/Provenance text and `REQUIREMENT_SPEC.md`'s
+  actual R-09/R-19 text directly (not via `ADR-0004`'s paraphrase): no silent contradiction of any
+  frozen document found; Foundation Impact Analysis independently confirmed complete once Reviewer
+  C's Requirement Derivation gap was fixed.
+- Confirmed all four newly-introduced section headings (Historical User Provenance Gate,
+  Classification Fail-Closed Rule, Identity Boundary — Not Merely a Freshness Gate, Historical Force
+  Is Not Current Force) resolve correctly everywhere they're cross-referenced — no dangling or
+  renamed-but-not-updated reference found.
 
 `npm test`: 32/32 throughout (unaffected — no contract/schema/runtime file touched). `git diff main
---stat`: exactly the same three allowed files (plus these two `.project` files); no foundation
-document modified. `git diff --check`: clean.
+--stat`: the same three docs plus these two `.project` files; no foundation document modified.
+`git diff --check`: clean.
 
-**Final recommendation: unchanged, `FOUNDATION_AMENDMENT_REQUIRED`** — this second-pass review found
-no defect that changes the underlying verdict from the prior round: every confirmed finding was a
-scoping, internal-consistency, or terminology-migration defect within the already-selected Model C,
-never evidence the model itself is unsound (so not `REDESIGN_REQUIRED`), and the same
-`SEMANTIC_AMENDMENT_REQUIRED` dependency on `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` (not just
-`M0_SCOPE.md`) established in the prior round still holds (so not `READY_FOR_HUMAN_REVIEW`).
+**Final recommendation: unchanged, `FOUNDATION_AMENDMENT_REQUIRED`** — every confirmed finding this
+round was a scoping, internal-consistency, or omission defect within the already-selected Model C,
+never evidence the model itself is unsound (so not `REDESIGN_REQUIRED`), and the standing
+`SEMANTIC_AMENDMENT_REQUIRED` dependency on `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` (now including the
+R-19 default provenance item) still holds and remains unmet (so not `READY_FOR_HUMAN_REVIEW`).
 
 ## Required Changes
 
-None remaining — every confirmed finding from both review rounds (the original Phase 12 four
-reviewers, and this round's second-pass four reviewers) was fixed and re-verified against the edited
-text (`npm test`: 32/32 throughout, across both rounds).
+None remaining — every confirmed finding across all three review rounds (the original Phase 12 four
+reviewers; the cross-boundary-remediation round's four reviewers; this round's four reviewers) was
+fixed and re-verified against the edited text (`npm test`: 32/32 throughout, across all three
+rounds).
 
 ## Fixes Applied
 
-See "Latest Review" above for this round's full list; see "History"'s
-`M0-ADR-0004-MEMORY-CONTEXT-AUTHORITY` entry for the original Phase 12 list. Applied to
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/MEMORY_CONTEXT.md`, and
-`docs/examples/MEMORY_CONTEXT_CASES.md` — no frozen foundation document touched, across either
+See "Latest Review" above for this round's full list; see "History"'s `M0-ADR-0004-CROSS-BOUNDARY-
+REMEDIATION` and `M0-ADR-0004-MEMORY-CONTEXT-AUTHORITY` entries for the two prior rounds' lists.
+Applied to `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/MEMORY_CONTEXT.md`,
+and `docs/examples/MEMORY_CONTEXT_CASES.md` — no frozen foundation document touched, across any
 round.
 
 ## Pending Human Gate
@@ -149,6 +139,29 @@ are each their own separate, future, explicitly human-authorized task. Human rev
 next gate.
 
 ## History
+
+- 2026-08-21 — `M0-ADR-0004-CROSS-BOUNDARY-REMEDIATION` (PR #15, second round): an external human
+  review of the first draft accepted Model C but found six cross-boundary issues (circular scope
+  anchor, undefined producer authority, admissibility-vs-interpretation conflation, a false
+  procedural/semantic binary, undefined lifecycle/invalidation, ambiguous cross-project corpus
+  language) requiring resolution before foundation-amendment work begins. Fixed by introducing
+  `RunContext` (non-memory run-identity anchor), a full "MemoryContext Producer: Role and Authority"
+  contract, an admissibility-vs-interpretation split, a three-tier Influence Taxonomy
+  (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`), a full Lifecycle/Invalidation model, and
+  deterministic per-case scope statements (corpus grew from 20 to 21 cases, adding Case 21 for
+  `RunContext`'s explicit absence). Four independent Codex reviewers by interaction axis (A: Scope
+  Anchor × Producer Authority; B: Lifecycle × Reproducibility; C: Process × Discovery × Semantic
+  Authority; D: cross-document/corpus contradiction) found real defects, mostly the remediation's own
+  fixes not propagated to `ADR-0004`'s duplicate copies (a stale `project`-anchor table row, stale
+  "produced by one stage" language, stale procedural/semantic terminology in Phase 6/7/8/9) plus a
+  self-contradiction between the Producer's "mechanical only" scope authority and pre-existing
+  "genuinely project-agnostic" content-judgment text (resolved by deferring that judgment to the
+  consuming stage), a functional-exclusion loophole in Case 8, a cross-run reuse gap, and a Case 18
+  cardinality conflict. All fixed and independently re-verified. `npm test`: 32/32. Verdict:
+  `FOUNDATION_AMENDMENT_REQUIRED` (unchanged). Moved here from "Latest Review" now that those sections
+  describe `M0-ADR-0004-AUTHORITY-PROVENANCE-CLOSURE` instead, per this file's branch/task scoping
+  (both entries share branch `m0/adr-0004-memory-context-authority` and PR #15). — branch
+  `m0/adr-0004-memory-context-authority`
 
 - 2026-08-21 — `M0-ADR-0004-MEMORY-CONTEXT-AUTHORITY` (PR #15, first draft/review round): semantic/
   architectural design task integrating MIHVER Brain / durable memory into Mihver Architect without

@@ -25,6 +25,16 @@ draft left several cases' cross-project applicability ambiguous ("a prior projec
 past project"); every such instance has been resolved one way or the other, since ambiguous scope is
 itself a defect this corpus should never model as acceptable.
 
+**Every `decision`-type case that describes a historical user statement states explicitly whether the
+record is Category A (direct — inspectably traceable to an original historical user-authored source)
+or Category B (derived/unverified — reads like a user statement but lacks that traceable linkage), per
+`MEMORY_CONTEXT.md`'s "Historical User Provenance Gate."** Only Category A entries may ever be cited
+as the premise of a current-run Inferred Claim; Category B entries are restricted to
+`DISCOVERY_ATTENTION` use (shaping a clarification question, informing retrieval) under every
+circumstance. Where a case's outcome does not depend on the distinction (the memory is excluded or
+never cited as a premise regardless of category), this is stated explicitly rather than left
+ambiguous.
+
 **Read every "Allowed use" and "Expected stage behavior" line below as implicitly prefixed by "once
 that specific stage is separately authorized to consume `MemoryContext` (not yet performed)."** This
 applies uniformly to every case and every stage named in it — Intent Parsing, Research Planning,
@@ -40,17 +50,25 @@ amendment. No case in this corpus authorizes any consumption today.
 
 ## 1. Stable historical preference, no current mention
 
-**Memory input:** `decision`, project-scoped, "user stated a preference for PostgreSQL over other
-databases" (Brain confidence: medium, `status: active`, no supersession).
+**Memory input:** `decision`, project-scoped, **Category A (direct)** — the record's body inspectably
+cites the specific past `UserIdea` version/turn it quotes ("`UserIdea` v1, turn 3: 'I'd like to use
+PostgreSQL over other databases'"), so it is traceable, not merely paraphrased — "user stated a
+preference for PostgreSQL over other databases" (Brain confidence: medium, `status: active`, no
+supersession).
 
 **Current-run input:** Same project. Current `UserIdea` contains no statement about databases at
 all.
 
-**Allowed use:** Cited as the premise for an Inferred Claim ("the system SHOULD use PostgreSQL,
-Inference-derived from a historical statement, moderate confidence, provisional/reversible") — or
-as informational input shaping a candidate clarification question ("a prior statement of yours
-named PostgreSQL — still your preference here?"). Both require the `MemoryContext` entry to be
-explicitly cited as the premise.
+**Allowed use:** Because this entry is Category A, it may be cited as the premise for an Inferred
+Claim ("the system SHOULD use PostgreSQL, Inference-derived from a historical statement, moderate
+confidence, provisional/reversible") — or as informational input shaping a candidate clarification
+question ("a prior statement of yours named PostgreSQL — still your preference here?"). Both require
+the `MemoryContext` entry to be explicitly cited as the premise, and the Inferred Claim's provenance
+must state that the entry is Category A and name the originating turn (M-18). **Contrast:** had this
+record instead lacked the inspectable citation (Category B — e.g. it merely read "user prefers
+PostgreSQL" with no traceable source), only the clarification-question path would be available; citing
+it as the Inferred Claim's premise would violate M-18 regardless of how plausible or confidently
+worded the record is.
 
 **Forbidden transformation:** Compiling directly into a User-Provided Requirement ("the system MUST
 use PostgreSQL") with no Inference layer, no confidence, and no provisional marking. (Violates M-03.)
@@ -59,8 +77,11 @@ use PostgreSQL") with no Inference layer, no confidence, and no provisional mark
 path above is defensible; silently doing neither (dropping the memory without any record) is not.
 
 **Expected provenance behavior:** The Inferred Claim's provenance names the `MemoryContext` entry as
-its premise, explicitly labeled "historical, not current-run"; the historical origin is never
-compressed into looking like a current-run statement.
+its premise, explicitly labeled "historical, not current-run," states its Category A status and
+originating turn (M-18), and separately states the reasoning basis for the Claim's own current force
+(a preference here, so M-20's force-inheritance risk is lower-stakes than an obligation/prohibition
+would be, but the same independent-reasoning discipline still applies); the historical origin is
+never compressed into looking like a current-run statement.
 
 **Expected stage behavior:** Intent Parsing (once authorized) may use this; it never mints a
 User-Provided Claim from it directly.
@@ -70,7 +91,9 @@ User-Provided Claim from it directly.
 ## 2. Historical preference contradicted by current UserIdea
 
 **Memory input:** `decision`, project-scoped to this same current project, "user preferred
-local-only execution" (medium confidence, active).
+local-only execution" (medium confidence, active). (Category A/B under "Historical User Provenance
+Gate" is immaterial to this case's outcome — the entry is never used at all once contradicted,
+regardless of how directly it traces to the user's own words.)
 
 **Current-run input:** Current `UserIdea`: "this project must run in our cloud account."
 
@@ -104,7 +127,9 @@ determination itself.
 ## 3. Historical user obligation from another project
 
 **Memory input:** `decision`, scoped to Project A, "user stated: the system MUST log every
-administrative action for audit purposes" (high confidence, active).
+administrative action for audit purposes" (high confidence, active). (Category A/B under "Historical
+User Provenance Gate" is immaterial here — the record is excluded mechanically on project-scope
+mismatch, below, before any premise eligibility question is ever reached.)
 
 **Current-run input:** Project B. Current `UserIdea` says nothing about audit logging.
 
@@ -148,7 +173,12 @@ is unconditional at the scope-mismatch stage, before any stage-level use is even
 projects" without resolving the cross-project admissibility question Case 3 raises; same-project
 scope avoids that ambiguity entirely and keeps this case's own teaching point — repetition does not
 raise authority — uncomplicated by it), each independently stating "user prefers TypeScript over
-plain JavaScript" (each medium confidence).
+plain JavaScript" (each medium confidence). **All three are Category A** (each inspectably cites its
+own distinct originating `UserIdea` turn) — deliberately, so this case tests repetition-as-authority
+in isolation, without also raising a Category A/B question; three Category-A citations of the *same*
+underlying preference are still one fact repeated three times, not three independent facts (this is
+exactly what makes them non-independent for M-07 purposes, regardless of each individually clearing
+the provenance gate).
 
 **Current-run input:** No current statement about language choice.
 
@@ -246,11 +276,14 @@ project.
 **Allowed use:** May inform Research Planning's search strategy ("consider checking LangGraph as a
 candidate") — `DISCOVERY_ATTENTION`: additive (LangGraph is added to what gets checked, nothing
 otherwise-required is skipped) and provenance-visible (the search record cites this memory as the
-originating lead). May also become a `TechnologyCandidateSet` entry, but **only** after
-independently clearing Technology Candidate Identification's hard eligibility constraints against
-*this* `RequirementSpec`, informed by a freshly-produced `EvidenceBundle` — never admitted, ranked,
-or preferred merely because it worked before (Threat D, Principle 9 — best-fit, not universal
-best).
+originating lead). LangGraph may go on to be the subject of a **wholly new, independently-produced**
+`TechnologyCandidateSet` entry, but **only** after independently clearing Technology Candidate
+Identification's hard eligibility constraints against *this* `RequirementSpec`, informed by a
+freshly-produced `EvidenceBundle` — never admitted, ranked, or preferred merely because it worked
+before (Threat D, Principle 9 — best-fit, not universal best). **The memory entry itself never
+becomes that `TechnologyCandidateSet` entry, and its own classification never advances past
+`DISCOVERY_ATTENTION`** — this is an identity boundary, not a threshold the memory eventually
+crosses (see "Identity Boundary, Not Merely a Freshness Gate" in `MEMORY_CONTEXT.md`).
 
 **Forbidden transformation:** Recommending LangGraph in the final `ArchitectureCandidate`/
 `ArchitectureDecision` on the strength of the memory alone, bypassing Evaluation's actual scoring
@@ -259,9 +292,10 @@ against the current `RequirementSpec`.
 **Clarification required?** No — this is an architecture-stage concern, not an intent-stage one;
 no user clarification is implicated.
 
-**Expected provenance behavior:** If it does become a `TechnologyCandidateSet` entry, its
-provenance cites the fresh `EvidenceBundle` entry that qualified it, not the memory directly — the
-memory's role recorded as "originating research lead," never as the qualifying basis itself.
+**Expected provenance behavior:** If a new `TechnologyCandidateSet` entry for LangGraph is produced,
+its provenance cites the fresh `EvidenceBundle` entry that qualified it, not the memory directly — the
+memory's role recorded as "originating research lead," never as the qualifying basis itself, and never
+as though the memory entry had itself become the new entry.
 
 **Expected stage behavior:** Technology Candidate Identification and Evaluation apply their full,
 undiminished ordinary authority regardless of this memory's existence.
@@ -281,8 +315,9 @@ caused unacceptable latency under load" (high confidence).
 **Current-run input:** Current requirements describe a similarly latency-sensitive workload.
 
 **Allowed use:** Once Architecture Synthesis is separately authorized to consume `MemoryContext` (its
-own required `M0_SCOPE.md` amendment — not named among the plausible candidates in `ADR-0004`'s
-Phase 11 and flagged there as an omission this case exposes), it is `DISCOVERY_ATTENTION`: it may add
+own required `M0_SCOPE.md` amendment — Architecture Synthesis is explicitly named among the plausible
+candidates in `ADR-0004`'s Phase 11, corrected in an earlier review round from a draft that had
+omitted it), it is `DISCOVERY_ATTENTION`: it may add
 asynchronous/multi-worker alternatives for Synthesis to *also* generate and consider — additive,
 provenance-visible — without lowering the baseline consideration, generation, or eligibility of a
 synchronous candidate shape in any way. This is legitimately Synthesis's own authority (M0_SCOPE.md:
@@ -385,16 +420,17 @@ check," distinct from the entry's own re-verified basis.
 
 ## 11. Superseded historical user statement
 
-**Memory input:** Two linked `decision` records, both scoped to the current project: an original
-"user wants a $100/month budget ceiling" (now `status: superseded`, `superseded_by` pointing at the
-second) and a correction, "user corrected: budget is actually $500/month" (`status: active`,
-`supersedes` pointing at the first).
+**Memory input:** Two linked `decision` records, both scoped to the current project, **both Category
+A** (each inspectably cites its own originating `UserIdea` turn): an original "user wants a
+$100/month budget ceiling" (now `status: superseded`, `superseded_by` pointing at the second) and a
+correction, "user corrected: budget is actually $500/month" (`status: active`, `supersedes` pointing
+at the first).
 
 **Current-run input:** No current statement about budget.
 
-**Allowed use:** Only the live ($500/month) record may be cited as a premise; the superseded
-$100/month record is excluded from `MemoryContext` production entirely once its supersession is
-resolved.
+**Allowed use:** Only the live ($500/month) record may be cited as a premise — and only because it is
+Category A; the superseded $100/month record is excluded from `MemoryContext` production entirely
+once its supersession is resolved, before its provenance category would even matter.
 
 **Forbidden transformation:** Retrieving and citing both records as if they were two independent,
 simultaneously-valid pieces of support (e.g. "the user has stated budget preferences of both $100
@@ -418,7 +454,9 @@ historical values to weigh against each other.
 ## 12. Cross-project memory leakage
 
 **Memory input:** `decision`, scoped to Project A's slug, "user requires HIPAA compliance for this
-system" (high confidence, active).
+system" (high confidence, active). (Category A/B under "Historical User Provenance Gate" is
+immaterial here too, for the same reason as Case 3 — scope mismatch excludes the record before any
+premise eligibility question is reached.)
 
 **Current-run input:** Project B — a different, unrelated system for the same user, no health-data
 involvement at all.
@@ -535,7 +573,9 @@ kind of content that can legitimately be `global`-scoped, distinct from Case 3's
 audit-logging obligation) — high confidence, admitted mechanically on its `global` scope tag (per
 M-06/M-13); Intent Parsing, as the consuming stage, is what must independently confirm the content is
 genuinely project-agnostic before using it to shape the clarification question below — not merely
-because it carries a `global` tag.
+because it carries a `global` tag. (Category A/B under "Historical User Provenance Gate" is
+immaterial here too — M-08 already forbids memory alone from closing a HIGH/CRITICAL item regardless
+of category, so only the clarification-shaping path, open to both categories, is ever reachable.)
 
 **Current-run input:** Current `UserIdea` describes a system with an irreversible production delete
 action, with no current statement on whether it may be automatic — a CRITICAL Decision Impact item
@@ -566,16 +606,19 @@ apparent answer; Requirement Derivation never consumes it.
 ## 16. LOW/MEDIUM issue where memory may reduce repeated questioning
 
 **Memory input:** `decision`, project-scoped to the current project's slug (from this same project's
-earlier phase), "user previously indicated a preference for weekly (not daily or monthly) reporting
-cadence" (medium confidence, active).
+earlier phase), **Category A** (inspectably cites its originating `UserIdea` turn), "user previously
+indicated a preference for weekly (not daily or monthly) reporting cadence" (medium confidence,
+active).
 
 **Current-run input:** Current `UserIdea` requests "a report," with no cadence specified — a MEDIUM
 Decision Impact item (tunes a detail, doesn't change the shape of the solution).
 
 **Allowed use:** May defensibly reduce a repeated question — but only via the Inferred-Claim path at
 Intent Parsing ("weekly cadence, Inference-derived from a historical statement, moderate confidence,
-provisional"), pending its own required amendment (see "Historical User Memory Rule"), or via a
-current-run clarification question shaped by the memory. **Not** via Requirement Derivation's R-19
+provisional"), pending its own required amendment (see "Historical User Memory Rule") and available
+here only because the entry is Category A (a Category B entry could only shape the clarification
+question below, never serve as this premise), or via a current-run clarification question shaped by
+the memory — available to either category. **Not** via Requirement Derivation's R-19
 default-filling mechanism: an earlier draft of this case offered "Requirement-Derivation-introduced
 default" as an equally valid alternative, which was itself a defect, corrected on independent review
 — *which cadence the user prefers* is a question about what the user wants, not a measurement or
@@ -673,9 +716,14 @@ production record for later audit.
 ## 19. Memory content conflicts internally
 
 **Memory input:** Two live (non-superseded), independently-scoped `decision` records that were never
-linked via supersession, both project-scoped to the current project: one states "user wants minimal
-infrastructure cost," the other states "user wants maximum reliability regardless of cost" —
-genuinely in tension, with neither marked as correcting the other.
+linked via supersession, both project-scoped to the current project, **both Category A** (each
+inspectably cites its own distinct originating `UserIdea` turn — this case tests genuine internal
+tension between two independently-grounded statements, not a provenance question, so both are
+deliberately given the strongest available provenance): one states "user wants minimal infrastructure
+cost," the other states "user wants maximum reliability regardless of cost" — genuinely in tension,
+with neither marked as correcting the other. (Had either record instead been Category B, it could not
+be cited as a premise at all under M-18 — it would only be available to shape a clarification
+question, which would sidestep the tension this case is designed to test, not resolve it.)
 
 **Current-run input:** No current statement resolving this tension.
 
@@ -791,3 +839,62 @@ never mistakes this projectless `MemoryContext` for one already scoped to it.
 **Expected stage behavior:** Whichever stage consumes this `MemoryContext` receives only
 globally-scoped content; it must not, and structurally cannot, receive project-scoped material this
 run never established an identity to be scoped to.
+
+---
+
+## 22. Historical prohibition, no current mention — force is not inherited from history
+
+**Memory input:** `decision`, project-scoped to the current project, **Category A** — the record's
+body inspectably cites its originating turn: "user stated (`UserIdea` v3, turn 5): 'notifications
+must never be sent between 10pm and 7am'" (high confidence, `status: active`, no supersession). The
+historical statement's own force, at the time it was made, was a **prohibition**.
+
+**Current-run input:** Current `UserIdea` says nothing about notification timing at all — a
+LOW/MEDIUM Decision Impact item (a UX/scheduling preference, not an irreversible or safety-critical
+action; contrast Case 15's genuinely CRITICAL irreversible-deletion example).
+
+**Allowed use:** Because this entry is Category A, it may be cited as the premise for a current-run
+Inferred Claim. **What it may not do is hand its own historical force to that Claim automatically.**
+The historical statement's own prohibition force is not, by itself, an independent current-run
+reasoning basis for assigning the current Inferred Claim that same **MUST NOT**-compiling force —
+citing "the historical statement was phrased as a prohibition" as the *entire* basis for a current
+prohibition-force Claim is exactly the silent inheritance this case exists to forbid, whether or not
+a sentence is wrapped around it. Absent anything beyond the bare historical citation, the defensible,
+independently-reasoned conclusion is a **preference-strength** Inferred Claim — e.g. "notifications
+SHOULD NOT be sent between 10pm and 7am, Inference-derived from a historical statement, moderate
+confidence, provisional/reversible" — stated as its own, deliberately weaker force than the history's
+own, precisely because nothing current-run yet independently supports compiling straight through to a
+hard **MUST NOT**. Reaching current-run prohibition force instead requires an *additional*, genuinely
+independent basis beyond the citation itself — most straightforwardly, an explicit current-run
+confirmation via the clarification-question path ("you've previously said notifications should never
+go out overnight — still a hard requirement here, or a preference?"), whose answer, if given, becomes
+User-Provided and may then carry whatever force the user's current answer actually states.
+
+**Forbidden transformation:** Assigning the current Inferred Claim prohibition-level force (which
+`REQUIREMENT_SPEC.md`'s Force → Strength Mapping would then compile straight through to a hard
+**MUST NOT** Requirement, regardless of the Inference's own confidence) **on the strength of the
+historical citation alone**, with no additional independent basis beyond "the history said so." This
+is the exact failure "Historical Force Is Not Current Force" forecloses: a stale historical
+prohibition silently hardening into a permanent current hard constraint through ordinary, uneventful
+downstream compilation, because nothing between the historical citation and the compiled Requirement
+ever supplied an independent reason to compile it that hard. Also forbidden: presenting the
+preference-strength Inferred Claim above as though it were somehow still "the same force as history,
+just worded more cautiously" — it is not the same force; it is a genuinely weaker one, and the
+provenance must say so plainly, never obscure the downgrade behind reassuring language.
+
+**Clarification required?** Not mandatory — this is ordinary LOW/MEDIUM-territory handling, subject
+to the same repetition/confidence discipline as any other memory-derived Claim (M-07) and to
+`MEMORY_CONTEXT.md`'s LOW/MEDIUM Decision Impact conditions (provisional marking, provenance
+visibility, immediate yield to any relevant current statement).
+
+**Expected provenance behavior:** The Inferred Claim's provenance records **two separate facts**, per
+M-20: (a) historical-content provenance — which `MemoryContext` entry supplied the premise's content,
+its Category A status, and the originating turn it was inspectably traced to; and (b) force
+provenance — the independent reasoning basis for the Claim's *own* current force, stated as its own
+sentence, never collapsed into "cites memory entry X" alone. An auditor must be able to tell, from the
+provenance alone, whether the current force was actually reasoned about or merely inherited.
+
+**Expected stage behavior:** Intent Parsing (once authorized) states an explicit force-derivation step
+for this Inferred Claim, exactly as it would for confidence or provisional marking; no stage compiles
+a Requirement's normative strength from this Claim without that explicit step having been recorded
+first.
