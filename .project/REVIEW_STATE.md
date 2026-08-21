@@ -15,115 +15,147 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-STEP-03A-FINAL-CROSS-REFERENCE-CLEANUP
-Branch: `m0/step-03a-requirement-contract`
+Task: PROJECT-STATE-RECONCILE-POST-STEP-03A
+Branch: `chore/project-state-reconcile-post-step-03a`
 
-**This cleanup task's own scope (no reviewers dispatched, per its own instructions):** a final
-independent verification found one stale cross-reference — Case 7b's Eligibility said "the same
-pattern as Case 2's Completeness," but Case 2 is now explicitly Partial (from the round summarized
-below). Fixed by replacing the reference with Case 8, a genuinely equivalent, unconditionally Complete
-binary-check example. A deterministic sweep of `REQUIREMENT_CASES.md` for every "Case X's
-Complete/Completeness/Partial"-style reference then surfaced two more instances of the same staleness
-under broader phrasing the literal regex missed: Case 16 cited "Case 1's 'approval gate' (testable
-now...)" and Case 15 cited "Case 1's or Case 9's (those have a testable Requirement with an open
-scope/trigger detail)" — both using the pre-fix framing that Case 1/9's own Requirement is "testable
-now" except for an attached open item, which the prior round had already corrected (their Requirements
-are individually Partial too, not merely Complete-with-an-open-item). Both reworded to accurately
-describe Case 1/9's current status. Every remaining `Case N` cross-reference in the file was checked
-against that case's own current Eligibility line and found accurate. `npm test`: 32/32. No semantics,
-invariants, ADR decisions, or frozen files changed. **Verdict: CLEAN.**
+### Phase 1–2 summary
 
----
+M0 Step 03A (PR #13) squash-merged to `main` at `fe79098` — confirmed exactly matching this task's
+stated expectation via `git log`, `git rev-parse HEAD`, and `gh pr list --repo mihvernetwork/mihver
+--state merged --limit 30 --json number,title,mergeCommit,mergedAt` (all 13 merged PRs enumerated and
+cross-checked against `.project/PROJECT_STATE.md`'s claims). `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`
+and `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md` were read directly for their own `## Status`
+fields (Accepted / Proposed respectively) rather than trusted from `.project` prose. `PROJECT_STATE.md`
+was reconciled: removed the stale "ADR-0002 Status: Proposed" claim (both the M0 Step 02A checkpoint
+line and the Open Items entry); added three missing frozen checkpoints actually present on `main` —
+Night Runner (PR #7 `9a61a0b`, PR #8 `4590f7a`), `ADR-0002` Acceptance (PR #10 `548bb75`, PR #11
+`63429c9`, PR #12 `a20d647`), and M0 Step 03A (PR #13 `fe79098`); replaced the resolved ADR-0002 Open
+Item with the genuinely-still-open `ADR-0003`-Proposed one; rewrote Next Authorized Action to
+explicitly *not* pre-authorize `ADR-0004` or Step 03B. `DECISIONS_LOG.md` was appended (never edited)
+with verified-only merge-confirmation entries for PR #4/#5/#6/#7 (previously logged only as "approved,
+not yet merged"), PR #8 and PR #13 (no prior entry existed at all), and PR #12 (`ADR-0002` acceptance
+merge) — every PR number, commit SHA, and merge date cross-checked against the `gh pr list` output
+above before being recorded.
 
-Prior round summarized below, retained for context (this task did not re-review it):
+### Phase 3 — Drift analysis
 
-External verification of head `3866304` found three residual issues. Claude fixed each at the source
-first, then dispatched three independent read-only Codex reviewers (A: Ambiguity/Conflict × R-21
-lifecycle consistency; B: Case 4 provenance/domain-of-Unknown consistency; C: cardinality examples ×
-unstated-responsibility leakage) to audit the fixes and the whole corpus for the same three patterns —
-each found further real, *deeper* instances of the same patterns in locations Claude's initial fixes
-hadn't reached, all independently re-verified by Claude against the actual text before being applied.
+1. **Which facts became stale?** `PROJECT_STATE.md`'s claim that `ADR-0002` Status is "Proposed"
+   (stale the moment PR #12 merged, `a20d647`); `PROJECT_STATE.md`'s "Frozen Steps / Checkpoints" list
+   (incomplete the moment PR #7/#8/#13 merged without a corresponding state-update task ever running);
+   `DECISIONS_LOG.md`'s "the merge has not been performed... requires a separate, later explicit
+   instruction" claims for PR #4/#5/#6/#7 (stale the moment those merges actually happened, since no
+   follow-up entry was ever appended); `DECISIONS_LOG.md`'s complete silence on PR #8 and PR #13's
+   merges (not staleness exactly — an outright gap, since no entry was ever created to go stale).
+2. **Which file was supposed to be authoritative for each?** None of `.project/*.md` is actually
+   authoritative for any of these facts — `PROJECT_STATE.md` and `DECISIONS_LOG.md` are both
+   explicitly *interpretive summaries* of live truth (per `PROJECT_STATE.md`'s own header: "If the two
+   disagree, trust the live git/gh output and update this file — do not trust this file over
+   reality"). The actual authoritative sources are: each ADR's own `## Status` field for ADR status;
+   `git log` / `gh pr list --state merged` for merge state. `.project/*.md` files are meant to be
+   *derived* from those sources at reconciliation time, not maintained as a live mirror automatically.
+3. **Was the problem human process, missing validation, or both?** Both, weighted toward missing
+   validation. Process side: every M0-STEP-03A-* task's own "Allowed Scope" deliberately excluded
+   `PROJECT_STATE.md`/`DECISIONS_LOG.md` (correct scope discipline for those narrow tasks), and the
+   actual merges of PR #4–#8, #12, #13 all happened outside any task that was itself scoped to update
+   durable state afterward — i.e. no task was ever issued specifically to reconcile state immediately
+   after each of those merges; this reconciliation task is that missing step, arriving late.
+   Validation side: no automated check exists (in `npm run context`, `npm test`, or CI) that
+   cross-references `PROJECT_STATE.md`'s status claims against the ADRs' own `## Status` fields or
+   against `gh pr list --state merged` — so this class of drift is invisible until someone manually
+   diffs prose against reality, which is exactly what this task just did.
+4. **What deterministic invariant could catch this class of drift later?** The task's own suggested
+   wording ("PROJECT_STATE assertions about accepted ADR status and frozen checkpoints must not
+   contradict authoritative repository artifacts") is directionally right but under-specifies *how* —
+   and misses the parallel `DECISIONS_LOG.md` failure mode (a PR logged as "merge not yet performed"
+   that GitHub now shows as merged). A more actionable, repo-structure-grounded version: **extend
+   `scripts/dev/project-context.mjs`'s existing pattern** (it already flags exactly this class of
+   drift for `CURRENT_TASK.md`'s declared branch — see its `WARNING:` output) **to (a) parse every
+   `docs/adr/ADR-*.md`'s own `## Status` field and flag any `PROJECT_STATE.md` prose that names that
+   ADR with a different status, and (b) flag any `DECISIONS_LOG.md` entry containing "has not been
+   performed" / "not yet merged" whose cited PR number appears in a fresh `gh pr list --state merged`
+   call.** This is proposed only, per this task's explicit instruction — not implemented here.
 
-**Issue 1 — R-21 let an Ambiguity/Conflict drive INDETERMINATE.** R-21 previously allowed a surviving
-Unknown, Ambiguity, *or* Conflict to legitimately route a candidate to a Complete Requirement's
-INDETERMINATE branch — contradicting R-08 and "LOW/MEDIUM Open Items and Conflicts That Survive Into
-This Stage," which give Requirement Derivation no authority over an Ambiguity/Conflict at any impact
-level: any Requirement whose content genuinely depends on one must remain unresolved, full stop.
-Rewritten with two explicit, jointly-required conditions: (1) the open item must be a surviving
-Unknown, never an Ambiguity or Conflict; (2) the Unknown's admissible reading domain must itself be
-explicit, closed, and grounded in the consumed `IntentSpec`'s own recorded content, never invented by
-Requirement Derivation. **Reviewer A** found the explicit fix hadn't propagated to several passages
-using *different vocabulary* for the same underlying bug: Cases 1, 2, and 9 each called an individual
-Requirement "Complete" ("Complete for that Requirement," "a Complete, firm Requirement," "existence and
-shape are Complete") while that Requirement's own satisfaction genuinely depended on an unresolved
-Ambiguity — functionally identical to letting the Ambiguity make it Complete, just not phrased as
-literal INDETERMINATE routing. Fixed: all three Requirements are now Partial at the individual level
-too, per R-21 condition 1 and the existing "must likewise remain unresolved" rule. Also fixed
-"Preservation of Conditions and Scope"'s trigger-Ambiguity paragraph (distinguishing derivability of
-the Requirement's *text* from its *Completeness*) and ADR-0003's Complete/Partial calibration-risk
-wording (which had implied Ambiguity/Conflict handling was a judgment call rather than unconditional).
+### Phase 4 — Validation and review
 
-**Issue 2 — Case 4 invented an exhaustive reading domain.** Case 4 claimed its cost-category Unknown
-had exactly two recorded readings ("infrastructure/model usage only" vs. "all recurring costs"), and
-built a three-valued procedure on that invented domain. Frozen `INTENT_CASES.md` Case 6 records this
-Unknown only as an open-ended gap ("included cost categories," with several non-exhaustive illustrative
-possibilities), never a closed two-reading set. Re-derived (not preserved by default): the *filled*
-branch (Requirement Derivation supplies an explicit marked default) stays Complete via a plain
-two-valued test; the *carried-forward-unresolved* branch is now **Partial**, because no closed,
-`IntentSpec`-grounded domain exists to support a faithful three-valued procedure — inventing one is
-exactly the scope-invention R-21 forbids. **Reviewer B** then challenged whether Case 4's *filled*
-branch itself violates R-19 (does choosing a cost-category default narrow "the boundary of a stated
-constraint"?) — independently re-derived and kept fillable: the stated threshold ($100/month) is
-unchanged under any reading; only the measurement of the compared quantity differs, and "some
-candidate's verdict can flip" cannot be the R-19 test, since it would make every genuine
-measurement-detail fill non-fillable and render R-19's fillable branch vacuous. Strengthened both Case
-4's text and R-19 itself with this threshold-vs-measurement distinction. Reviewer B also found Case 14
-(superseded `IntentSpec`) silently ignored the same cost-scope Unknown that `INTENT_CASES.md` Case 20
-confirms persists unresolved into the v2 correction — fixed to mirror Case 4's now-established fork.
+`npm test`: 32/32 (unaffected — no contract/schema file touched). `git diff --check`: clean. `git diff
+main --stat` (after this phase's fixes below): four `.project/*.md` files changed, nothing else.
 
-**Issue 3 — stale one-Claim-to-many example reintroduced unstated responsibility.** "Requirement
-Cardinality and Granularity" still used a generic "a notification preference that entails both a
-detection requirement and a delivery requirement" example — exactly the unstated-responsibility bug
-Case 12 was previously rewritten to avoid (detection could plausibly belong to an external system, not
-this one). Replaced with the current logging/search example from Case 12, plus explicit prose
-contrasting it with why the notification example doesn't automatically work the same way. **Reviewer
-C** confirmed this fix is sound and swept the entire corpus and ADR-0003 for the same pattern, finding
-no other case exhibits it; two borderline findings (Case 7a's Inference scope, Case 11's "surface
-indicators" mechanism choice) were independently re-derived and rejected as a different failure mode —
-testability/mechanism vagueness, already separately handled by R-21 — not the specific
-actor-misassignment pattern this audit targets, with that reasoning documented rather than silently
-dismissed. Added a hardening note to ADR-0003's Risks section explicitly naming unstated-actor
-assignment as a named species of the existing Requirement-Level-Inference-laundering risk, per
-Reviewer C's suggestion (a proportionate addition, not a required fix — Reviewer C found no
-contradiction, only an opportunity to make the pattern harder to reintroduce).
+One independent read-only Codex reviewer (state authority / historical integrity) was dispatched.
+Findings, each independently re-verified by Claude:
 
-`npm test`: 32/32 throughout, unaffected (no schema/validator/fixture file touched).
+- **Confirmed and fixed:** `CURRENT_TASK.md` claimed Phase 3/4 content "are recorded in
+  `.project/REVIEW_STATE.md`'s 'Latest Review'" at a point when this file hadn't been updated yet —
+  true at time of review, resolved by this very update. Also confirmed and fixed: `CURRENT_TASK.md`
+  claimed `git diff main --stat` showed "the four allowed `.project` files changed" when at review
+  time only three had — resolved now that this file is also updated, making the count literally
+  accurate.
+- **Confirmed and fixed:** the newly-appended `DECISIONS_LOG.md` entry for PR #13 asserted "every
+  `M0-STEP-03A-*` task instruction in this session's own record explicitly said 'do not merge'" — the
+  reviewer correctly noted this is not verifiable from `git log`/`gh pr list` the way the entry's own
+  preamble promised ("verified directly against `git log` and `gh pr list`... none is inferred").
+  Removed the claim; the entry now states only the merge fact and that the authorization decision
+  itself is not independently verifiable from git/GitHub, without asserting what it can't source from
+  those tools.
+- **Verified clean, with Claude independently closing a gap the reviewer's own sandbox couldn't:** the
+  reviewer's sandbox could not reach `api.github.com` (network blocked, escalation rejected), so it
+  could not independently confirm PR-number-to-commit mappings against live GitHub — it verified SHAs
+  and dates against local `git log` only. Claude had already run `gh pr list --state merged` directly
+  in Phase 1 (full JSON output captured) and re-cross-checked every PR-number/SHA pair used in
+  `PROJECT_STATE.md` and `DECISIONS_LOG.md` against that output line by line: all 13 mappings (PR
+  #1–#13) match exactly.
+- **Verified clean (reviewer's own independent check, re-confirmed by Claude):** `git diff main --
+  .project/DECISIONS_LOG.md` shows only added lines — zero deletions, zero modifications to any
+  pre-existing entry. Append-only integrity intact.
+- **Verified clean:** `CURRENT_TASK.md` correctly declares `Branch: chore/project-state-reconcile-post-step-03a`
+  and stays scoped to this specific task; no durable global fact was smuggled into it that belongs in
+  `PROJECT_STATE.md` instead.
+- **Verified clean:** `PROJECT_STATE.md`'s "Next Authorized Action" explicitly excludes advancing
+  `ADR-0003`, beginning M0 Step 03B, and starting `ADR-0004` or any new ADR — no future work was
+  silently authorized.
+- **Verified clean:** `git diff main --stat` / `git diff --name-status main` show only `.project/*.md`
+  files changed — nothing under `docs/contracts/`, `docs/adr/`, `schemas/`, `tests/`, or runtime
+  tooling.
 
-**Final verdict: `APPROVED`** — not `REDESIGN` (no reviewer, across any round, found the model's basic
-shape unsound; every confirmed defect was the same three already-diagnosed patterns recurring in
-locations not yet swept, not a new structural problem); not `APPROVE_WITH_REQUIRED_CHANGES` (every
-confirmed defect — including the deeper, same-pattern instances the reviewers found beyond Claude's
-initial fixes — was fixed and independently re-verified against the edited text before this verdict
-was reached, nothing left open pending a further round).
+`npm test`: 32/32 throughout.
+
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** No new architecture decision was introduced;
+`ADR-0004` was not started; every confirmed reviewer finding was fixed and re-verified against the
+edited text before this recommendation was reached.
 
 ## Required Changes
 
-None remaining — every confirmed defect from all three reviewers (including deeper instances of
-Issues 1–3 surviving Claude's own first-pass fixes) was fixed and re-verified against the edited text
-(`npm test`: 32/32 throughout).
+None remaining — the reviewer's confirmed findings (CURRENT_TASK.md's premature "recorded in
+REVIEW_STATE.md" / file-count claims, and DECISIONS_LOG.md's non-git/gh-verifiable sourcing claim)
+were fixed and re-verified (`npm test`: 32/32 throughout; `git diff main -- .project/DECISIONS_LOG.md`
+re-confirmed zero deletions after the fix).
 
 ## Fixes Applied
 
-See "Latest Review" above for the full list; applied directly to `docs/contracts/REQUIREMENT_SPEC.md`,
-`docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, and `docs/examples/REQUIREMENT_CASES.md`.
+See "Phase 4 — Validation and review" above for the full list; applied to `.project/CURRENT_TASK.md`
+and `.project/DECISIONS_LOG.md` (append-only edit to this task's own just-added entry, not to any
+pre-existing entry).
 
 ## Pending Human Gate
 
-PR #13 to be updated in place (pushed to the `devSerdar` fork, not `mihvernetwork` — per this task's
-explicit instruction). Not to be merged by this task. `ADR-0003`'s Status remains **Proposed**, per
-task instruction — human review of the PR is the next gate.
+A PR to `mihvernetwork/mihver:main` (from the `devSerdar` fork), title `chore: reconcile durable
+project state after Step 03A`, is to be opened per this task's explicit instruction. Not to be merged
+by this task — human review of the PR is the next gate.
 
 ## History
+
+- 2026-08-21 — `M0-STEP-03A-FINAL-CROSS-REFERENCE-CLEANUP` (PR #13, sixth pass, no reviewers per its
+  own instructions): a final independent verification found Case 7b's Eligibility citing "Case 2's
+  Completeness" when Case 2 is explicitly Partial (from the fifth round) — replaced with Case 8, a
+  genuinely equivalent Complete example. A deterministic sweep of every "Case X's
+  Complete/Completeness/Partial" reference in `REQUIREMENT_CASES.md` then found two more instances of
+  the same staleness under broader phrasing (Case 16 → Case 1, Case 15 → Case 1/9, both citing a
+  pre-fix "testable now" framing the fifth round had already corrected) — fixed. Every remaining
+  cross-reference checked against its target case's own current Eligibility and found accurate.
+  `npm test`: 32/32. Verdict: CLEAN. PR #13 was subsequently merged to `main` (squash commit `fe79098`)
+  — that merge event is recorded in `.project/DECISIONS_LOG.md`, not here. Moved here from "Latest
+  Review" now that those sections describe `PROJECT-STATE-RECONCILE-POST-STEP-03A` instead, per this
+  file's branch/task scoping — this is the first entry on a new branch, since the prior five rounds all
+  shared `m0/step-03a-requirement-contract`. — branch `m0/step-03a-requirement-contract`
 
 - 2026-08-21 — `M0-STEP-03A-FINAL-INTRINSIC-CONSISTENCY-FIX` (PR #13, fourth review round): fixed
   three issues an external final review found in head prior to `3866304`: (1) "What Qualifies as a
