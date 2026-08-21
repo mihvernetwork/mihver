@@ -5,79 +5,128 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-ADR-0002-ACCEPTANCE
+M0-STEP-03A-FINAL-CROSS-REFERENCE-CLEANUP
 
 ## Objective
 
-Implement the human decision that `ADR-0002` is approved to move from Proposed to Accepted, as
-narrow "acceptance housekeeping" only: change the Status line, update Future Work so it no longer
-lists completed schema-design/adversarial-review gates as pending (while preserving genuinely
-unresolved future work and Open Questions unchanged), and add a concise, traceable acceptance basis
-referencing the merged evidence (PR #10, PR #11, current test suite). No epistemic-model, contract,
-schema, validator, or `INTENT_CASES.md` change authorized in this task.
+Fix one stale cross-reference a final independent verification found in `REQUIREMENT_CASES.md`: Case
+7b's Eligibility paragraph said "the same pattern as Case 2's Completeness," but Case 2 is now
+explicitly Partial (from the prior `M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX` round). Replaced with a
+genuinely equivalent Complete binary-check example (Case 8). A deterministic sweep of the whole file
+for every "Case X's Complete/Completeness/Partial"-style reference then found two more instances of the
+same staleness the sweep's own regex missed on a literal match (broader phrasing: "Case 1's 'approval
+gate' (testable now...)" in Case 16, and "Case 1's or Case 9's (those have a testable Requirement with
+an open scope/trigger detail)" in Case 15) — both referencing Case 1's/Case 9's pre-fix "testable now"
+framing, which the same prior round had already corrected (Case 1 and Case 9's own Requirements are
+individually Partial too, not "testable now" with only a detail open). Both fixed. No semantics,
+invariants, ADR decisions, or frozen files changed — prose-only cross-reference corrections.
+
+This task supersedes the prior task's own record of what remained; for context on the three residual
+issues that round fixed, see below:
+(1) R-21 allowed a surviving Ambiguity or Conflict — not just an Unknown — to legitimately route a
+candidate to a Complete Requirement's INDETERMINATE branch, contradicting R-08 and "LOW/MEDIUM Open
+Items and Conflicts" (which give Requirement Derivation no authority over Ambiguity/Conflict at any
+impact level); (2) Case 4 claimed its cost-category Unknown had exactly two recorded, exhaustive
+readings, but frozen `INTENT_CASES.md` Case 6 records it only as an open-ended gap — Case 4 was
+re-derived rather than preserved by default; (3) "Requirement Cardinality and Granularity" still used
+a generic notification-preference "detection + delivery" example, reintroducing the exact
+unstated-responsibility bug Case 12 was previously rewritten to avoid. Frozen boundaries respected:
+`ADR-0002`, `INTENT_SPEC.md`, `USER_IDEA.md`, existing schemas/validator, and `INTENT_CASES.md` were
+not modified. `ADR-0003`'s Status remains Proposed.
 
 ## Branch / Base
 
-Branch: `docs/adr-0002-acceptance`
-Base: `main` (`63429c97f8cc2b233f7548bf7d8351c382e17048` — includes merged PR #10 and PR #11)
+Branch: `m0/step-03a-requirement-contract` (continued; PR #13 already open from prior sub-tasks)
+Base: `main` (`a20d647` — includes merged PR #10, #11, #12; `ADR-0002` Status: Accepted)
 
 ## Status
 
-**Complete.** Changed `ADR-0002`'s Status from Proposed to Accepted, with a new "Acceptance basis"
-paragraph citing: schema design (M0 Step 02B, merged `0683e84`); adversarial review (PR #10,
-merged `548bb75`); remediation, final consistency sweep, and handoff-consistency fix (PR #11,
-merged `63429c9`); current test suite (32/32); no representability or model-redesign blocker found
-across four review rounds. Updated Future Work to split genuinely-still-open items
-(RequirementSpec-side contract design; origin-classification validation approach) from
-now-completed ones (schema design; the "revisit Status" gate itself), the latter kept for
-traceability rather than deleted. Open Questions section left completely untouched. Appended a
-`DECISIONS_LOG.md` entry recording the human's explicit decision. `npm test`: 32/32.
+**Complete (this cleanup task).** The stale Case 7b → Case 2 cross-reference is fixed, plus two more
+instances of the same staleness the deterministic sweep surfaced (Case 16 → Case 1, Case 15 → Case
+1/Case 9), all now referencing cases whose current Eligibility genuinely matches the claim being made.
+No reviewers were dispatched for this narrow, mechanical cleanup, per the task's own instructions.
+`npm test`: 32/32. Verdict: **CLEAN**.
 
-One independent read-only Codex reviewer verified: the Status transition is justified by verifiable
-evidence (not just self-described — checked the review/remediation reports exist, reach real
-conclusions, and their commits are ancestors of `main`; independently re-ran `npm test`); no
-substantive semantic/model change slipped into the patch (`git diff main --stat` confirmed only the
-ADR file and `DECISIONS_LOG.md` changed — `INTENT_SPEC.md`, `INTENT_CASES.md`, `schemas/**`, and the
-validator confirmed untouched); Future Work accurately separates completed from remaining work, and
-Open Questions confirmed word-for-word unchanged. Overall verdict: **CLEAN AND READY**. The
-reviewer's one caveat — local git alone couldn't confirm the PR #10/#11 number mapping — was
-independently resolved by Claude via `gh pr view`: both merge-commit SHAs match exactly, both
-`MERGED`.
+---
+
+Status of the prior `M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX` round, retained for context: **Complete.**
+All three findings fixed at the source, then three independent read-only Codex reviewers
+dispatched (A: Ambiguity/Conflict × R-21 lifecycle consistency; B: Case 4 provenance/domain-of-Unknown
+consistency; C: cardinality examples × unstated-responsibility leakage) found further real, deeper
+instances of the same three patterns, all independently re-verified before being applied:
+
+- (Reviewer A) The explicit R-21 fix (Ambiguity/Conflict can never drive INDETERMINATE) didn't
+  propagate to several passages using different vocabulary for the same underlying bug: Cases 1, 2, and
+  9 each called an individual Requirement "Complete" (or "Complete for that Requirement," "a Complete,
+  firm Requirement," "existence and shape are Complete") while that Requirement's own satisfaction
+  genuinely depended on an unresolved Ambiguity — functionally the same "Ambiguity indirectly makes a
+  Requirement Complete" outcome R-21's fix exists to forbid, just not phrased as literal INDETERMINATE
+  routing. Fixed: all three Requirements are now correctly Partial at the individual level too, per
+  R-21 condition 1 and "LOW/MEDIUM Open Items and Conflicts"'s existing rule that any Requirement whose
+  content genuinely depends on an Ambiguity/Conflict "must likewise remain unresolved." Also fixed
+  "Preservation of Conditions and Scope"'s trigger-Ambiguity paragraph and ADR-0003's Complete/Partial
+  calibration-risk wording, which had implied this was a judgment call rather than unconditional.
+- (Reviewer B) Case 4's *filled* branch was challenged as potentially violating R-19 itself (does
+  choosing a cost-category default narrow "the boundary of a stated constraint"?) — independently
+  re-derived and kept fillable: the stated threshold ($100/month) is unchanged under any reading; only
+  the measurement of the compared quantity differs, and "some candidate's verdict can flip" cannot be
+  the R-19 test (it would make every measurement-detail fill non-fillable). Strengthened both Case 4's
+  text and R-19 itself with this threshold-vs-measurement distinction. Also found Case 14 (superseded
+  IntentSpec) silently ignored the same cost-scope Unknown that `INTENT_CASES.md` Case 20 confirms
+  persists into the v2 correction — fixed to mirror Case 4's now-established fork (Complete if filled,
+  Partial if carried forward unresolved).
+- (Reviewer C) Confirmed the cardinality fix is sound and no other case exhibits actor/responsibility
+  misassignment beyond what was already fixed; two borderline findings (Case 7a's inference scope,
+  Case 11's "surface indicators" mechanism choice) were independently re-derived and rejected as a
+  different failure mode (testability/mechanism vagueness, already handled separately) rather than the
+  specific actor-misassignment pattern this audit targets — documented transparently rather than
+  silently dismissed. Added a hardening note to ADR-0003's Risks section explicitly naming
+  unstated-actor assignment as a named species of the existing Requirement-Level-Inference-laundering
+  risk, per Reviewer C's suggestion.
+
+`npm test`: 32/32 throughout.
+
+Final recommendation: **APPROVED** — not `REDESIGN` (no reviewer found the model's basic shape
+unsound; every confirmed defect was the same three already-diagnosed patterns recurring in
+not-yet-swept locations, not a new structural problem); not `APPROVE_WITH_REQUIRED_CHANGES` (all
+confirmed defects — including the deeper, same-pattern instances the reviewers found beyond Claude's
+initial fixes — were fixed and re-verified before this verdict was reached). See
+`.project/REVIEW_STATE.md`'s "Latest Review" for the full defect list.
 
 ## Allowed Scope
 
-Update (explicitly authorized, narrow "acceptance housekeeping" only):
-- `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md` — Status line, a new Acceptance-basis paragraph
-  under Status, and Future Work reorganization (completed vs. still-open). No other section
-  (Context, Decision, Rationale, Consequences, Alternatives Considered, Risks, Open Questions) may
-  be touched.
+Add:
+- `docs/contracts/REQUIREMENT_SPEC.md`
+- `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`
+- `docs/examples/REQUIREMENT_CASES.md`
 
-Update: `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `.project/DECISIONS_LOG.md`
-(append-only, per `AGENT_POLICY.md`'s Operational State Scope — this is a durable human decision).
+Update: `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
 
-Forbidden: `docs/contracts/INTENT_SPEC.md`, `docs/examples/INTENT_CASES.md`, `schemas/**`,
-`tests/contracts/validate-contracts.mjs`, any epistemic-model or RequirementSpec-design content,
-`.project/PROJECT_STATE.md` (a "Frozen Steps/Checkpoints (on main)" file — updating it before this
-PR is actually merged would describe a state not yet true; a natural follow-up once merged, not
-this task), `.project/CONTEXT_INDEX.md`, `CLAUDE.md`, `docs/development/**`, and anything unrelated.
+Forbidden (frozen, none touched): `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`,
+`docs/contracts/INTENT_SPEC.md`, `docs/contracts/USER_IDEA.md`, `schemas/**`,
+`tests/contracts/validate-contracts.mjs`, `docs/examples/INTENT_CASES.md`, `CLAUDE.md`,
+`docs/development/**`, `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`.
 
 ## Required Context
 
 - `CLAUDE.md`, `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`
-- `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`
-- `docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md`, `docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md`
+- `docs/foundation/M0_SCOPE.md`, `docs/foundation/PRINCIPLES.md`, `docs/adr/ADR-0001-ARCHITECTURE-COMPILER-MODEL.md`
+- `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`, `docs/contracts/INTENT_SPEC.md`,
+  `docs/contracts/USER_IDEA.md` (read-only grounding)
 
 ## Validation
 
-- `npm test`: 32/32.
-- One independent Codex reviewer, verdict CLEAN AND READY; the one caveat raised was independently
-  resolved by Claude via `gh pr view` (not merely re-asserted).
+- `npm test`: 32/32 throughout (unaffected by this task's prose-only, no-schema-touched changes).
+- Three independent Codex reviewers (A/B/C), each finding real, deeper instances of the same three
+  externally-reported patterns surviving in locations Claude's initial fixes hadn't reached (Cases 1/2/
+  9's individual-Requirement Completeness claims; Case 14's silently-ignored cost-scope Unknown; ADR
+  wording) — all independently re-verified by Claude against the actual text before being fixed. Two
+  reviewer findings (Case 7a, Case 11) were independently re-derived and rejected as a different,
+  already-handled failure mode, with reasoning documented rather than silently dismissed.
 
 ## Next Gate
 
-PR #12 opened directly on `mihvernetwork/mihver:main` (compare `docs/adr-0002-acceptance`). A newly
-authenticated `mihvernetwork` GitHub account (full push access, confirmed via `gh api`) became
-available on this machine during this task, superseding the fork-based push workflow PRs #10/#11
-used — pushed directly to `origin`/`mihvernetwork/mihver` instead of a personal fork. Do not merge.
-Human review of the PR is the next gate; a separate, later explicit instruction is required to
-merge.
+PR #13 updated in place (base `mihvernetwork/mihver:main`, compare
+`devSerdar:m0/step-03a-requirement-contract` — pushed via the `devSerdar` fork per this task's
+explicit instruction, not `mihvernetwork`). Do not merge. `ADR-0003` remains Proposed. Human review of
+the PR is the next gate.
