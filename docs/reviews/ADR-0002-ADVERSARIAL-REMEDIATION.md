@@ -129,31 +129,160 @@ validator change to pass — confirmed by both Claude (`npm test` before and aft
 - Reviewer B's one procedural note (new fixtures were untracked at review time) is expected and
   resolved by this task's own commit, per its `Commit/push allowed: yes` authorization.
 
+## 5. Final Consistency Sweep (`ADR-0002-FINAL-CONSISTENCY-SWEEP`)
+
+A follow-up task, continued on this same branch and PR, closed the one gap the section above left
+open (Case 18) and extended review to all 20 cases — not just the previously-touched ones — per an
+explicit instruction to check every case against the outcome-relative Decision Impact rule, detect
+residual stage-relative reasoning, and verify Unknown-vs-Ambiguity consistency corpus-wide.
+
+### Method
+
+Three independent read-only Codex reviewers, dispatched in parallel over disjoint case ranges
+(A: Cases 1–7, B: Cases 8–14, C: Cases 15–20, each applying the same five checks: outcome-relative
+reasoning, level-matches-`INTENT_SPEC.md`, clarification/blocking consistency, residual
+stage-relative language, Unknown/Ambiguity correctness), followed by a fourth independent read-only
+reviewer checking cross-corpus consistency (cross-references, terminology, pattern application,
+and new inconsistencies introduced by this pass's own edits) on the resulting text. Claude performed
+an independent first-principles pass of its own before dispatching any reviewer, then
+cross-verified every reviewer finding against the actual text before acting — several reviewer
+suggestions were evaluated and explicitly rejected as insufficiently grounded (see "Findings
+evaluated and not actioned" below), not merely relayed.
+
+### Case 18 — confirmed blocker, corrected
+
+Re-evaluated completely from first principles, per the task's explicit instruction not to assign a
+predetermined level. Least favorable materially plausible reading: "blockchain" is treated as
+non-negotiable, forcing Architecture Synthesis into a distributed-ledger/consensus architecture
+branch (identity mapping, state representation, latency/cost implications) instead of a
+conventional CRDT/OT-based collaborative editor — a materially different, likely more expensive
+architecture. That is HIGH, not LOW; the prior LOW rating rested entirely on stage-relative
+language ("LOW at the intent-capture stage itself," "LOW for Intent Parsing specifically... doesn't
+need answering here") that the outcome-relative subsection explicitly rejects. Also found and
+fixed: a dangling cross-reference — the case's "What IntentSpec must NOT decide" bullet referenced
+a negotiability Open Item "that's a separate Open Item" which had never actually been added to the
+Unknowns bullet; added it. Retitled from "False technical premise from user" (a title that itself
+passed the suitability judgment the case's own body forbids Intent Parsing from making) to "User-
+selected technical means with unresolved negotiability." Full bullet-level rewrite applied; verified
+no other file references the old title.
+
+### Corpus-wide fixes applied (all independently verified against the actual text, not relayed)
+
+- **Case 7** (user-selected technology): MEDIUM → HIGH. Re-derivation found the earlier MEDIUM
+  rating rested on an unstated assumption — that vector-search/orchestration/deployment component
+  *categories* were already independently necessary, with only vendor choice open. Nothing in this
+  `UserIdea` establishes that independently of the named technologies themselves; if negotiable,
+  Architecture Synthesis has ordinary freedom not to build those components' technology-specific
+  branches at all. Matches the same shape-vs-tuning test as Cases 2/9/11/14. Removed stage-relative
+  "not yet evaluated"/"no immediate need to resolve... before proceeding" language.
+- **Case 2**: further split — competitor identity alone (MEDIUM, tunes an already-established
+  research capability) separated from source scope (HIGH, determines whether authenticated/licensed
+  access exists at all), replacing the earlier bundled-HIGH framing flagged as a precision note in
+  section 2 above.
+- **Unknown → Ambiguity relabeling**, applying `INTENT_SPEC.md`'s practical test (wording that bears
+  on a question and supports multiple readings is an Ambiguity, not an Unknown) to items previously
+  mislabeled: Case 9 ("can't support the workload" — throughput/memory/latency, already implied in
+  the case's own Unsafe Assumptions bullet), Case 10 ("struggling"), Case 14 ("local"), Case 16
+  ("monitors employee productivity"), Case 17 ("looks obsolete" — candidate readings already listed
+  in the case's own text), Case 19 ("best possible" — candidate readings already parenthetical in
+  the case's own text).
+- **Case 20**: fixed a category error — "LOW for the correction mechanics" assigned a Decision
+  Impact level to a resolved supersession event, which is neither an Open Item nor a Conflict.
+  `INTENT_SPEC.md` states the four levels apply "to an Open Item or Conflict — not to Claims in
+  general." Rewrote to state plainly that no level applies to the correction event itself; only the
+  carried-forward cost-scope Unknown (from Case 6) retains its MEDIUM rating.
+- **Case 11**: the cross-corpus reviewer caught the *same* category error, pre-existing from before
+  this pass — "LOW for the core goal (the renaming pattern itself is clear)" assigned a level to a
+  resolved Claim. Fixed identically to Case 20.
+- **Case 17**: Decision Impact reasoning previously skipped `INTENT_SPEC.md`'s required
+  "unresolved item / downstream decision / why this level" provenance, stating only the conclusion.
+  Rewrote to supply all three explicitly.
+- **Case 4**: tightened the CRITICAL rationale to name the actual consequence (unauthorized,
+  non-reversible disclosure of confidential source code) rather than implying any violation of an
+  explicit prohibition is automatically CRITICAL — which would incorrectly pull Cases 10 and 15 (both
+  HIGH, both involving a possible prohibition violation) up to CRITICAL too. Also fixed an inaccurate
+  cross-reference: Case 4 pointed to Case 8 as "this same statement in contradiction with a later
+  one," but Case 8 uses a different `UserIdea` — corrected to describe it as a structurally analogous
+  Conflict pattern instead.
+- **Terminology precision**: four cases introduced in this pass used "Blocked pending resolution,"
+  which risks being misread as "temporarily blocked until resolved" — the opposite of
+  `INTENT_SPEC.md`'s I-18 (a Blocked version is *permanently* non-consumable; resolution produces a
+  new version, never unblocks the old one in place). Reworded all four (Cases 7, 9, 10, 18) to state
+  permanent ineligibility explicitly, matching the more careful phrasing Cases 8/17/19 already used.
+- **Case 16**: caught in Claude's own final read-through (not by any dispatched reviewer) — the new
+  productivity-monitoring Ambiguity had no assigned Decision Impact level, left dangling against the
+  existing "MEDIUM for the other three regarding priority/phasing" framing, which doesn't fit a
+  definitional ambiguity. Assigned it its own MEDIUM rating with explicit reasoning, distinct from
+  the priority/phasing bundle.
+
+### Findings evaluated and not actioned (independently assessed, not confirmed as defects)
+
+- **Case 1** ("what counts as 'small'"): the reviewer assigned to this case itself called Unknown
+  "defensible" on reflection, not a confirmed mislabel. Left unchanged.
+- **Case 6** ("month," "currency"): a reviewer suggested relabeling the measurement-period Unknown as
+  an Ambiguity and adding a new currency Open Item. Independently judged "month" a materially weaker
+  case for Ambiguity than the confirmed relabelings above (ordinary usage doesn't naturally split it
+  the way "deployment" or "struggling" do), and currency would be a net-new Open Item, not a
+  mislabel correction. Left unchanged.
+- **Cases 3, 4, 5, 15**: reviewers suggested assigning individual Decision Impact levels to several
+  already-listed-but-previously-unrated Unknowns (escalation path, derived artifacts, output
+  audience, external network access, derived-data-as-"documents"). These are completeness additions,
+  not mislabeling or miscalibration defects, and acting on all of them would substantially restructure
+  the corpus's established compact format beyond what any confirmed defect required. Not added.
+- **Case 11**'s missing-field/collision bundling (both LOW): raised independently by two separate
+  reviewers across two rounds now. Re-evaluated once more: a materially plausible missing-field
+  response (skip and log) doesn't require a fundamentally different architecture the way OCR/
+  extraction does — unlike Case 18's blockchain-vs-CRDT fork, there's no comparably clear technology-
+  category branch here. Genuine, reasonable disagreement persists without a textual contradiction to
+  resolve it (unlike Case 13's or Case 9's original defects). Left unchanged; documented here rather
+  than re-litigated indefinitely.
+- **Case 12** ("which specific activities," "what authority level"): a reviewer proposed relabeling
+  these as Ambiguities. Independently rejected — "runs my store" doesn't invite a natural, bounded
+  set of candidate readings the way "deployment," "struggling," or "the company" do; the listed
+  alternatives (refunds? pricing? inventory?) read as adjacent-capability enumeration, not
+  wording-grounded alternate readings of a specific phrase. Left as Unknown.
+- **Case 14** ("viral readiness... essential now or aspirational for later"): judged more marginal
+  than the confirmed "local" relabeling in the same case — "ready for when X happens" doesn't clearly
+  invite a now-vs-later split the way a scope-word does. Left as Unknown.
+
+### Validation
+
+`npm test`: 32/32 fixtures pass (unaffected — this sweep only touched prose in
+`docs/examples/INTENT_CASES.md`; no fixture or schema/validator file was touched). Re-run after
+every batch of edits, including after the final self-caught Case 16 fix.
+
 ## Final Recommendation
 
-**`REQUIRED_CHANGES_REMAIN`**
+**`READY_TO_RECONSIDER_ADR_ACCEPTANCE`**
 
-Not `REDESIGN_REQUIRED` — no case in this remediation, or in the prior review, required or now
-requires re-architecting the Claim/Open Item/Conflict model, and Reviewer B found no schema
-representability failure. Not `READY_TO_RECONSIDER_ADR_ACCEPTANCE` — one confirmed, real
-inconsistency remains unaddressed: **Case 18's stage-relative Decision Impact language is now
-inconsistent with the outcome-relative clarification this task added**, and it was correctly out of
-this task's authorized scope to fix (not one of the named six cases, not Case 13). A small follow-up
-task, explicitly authorized to touch Case 18, should re-rate it under the same outcome-relative test
-applied here before `ADR-0002`'s Status is reconsidered. Case 11's edge-case bundling is a lower-
-confidence open question worth a second look in the same pass, though it is not a confirmed defect.
+Not `REDESIGN_REQUIRED` — across three full review rounds (the original adversarial review, the
+first remediation, and this final sweep), no case was found structurally unrepresentable by the
+existing schema, and no finding required re-architecting the Claim/Open Item/Conflict model itself.
 
-Everything this task was explicitly authorized to fix has been fixed and independently verified:
-Case 13's category contradiction, Cases 2/9/10/11/14's Decision Impact miscalibration (including two
-issues introduced by this task's own edit and caught during its own review pass, not left for a
-future task), and the fixture coverage gaps for `scope_condition`, `reported_third_party`,
-non-`operative` `discourse_role`, and claim-bearing cross-version supersession.
+Not `REQUIRED_CHANGES_REMAIN` — the one confirmed, named blocker from the prior round (Case 18) is
+now fixed and independently re-derived from first principles, not merely patched to match a
+predetermined target. All 20 cases have now been checked against the outcome-relative Decision
+Impact rule by independent reviewers covering disjoint ranges plus a dedicated cross-corpus
+consistency pass, and every confirmed defect found — including several pre-existing ones outside
+this task's originally-named scope (Case 11's and Case 20's category errors, Case 17's provenance
+gap, Case 4's calibration language and a stale cross-reference, terminology imprecision this pass's
+own edits introduced) — was fixed and re-verified, not left for a future task. Remaining flagged
+items (above) were evaluated and are genuine, defensible judgment calls or out-of-scope completeness
+suggestions, not confirmed defects blocking reconsideration.
+
+`ADR-0002`'s Status field was **not** changed by this task, per its explicit instruction — that
+remains the human's decision to make, informed by this report.
 
 ## Reviewer Attribution
 
-Two independent read-only Codex MCP sessions, dispatched in parallel from disjoint task contracts
-(epistemic correctness; fixture/schema/validator coverage), per `AGENT_POLICY.md`'s Task Contract
-and Parallel Worker Rules. Full verbatim reports retained in this session's transcript; this
-document is Claude's critically-reviewed synthesis, including two material self-corrections made
-after independently verifying Reviewer A's findings against the actual edited text — not a direct
-relay of either reviewer's output.
+**First remediation round:** two independent read-only Codex MCP sessions (epistemic correctness;
+fixture/schema/validator coverage), dispatched in parallel from disjoint task contracts.
+
+**Final consistency sweep:** three independent read-only Codex MCP sessions dispatched in parallel
+over disjoint case ranges (Cases 1–7, 8–14, 15–20), followed by a fourth independent read-only
+session for cross-corpus consistency — all per `AGENT_POLICY.md`'s Task Contract and Parallel
+Worker Rules. Full verbatim reports retained in this session's transcript; this document is
+Claude's critically-reviewed synthesis throughout, including material self-corrections made after
+independently verifying reviewer findings against the actual edited text (never relayed
+uncritically), and at least one finding (Case 16's dangling Ambiguity impact assignment) caught by
+Claude's own final read-through rather than by any dispatched reviewer.

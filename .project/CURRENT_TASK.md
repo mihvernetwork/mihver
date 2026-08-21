@@ -5,86 +5,84 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-ADR-0002-ADVERSARIAL-REMEDIATION
+ADR-0002-FINAL-CONSISTENCY-SWEEP
 
 ## Objective
 
-Resolve the confirmed findings from `ADR-0002-ADVERSARIAL-REVIEW` (PR #10, not yet merged) without
-redesigning the epistemic model or changing the JSON schema shape: (1) fix `INTENT_CASES.md`
-Case 13's Ambiguity/Unknown contradiction; (2) make Decision Impact's outcome-relative
-interpretation explicit in `INTENT_SPEC.md` and independently re-evaluate Cases 2, 6, 9, 10, 11,
-14 against it, re-rating only cases that actually conflict; (3) add adversarial fixture coverage
-for `scope_condition`, `reported_third_party` speaker attribution, non-`operative` `discourse_role`
-values, and a claim-bearing cross-version supersession (Case 20); (4) validate via tests plus two
-independent read-only Codex reviewers, and issue a final recommendation. This task is explicitly
-authorized to modify `INTENT_CASES.md` and `INTENT_SPEC.md` within this narrow scope — both are
-otherwise frozen documents.
+Close the remaining consistency gap flagged by `ADR-0002-ADVERSARIAL-REMEDIATION` before ADR-0002
+acceptance can be reconsidered: Case 18's stage-relative Decision Impact language, plus a full
+review of all 20 `INTENT_CASES.md` cases (not just previously-touched ones) against the
+outcome-relative Decision Impact rule, checking for residual stage-relative reasoning and
+Unknown-vs-Ambiguity consistency corpus-wide. Explicit follow-up to
+`ADR-0002-ADVERSARIAL-REMEDIATION`, continued on the same branch, updating the same PR (#11) rather
+than opening a new one.
 
 ## Branch / Base
 
-Branch: `fix/adr-0002-adversarial-remediation`
+Branch: `fix/adr-0002-adversarial-remediation` (unchanged, continued from the prior task)
 Base: `main` (`3bedeb856fe8e0886042add4427d9828d6978908`)
 
 ## Status
 
-**Complete.** Fixed Case 13's Ambiguity/Unknown contradiction; added an outcome-relative Decision
-Impact clarification to `INTENT_SPEC.md`; independently re-evaluated Cases 2, 6, 9, 10, 11, 14
-(re-rated 2, 9, 10, 11-extraction, 14 to HIGH; left 6 at MEDIUM after genuine evaluation); added 8
-new fixtures for `scope_condition`, `reported_third_party`, non-`operative` `discourse_role`, and
-claim-bearing cross-version supersession (Case 20). Two independent Codex reviewers found two real
-issues Claude verified and fixed directly: Case 13's own Decision Impact rating had become
-inconsistent with the new outcome-relative clarification (fixed, MEDIUM → HIGH), and Case 9's
-original re-rating rationale contained a logical error (a necessary condition does not establish a
-runtime mechanism must exist — corrected, re-rated to HIGH). `npm test`: 32/32 fixtures pass.
-Case 18's now-inconsistent stage-relative language was found but correctly left unedited (outside
-this task's authorized scope) and flagged for a follow-up task. Full report:
-`docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md`.
+**Complete.** Case 18 re-evaluated completely from first principles (not a predetermined level):
+re-rated LOW → HIGH (negotiability of "blockchain" determines whether an entire distributed-ledger
+architecture branch is mandatory vs. a conventional CRDT/OT-based alternative), stage-relative
+language removed, a dangling Open-Item cross-reference fixed, retitled away from a title that itself
+passed a suitability judgment the case's own body forbids. Three independent Codex reviewers (Cases
+1–7, 8–14, 15–20) plus one cross-corpus consistency reviewer found and (after independent
+verification) fixed: Case 7 recalibrated MEDIUM → HIGH (same shape-vs-tuning error the original
+Case 9 fix had); Case 2 further split (competitor identity MEDIUM / source scope HIGH); six
+Unknown → Ambiguity relabelings (Cases 9, 10, 14, 16, 17, 19) where wording already bore on the
+question; a category error in Case 20 (and an identical pre-existing one in Case 11) where a
+resolved Claim/event was wrongly assigned a Decision Impact level; a missing-provenance gap in
+Case 17; a calibration/cross-reference fix in Case 4; imprecise "Blocked pending resolution"
+phrasing (this pass's own wording) corrected to state permanent non-consumability; and one gap
+(Case 16) Claude caught in its own final read-through, not from any dispatched reviewer. Several
+other reviewer suggestions were independently evaluated and explicitly rejected as insufficiently
+grounded (Case 1, Case 6 month/currency, Cases 3/4/5/15 completeness additions, Case 11's
+missing-field/collision split, Case 12 and Case 14's remaining Unknowns) — documented in the report,
+not silently ignored. `npm test`: 32/32 fixtures pass throughout (this sweep touched only
+`docs/examples/INTENT_CASES.md` prose; no fixture, schema, or validator file changed). Full report:
+`docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md` (section 5, "Final Consistency Sweep").
 
-Final recommendation: **REQUIRED_CHANGES_REMAIN** — not `REDESIGN_REQUIRED` (no representability or
-model-shape failure found), not `READY_TO_RECONSIDER_ADR_ACCEPTANCE` (Case 18's now-inconsistent
-language is a known, real, unaddressed gap). `ADR-0002`'s Status was not changed, per task
-instruction. No schema or validator file was modified — confirmed unchanged via `git diff` against
-`main`.
+Final recommendation: **READY_TO_RECONSIDER_ADR_ACCEPTANCE** — not `REDESIGN_REQUIRED` (no
+representability or model-shape failure found across three full review rounds), not
+`REQUIRED_CHANGES_REMAIN` (the one previously-named blocker is fixed and re-derived from first
+principles; all 20 cases now independently checked; remaining flagged items are genuine judgment
+calls or out-of-scope completeness suggestions, not confirmed defects). `ADR-0002`'s Status was
+**not** changed by this task, per its explicit instruction — that decision belongs to the human.
 
 ## Allowed Scope
 
 Update (explicitly authorized, narrow scope only):
-- `docs/examples/INTENT_CASES.md` — Case 13 fix; re-rating of Cases 2, 6, 9, 10, 11, 14 only where
-  independently found to actually conflict with the outcome-relative reading.
-- `docs/contracts/INTENT_SPEC.md` — minimal clarification that Decision Impact is outcome-relative.
-
-Add:
-- `tests/contracts/fixtures/valid/**`, `tests/contracts/fixtures/invalid/**` — new fixtures for
-  `scope_condition`, `reported_third_party`, non-`operative` `discourse_role`, claim-bearing
-  supersession.
-- `docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md` (new report)
+- `docs/examples/INTENT_CASES.md` — full-corpus consistency sweep, all 20 cases reviewable; changes
+  applied only where independently confirmed as defects.
+- `docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md` — update in place (not a new report file).
 
 Update: `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
 
-Forbidden: `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md` (Status must not change this task, and
-no other edit to this file is in scope either), `schemas/**` (no schema shape change —
-if an existing schema/validator defect is found, stop and report, don't silently redesign),
-`tests/contracts/validate-contracts.mjs` (no validator logic change unless a defect is found and
-explicitly reported first), `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`,
-`CLAUDE.md`, `docs/development/**`.
+Forbidden: `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md` (Status unchanged), `schemas/**`,
+`tests/contracts/validate-contracts.mjs`, `docs/contracts/INTENT_SPEC.md` (already "now-authoritative"
+per this task's own framing — not reopened this round), `.project/PROJECT_STATE.md`,
+`.project/DECISIONS_LOG.md`, `CLAUDE.md`, `docs/development/**`, and anything Night
+Runner/RRF-related or otherwise unrelated to this task.
 
 ## Required Context
 
 - `CLAUDE.md`, `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`
-- `docs/reviews/ADR-0002-ADVERSARIAL-REVIEW.md` (prior review this task remediates)
-- `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md` (read-only context)
-- `docs/contracts/INTENT_SPEC.md`, `docs/examples/INTENT_CASES.md`
-- `schemas/m0/intent-spec.schema.json`, `schemas/m0/user-idea.schema.json`
-- `tests/contracts/validate-contracts.mjs` and `tests/contracts/fixtures/**`
+- `docs/reviews/ADR-0002-ADVERSARIAL-REMEDIATION.md` (prior remediation this task extends)
+- `docs/contracts/INTENT_SPEC.md` (read-only this round, especially the outcome-relative subsection)
+- `docs/examples/INTENT_CASES.md` (all 20 cases)
 
 ## Validation
 
-- Baseline `npm test`: 24/24 (before remediation changes).
-- Full validation after changes and two independent Codex reviews: pending.
+- `npm test`: 32/32 throughout (unaffected by prose-only changes).
+- Three parallel range reviewers + one cross-corpus reviewer, all independently verified by Claude
+  against the actual text before any fix was applied.
 
 ## Next Gate
 
-PR #11 opened (base `mihvernetwork/mihver:main`, compare
-`devSerdar:fix/adr-0002-adversarial-remediation` — pushed via the same fork as PR #10, same
-push-access constraint). Human review of the report and its `REQUIRED_CHANGES_REMAIN`
-recommendation is the next gate. Not merged, per task instruction.
+PR #11 updated in place (same branch, same PR — not a new one), now reflecting
+`READY_TO_RECONSIDER_ADR_ACCEPTANCE`. Human review of the updated report and recommendation is the
+next gate. Not merged, per task instruction. `ADR-0002`'s Status change (if the human agrees) is a
+separate, later action this task does not itself perform.
