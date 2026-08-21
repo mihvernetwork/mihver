@@ -131,9 +131,10 @@ costs" reading it does not — the category boundary genuinely changes the verdi
 candidate. This does not make the Requirement untestable in the R-21 sense, though: "cost under
 $100/month" already supplies a real metric and threshold, so the *overwhelming majority* of
 candidates (well under or well over, regardless of which reading applies) are evaluable immediately
-without needing the boundary resolved at all — the ambiguity narrows precision for a boundary
-zone, it does not remove the test itself, unlike Case 16's "fast," which supplies no metric or
-comparator for *any* candidate. A candidate that actually falls in the disputed zone should be
+without needing the boundary resolved at all — the unresolved category boundary narrows precision for
+a boundary zone (this is an Unknown, not a formal Ambiguity — no wording in the source Claim itself
+supports competing readings; the category question is simply unaddressed), it does not remove the
+test itself, unlike Case 16's "fast," which supplies no metric or comparator for *any* candidate. A candidate that actually falls in the disputed zone should be
 flagged by the evaluating stage as boundary-sensitive and requiring the Unknown's resolution before a
 verdict is given for *that specific candidate* — that is a normal, expected consequence of an
 unresolved-but-testable Requirement, not evidence the Requirement itself is Partial.
@@ -205,7 +206,14 @@ prohibition), reasoning = "the user appears to have a data-locality or privacy c
 exposure generally (Inference-derived, moderate confidence)." SHOULD because the Inferred Claim's
 **own force is a preference** — not because moderate confidence capped a stronger force down to
 SHOULD. Confidence and provisional standing are recorded in provenance alongside the origin marker,
-not folded into the strength.
+not folded into the strength. Separately from strength, this Requirement's own recorded content
+supplies no metric, comparator, or procedure for "data-locality exposure" or "minimize... generally"
+— structurally the same testability gap as Case 16's "fast," not a boundary-refinement gap like Case
+4's dollar threshold (per R-21's two-way test): nothing here gives a downstream evaluator a real
+yardstick for *any* candidate, not merely an edge case. Strength (SHOULD) and testability (whether a
+satisfaction procedure exists) are independent questions — this Requirement's strength classification
+is correct precisely because it does not depend on, and is not weakened by, its separate testability
+gap.
 
 **Source IntentSpec semantics (7b — prohibition-force Inference, contrast case):** Inferred Claim,
 force = prohibition, premise = the same source-code prohibition, reasoning = "the stated prohibition
@@ -234,44 +242,66 @@ Inferred Claim's own premises, per `INTENT_SPEC.md`'s I-05); each Requirement's 
 Inference's `derivation_confidence` and reasoning kind, carried forward rather than discarded at
 compilation, and independently of — not substituting for — the Requirement's own strength.
 
-**Eligibility:** Complete (both 7a and 7b).
+**Eligibility:** Partial for 7a — the SHOULD strength is correctly and completely derived, but the
+Requirement's own content supplies no metric/comparator/procedure for "data-locality exposure" or
+"generally," per R-21's testability-blockage branch; this is a defect in the worked example caught on
+final audit, distinct from the strength question 7a exists to demonstrate. Complete for 7b — "transmit
+build artifacts or dependency-lock files containing source content" is a real, applicable binary check
+(inspect the transmitted artifact for embedded source content) for essentially every candidate, the
+same pattern as Case 2's boundary-refinement Completeness, not the missing-oracle pattern.
 
 ---
 
 ## 8. Assumed Claim
 
-**Source IntentSpec semantics:** Assumed Claim, gap = "which of two grammatically possible referents
-a pronoun points to," rationale = "the nearest-noun reading permits continued interpretation," scope
-= narrow (a single sentence), reversible = true (`INTENT_SPEC.md`'s own worked example, from
-`intent-spec-ambiguity-conflict.json`).
+**Source IntentSpec semantics:** the user's turn stated "if an upload conflicts with an existing
+record, replace it" — Intent Parsing already recorded this as a Claim with **obligation force**
+(a direct instruction, not hedged as a wish) *before and independent of* resolving what "it" refers
+to; that force is a settled property of the Claim itself, not something that depends on which
+referent is later assumed. Separately, the pronoun "it" is grammatically ambiguous between "the
+upload" and "the existing record." Assumed Claim: gap = "which of the two grammatically possible
+referents the pronoun points to," rationale = "the nearest-noun reading (the existing record) permits
+continued interpretation," scope = narrow (a single sentence), reversible = true — the same
+gap/rationale/scope/`reversible` structure `INTENT_SPEC.md`'s own worked example uses (from
+`intent-spec-ambiguity-conflict.json`), concretized here with an explicit sentence and an explicit,
+already-recorded force so this case can be audited for testability and origin/strength independence,
+not left as an unfillable placeholder.
 
-**Defensible RequirementSpec result:** If the Assumption's resolved reading is itself something the
-system must do or avoid, the resulting Requirement's **strength follows that force, unweakened** —
-e.g. "The system MUST \[behavior implied by the assumed referent\] (provisional — based on an
-Assumption, reversible if the referent is later clarified otherwise)." Assumed origin requires the
-provisional/reversible marking; it does not require, or justify, softening MUST to SHOULD — that
-would be the same confidence/origin-into-normative-weakness conflation Case 7b tests, applied to
-Assumed rather than Inferred origin. If the assumed reading is instead something merely preferred
-(not obligatory), SHOULD is correct — but because the reading's own force is a preference, not
-because Assumed origin caps it there. If the Assumption's content is too narrowly interpretive to
-support any independent system behavior on its own, no Requirement is derived from it at all, and
-that is the correct, expected outcome.
+**Defensible RequirementSpec result:** Requirement: "The system MUST replace the existing record when
+an uploaded file conflicts with it (nearest-noun reading assumed for 'it'; provisional — based on an
+Assumption, reversible if the referent is later clarified otherwise)." **MUST**, because that is the
+Claim's own already-recorded force — Requirement Derivation is **compiling a force IntentSpec already
+settled**, not inspecting the resolved sentence's content and deciding for itself whether the result
+"is" obligatory or preferred; the Assumption resolves only *which noun* "it" points to, never *how
+binding* the instruction is. Assumed origin requires the provisional/reversible marking; it does not
+require, or justify, softening MUST to SHOULD — that would be the same confidence/origin-into-
+normative-weakness conflation Case 7b tests, applied to Assumed rather than Inferred origin. (Had the
+underlying Claim instead carried preference force, the compiled Requirement would be SHOULD for the
+same reason — because that is the Claim's own recorded force, not because Assumed origin caps it
+there.) If an Assumption's content were too narrowly interpretive to support any independent system
+behavior on its own, no Requirement would be derived from it at all — that remains a correct, expected
+outcome for a different Assumed Claim than this one, where the resolved sentence *does* name a
+concrete system behavior ("replace the existing record").
 
 **Prohibited transformations:** Presenting an Assumption-derived Requirement with the same standing
-as a User-Provided one; weakening an obligation-level assumed reading to SHOULD merely because its
+as a User-Provided one; weakening the obligation-level assumed reading to SHOULD merely because its
 origin is Assumed (the origin justifies the provisional/reversible marking, not a lower strength);
-treating the Assumption's "reversible: true" property as satisfied by simply noting it once, rather
-than actually re-examining the Requirement if a later `IntentSpec` version resolves the referent
+deciding the Requirement's strength by inspecting what the resolved reading "seems like" rather than
+compiling the force IntentSpec already recorded on the Claim — that would be Requirement Derivation
+quietly exercising interpretive authority over force that belongs to Intent Parsing alone; treating
+the Assumption's "reversible: true" property as satisfied by simply noting it once, rather than
+actually re-examining the Requirement if a later `IntentSpec` version resolves the referent
 differently (this connects forward to "IntentSpec Supersession Effects").
 
-**Provenance expectations:** If a Requirement is derived, it traces to the single Assumed Claim, and
-carries forward — not merely references — that Claim's own recorded gap, rationale, scope, and
-`reversible: true` property; these are the Requirement's actual basis and must remain visible to a
-downstream consumer, not compressed into the word "provisional" alone. If no Requirement is derived,
-there is no provenance to record — the absence itself is the correct output, exactly as an empty
-Requirement set is in Case 17.
+**Provenance expectations:** The Requirement traces to both the obligation-force Claim and the Assumed
+Claim resolving its pronoun, and carries forward — not merely references — the Assumption's own
+recorded gap, rationale, scope, and `reversible: true` property; these are part of the Requirement's
+actual basis and must remain visible to a downstream consumer, not compressed into the word
+"provisional" alone.
 
-**Eligibility:** Complete.
+**Eligibility:** Complete — "replace the existing record" is a real, applicable binary check (did a
+conflicting upload's existing record get replaced, yes/no) for essentially every candidate; this case
+is not testing the testability axis (contrast Case 7a/Case 11, which are).
 
 ---
 
@@ -361,13 +391,20 @@ Case 10, post-remediation, with its "struggling" Ambiguity assumed resolved by r
 **Defensible RequirementSpec result:** One combined Requirement: "The system SHOULD surface
 academic-performance-based indicators of students who may need support, and MUST NOT produce
 per-student rankings or numeric risk scores." The positive goal and both prohibitions compose into a
-single testable statement, because they jointly define the same output-shape constraint, not three
+single statement, because they jointly define the same output-shape constraint, not three
 independent behaviors — but each clause keeps the strength its own source Claim's force actually
 supports: SHOULD for the positive goal (Claim (a) is a preference, not an obligation — combining it
 with two prohibitions does not inflate its own force), MUST NOT for each prohibition (Claims (b) and
 (c) are themselves prohibitions). Mixed strength within one combined Requirement is expected here,
 per "Requirement Cardinality and Granularity" in `REQUIREMENT_SPEC.md` — it is not an error to
-correct toward a single uniform strength.
+correct toward a single uniform strength. Strength and testability are, however, independent
+questions (per R-21): the two prohibitions are each a real, applicable binary check (does the output
+contain a per-student ranking or numeric score, yes/no) for essentially every candidate, but the
+positive clause's "academic-performance-based indicators... who may need support" supplies no metric,
+comparator, or threshold — no reading of it says what counts as an "indicator" or what performance
+level triggers "may need support" — the same missing-oracle pattern as Case 7a and Case 16's "fast,"
+not the boundary-refinement pattern of Case 4. The prohibitions being Complete does not make the
+positive clause Complete; each clause's testability, like its strength, is assessed independently.
 
 **Prohibited transformations:** Mapping Claim (a)'s preference to SHALL/MUST because it appears
 alongside two firmer prohibitions in the same combined statement (force inflation by association,
@@ -381,7 +418,13 @@ easier to satisfy.
 and (c) — not just the strongest one — so an auditor can see the full basis for the combined
 statement.
 
-**Eligibility:** Complete.
+**Eligibility:** Partial — the two prohibition clauses are Complete (a real binary check exists for
+each), but the positive clause supplies no metric/comparator for "academic-performance-based
+indicators... who may need support," per R-21's testability-blockage branch, making the combined
+Requirement's positive half an open item even though its strength (SHOULD) is already correctly
+settled. This is a defect in the worked example caught on final audit — a fillable Unknown does not
+exist here to carry forward (nothing in the source Claim supplies even an unresolved-but-real metric
+the way Case 4's dollar figure does); the gap is a genuinely missing oracle, not a boundary refinement.
 
 ---
 

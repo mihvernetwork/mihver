@@ -292,6 +292,21 @@ Parsing pass, not to Requirement Derivation, however "plausible" or "obvious" th
 Domain convention, common usage, or "this plausibly covers X" is never, by itself, sufficient basis
 for a Requirement-Level Inference.
 
+**Strength and provisional standing of a Requirement-Level Inference (R-22):** because the operational
+test above already requires the conclusion to hold under every materially plausible reading, a
+Requirement-Level Inference is not an independent epistemic guess the way an `IntentSpec` Inference
+is — it makes an already-settled Requirement's content explicit rather than introducing new normative
+content of its own. Its **strength is therefore exactly the strength already established by the
+Requirement or Claim it derives from** — never independently chosen, never strengthened, never
+weakened — the same non-substitution discipline "Treatment of Claim Origin" applies to origin and
+confidence. A Requirement-Derivation-level inference carries no `derivation_confidence` field of its
+own (that field belongs to `IntentSpec` Inferences specifically); what it does carry, by default, is a
+**provisional/reversible marking**, mirroring the Inferred-Claim default above — because the inference
+remains subject to being found unsupported if a later reconsideration shows the premise doesn't
+actually entail it (see "Requirement Identity and Versioning"'s re-derivation triggers, which already
+name this case). Requirement Derivation may instead record it as settled only on the same basis
+described for Inferred Claims: stating why continued reconsideration isn't warranted, not by silence.
+
 ## Force → Requirement Strength Mapping
 
 `INTENT_SPEC.md`'s force axis (obligation / prohibition / permission / preference, with strength for
@@ -533,10 +548,15 @@ eligible):
   *could* be derived independently of the blocked area is derived normally; the blocked area is
   recorded as an explicit open item (or an unresolved constraint-candidate, for the R-20 case), not
   silently dropped and not silently guessed into a false appearance of testability. Downstream stages
-  must treat a Partial `RequirementSpec`'s open items as a signal that a revision cycle (an
-  `IntentSpec` clarification/correction) is needed before that specific area can be compiled — the
-  mechanics of triggering that revision are deferred, per `M0_SCOPE.md`, to implementation, not fixed
-  here.
+  must treat a Partial `RequirementSpec`'s open items as a signal that a revision cycle is needed
+  before that specific area can be compiled — but *which* revision cycle depends on what kind of gap
+  is blocking it, not always the same one: an unresolved Ambiguity or Conflict, or an R-20 unresolved
+  force, can only be closed by a new `IntentSpec` clarification/correction (Requirement Derivation has
+  no authority over either); an R-19-eligible Unknown that Requirement Derivation chose to carry
+  forward unfilled, by contrast, can be closed by Requirement Derivation itself filling it in a later
+  `RequirementSpec` version, with no new `IntentSpec` version required (see "Requirement Identity and
+  Versioning"). The mechanics of triggering either revision are deferred, per `M0_SCOPE.md`, to
+  implementation, not fixed here.
 - **Failed.** Reserved for a narrower and different situation than "nothing to derive": Requirement
   Derivation cannot even attempt honest compilation because the consumed `IntentSpec`, despite having
   passed `IntentSpec`'s own eligibility gate, is internally malformed in a way that blocks processing
@@ -676,7 +696,8 @@ Identity and Versioning."
   own stated rationale, distinct from any `IntentSpec`-recorded provenance.
 - **R-10** A Requirement-Derivation-level inference states its premise (the accepted Claim or
   Requirement it derives from) and reasoning, and is labeled as a Requirement Derivation inference,
-  never folded into or presented as an `IntentSpec` Inference.
+  never folded into or presented as an `IntentSpec` Inference. Its strength and provisional standing
+  are governed separately, by R-22.
 - **R-11** `RequirementSpec` never contains a technology or architecture evaluation, comparison, or
   selection — a user-named technology may appear only as a preserved constraint, never as an endorsed
   or evaluated choice.
@@ -722,16 +743,28 @@ Identity and Versioning."
   satisfaction procedure a downstream evaluator can apply without inventing the metric, comparator,
   threshold, or scope itself. The test is not "does *some* reasonable operational reading exist in
   the abstract" (almost anything admits one) but "does the Requirement's own recorded content already
-  point to one" — an evaluator filling in a completely unauthorized oracle (e.g. picking its own
-  latency threshold for "fast," with no stated number or comparator anywhere) is not evaluating the
-  Requirement, it is inventing a different, more specific one. A Requirement whose recorded content
-  supplies at least a metric and threshold (even with an unresolved boundary refining which values
-  count toward it) remains Complete: most candidates are evaluable without needing that refinement,
-  and the refinement narrows precision rather than supplying the missing test itself (see Case 4's
-  own reasoning for why this holds even for a boundary-straddling candidate). A Requirement with no
-  metric, comparator, or procedure at all — where literally nothing in the record indicates what
-  "satisfied" would even look like — is Partial, even though the unresolved item is technically an
-  Unknown rather than an Ambiguity or Conflict.
+  point to one." This resolves into two, and only two, distinguishable situations, not a sliding
+  scale: (a) the Requirement's recorded content supplies **at least one genuine metric, comparator, or
+  procedure** that produces a definite verdict for the overwhelming majority of candidates, with only
+  a narrow boundary zone left to refine (e.g. Case 4's dollar threshold — the boundary of which cost
+  categories count is open, but "$100/month" itself is a real, applicable test for nearly every
+  candidate) — this **remains Complete**, because the refinement narrows precision for edge cases
+  rather than supplying the missing test itself (see Case 4's own reasoning for why this holds even
+  for a boundary-straddling candidate); or (b) the Requirement's recorded content supplies **no**
+  metric, comparator, or procedure at all for *essentially any* candidate — where literally nothing in
+  the record indicates what "satisfied" would even look like, not merely at the edges (e.g. "fast," or
+  "minimize exposure generally," with no stated number, benchmark, or comparator anywhere) — this **is
+  Partial**, even though the unresolved item is technically an Unknown rather than an Ambiguity or
+  Conflict. An evaluator filling in a completely unauthorized oracle for case (b) (e.g. picking its own
+  latency threshold for "fast") is not evaluating the Requirement, it is inventing a different, more
+  specific one. The dividing line is whether a real yardstick already exists in the record (case a) or
+  not (case b) — not whether every possible candidate is already resolvable under that yardstick.
+- **R-22** A Requirement-Derivation-level inference's strength is exactly the strength already
+  established by the Requirement or Claim it derives from — never independently chosen, strengthened,
+  or weakened — because the operational test governing such an inference already requires it to hold
+  under every materially plausible reading. It carries no `derivation_confidence` of its own (that
+  field belongs to `IntentSpec` Inferences) and is marked provisional/reversible by default, unless
+  Requirement Derivation states why continued reconsideration isn't warranted.
 
 ## Examples
 

@@ -82,7 +82,9 @@ structural commitments, detailed in full in
    layer on top of whatever `IntentSpec` already recorded.
 2. **Force maps to strength one-directionally, never inflated — and a Claim whose force never
    resolved gets no strength at all.** Obligation/prohibition/permission/preference map to
-   MUST/MUST NOT/MAY/SHOULD with an explicit non-inflation rule: strength may only reflect what the
+   MUST/MUST NOT/MAY/SHOULD-or-MAY (preference splits further by stated strength — weak preference
+   maps to MAY, not SHOULD; see `REQUIREMENT_SPEC.md`'s full mapping table for the exact tiers) with
+   an explicit non-inflation rule: strength may only reflect what the
    Claim's own force actually stated, never more. A Claim whose wording is direct but doesn't resolve
    to any of the four categories (e.g. a named technology stated as a bare method with no
    obligation/preference language) is not assigned a manufactured strength either — Requirement
@@ -160,11 +162,13 @@ structural commitments, detailed in full in
   downstream stage still must not treat every Requirement as equally authoritative just because it is
   structured; structure makes that judgment possible, it does not make it automatic.
 - A Partial `RequirementSpec` introduces a new kind of intermediate pipeline state `M0_SCOPE.md`'s
-  stage table does not explicitly narrate: some Requirements usable now, others pending a revision
-  cycle. This document does not design how a downstream stage should behave when handed a Partial
-  `RequirementSpec` (e.g. whether Research Planning may proceed on the Complete portion alone) — that
-  consumption behavior is explicitly out of scope here and left to that stage's own future design
-  work (see Open Questions).
+  stage table does not explicitly narrate: some Requirements structurally complete and well-formed
+  now, others pending a revision cycle — "structurally complete" here describes the artifact's own
+  internal well-formedness, not a license for any downstream stage to already treat those Requirements
+  as consumable. This document does not design how a downstream stage should behave when handed a
+  Partial `RequirementSpec` (e.g. whether Research Planning may proceed on the Complete portion alone)
+  — that consumption behavior is explicitly out of scope here and left to that stage's own future
+  design work (see Open Questions).
 - Revision becomes more consequential, mirroring `ADR-0002`'s equivalent consequence one stage
   earlier: superseding an `IntentSpec` version can invalidate downstream Requirements that depended on
   it, and those dependents must be reconsidered rather than silently carried forward.
@@ -246,9 +250,12 @@ structural commitments, detailed in full in
   the inference to state its premise and reasoning? This ADR defines the category and its discipline;
   it does not define an enforcement mechanism, the same posture `ADR-0002` took toward the analogous
   origin-classification question.
-- Should a Requirement ever carry more than one strength simultaneously — e.g. a base obligation with
-  a separately-tracked "aspirational" stretch goal layered on top — or does that belong to a later
-  refinement of the force→strength mapping? Not resolved in this step.
+- Should a single *clause/behavior* ever carry more than one strength layered on itself simultaneously
+  — e.g. a base obligation with a separately-tracked "aspirational" stretch goal on the *same*
+  underlying behavior — or does that belong to a later refinement of the force→strength mapping? Not
+  resolved in this step. (Distinct from the already-resolved question of a *combined* Requirement with
+  multiple *clauses*, each carrying its own single strength — see "Requirement Cardinality and
+  Granularity" in `REQUIREMENT_SPEC.md`, worked in Case 11.)
 - Where multiple Claims combine into one Requirement, and one of those Claims is later superseded
   while the others remain live, does the Requirement survive in weakened form, get re-derived from the
   remaining Claims alone, or get invalidated outright pending reconsideration? "IntentSpec Supersession

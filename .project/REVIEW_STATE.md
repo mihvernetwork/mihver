@@ -15,84 +15,157 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-STEP-03A-CROSS-AXIS-REMEDIATION
+Task: M0-STEP-03A-BRAIN-ASSISTED-FINAL-AUDIT
 Branch: `m0/step-03a-requirement-contract`
 
-Four independent read-only Codex reviewers, dispatched by **invariant axis, not file range** (per
-this task's explicit instruction, since prior file-range reviewers had missed cross-cutting issues):
-A — normative strength vs. epistemic standing (origin/confidence/provisionality) independence; B —
-resolution authority (which surviving Unknowns Requirement Derivation may fill); C —
-completeness/testability of the Complete/Partial/Failed model; D — cross-document contradiction
-hunting across `REQUIREMENT_SPEC.md`, `ADR-0003`, and `REQUIREMENT_CASES.md`. Each reviewed the full
-corpus as revised in this task's first pass (the five externally-reported findings already fixed).
-Claude independently verified every material finding directly against the actual text before fixing
-(not relayed uncritically), then applied targeted fixes across all three documents.
+### Phase 1 — Memory → Review-Plan Effect (MIHVER Brain retrieval)
+
+Queried `../mihver-brain` (via its CLI: `search`, then `context --scope mihver`) for lessons on
+review invariant axis / cross-axis force confidence / provenance review / lifecycle handoff /
+completeness testability, before planning the review. Two `mihver`-scope lessons retrieved (the only
+two in that scope; a full `context --scope mihver` dump confirmed no others exist):
+
+- `4250a08b-4476-47d2-b0a0-9a9f7f77e995` — "Review coverage should be decomposed by invariant axis"
+  (from the ADR-0002/PR #11 retrospective): independent reviewers don't guarantee coverage if their
+  contracts examine similar dimensions; decompose across classification, calibration, provenance,
+  lifecycle/handoff, schema enforcement, cross-axis interactions.
+  **Effect on review plan:** added an explicit six-named-axis coverage checklist as a Phase-3
+  verification step (see below), rather than trusting "4 reviewers by axis" as self-evidently
+  sufficient. **Would this have happened without the memory?** Partially — axis-based (not file-range)
+  dispatch was already the pattern from the immediately preceding round of this same session; what the
+  memory concretely added was the explicit per-named-axis coverage audit, which was not otherwise
+  planned.
+- `96500b29-281f-4b27-a1d3-8d22d31f554f` — "Cross-axis invariants require explicit review contracts"
+  (from the RequirementSpec/PR #13 retrospective): reviewing provenance and force separately can still
+  miss a defect in their *interaction* — the exact failure mode that produced the Case 7 force/result
+  mismatch found in the immediately prior round.
+  **Effect on review plan:** applied the same pairwise-interaction scrutiny to Claude's own Phase-3
+  independent verification, not only to how Reviewers A/D were briefed (the task prompt already briefs
+  them this way). **Would this have happened without the memory?** Likely yes at the reviewer-briefing
+  level; the memory's concrete addition was extending that discipline to Claude's own re-derivation
+  step, which the task text does not itself mandate for Claude.
+
+### Phase 2 — Four independent read-only Codex reviewers, dispatched by **invariant interaction, not
+file range**:
+A — normative × epistemic interaction; B — resolution authority × lifecycle; C — testability ×
+completeness × examples (all 17 cases audited one by one against R-21); D — cross-document
+contradiction matrix (R-01..R-22, ADR-0003's every Decision/Rationale/Consequence/Risk/Open Question,
+and all 17 cases, checked pairwise, not read section-by-section). Each reviewed the full corpus as it
+stood after the prior round's cross-axis-remediation fixes. Claude independently verified every
+material finding directly against the actual text before fixing (not relayed uncritically, and not
+accepted by majority vote), then applied targeted fixes across all three documents.
 
 Confirmed and fixed (verified by Claude against the cited text in each case):
 
-- **Residual strength-weakening sentence**: the "Force → Requirement Strength Mapping" section's own
-  intro sentence still said a mapping "may only preserve or (for provisional/lower-confidence Claims)
-  weaken strength" — a direct leftover contradicting the axis-independence fix already applied
-  elsewhere (R-03, R-04, the "Downgrading is permitted" paragraph). Found independently by Reviewers A
-  and D; rewritten to state strength is never weakened by origin/confidence either.
-- **Case 7 force/result mismatch**: Case 7b stated "force = obligation" but derived a MUST NOT
-  (prohibition-mapped) result — an internal contradiction in the very case built to demonstrate the
-  axis-independence fix. Found independently by Reviewers A and D; relabeled force to "prohibition"
-  throughout (source semantics, result, prohibited-transformations bullet, closing sentence).
-- **ADR-0003 confidence overclaim**: "Origin, force, and confidence are first-class, mandatory,
-  independently-inspectable properties of every Requirement" — but confidence is an Inferred-Claim-
-  specific property, not universal. Found independently by Reviewers A and D; corrected to scope
-  confidence to Inference-derived Requirements and mention provisional/reversible standing "wherever
-  applicable."
-- **R-20 overbroad scope**: as originally worded, R-20 also literally captured genuinely force-absent
-  descriptive Claims (already correctly handled by R-02/R-17), contradicting Cases 6 and 17. Found by
-  Reviewer D; fixed with an explicit carve-out ("R-20 does not apply to a genuinely force-absent
-  descriptive Claim").
-- **Case 17 Failed-contrast contradicting R-17**: the "nothing to compile from at all" contrast
-  phrasing directly contradicted R-17's own tolerance for a well-formed, entirely-descriptive,
-  zero-Requirement `IntentSpec` being Complete, not Failed. Found independently by Reviewers C and D;
-  rewritten to define Failed strictly around structural malformedness.
-- **Case 16 Unknown/Ambiguity mislabeling**: "fast" was originally treated as an Unknown when, per
-  `INTENT_SPEC.md`'s own practical test (wording that itself supports multiple readings is an
-  Ambiguity, not a blank gap), it should be an Ambiguity — the same pattern repeatedly fixed earlier
-  in `INTENT_CASES.md`. Found by Reviewer B; reclassified and restructured around both R-08
-  (Ambiguity never resolvable here) and R-21 (no metric even after picking a reading).
-- **Anti-Example misciting R-01**: the microservices-from-vague-preference Anti-Example cited
-  "(Violates R-01, R-11)," but R-01 only requires *some* provenance reference exists, which a
-  fabricated Requirement could still technically carry. Found by Reviewer D; corrected to cite R-11
-  alone, with an explanatory clause.
-- **Cross-reference bug** (found by Claude, not a reviewer, during the final read-through sweep after
-  all reviewer fixes were applied): the Examples section's source-code-prohibition example pointed at
-  "Case 4-derived worked example, Case 1" in `REQUIREMENT_CASES.md`; the matching worked example is
-  actually Case 2. Corrected.
-- **R-19 tightened and given a terminology note**: Reviewer B's structural test (does a materially
-  different value change what the Requirement covers, not what vocabulary describes it) sharpened the
-  Unknown-fillability rule; a new "Note on terminology" paragraph reconciles R-19's narrower test
-  against `INTENT_SPEC.md`'s broader "technical or operational default" phrase, since the two
-  documents use the same words for differently-scoped concepts.
-- **R-21 tightened to an oracle-based test**: "does the Requirement's own recorded content already
-  point to a satisfaction procedure" replacing a looser "does some reasonable reading exist"
-  formulation Reviewer C flagged as too permissive.
-- **R-09 explicitly subordinated to R-19**: provenance marking alone was previously readable as
-  sufficient to make an Unknown fillable; now explicitly conditioned on passing R-19 first.
+- **Requirement-Level Inference had no strength/provisionality rule** (Reviewer A): R-03/R-04 pin an
+  `IntentSpec`-level Inferred/Assumed Claim's strength to its own force, never weakened by confidence
+  or origin — but nothing analogous existed for Requirement Derivation's *own* inferences (R-10 only
+  required stating premise/reasoning). Fixed with new **R-22**: an RD-level inference's strength is
+  exactly its premise's strength (never independently chosen), carries no `derivation_confidence` of
+  its own, and defaults to provisional/reversible.
+- **Case 8 was an unfilled placeholder** (Reviewers A and C, independently): `"[behavior implied by
+  the assumed referent]"` couldn't ground either its Complete claim (C) or its strength-independence
+  claim (A — the "if X then Y" framing read as Requirement Derivation deciding force by inspecting the
+  resolved content, rather than compiling a force `IntentSpec` already recorded). Rewritten concretely
+  (a resolved pronoun scenario with an explicit, pre-recorded obligation force), grounded in the same
+  `intent-spec-ambiguity-conflict.json` fixture pattern.
+- **Case 7a and Case 11's positive clause had zero metric/comparator/threshold** (Reviewer C, applying
+  R-21 case-by-case across all 17): "minimize data-locality exposure generally" (7a) and
+  "academic-performance-based indicators... who may need support" (11) are structurally identical to
+  Case 16's "fast" — the exact defect class that fix was supposed to close, but two other instances of
+  it survived uncaught. Both reclassified **Partial** for that specific clause; their strength (SHOULD)
+  was independently correct and unaffected, since strength and testability are separate axes.
+- **R-21's own wording had a genuine tension** (Reviewers B and C, independently, both re-arguing
+  Case 4 as evidence): the first sentence ("without inventing... scope") read as barring *any*
+  unresolved boundary, while the very next sentences carve out boundary-refinement as still Complete.
+  Sharpened into an explicit two-situation test — (a) a real metric/comparator/threshold exists,
+  resolving the overwhelming majority of candidates, only a boundary zone is open → Complete; (b) no
+  metric/comparator/threshold exists for essentially any candidate → Partial — replacing a looser,
+  single-sentence formulation. This sharper line is what correctly separated the newly-confirmed Case
+  7a/11 defects from the still-rejected Case 4 reclassification (see disagreement note below).
+- Five smaller cross-document clarity fixes: a stray lowercase "ambiguity" in Case 4 risking confusion
+  with the formal `Ambiguity` term next to the Unknown/Ambiguity distinction this whole document is
+  built on (Reviewer B); ADR-0003's compact force-mapping summary read as mapping every preference to
+  SHOULD, omitting the weak-preference→MAY tier (Reviewer D); the "Partial" bullet's parenthetical
+  named only "an `IntentSpec` clarification/correction" as the revision path, when the same document
+  elsewhere allows a Requirement-Derivation-only re-derivation for a previously-uncommitted, R-19-
+  fillable Unknown (Reviewer D); ADR-0003's "some Requirements usable now" sitting awkwardly next to
+  "not authorized... for a downstream stage" in the same paragraph (Reviewer D); an ADR Open Question
+  about single-clause dual-strength conflated in the reviewer's reading with the already-resolved
+  multi-clause cardinality rule — a clarifying parenthetical added to distinguish them (Reviewer D,
+  not actually a contradiction on Claude's re-derivation, but worth the clarity).
 
-**Reviewer disagreement, resolved by independent re-derivation, not majority vote:** Reviewer B
-argued Case 4's cost-category Unknown should be reclassified as non-fillable/Partial (same as Case
-10's competitor-identity Unknown), citing a concrete boundary-straddling counterexample
-($80 infra + $60 licenses = $140, which passes under one cost-category reading and fails under
-another). Reviewers C and D did not flag Case 4 as incorrect. Claude independently re-derived the
-question from the contract text and concluded Case 4 should keep its Complete/fillable
-classification — it has a real metric and threshold, and only the category boundary is ambiguous, so
-most candidates are evaluable regardless of interpretation, unlike Case 16's "fast," which has zero
-anchor for any candidate. Case 4 was not reclassified, but its text was substantially strengthened
-with a new "A candid check against a boundary-straddling candidate" paragraph that explicitly and
-honestly engages Reviewer B's exact counterexample rather than leaving it unaddressed.
+Not actioned, with reasoning: Reviewer D's read of Case 16's closing sentence ("resolving either
+requires a new Intent Parsing pass... quantifies whichever reading is chosen") as contradicting R-19's
+measurement-detail-filling permission — re-derived and rejected: there is zero recorded numeric anchor
+anywhere in Case 16's source Claim, so no R-19-fillable Unknown exists yet to fill; the sentence is
+accurate to this specific case's facts, not a general claim that quantification is categorically
+Intent Parsing's. Reviewer D's read of the ADR Open Question on multi-strength vs. the Cardinality
+section as a hard contradiction — re-derived and rejected (different questions: one clause carrying
+two strengths at once, vs. a multi-clause Requirement where each clause has its own single strength),
+though the clarifying parenthetical above was added anyway since the wording invited the conflation.
+
+**Reviewer disagreement, resolved a second time by independent re-derivation, not majority vote:**
+this round's Reviewer B and Reviewer C *both* independently re-argued (joining last round's Reviewer
+B) that Case 4's cost-category Unknown should flip to Partial/non-fillable, citing the same
+boundary-straddling-candidate structure. Claude re-derived the question a second time — this time
+producing the explicit metric-exists-vs-doesn't-exist dividing line now written into R-21 itself,
+rather than only re-asserting the prior conclusion in prose. Applying that sharpened line consistently
+across the *whole* corpus, not just Case 4, is what caught the genuinely different Case 7a/11 defects
+above — evidence the line is correctly drawn (it does real classificatory work elsewhere), not merely
+defended to preserve a prior answer. Case 4 itself was not reclassified.
+
+### Phase-3 coverage checklist against the six Brain-named axes (memory `4250a08b`)
+
+- **Classification** (Unknown/Ambiguity/Conflict, origin categories): exercised by B and by Claude's
+  own fixes (Case 4's stray "ambiguity" wording, Case 16's prior-round fix). Covered.
+- **Calibration** (strength/confidence/testability tiering): exercised by C, produced the Case 7a/11
+  defects and the R-21 sharpening. Covered.
+- **Provenance**: exercised by A, produced the R-22 gap and Case 8 rewrite. Covered.
+- **Lifecycle/handoff**: exercised by B (Case 14 versioning re-checked, no defect found) and D
+  (the Partial-bullet revision-path imprecision). Covered.
+- **Schema enforcement**: not applicable — no machine-readable `RequirementSpec` schema exists yet
+  (explicitly deferred to future M0 work per `ADR-0003`'s Future Work); correctly out of scope, not
+  skipped.
+- **Cross-axis interactions**: exercised by A explicitly and D's full contradiction matrix; produced
+  the R-22 gap, the ADR wording fixes, and the Partial-bullet fix.
+
+All applicable named axes produced real reviewer engagement, and four of the six produced confirmed,
+independently-verified defects — not merely restated confidence.
+
+### Phase 4 — Brain Retrieval Impact
+
+- `4250a08b` (decompose by axis): review-plan decision influenced — added the six-axis coverage
+  checklist above as an explicit Phase-3 step. Concrete reviewer-contract change: none to the reviewer
+  briefs themselves (axis-based dispatch was already planned), but the checklist is what confirms
+  "schema enforcement" is legitimately out of scope rather than silently skipped, and confirms the
+  other five axes actually got exercised rather than assuming four reviewers implies six axes covered.
+  **Exposed a defect or only increased confidence?** Increased confidence — the checklist did not
+  itself surface a defect the reviewers hadn't already found; it verified coverage after the fact.
+- `96500b29` (cross-axis interaction needs explicit contracts): review-plan decision influenced —
+  applied pairwise-interaction scrutiny to Claude's *own* Phase-3 re-derivation, not only to Reviewer
+  A/D's briefs. Concrete effect: this is the discipline that caught the Case 4 "boundary-straddling"
+  re-derivation needing a *sharper, generalizable rule* (the R-21 two-situation test) rather than a
+  case-specific defense, which is what then caught Case 7a/11 as a byproduct. **Exposed a defect or
+  only increased confidence?** Exposed a defect indirectly — the memory's discipline is what pushed the
+  Case 4 re-derivation from "defend the prior conclusion" to "derive a general test," and that general
+  test is what surfaced the genuinely new Case 7a/11 defects. Without that push, Case 7a/11 could
+  plausibly have been re-confirmed-Complete by the same shallow reasoning that (correctly) protected
+  Case 4, since both look superficially similar ("some open question, but Complete anyway").
+
+**Overall assessment of the retrieval → behavior chain:** both memories measurably shaped this round's
+process (an explicit coverage audit; a push from case-specific defense toward a general rule), and one
+of those process changes (the general-rule push) is plausibly responsible for catching two real
+defects that a less rigorous re-derivation would have missed. Neither memory directly named a specific
+defect in advance — their effect was on *how carefully* Claude re-derived, not *what* was wrong. That
+is consistent with the memories' own framing ("advisory engineering lessons, not authoritative
+semantic contract rules") and with their intended use.
 
 ## Required Changes
 
-None remaining — every confirmed defect from all four axis reviewers was fixed and re-verified, plus
-one additional cross-reference bug Claude caught independently (`npm test`: 32/32 throughout,
-unaffected since no schema/validator/fixture file was touched).
+None remaining — every confirmed defect from all four axis-interaction reviewers was fixed and
+re-verified against the edited text (`npm test`: 32/32 throughout, unaffected since no
+schema/validator/fixture file was touched).
 
 ## Fixes Applied
 
@@ -106,6 +179,23 @@ explicit instruction). Not to be merged by this task. `ADR-0003`'s Status remain
 task instruction — human review of the PR is the next gate.
 
 ## History
+
+- 2026-08-21 — `M0-STEP-03A-CROSS-AXIS-REMEDIATION` (PR #13, second review round): four independent
+  read-only Codex reviewers by invariant axis (A: normative vs. epistemic; B: resolution authority; C:
+  completeness/testability; D: cross-document contradiction). Confirmed and fixed: a residual
+  strength-weakening sentence left over from the axis-independence fix (found independently by A, D);
+  the Case 7b force/result mismatch (A, D); an ADR-0003 overclaim that confidence is mandatory on every
+  Requirement (A, D); an overbroad R-20 scope contradicting Cases 6/17 (D); a Case 17 Failed-definition
+  contradiction with R-17 (C, D); Case 16's Unknown reclassified to Ambiguity (B); a miscited R-01 in
+  an Anti-Example (D); R-19 tightened with a terminology note reconciling it against
+  `INTENT_SPEC.md`'s broader phrase (B); R-21 tightened to an oracle-based test (C); R-09 subordinated
+  to R-19. One reviewer disagreement (Case 4's cost-category Unknown fillability, argued by Reviewer B)
+  resolved by Claude's independent re-derivation, not majority vote — kept Complete/fillable, text
+  strengthened to engage the counterexample directly. A final read-through caught one more
+  cross-reference bug no reviewer flagged. `npm test`: 32/32. Moved here from "Latest Review" now that
+  those sections describe `M0-STEP-03A-BRAIN-ASSISTED-FINAL-AUDIT` instead, per this file's branch/task
+  scoping (all three entries for this branch share PR #13, since each was a continuation, not a new
+  branch). — branch `m0/step-03a-requirement-contract`
 
 - 2026-08-21 — `M0-STEP-03A-REQUIREMENT-SPEC-SEMANTIC-CONTRACT` (PR #13, first draft pass): three
   independent read-only Codex reviewers (A: provenance/epistemic boundary; B: requirement
