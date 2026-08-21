@@ -6,6 +6,44 @@ Proposed
 
 ## Context
 
+**Remediation note (this revision):** an external human review of the first draft accepted Model C
+but found six cross-boundary issues requiring resolution before any foundation-amendment work
+begins: (1) a circular scope-anchor problem (a Brain record was being used to authenticate its own
+applicability); (2) an undefined `MemoryContext` producer role; (3) an authority leak letting
+production perform semantic contradiction-detection that belongs to Intent Parsing; (4) a false
+procedural/semantic binary that mislabeled search-space-altering influence as "procedural"; (5) an
+undefined `MemoryContext` lifecycle/invalidation model; (6) unresolved cross-project scope ambiguity
+in several worked cases. All six are resolved below — see "Current-Run Scope Anchor: `RunContext`,"
+"MemoryContext Producer: Role and Authority," "Separating Admissibility from Interpretation,"
+"Influence Taxonomy," and "MemoryContext Lifecycle and Invalidation" in `MEMORY_CONTEXT.md`, and the
+corrected cases in `MEMORY_CONTEXT_CASES.md`. Model C itself was not found unsound by this review and
+is retained unchanged as the selected model.
+
+**Second remediation pass (this revision, continued):** four independent Codex reviewers, dispatched
+by interaction axis (A: Scope Anchor × Producer Authority; B: Lifecycle × Reproducibility; C: Process
+× Discovery × Semantic Authority; D: cross-document/corpus contradiction), each independently
+re-verified against the actual text before any fix was applied, found and this revision fixes: a
+stale table entry in this ADR still describing `project` records as an identity anchor rather than a
+corroborating description (propagated from an earlier fix applied only to `MEMORY_CONTEXT.md`); a
+genuine self-contradiction where the Producer's "mechanical scope admissibility only" authority limit
+conflicted with pre-existing text requiring it to judge whether `global`-scoped content is "genuinely
+project-agnostic" (resolved by deferring that specific content judgment to the consuming stage,
+mirroring how semantic-contradiction detection is already deferred elsewhere); an under-specified
+"freshness" judgment that could be misread as production judging real-world truth rather than a
+mechanical, age-based fact; residual "produced by one stage, at a specific point in a run" language
+throughout this ADR's Phase 3, Phase 6, Phase 9, Rationale, Consequences, and Open Questions sections,
+left over from before the cross-cutting-boundary model was adopted; an incomplete migration of the
+old two-way procedural/semantic split to the three-tier Influence Taxonomy, left in place in several
+worked cases (7, 8, 9, 10, 20) and this ADR's own Phase 4/7/8 tables even after `MEMORY_CONTEXT.md`'s
+copies were corrected; a functional-exclusion loophole in Case 8 that let memory contribute partial
+weight toward excluding a candidate under cover of "never the sole reason"; several worked cases with
+still-ambiguous memory scope (5, 6, 9, 10, 13, 16, 20); a coverage gap where no case exercised
+`RunContext`'s explicit absence (closed with new Case 21); a cross-run reuse gap in the Lifecycle
+model that did not prohibit reusing a `MemoryContext` snapshot across separate runs bound to the same
+identity; and a genuine cardinality inconsistency in Case 18 that simultaneously said no
+`MemoryContext` is produced on Brain-unavailability and that a production record exists for that
+outcome. All are fixed below and in the two companion documents; none required abandoning Model C.
+
 MIHVER Brain (`../mihver-brain`, a sibling repository — see "Brain Architecture Summary" below) is
 a durable, file-based, deterministic second-brain: engineering lessons, decisions, and project
 records persist across sessions and can be retrieved by later work. This session has already used
@@ -60,7 +98,7 @@ scopes was also run to confirm no others exist):
 | Memory | What it says | Where it concretely influenced this design |
 |---|---|---|
 | `4250a08b` — "Review coverage should be decomposed by invariant axis" | Independent reviewers miss shared blind spots unless work is explicitly decomposed across axes (classification, calibration, provenance, lifecycle, schema enforcement, cross-axis interaction). | Directly shapes Phase 12's reviewer dispatch (A/B/C/D by interaction axis, not file range) — already prescribed by this task, and confirmed sound by this memory rather than merely assumed. |
-| `96500b29` — "Cross-axis invariants require explicit review contracts" | Reviewing two axes separately (there: provenance and normative force) can still miss a defect that only appears in their *interaction*. Observed during M0 Step 03A's RequirementSpec work. | This is the single most load-bearing memory for this design. It is used, honestly, as **Phase 7's worked example**: it changed *how* Claude reviewed (added pairwise-interaction scrutiny to the verification step) and never changed *what* the user's Requirements were. That is exactly the procedural/semantic distinction this ADR makes first-class (see "Procedural vs. Semantic Influence" below). It also directly motivates Reviewer D's cross-axis contradiction-matrix mandate in Phase 12. |
+| `96500b29` — "Cross-axis invariants require explicit review contracts" | Reviewing two axes separately (there: provenance and normative force) can still miss a defect that only appears in their *interaction*. Observed during M0 Step 03A's RequirementSpec work. | This is the single most load-bearing memory for this design. It is used, honestly, as **Phase 7's worked example**: it changed *how* Claude reviewed (added pairwise-interaction scrutiny to the verification step) and never changed *what* the user's Requirements were. That is exactly the `PROCESS_ONLY` tier of the Influence Taxonomy this ADR makes first-class (see "Influence Taxonomy: Process-Only, Discovery/Attention, Semantic Premise" below). It also directly motivates Reviewer D's cross-axis contradiction-matrix mandate in Phase 12. |
 | `37a0ce2b` — "Natural-language interfaces must be separated from backend query languages" | A parameterized query can still be unsafe if one of its own parameters is itself interpreted by a nested sub-language (Brain's own FTS5 MATCH-operand bug). Correct shape: raw input → explicit translation boundary → backend-safe representation, never raw input straight into the backend language. | Used as a structural analogy, not a security finding about MIHVER: the same "explicit translation boundary" discipline that fixed Brain's own search bug is the argument *for* Model C (a dedicated MemoryContext-production boundary) over Model A (stages querying raw Brain directly) in Phase 3 below — a stage consuming raw retrieval results is structurally the same shape as passing raw text into FTS5, one layer up. |
 | `64d5e902` — "CWD is not a filesystem isolation boundary" (`global` scope) | An apparent isolation mechanism (child-process CWD) does not by itself provide real isolation. | Used as a caution against a specific design temptation: assuming Brain's own `scope` field, by itself, is a sufficient stage-isolation/authority boundary. It is a useful *filter*, not a substitute for an explicit production boundary and declared per-stage input (see "Stage Isolation" under Model C). |
 
@@ -128,8 +166,9 @@ defeats these, not merely evaluated against them afterward:
   ranking signal (not even stored on the Brain record), never conflated with the separately-tracked
   authority classification.
 - **C. Engineering-lesson semantic leakage.** "Review by invariant axis" (a `lesson`) becomes a
-  user's system Requirement. Defeated by: Phase 4's `lesson`/`playbook` → procedural-only authority
-  class, and Phase 7's first-class procedural/semantic split.
+  user's system Requirement. Defeated by: Phase 4's `lesson`/`playbook` → `PROCESS_ONLY`-always
+  authority class, and Phase 7's Influence Taxonomy, under which `lesson`/`playbook` have no path to
+  any other tier.
 - **D. Past-architecture lock-in.** A prior project's LangGraph success gets recommended now merely
   because it worked before. Defeated by: past outcomes (`pattern`/`decision`) may propose or shape
   the *search* for candidates, never bypass current Requirements/Evidence/Evaluation — Phase 3's
@@ -148,9 +187,11 @@ defeats these, not merely evaluated against them afterward:
   admission — a superseded record is never presented as live, current standing (Case 11 below).
 - **H. Cross-project scope leakage.** A constraint recorded for Project A silently becomes a
   constraint in Project B. Defeated by: Brain's own `scope` field is a necessary filter at
-  MemoryContext production, but (per the CWD lesson above) not by itself sufficient — production
-  must also verify the *current run's own* project identity matches before admitting a
-  project-scoped record (Case 12 below).
+  `MemoryContext` production, but (per the CWD lesson above) not by itself sufficient — production
+  must also verify the memory's scope against `RunContext`, a non-memory identity anchor established
+  independently of Brain (see `MEMORY_CONTEXT.md`'s "Current-Run Scope Anchor"; corrected during this
+  remediation from an earlier draft that let a Brain `project` record serve as its own identity
+  check, which was itself circular — Case 12/14 below).
 - **I. Privacy/scope leakage by mere existence.** A stage receives an unrelated memory only because
   it happens to be stored somewhere. Defeated by: MemoryContext is stage-scoped and
   purpose-retrieved (an explicit query/purpose, per Phase 9), never a blanket dump of everything
@@ -189,13 +230,19 @@ construction — hands memory the single highest authority level that exists in 
 ### Model C — A typed, immutable, stage-scoped `MemoryContext` artifact, produced at a separate retrieval boundary, passed as an explicitly-declared input where authorized
 
 Selected. `MemoryContext` is a new artifact — not a `Claim`, not `Evidence`, not `UserIdea` — that a
-dedicated retrieval step produces from Brain at a specific point in a run, with its own recorded
-provenance (which memories, at what retrieval time, for what purpose, under what authority
-classification — Phase 9). It is then passed to a stage **only if that stage's `M0_SCOPE.md` input
-list has been explicitly amended to declare it** (Principle 3 respected, at the cost of an honest,
-named required amendment — see "Foundation Impact Analysis"). This mirrors the exact pattern
-`ADR-0001` already established for `RequirementSpec`/`ArchitectureCandidate`: a bounded IR, produced
-by one stage, consumed by declared others, never a live query surface. Every property Models A/B
+dedicated retrieval boundary produces from Brain, with its own recorded provenance (which memories,
+at what retrieval time, for what purpose, under what authority classification — Phase 9). This
+boundary is **not a first-class linear pipeline stage**: it is a cross-cutting compiler boundary/
+service, invoked repeatedly, once per authorized retrieval, by whichever consuming stage currently
+needs it — each invocation produces its own fresh, independently immutable `MemoryContext` (see
+"MemoryContext Producer: Role and Authority" in `MEMORY_CONTEXT.md`). Each resulting `MemoryContext`
+is then passed to a stage **only if that stage's `M0_SCOPE.md` input list has been explicitly
+amended to declare it** (Principle 3 respected, at the cost of an honest, named required amendment —
+see "Foundation Impact Analysis"). This partially mirrors the pattern `ADR-0001` already established
+for `RequirementSpec`/`ArchitectureCandidate` — a bounded, versioned IR, never a live query
+surface — but differs from that pattern in cardinality: instead of one artifact produced once by one
+stage in the linear sequence, `MemoryContext` is produced fresh, on demand, by a boundary invoked
+from multiple points in the pipeline. Every property Models A/B
 sacrifice is what this model buys back: a frozen, versioned artifact restores reproducibility; an
 explicit production boundary enforces least authority and stale-memory/scope checks in one place
 instead of trusting every consumer independently; and because `MemoryContext` is not itself a Claim
@@ -245,16 +292,17 @@ for Claims:
    notions are related but not identical, and only the second one governs Evidence eligibility
    (Principle 5).
 5. **Scope/project applicability** — Brain's `scope` field (`global` or a project slug) is a
-   necessary filter, never a sufficient isolation boundary by itself (per the CWD lesson) — see
-   "Cross-Project Scope Verification" in `MEMORY_CONTEXT.md`.
+   necessary filter, checked against `RunContext` (a non-memory anchor, never another Brain record),
+   never a sufficient isolation boundary by itself (per the CWD lesson) — see "Current-Run Scope
+   Anchor" and "Cross-Project Scope Verification" in `MEMORY_CONTEXT.md`.
 6. **Confidence, where meaningful** — Brain's `confidence` (`low`/`medium`/`high`) is the memory
    *author's* judgment that the record is durable/useful. It is not, and must never be presented
    as, MIHVER's own Inference-derivation confidence (ADR-0002) or an Evidence confidence score
    (Principle 5) — those are separately computed at the point a memory actually becomes a premise
    for an Inference or a candidate for Evidence, never inherited wholesale from Brain's field.
-7. **Allowed use by stage** — which specific stage(s) may consume this entry at all, and for what
-   *purpose class* (procedural-only vs. semantic-eligible-with-full-gate) — assigned at
-   `MemoryContext` production, never left to the consuming stage's own judgment.
+7. **Allowed use by stage** — which specific stage(s) may consume this entry at all, and for which
+   Influence Taxonomy tier (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`, Phase 7) —
+   assigned at `MemoryContext` production, never left to the consuming stage's own judgment.
 
 ### Mapping Brain's actual eight types to semantic authority classes
 
@@ -267,12 +315,12 @@ actually read and classify, not infer from `type` alone.
 
 | Brain type | Typical semantic authority class (a prior, not a guarantee) | Notes |
 |---|---|---|
-| `project` | Durable project-identity/context anchor. | Helps scope retrieval correctly; its content is not automatically current-run authoritative. |
+| `project` | Durable project *description*, corroborating an already-established `RunContext` identity. | Never itself the anchor establishing that identity (see "Current-Run Scope Anchor" in `MEMORY_CONTEXT.md`); its content is not automatically current-run authoritative either way. |
 | `decision` | **Historical user statement/preference** (when project-scoped and describing something a user said or chose) **or** prior project decision/outcome (when describing MIHVER's own process). Brain does not distinguish these — production must. | This is the type most likely to carry Threat-A material; treat with the most scrutiny. |
-| `lesson` | Procedural-only (Phase 7). | Never semantic content of any pipeline artifact. |
-| `incident` | Procedural by default; may motivate a research hint if it names a specific technology's failure — must still clear the Evidence gate (Phase 8) before counting as Evidence. | |
-| `pattern` | Prior architecture outcome. | May propose/search candidates (Threat D); never bypasses Requirements/Evidence/Evaluation. |
-| `playbook` | Procedural-only. | Describes a process/runbook, not a user's system. |
+| `lesson` | `PROCESS_ONLY` always (Phase 7). | Never semantic content of any pipeline artifact. |
+| `incident` | `DISCOVERY_ATTENTION` by default; may motivate a research hint if it names a specific technology's failure — must still clear the Evidence gate (Phase 8) before counting as Evidence. | |
+| `pattern` | Prior architecture outcome; `DISCOVERY_ATTENTION` when shaping search. | May propose/search candidates (Threat D); never bypasses Requirements/Evidence/Evaluation. |
+| `playbook` | `PROCESS_ONLY` always. | Describes a process/runbook, not a user's system. |
 | `reference` | Candidate technology/evidence knowledge. | Exactly Threat E's shape — must clear Principle 5's freshness/source/date gate before EvidenceBundle eligibility (Phase 8). |
 | `inbox` | **Excluded entirely — not a low authority tier, a non-classification.** Not retrievable into any stage-facing `MemoryContext` until re-filed into a real type. | Default-excluded from production, not merely low-priority or low-ranked. |
 
@@ -301,8 +349,8 @@ satisfies Inference Policy's "premises support the conclusion" test strongly eno
 settle a materially-different-architecture-level question — and even where it plausibly could, doing
 so would still require an Inferred Claim exactly as disciplined as any other, at HIGH/CRITICAL-level
 consequences, which this ADR judges as never appropriate: at most, memory may inform *what
-clarifying question gets asked* (procedural aid, reducing friction in *how* the user is asked),
-never substitute for asking it.
+clarifying question gets asked* (`DISCOVERY_ATTENTION` — it may shape the question's content, never
+answer it), never substitute for asking it.
 
 **LOW/MEDIUM Decision Impact: memory may defensibly reduce repeated clarification.** Conditions,
 all required: (a) surfaced as an explicitly-marked, provisional, reversible candidate — either a
@@ -335,44 +383,66 @@ change to `INTENT_SPEC.md`, since the resulting Claim is User-Provided from the 
 
 ## Phase 6 — Current Input Must Win
 
-Deterministic precedence, in all cases: the current run's own authoritative input wins; a
-contradicted memory is marked stale-for-this-run, never silently overridden into applying anyway,
-and never silently discarded without a trace either.
+Deterministic precedence, in all cases: the current run's own authoritative input wins. Production
+performs only Category-A (mechanical/lifecycle) admissibility checks (see "Separating Admissibility
+from Interpretation" in `MEMORY_CONTEXT.md`); detecting that a memory's content actually contradicts
+current-run meaning is a Category-B semantic judgment, and belongs exclusively to whichever consuming
+stage already owns that interpretation — never to `MemoryContext` production itself.
 
-| Current-run authority | vs. | Memory | Precedence | On contradiction |
+| Current-run authority | vs. | Memory | Precedence | Who detects/records the conflict |
 |---|---|---|---|---|
-| Current `UserIdea` | vs. | Historical preference | Current wins, always | Memory entry marked stale-for-this-run in `MemoryContext`'s own record; **not** an `IntentSpec` Conflict (the memory was never elevated to Claim status, so `IntentSpec`'s Conflict machinery — which is defined over Claims — does not apply; see `MEMORY_CONTEXT.md`) |
+| Current `UserIdea` | vs. | Historical preference | Current wins, always | The **consuming stage** (Intent Parsing), in its own artifact's provenance — never `MemoryContext` production, and never recorded as an `IntentSpec` Conflict (the memory was never elevated to Claim status, so `IntentSpec`'s Conflict machinery, defined over Claims, does not apply; see `MEMORY_CONTEXT.md`) |
 | Current `UserIdea` | vs. | Past project decision | Current wins, always | Same as above |
-| Current project canonical state | vs. | Historical Brain summary | Current wins, always | Brain summary treated as advisory/candidate-recall only for this run |
-| Current authoritative Evidence | vs. | Cached/stale technology memory | Current wins, always | Cached memory may prompt re-verification (a research hint); never substitutes for the current Evidence entry |
+| Current project canonical state | vs. | Historical Brain summary | Current wins, always | Whichever stage relies on the canonical state; Brain summary treated as advisory/candidate-recall only |
+| Current authoritative Evidence | vs. | Cached/stale technology memory | Current wins, always | Research + Evidence Collection, at re-verification time; cached memory may prompt re-verification (a research hint), never substitutes for the current Evidence entry |
 
 Whether a contradiction should additionally trigger clarification depends on the contradicted
 item's own Decision Impact, computed exactly as `INTENT_SPEC.md` already computes it for any other
-item — memory contradiction is **not a new, independent blocking mechanism**. If the contradicted
-question would be HIGH/CRITICAL on its own merits, the contradiction is surfaced as context that may
-shape *what* clarifying question gets asked (Phase 5); if LOW/MEDIUM, it is silently marked stale
-with no clarification required, since the current input already authoritatively answered the
-question. What must never happen, at any impact level: silently applying memory content over
-current-run authoritative input.
+item — memory contradiction is **not a new, independent blocking mechanism**, and is never something
+production itself decides to escalate, since production never detects it in the first place. If the
+contradicted question would be HIGH/CRITICAL on its own merits, the consuming stage's detection may
+shape *what* clarifying question gets asked (Phase 5); if LOW/MEDIUM, the consuming stage simply does
+not use the entry, recorded in that stage's own provenance, with no clarification required, since
+current input already authoritatively answered the question. If the contradiction is instead known
+at production time — because an authoritative upstream artifact already-settled the judgment was
+supplied to production as an input (see "Separating Admissibility from Interpretation") — production
+may mechanically record that already-settled fact within `MemoryContext`'s own record; it may never
+form the judgment itself. What must never happen, at any impact level: silently applying memory
+content over current-run authoritative input, or mutating an already-frozen `MemoryContext` snapshot
+to reflect a contradiction discovered after production (see Phase 9).
 
-## Phase 7 — Procedural vs. Semantic Memory (first-class distinction)
+## Phase 7 — Influence Taxonomy: Process-Only, Discovery/Attention, Semantic Premise
 
-**Procedural influence**: changes *how* MIHVER performs its own internal work — review
-decomposition, verification rigor, retrieval query strategy, which invariant axes get tested, how
-many independent reviewers are dispatched, what gets double-checked. Never changes the *content* of
-any pipeline artifact.
+An earlier draft of this design used a two-way procedural/semantic split, and called both "review
+decomposition" and "expanding what Research Planning searches for" equally "procedural" — but the
+second can change `ResearchPlan`'s or `ArchitectureCandidate`'s actual search space and content,
+which the first never can. Collapsing these two, materially different effects into one label was
+itself a defect, corrected into three properties of a specific *use* of a memory entry, not fixed
+properties of the entry itself (full detail in `MEMORY_CONTEXT.md`'s "Influence Taxonomy"):
 
-**Semantic authority**: the capacity to become, or directly determine, part of a pipeline artifact's
-actual content — a Claim, a Requirement, a technology eligibility judgment, an architecture
-constraint.
+- **`PROCESS_ONLY`**: changes *how* MIHVER performs its own internal work — review decomposition,
+  verification rigor, which invariant axes get tested, how many independent reviewers are dispatched.
+  Has **zero** pipeline-artifact-content effect, in either direction, ever. `lesson` and `playbook`
+  types are `PROCESS_ONLY` under every use and structurally cannot cross into another category.
+- **`DISCOVERY_ATTENTION`**: proposes additional research questions, candidate technology
+  categories, or architecture shapes for a stage to *consider* — it may alter that stage's search
+  space and, downstream, the content of `ResearchPlan`, `TechnologyCandidateSet`, or
+  `ArchitectureCandidate` (which is exactly why it is not `PROCESS_ONLY`), but it never itself
+  establishes truth, eligibility, a Requirement, or a preference. It must be **additive** (never
+  narrowing or substituting for what would otherwise be checked) and **provenance-visible** (the
+  stage's own record of why it looked where it looked must cite the memory). `pattern`, `incident`,
+  and `reference` types are typically `DISCOVERY_ATTENTION` when used to shape where a stage looks.
+- **`SEMANTIC_PREMISE`**: the capacity to directly support a Claim, Requirement, or equivalent
+  pipeline-artifact content — reached only by separately clearing the full corresponding epistemic
+  or evidence gate (Phase 5's Historical User Memory Rule for Claims; Phase 8 for Evidence), never by
+  mere retrieval or by accumulating `DISCOVERY_ATTENTION` uses.
 
-These are properties of a specific *use*, not fixed properties of a memory record: the same
-`pattern` memory ("past architecture used a message queue for decoupling") may procedurally inform
-Research Planning's search strategy ("check message-queue options" — free, low-risk, no gate) while
-also being a *candidate* technology lead that must separately clear the full Evidence gate (Phase 8)
-before it may influence `RequirementSpec` or an `ArchitectureCandidate`'s actual content. `lesson`
-and `playbook` types are procedural-only by default classification (Phase 4's table) and structurally
-cannot cross into semantic authority under this design at all.
+The same `pattern` memory ("past architecture used a message queue for decoupling") illustrates the
+full chain: it may inform Research Planning's search strategy as `DISCOVERY_ATTENTION` — additive,
+provenance-visible, never narrowing what would otherwise be checked — while remaining only a
+candidate technology lead that must separately clear the full Evidence gate (Phase 8) and Technology
+Candidate Identification's eligibility screening before it may reach `SEMANTIC_PREMISE` standing in a
+`TechnologyCandidateSet` or `ArchitectureCandidate`'s actual content.
 
 **Honest worked example, per this task's explicit instruction:** the `cross-axis-invariants-
 require-explicit-review-contracts` lesson (`96500b29`), retrieved and applied during M0 Step 03A's
@@ -385,8 +455,8 @@ That is the exact shape every future engineering-lesson memory must be held to.
 
 | Path | Allowed? | Condition |
 |---|---|---|
-| memory → search/research hint | Allowed once Research Planning is separately authorized to consume `MemoryContext` (not yet performed) | Procedural use only, and only *additive* — informs Research Planning's own query strategy without narrowing or skipping requirement-derived coverage; never appears in `RequirementSpec`/`ArchitectureCandidate` content directly. |
-| memory → candidate evidence requiring freshness/source verification | Allowed, gated | Hands Research + Evidence Collection a lead to independently re-source, re-date, and re-confidence per Principle 5 — the cached memory is never itself the citation. |
+| memory → search/research hint (`DISCOVERY_ATTENTION`) | Allowed once Research Planning is separately authorized to consume `MemoryContext` (not yet performed) | Only *additive* — informs Research Planning's own query strategy without narrowing or skipping requirement-derived coverage; never appears in `RequirementSpec`/`ArchitectureCandidate` content directly. |
+| memory → candidate evidence requiring freshness/source verification (`DISCOVERY_ATTENTION`, en route to `SEMANTIC_PREMISE`) | Allowed, gated | Hands Research + Evidence Collection a lead to independently re-source, re-version, re-date, and re-confidence per Principle 5 — the cached memory is never itself the citation. |
 | memory → direct `EvidenceBundle` entry | **Never allowed** | A cached "Framework X supports feature Y" cannot supply a *current* verification date, and Principle 5 requires one. Re-verification, not memory recall, is what produces a valid entry. |
 
 This preserves Principle 2 (no material recommendation on assertion alone — a remembered assertion
@@ -398,45 +468,71 @@ cannot make current by being remembered confidently).
 A past `ArchitectureDecision` must remain reconstructable (Principle 11). Brain's own vault is
 mutable — records get superseded, reindexed, potentially edited — so **the raw Brain index is not
 sufficient to reproduce a past run's memory context; only a frozen `MemoryContext` snapshot is.**
-Conceptually (no JSON fields chosen here — deferred per `M0_SCOPE.md`'s own field-design deferral
-pattern), a production step must preserve:
+Two genuinely different kinds of fact are involved, and they must not be conflated into one mutable
+record: facts knowable **at production time** belong to the frozen snapshot itself; facts only
+knowable **later, at or after consumption** belong to the *consuming artifact's own* provenance,
+never written back into, or used to mutate, the frozen snapshot (see `MEMORY_CONTEXT.md`'s
+"Reproducibility" for the full split).
 
-- which memories were retrieved (stable Brain memory IDs);
-- each memory's canonical content/version/hash-equivalent identity (e.g. Brain's own `updated`
-  timestamp plus a content digest, or equivalent) — so a later re-run against a changed vault can
-  still show exactly what was seen;
-- retrieval time/snapshot (when `MemoryContext` was produced, distinct from when the memory itself
-  was created/updated in Brain);
-- the retrieval query and its purpose (what was searched for, and why);
+Conceptually (no JSON fields chosen here — deferred per `M0_SCOPE.md`'s own field-design deferral
+pattern), **preserved in the frozen `MemoryContext` snapshot itself, fixed at production time:**
+
+- the identities this `MemoryContext` is bound to (`RunContext`-or-absence, consuming stage,
+  retrieval purpose, upstream artifact version — see "MemoryContext Lifecycle and Invalidation" in
+  `MEMORY_CONTEXT.md`);
+- which memories were retrieved (stable Brain memory IDs), and an explicit retrieval-outcome
+  discriminator (admitted, successfully-empty, or retrieval-unavailable — three distinct facts);
+- each memory's own content, retained as an actual copy at production time — not merely a hash or
+  pointer into Brain's mutable vault — plus its canonical version/identity;
+- retrieval time/snapshot, distinct from the memory's own `created`/`updated` timestamps;
+- the retrieval query and its purpose;
 - each memory's Brain-recorded scope and provenance (`source`/`author`);
 - the authority classification assigned at production (Phase 4) — not re-derivable from Brain alone;
 - the freshness/temporal-standing judgment made at production time (distinct from Brain's own
-  `status`);
-- why it was admitted (the retrieval rationale);
-- which stage was authorized to use it;
+  `status`) — a mechanical, age/lifecycle-based fact, never a judgment that the underlying claim is
+  still true (`MEMORY_CONTEXT.md`'s M-05);
+- why it was admitted or excluded (the retrieval rationale, for both outcomes);
+- which stage was authorized to use it.
+
+**Preserved separately, in whichever consuming artifact's own provenance actually uses the entry, not
+in the frozen snapshot:**
+
 - **whether it actually influenced output** — a post-hoc fact, not knowable at retrieval time,
   essential to Explainability (Principle 10) and to honestly distinguishing "retrieved but unused"
-  from "retrieved and load-bearing," the same distinction Phase 7's worked example depends on.
+  from "retrieved and load-bearing," the same distinction Phase 7's worked example depends on;
+- whether a later-discovered contradiction marks the entry stale-for-this-run (Phase 6) — recorded in
+  the contradicting artifact's own provenance, never by editing the frozen `MemoryContext` snapshot.
 
 ## Phase 11 — Foundation Impact Analysis
 
 No frozen document is modified in this task. Required future changes, classified:
 
-- **`M0_SCOPE.md` stage input declarations — `SEMANTIC_AMENDMENT_REQUIRED`.** No stage currently
-  declares `MemoryContext` (or any memory artifact) as an input (Phase 1, item 8; Principle 3). Any
-  stage this design would authorize to consume `MemoryContext` requires its own, separate
-  `M0_SCOPE.md` entry amendment to add it to that stage's declared `Input:` list — this is a real
-  amendment to a frozen document, not a clarification of existing wording, and is not performed by
-  this task. **Corrected on independent review:** an earlier draft of this ADR named only two
-  "plausible" candidate stages (Intent Parsing, Research Planning), but `MEMORY_CONTEXT_CASES.md`'s
-  own worked cases (7, 8, 20) describe Architecture Synthesis making comparable procedural use of
-  memory for architecture-*shape* reasoning (distinct from named-technology discovery, which remains
-  Technology Candidate Identification's gate) — meaning Architecture Synthesis is at minimum a third
-  stage requiring its own amendment, undercounted in the original list. This ADR does not attempt to
-  enumerate every stage that might eventually want `MemoryContext`; it corrects the earlier
-  undercount to make clear the list was illustrative, not exhaustive, and that each stage's amendment
-  must be separately, explicitly authorized — no stage is added to that list by this correction
-  itself.
+- **`M0_SCOPE.md` — `SEMANTIC_AMENDMENT_REQUIRED`, broader than originally scoped.** An earlier draft
+  of this ADR framed the required `M0_SCOPE.md` amendment as narrowly as "add `MemoryContext` to a
+  stage's declared `Input:` list." On independent review this undercounts what is actually required,
+  in three distinct ways:
+  1. **A non-memory scope anchor must be introduced.** M0's current milestone input is declared as
+     only `UserIdea` (`M0_SCOPE.md`'s own "Milestone Input and Output"). This design's
+     `RunContext` — the current run's project-identity anchor, established outside Brain and outside
+     the pipeline's own artifact chain (see `MEMORY_CONTEXT.md`'s "Current-Run Scope Anchor") — has
+     no home in the current foundation at all. The amendment must introduce this concept (name
+     illustrative, not fixed here) as something the milestone or its stages may consult, not merely
+     add a new artifact name to an existing stage's input list.
+  2. **The `MemoryContext` producer boundary needs its own documented contract, not just a
+     consumer-side input declaration.** Per this ADR's "MemoryContext Producer: Role and Authority,"
+     production is a cross-cutting compiler boundary invoked by multiple stages, not a linear
+     pipeline stage — `M0_SCOPE.md`'s existing stage-table format (one row per linear stage) does not
+     naturally accommodate it. The amendment must define this boundary's own semantic role (inputs,
+     output, allowed/not-allowed decisions) somewhere in the foundation, the way `M0_SCOPE.md`
+     already documents each pipeline stage — not merely note, on the consuming stage's own row, that
+     `MemoryContext` is now an accepted input.
+  3. **Each consuming stage's own `Input:` list amendment remains required, and remains
+     stage-specific** — Intent Parsing, Research Planning, and Architecture Synthesis (per
+     `MEMORY_CONTEXT_CASES.md`'s Cases 7, 8, 20 — corrected during review from an earlier draft that
+     named only the first two as "plausible") are named as candidates, not an exhaustive list; each
+     stage's own amendment must be separately, explicitly authorized.
+  None of this is performed by this task — it is named here precisely so a future amendment task
+  does not under-scope itself the way this ADR's own earlier draft did.
 - **`PRINCIPLES.md` — `NO_CHANGE`.** Every principle this design leans on (2, 3, 5, 6, 7, 10, 11, 12)
   already supports the chosen model without modification; this ADR applies them to a new subsystem,
   it does not extend or reinterpret any of them.
@@ -490,15 +586,16 @@ in [MEMORY_CONTEXT_CASES](../examples/MEMORY_CONTEXT_CASES.md).
 
 ## Rationale
 
-- **Extends, rather than reinvents, the compiler-IR pattern (`ADR-0001`).** `MemoryContext` is a
-  bounded IR like `RequirementSpec` or `ArchitectureCandidate` — produced once, consumed by
-  declared stages, never a live conversational surface.
+- **Extends, rather than reinvents, the compiler-IR pattern (`ADR-0001`).** Each `MemoryContext` is a
+  bounded, immutable IR like `RequirementSpec` or `ArchitectureCandidate` — never a live conversational
+  surface — though produced repeatedly, once per authorized invocation, by a cross-cutting boundary
+  rather than once by a single linear stage (Phase 3, Model C).
 - **Extends ADR-0002's origin discipline instead of adding a parallel one.** Historical memory, when
   it does become an `IntentSpec` Claim at all, is folded into the *Inferred* origin Claims already
   use — never a fourth, unprincipled origin category, and never Assumed: Assumption Policy restricts
   Assumptions to narrowly interpretive gaps, never operational defaults, and a historical preference
   is exactly the latter, not the former (see "Historical User Memory Rule" in `MEMORY_CONTEXT.md`).
-- **Makes the procedural/semantic distinction (Phase 7) load-bearing, not incidental** — it is what
+- **Makes the three-tier Influence Taxonomy (Phase 7) load-bearing, not incidental** — it is what
   lets MIHVER benefit from engineering-lesson memory (as this very session already has) without any
   risk of that benefit leaking into a user's actual Requirements.
 - **Names its own cost honestly.** Model C is the most complex option and requires a real,
@@ -510,11 +607,14 @@ in [MEMORY_CONTEXT_CASES](../examples/MEMORY_CONTEXT_CASES.md).
 - No stage may consume `MemoryContext` until `M0_SCOPE.md` is amended for that specific stage; this
   ADR's Status stays Proposed until then.
 - Every future memory-consuming stage must additionally state, in its own future contract work,
-  which authority classes it is permitted to use for which purpose (procedural vs. semantic) —
-  `MemoryContext`'s existence does not itself grant blanket permission.
-- `MemoryContext` production becomes a new, disciplined boundary requiring its own future rigor
-  (query construction, scope verification, supersession resolution, freshness judgment) — deferred
-  design work, not designed here.
+  which authority classes it is permitted to use for which of the three Influence Taxonomy tiers
+  (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`, Phase 7) — `MemoryContext`'s existence does
+  not itself grant blanket permission.
+- `MemoryContext` production becomes a new, disciplined boundary. Its authority boundaries are
+  designed here (mechanical scope admissibility against `RunContext`, age/lifecycle-based freshness
+  flagging, admissibility-vs-interpretation separation — see "MemoryContext Producer: Role and
+  Authority" in `MEMORY_CONTEXT.md`); only its machine-readable schema and runtime query-construction
+  mechanics remain deferred design work.
 - Brain's own evolution (including any future SB-02 hybrid-retrieval capability) can proceed
   independently of MIHVER's pipeline contracts, as long as it continues to produce records
   `MemoryContext` production can classify under Phase 4's model — this is exactly Principle 12
@@ -563,9 +663,13 @@ specific to this design, not merely because Model C was suggested by the task.
   sufficient) — this design does not specify which of those, if any, memory may influence versus
   which must remain fully independent of it. Not decided here — deferred to the `M0_SCOPE.md`
   amendment task, which must specify this per-stage, per-decision granularity explicitly rather than
-  granting a stage blanket "procedural use."
-- How should `MemoryContext` production itself be triggered (per-run, per-clarification-cycle, on
-  demand)? Deferred as an implementation concern, per this task's explicit scope.
+  granting a stage a blanket `DISCOVERY_ATTENTION` allowance.
+- Within each authorized stage/purpose/upstream-version binding (the settled cardinality — production
+  is invoked repeatedly, once per authorized retrieval, never once per run as a singular artifact; see
+  "MemoryContext Producer: Role and Authority" in `MEMORY_CONTEXT.md`), exactly when should a given
+  invocation be scheduled or repeated (e.g. once per clarification cycle, or freshly on every
+  consuming-stage entry)? Deferred as an implementation/scheduling concern, per this task's explicit
+  scope — the cardinality itself is not open, only the scheduling mechanics are.
 - Should Brain ever gain a dedicated memory type or field for "historical user statement," rather
   than relying on the `decision`-type convention this design recommends? Deferred — would require a
   `mihver-brain` change, explicitly out of scope for this task.
