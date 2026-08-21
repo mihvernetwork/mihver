@@ -219,10 +219,22 @@ structural commitments, detailed in full in
   Allowing Requirement Derivation to draw its own technical-implication inferences (Section
   "Requirement-Level Inference" in `REQUIREMENT_SPEC.md`) is useful but risks becoming a backdoor for
   reintroducing intent-level interpretation under the label "technical implication," if an
-  implementation doesn't police the boundary carefully. Mitigation: `REQUIREMENT_SPEC.md` states the
-  boundary explicitly and requires the inference's premise and reasoning to be stated, mirroring the
-  same discipline `INTENT_SPEC.md` already imposes on Intent Parsing inferences — but this ADR does
-  not, and cannot, guarantee a real implementation draws that line correctly every time.
+  implementation doesn't police the boundary carefully. A particularly easy-to-miss species of this
+  risk is **unstated actor or responsibility assignment**: an inference or a one-Claim-to-many split
+  that silently assigns a duty (detecting an event, supplying data, triggering a condition) to *this*
+  system when the Claim's own wording never named the responsible actor and an external system, a
+  different component, or a human could equally have been the source — the "email me whenever
+  deployment fails" → "the system SHOULD detect deployment failures" failure mode
+  `REQUIREMENT_SPEC.md`'s "Requirement Cardinality and Granularity" and Case 12 in
+  `REQUIREMENT_CASES.md` both now name explicitly. The "Requirement-Level Inference" operational test
+  (holds under every materially plausible reading) already covers this in principle — an inference
+  assigning detection duty to this system does not hold under the external-source reading — but an
+  implementation that fails to treat alternative actor allocations as "materially plausible readings"
+  could still miss it in practice; naming the pattern explicitly here is deliberate hardening against
+  that omission, not evidence the operational test has a semantic gap. Mitigation: `REQUIREMENT_SPEC.md`
+  states the boundary explicitly and requires the inference's premise and reasoning to be stated,
+  mirroring the same discipline `INTENT_SPEC.md` already imposes on Intent Parsing inferences — but
+  this ADR does not, and cannot, guarantee a real implementation draws that line correctly every time.
   Classification-boundary risk of this kind was already acknowledged as inherent to the analogous
   Inference/Assumption boundary in `ADR-0002`'s own Risks section; this is the same risk recurring one
   stage later.
@@ -233,12 +245,18 @@ structural commitments, detailed in full in
   Derivation output; the defect would already exist upstream. This ADR does not introduce new
   exposure here; it inherits `ADR-0002`'s existing classification-boundary risk rather than adding to
   it.
-- **Complete/Partial calibration risk.** Deciding which surviving items make a `RequirementSpec`
-  Partial versus which are minor enough to leave as carried-forward Unknowns on an otherwise Complete
-  version is a judgment call, the same kind of coarse, judgment-based calibration `ADR-0002`'s Risks
-  section already named for Decision Impact. An implementation that systematically over- or
-  under-rates what counts as "blocking" could produce either needlessly fragmented Partial outputs or
-  outputs that quietly compile through gaps that should have been flagged.
+- **Complete/Partial calibration risk.** This calibration judgment applies only *among* Unknowns that
+  already pass R-19's fillability test and R-21's grounded-domain test — deciding whether one such
+  qualifying Unknown is minor enough to leave carried-forward on an otherwise Complete Requirement, or
+  significant enough that Requirement Derivation should fill it instead, is a judgment call, the same
+  kind of coarse, judgment-based calibration `ADR-0002`'s Risks section already named for Decision
+  Impact. It is emphatically **not** a judgment call for a surviving Ambiguity or Conflict, or for an
+  Unknown whose reading domain isn't `IntentSpec`-grounded — those are Partial unconditionally, with no
+  calibration discretion at all (R-21 conditions 1 and 2). An implementation that systematically over-
+  or under-rates what counts as "blocking" *within the qualifying-Unknown class* could produce either
+  needlessly fragmented Partial outputs or outputs that quietly compile through gaps that should have
+  been flagged; it could not legitimately extend that same discretion to an Ambiguity, Conflict, or an
+  ungrounded Unknown without violating R-21 outright.
 
 ## Open Questions
 

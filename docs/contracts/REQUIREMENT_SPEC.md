@@ -178,8 +178,17 @@ Both cardinalities are valid, and neither is fixed or assumed:
   make sense as constraints *on* the capability they scope. A combined Requirement's provenance lists
   every contributing Claim, not just the strongest one.
 - **One Claim may support several distinct Requirements**, when the Claim mechanically entails more
-  than one independently-testable consequence — e.g. a notification preference that entails both a
-  detection requirement and a delivery requirement. Splitting is legitimate only when each resulting
+  than one independently-testable consequence — e.g. "log every user action and let me search those
+  logs afterward" entails both a logging requirement and a search requirement, because the Claim's own
+  wording directly and textually names both actions as things *this* system does (see Case 12 in
+  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md)). A weaker example — e.g. a notification
+  preference alone entailing both a "detect the triggering event" requirement and a "send the
+  notification" requirement — is *not* automatically legitimate this way: unless the Claim's own
+  wording names the detecting system as unambiguously *this* system (rather than leaving it open
+  whether an external system, platform webhook, or human supplies the event), assigning a detection
+  requirement is assigning unstated architectural responsibility, not compiling what the Claim actually
+  entails — see Case 12's own contrast with its rejected earlier draft for the worked failure mode this
+  bullet exists to avoid. Splitting is legitimate only when each resulting
   Requirement expresses a genuinely distinct, non-redundant consequence the Claim's own content
   entails; it is not legitimate merely because a plausible-sounding second Requirement could be
   imagined. If the split itself depends on resolving what an ambiguous phrase in the Claim covers —
@@ -370,10 +379,15 @@ preserved through `IntentSpec`, only to be flattened or logically strengthened a
 information loss `INTENT_SPEC.md` prevented at the interpretation stage would simply happen one
 stage later instead, defeating the purpose of having prevented it at all.
 
-Where the condition's own trigger is itself unresolved (e.g. a surviving Ambiguity or Unknown about
-what "can't support the workload" means quantitatively), that unresolved trigger is a LOW/MEDIUM
-Open Item carried forward exactly as described below — it does not block deriving the conditional
-Requirement itself, only the eventual evaluation of when the condition fires.
+Where the condition's own trigger is itself unresolved — a surviving Ambiguity about what "can't
+support the workload" means quantitatively, or an Unknown — that unresolved trigger is a LOW/MEDIUM
+Open Item carried forward exactly as described below. This does not block deriving the conditional
+Requirement's *text* (the conditional structure itself is still recorded). It does block the
+Requirement's own **Completeness**, per R-21: a Requirement whose satisfaction cannot be evaluated for
+a given candidate without first resolving the trigger is not independently Complete, whether the
+trigger is an Ambiguity (never eligible for R-21's INDETERMINATE branch, per condition 1) or an
+Unknown lacking a closed, `IntentSpec`-grounded reading domain (condition 2). Derivability and
+Completeness are two different questions; this section fixes only the former.
 
 ## LOW/MEDIUM Open Items and Conflicts That Survive Into This Stage
 
@@ -409,8 +423,11 @@ this is the single most load-bearing distinction in this contract, directly exte
   internal parameters under R-19; others (a competitor list, which defines what the user's stated
   goal actually targets) turn out, on inspection, to be intent-scope questions despite the shared
   label — see Case 4 versus Case 10 in
-  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md), which apply R-19 to opposite outcomes, and
-  Case 4's own reasoning for why a boundary-straddling candidate doesn't change that conclusion.
+  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md), which apply R-19 to opposite outcomes: R-19's
+  fillability conclusion (may Requirement Derivation fill this Unknown at all) is independent of R-21's
+  separate testability question (is a carried-forward-unresolved version of it still Complete) — Case
+  4's own reasoning shows both a fillable Unknown and a testability-blocked carried-forward branch can
+  coexist for the same Unknown, which is not a contradiction.
   Whether a named technology's negotiability is resolved is a canonical example of the *forbidden*
   kind under R-19 as well: resolving it directly decides the stated constraint's **exclusivity** —
   whether a substitute may satisfy it, or only the named technology itself may — which is a
@@ -548,13 +565,16 @@ eligible):
   invent the test itself rather than merely apply one. Both make the affected area Partial, not
   Complete, even though only (a) involves an Ambiguity/Conflict in the formal sense — (b) can be
   triggered by an Unknown, or by a Claim whose own force never resolved (R-20). A Complete
-  `RequirementSpec` may still carry forward unresolved LOW/MEDIUM Unknowns that a fully-specified
-  satisfaction procedure already routes to INDETERMINATE (e.g. Case 4's cost-category Unknown, where
-  the procedure itself — not an appeal to how many candidates would be affected — is what determines
-  which candidates land on INDETERMINATE) — that routing does not block testability, because the
-  procedure itself is still complete and content-derived; "Complete" describes the absence of *both*
-  kinds of blockage, not the absence of every open question, and never depends on how many candidates
-  a surviving Unknown actually affects.
+  `RequirementSpec` may still carry forward an unresolved LOW/MEDIUM Unknown that a fully-specified
+  satisfaction procedure already routes to INDETERMINATE — but only where that Unknown's own admissible
+  reading domain is itself explicit, closed, and grounded in the consumed `IntentSpec`'s recorded
+  content, per R-21's two conditions; an Unknown whose readings Requirement Derivation would have to
+  invent or partition itself does not qualify, and neither does an Ambiguity or Conflict under any
+  circumstance (R-21 condition 1) — both remain testability blockage, not a legitimate INDETERMINATE
+  routing. Where the routing is legitimate, it does not block testability, because the procedure itself
+  is still complete and content-derived; "Complete" describes the absence of *both* kinds of blockage,
+  not the absence of every open question, and never depends on how many candidates a surviving Unknown
+  actually affects.
 - **Partial.** At least one Requirement that could otherwise be derived instead remains explicitly
   unresolved — because it depends on a surviving Ambiguity or Conflict Requirement Derivation has no
   authority to resolve, because a value it materially depends on for testability is wholly unresolved
@@ -754,7 +774,16 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
   the boundary of a stated constraint itself. Labeling a value "technical," "operational," or
   "accounting" is not sufficient by itself — the test is whether a materially different choice would
   change what the requirement actually covers or requires, not what vocabulary describes the value.
-  An Unknown that fails this test must remain unresolved and carried forward, exactly as an Ambiguity
+  **"Would change what the requirement covers" does not mean "some candidate's pass/fail verdict could
+  change"** — nearly any genuine measurement-detail fill differentiates some candidates, by definition
+  of being a real parameter, so that alone cannot be the test without making this fillable branch
+  vacuous. The operative question is narrower: does the fill change what the Requirement itself
+  *asserts* — its stated threshold, its target, its actor, its capability — or only how compliance
+  with an already-fixed assertion gets *computed*. A fill that leaves the stated threshold or target
+  unchanged and only settles how the compared quantity is measured is fillable; a fill that would
+  change the threshold, target, actor, or capability itself is not (see Case 4 versus Case 10 in
+  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md) for this exact contrast worked through). An
+  Unknown that fails this test must remain unresolved and carried forward, exactly as an Ambiguity
   or Conflict would be, regardless of its Unknown/Ambiguity classification in the source `IntentSpec`.
 - **R-20** A Claim that asserts binding or constraining content — the user is stating a method,
   requirement, or means, not merely describing a fact — but whose own force does not resolve to one
@@ -780,34 +809,72 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
   The satisfaction procedure a Complete Requirement supplies or authorizes returns exactly one of
   three outcomes for any given candidate: **SATISFIED**, **NOT_SATISFIED**, or **INDETERMINATE**.
   INDETERMINATE is a legitimate, first-class outcome of a Complete Requirement's own procedure — not a
-  symptom of Partial status by itself — for a candidate whose classification depends on an
-  Unknown, Ambiguity, or Conflict the Requirement's provenance already, explicitly carries forward
-  (e.g. Case 4's cost-category boundary). But the procedure must be **faithful and maximally
-  determinate**, not merely well-typed: a procedure that returns one of the three labels is not, by
-  itself, sufficient — for a candidate where every recorded reading of the carried-forward Unknown,
-  Ambiguity, or Conflict agrees on the same verdict, the procedure **must** return that verdict
-  (SATISFIED or NOT_SATISFIED), never INDETERMINATE; INDETERMINATE may be returned only for a
-  candidate where the readings genuinely disagree — i.e. where the open item's eventual resolution
-  would actually change *that specific candidate's* verdict. A procedure that returns INDETERMINATE
-  regardless of whether the readings agree (e.g. "always INDETERMINATE, because the cost-category
-  Unknown remains open") is not a satisfaction procedure under this invariant at all — it never applies
-  the Requirement's own recorded content, and does not make the Requirement Complete. This
-  faithfulness test is itself intrinsic and per-candidate, not a population claim: it asks whether the
-  procedure's output for *this* candidate matches what *this* candidate's own recorded facts, read
-  under every recorded reading, actually say — never how many other candidates would be affected. What
-  makes a Requirement genuinely Complete is that the *procedure itself*, including exactly which
-  recorded open item routes a candidate to INDETERMINATE and why, and satisfying the faithfulness test
-  above, is fully specified by the Requirement's own recorded content — so an evaluator never has to
-  invent that routing rule, only apply it. A Requirement is **Partial** (testability-blocked) when no
-  such faithful procedure — not even one with an INDETERMINATE branch — can be written down from its
-  own recorded content without the evaluator supplying its own metric, comparator, threshold, or scope
-  from nothing (e.g. "fast," or "minimize exposure generally," with no stated number, benchmark, or
-  comparator anywhere to route *any* candidate, in *any* branch — not even to INDETERMINATE, since
-  there is no recorded reading for INDETERMINATE to be conditioned on). The test is binary and
-  content-only: either the Requirement's own recorded content is sufficient to fully specify a
-  faithful SATISFIED/NOT_SATISFIED/INDETERMINATE procedure (Complete — see Case 4's own worked
-  procedure for exactly this shape), or it is not (Partial) — never a question of how many real-world
-  candidates would fall into which branch.
+  symptom of Partial status by itself — but **only under two conditions held simultaneously, both
+  required, neither sufficient alone**:
+
+  1. **The open item routing a candidate to INDETERMINATE must be a surviving Unknown — never an
+     Ambiguity or Conflict.** A surviving Ambiguity or Conflict touching a Requirement's content
+     already has its own, separate, absolute rule (R-08, and "LOW/MEDIUM Open Items and Conflicts
+     That Survive Into This Stage" above): Requirement Derivation has no authority to resolve it, at
+     any impact level, and any Requirement whose content genuinely depends on it must remain
+     unresolved, making that area Partial — full stop, with no exception for routing it through an
+     otherwise-complete procedure's INDETERMINATE branch instead. Treating an Ambiguity or Conflict as
+     merely another INDETERMINATE-triggering condition would let R-21 relabel a forbidden interpretive
+     resolution as a permitted testability nuance — it would not actually resolve the Ambiguity or
+     Conflict, but it would launder an interpretively-blocked Requirement into looking Complete, which
+     is exactly the outcome "LOW/MEDIUM Open Items and Conflicts" forbids. Only a surviving **Unknown**
+     — the *kind* of open item Requirement Derivation is structurally permitted to touch at all, per
+     R-19 — may ever route a candidate to INDETERMINATE.
+  2. **The Unknown's admissible set of readings must itself be explicit, closed, and grounded in the
+     consumed `IntentSpec`'s own recorded content — never invented or partitioned by Requirement
+     Derivation to make a procedure work.** An Unknown is, by `INTENT_SPEC.md`'s own definition, a
+     genuine gap — nothing in the wording addresses it — which means an Unknown does not, in general,
+     arrive with a recorded set of candidate readings the way an Ambiguity does (an Ambiguity's
+     multiple readings come from specific wording that generates them). Constructing a closed
+     two-or-more-reading domain for an Unknown that was never actually recorded that way is itself an
+     act of inventing scope — exactly what this invariant's first sentence already forbids. This
+     branch is therefore legitimately available only for the narrow case where the `IntentSpec`
+     itself — not Requirement Derivation's own judgment — already closes the domain (e.g. the
+     `IntentSpec` records the gap as being among a small, explicitly enumerated set of named
+     options). An open-ended Unknown ("what's included?", with no enumerated candidate set recorded
+     anywhere) does not qualify, however natural a two-way split might seem to Requirement Derivation
+     in hindsight.
+
+  Even where both conditions hold, the procedure must still be **faithful and maximally determinate**,
+  not merely well-typed: a procedure that returns one of the three labels is not, by itself,
+  sufficient — for a candidate where every recorded reading of the grounded Unknown agrees on the same
+  verdict, the procedure **must** return that verdict (SATISFIED or NOT_SATISFIED), never
+  INDETERMINATE; INDETERMINATE may be returned only for a candidate where the readings genuinely
+  disagree — i.e. where the Unknown's eventual resolution would actually change *that specific
+  candidate's* verdict. A procedure that returns INDETERMINATE regardless of whether the readings
+  agree (e.g. "always INDETERMINATE, because the Unknown remains open") is not a satisfaction
+  procedure under this invariant at all — it never applies the Requirement's own recorded content, and
+  does not make the Requirement Complete. This faithfulness test is itself intrinsic and per-candidate,
+  not a population claim: it asks whether the procedure's output for *this* candidate matches what
+  *this* candidate's own recorded facts, read under every recorded reading, actually say — never how
+  many other candidates would be affected. What makes a Requirement genuinely Complete is that the
+  *procedure itself*, including exactly which recorded, grounded Unknown routes a candidate to
+  INDETERMINATE and why, and satisfying the faithfulness test above, is fully specified by the
+  Requirement's own recorded content — so an evaluator never has to invent that routing rule, only
+  apply it. Because a genuinely closed, `IntentSpec`-grounded reading domain for an Unknown is
+  unusual (most surviving Unknowns are open-ended gaps, not enumerated option sets), a legitimate
+  three-valued Complete Requirement is expected to be the rarer case, not the default fallback for
+  every unresolved-but-metric-bearing Requirement — see Case 4 in
+  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md) for a worked example of exactly this boundary:
+  its cost-category Unknown does *not* meet condition 2, and its carried-forward-unresolved branch is
+  Partial as a result, even though a $100/month threshold is recorded.
+
+  A Requirement is **Partial** (testability-blocked) when no such faithful, properly-grounded
+  procedure — not even one with an INDETERMINATE branch — can be written down from its own recorded
+  content: either because it supplies no metric, comparator, or procedure at all (e.g. "fast," or
+  "minimize exposure generally," with no stated number, benchmark, or comparator anywhere to route
+  *any* candidate, in *any* branch), or because its only route to a three-valued procedure would
+  require inventing a reading domain the `IntentSpec` never actually recorded (condition 2 above), or
+  because the open item blocking it is an Ambiguity or Conflict rather than an Unknown at all
+  (condition 1 above). The test is binary and content-only: either the Requirement's own recorded
+  content is sufficient to fully specify a faithful, properly-grounded
+  SATISFIED/NOT_SATISFIED/INDETERMINATE procedure, or a plain two-valued one (Complete), or it is not
+  (Partial) — never a question of how many real-world candidates would fall into which branch.
 - **R-22** A Requirement-Derivation-level inference's strength is exactly the strength already
   established by the Requirement or Claim it derives from — never independently chosen, strengthened,
   or weakened — because the operational test governing such an inference already requires it to hold

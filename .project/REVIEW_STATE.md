@@ -15,90 +15,83 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-STEP-03A-FINAL-INTRINSIC-CONSISTENCY-FIX
+Task: M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX
 Branch: `m0/step-03a-requirement-contract`
 
-An external final review found three remaining issues in the M0 Step 03A draft. Claude fixed each at
-the source first, then dispatched three independent read-only Codex reviewers (A: eligibility ×
-force/R-20; B: completeness/testability intrinsicness × Case 4/R-21; C: force × negotiability ×
-cross-document consistency) to check the fixes — each found further real, residual defects in Claude's
-own same-task work, all independently re-verified by Claude against the actual text before being
-applied (not relayed uncritically, and not accepted by majority vote).
+External verification of head `3866304` found three residual issues. Claude fixed each at the source
+first, then dispatched three independent read-only Codex reviewers (A: Ambiguity/Conflict × R-21
+lifecycle consistency; B: Case 4 provenance/domain-of-Unknown consistency; C: cardinality examples ×
+unstated-responsibility leakage) to audit the fixes and the whole corpus for the same three patterns —
+each found further real, *deeper* instances of the same patterns in locations Claude's initial fixes
+hadn't reached, all independently re-verified by Claude against the actual text before being applied.
 
-**Issue 1 — Requirement eligibility contradicted R-20.** "What Qualifies as a Requirement" said a
-Claim was eligible to become a Requirement's basis if it carried resolved force **or** was "a
-directly-stated constraint whose absence of force does not remove its binding character" — directly
-contradicting R-20 (a binding/constraining Claim with unresolved force must become an unresolved
-constraint-candidate, Partial, never an assigned strength). Rewritten to an explicit three-way split:
-resolved force → may become a Requirement; genuinely force-absent/descriptive → no Requirement;
-constraining/binding content with unresolved force → unresolved constraint-candidate, Partial (R-20).
-**Reviewer A** found one more surviving instance of the same bug in the Information-Loss Rules bullet
-("a user-named technology survives as a stated constraint," stated unconditionally) — reworded to
-cover both branches instead of overclaiming the force-resolved one.
+**Issue 1 — R-21 let an Ambiguity/Conflict drive INDETERMINATE.** R-21 previously allowed a surviving
+Unknown, Ambiguity, *or* Conflict to legitimately route a candidate to a Complete Requirement's
+INDETERMINATE branch — contradicting R-08 and "LOW/MEDIUM Open Items and Conflicts That Survive Into
+This Stage," which give Requirement Derivation no authority over an Ambiguity/Conflict at any impact
+level: any Requirement whose content genuinely depends on one must remain unresolved, full stop.
+Rewritten with two explicit, jointly-required conditions: (1) the open item must be a surviving
+Unknown, never an Ambiguity or Conflict; (2) the Unknown's admissible reading domain must itself be
+explicit, closed, and grounded in the consumed `IntentSpec`'s own recorded content, never invented by
+Requirement Derivation. **Reviewer A** found the explicit fix hadn't propagated to several passages
+using *different vocabulary* for the same underlying bug: Cases 1, 2, and 9 each called an individual
+Requirement "Complete" ("Complete for that Requirement," "a Complete, firm Requirement," "existence and
+shape are Complete") while that Requirement's own satisfaction genuinely depended on an unresolved
+Ambiguity — functionally identical to letting the Ambiguity make it Complete, just not phrased as
+literal INDETERMINATE routing. Fixed: all three Requirements are now Partial at the individual level
+too, per R-21 condition 1 and the existing "must likewise remain unresolved" rule. Also fixed
+"Preservation of Conditions and Scope"'s trigger-Ambiguity paragraph (distinguishing derivability of
+the Requirement's *text* from its *Completeness*) and ADR-0003's Complete/Partial calibration-risk
+wording (which had implied Ambiguity/Conflict handling was a judgment call rather than unconditional).
 
-**Issue 2 — R-21 was not intrinsic/deterministic.** The prior R-21 defined Completeness using
-future-candidate-population phrases ("the overwhelming majority of candidates," "a narrow boundary
-zone," "essentially any candidate") — not decidable from the artifact's own semantics alone, at
-authoring time, before any candidate exists. Re-derived from the intrinsic principle and rebuilt
-around an explicit **SATISFIED / NOT_SATISFIED / INDETERMINATE** satisfaction-procedure model: a
-Requirement is Complete only if its own recorded content fully specifies a procedure mapping any one
-candidate, considered entirely on its own, to one of the three outcomes, with INDETERMINATE a
-legitimate first-class output for a candidate whose recorded readings genuinely disagree. Case 4 (the
-"$100/month" case) was re-derived under this principle rather than preserved by default, and kept
-Complete via an explicit worked three-valued procedure (based on two recorded cost-category readings).
-**Reviewer B** found two serious residual defects in this same-task rewrite:
-- The new R-21 was **gameable**: nothing required the procedure to be *faithful* — a trivial "always
-  INDETERMINATE, because the Unknown remains open" procedure technically satisfied the letter of the
-  rule (fixed-form, candidate-independent, cites a recorded open item, returns a permitted label).
-  Closed with an explicit faithfulness/maximal-determinacy requirement: the procedure must return
-  SATISFIED or NOT_SATISFIED whenever every recorded reading agrees for that candidate, and may only
-  return INDETERMINATE where the readings genuinely disagree for that specific candidate — itself an
-  intrinsic, per-candidate test, not a population claim, so it doesn't reintroduce the Issue-2 defect
-  while fixing it.
-- Case 4's worked procedure had a **strict-vs-inclusive threshold bug**: "under $100/month" is a
-  strict inequality, but the procedure used ≤ / > (making a candidate priced at exactly $100
-  SATISFIED, when it should be NOT_SATISFIED under a strict reading). Corrected to < / ≥, and
-  re-verified the corrected procedure is airtight (the three branches are exhaustive and mutually
-  exclusive, and INDETERMINATE is returned only where the two readings actually disagree).
-- Reviewer B also found four more stale instances of population-dependent completeness language
-  ("...for essentially every candidate") that survived in Cases 7b, 8, and 11's prohibition clauses —
-  reworded to intrinsic, per-candidate, two-valued procedure language (these needed no INDETERMINATE
-  branch, since none of them carry a recorded disputed reading).
+**Issue 2 — Case 4 invented an exhaustive reading domain.** Case 4 claimed its cost-category Unknown
+had exactly two recorded readings ("infrastructure/model usage only" vs. "all recurring costs"), and
+built a three-valued procedure on that invented domain. Frozen `INTENT_CASES.md` Case 6 records this
+Unknown only as an open-ended gap ("included cost categories," with several non-exhaustive illustrative
+possibilities), never a closed two-reading set. Re-derived (not preserved by default): the *filled*
+branch (Requirement Derivation supplies an explicit marked default) stays Complete via a plain
+two-valued test; the *carried-forward-unresolved* branch is now **Partial**, because no closed,
+`IntentSpec`-grounded domain exists to support a faithful three-valued procedure — inventing one is
+exactly the scope-invention R-21 forbids. **Reviewer B** then challenged whether Case 4's *filled*
+branch itself violates R-19 (does choosing a cost-category default narrow "the boundary of a stated
+constraint"?) — independently re-derived and kept fillable: the stated threshold ($100/month) is
+unchanged under any reading; only the measurement of the compared quantity differs, and "some
+candidate's verdict can flip" cannot be the R-19 test, since it would make every genuine
+measurement-detail fill non-fillable and render R-19's fillable branch vacuous. Strengthened both Case
+4's text and R-19 itself with this threshold-vs-measurement distinction. Reviewer B also found Case 14
+(superseded `IntentSpec`) silently ignored the same cost-scope Unknown that `INTENT_CASES.md` Case 20
+confirms persists unresolved into the v2 correction — fixed to mirror Case 4's now-established fork.
 
-**Issue 3 — Negotiability was coupled to normative strength.** "User-Selected Technology"'s closing
-paragraph implied that resolving a named technology's *negotiability* could, by itself, cause the
-Requirement's *strength* to be revisited — conflating two axes that must stay independent (force
-resolution/change → strength may change; negotiability resolution/change → only
-exclusivity/substitutability semantics may change). Fixed by rewriting the closing paragraph to state
-both directions explicitly. **Reviewer C** found three more surviving instances of the same
-force/negotiability conflation Claude's own initial fix had missed:
-- R-19's "Note on terminology" said resolving negotiability "directly decides whether a stated
-  constraint is binding" — reworded to say it decides **exclusivity**, never bindingness.
-- The identical phrase recurred inside "User-Selected Technology" itself ("binding to only this
-  option") — reworded to "exclusive to this option" / "substitutable."
-- ADR-0003's Decision item 3 repeated the same coupling in its parenthetical — reworded to name
-  exclusivity/substitutability as the distinct, additional question negotiability resolves.
-- Case 15 presented "negotiable" as a third force category alongside "obligation" and "preferred" (as
-  if force had three branches, not two-resolved-or-unresolved) — reworded to state force and
-  negotiability as two genuinely separate open questions, with an explicit note that a technology can,
-  in a different case, be obligatory yet substitutable, or preferred yet exclusive.
-
-All four now match the already-correct closing paragraph they had been inconsistent with.
+**Issue 3 — stale one-Claim-to-many example reintroduced unstated responsibility.** "Requirement
+Cardinality and Granularity" still used a generic "a notification preference that entails both a
+detection requirement and a delivery requirement" example — exactly the unstated-responsibility bug
+Case 12 was previously rewritten to avoid (detection could plausibly belong to an external system, not
+this one). Replaced with the current logging/search example from Case 12, plus explicit prose
+contrasting it with why the notification example doesn't automatically work the same way. **Reviewer
+C** confirmed this fix is sound and swept the entire corpus and ADR-0003 for the same pattern, finding
+no other case exhibits it; two borderline findings (Case 7a's Inference scope, Case 11's "surface
+indicators" mechanism choice) were independently re-derived and rejected as a different failure mode —
+testability/mechanism vagueness, already separately handled by R-21 — not the specific
+actor-misassignment pattern this audit targets, with that reasoning documented rather than silently
+dismissed. Added a hardening note to ADR-0003's Risks section explicitly naming unstated-actor
+assignment as a named species of the existing Requirement-Level-Inference-laundering risk, per
+Reviewer C's suggestion (a proportionate addition, not a required fix — Reviewer C found no
+contradiction, only an opportunity to make the pattern harder to reintroduce).
 
 `npm test`: 32/32 throughout, unaffected (no schema/validator/fixture file touched).
 
 **Final verdict: `APPROVED`** — not `REDESIGN` (no reviewer, across any round, found the model's basic
-shape unsound; the R-21 gaming loophole was a rigor gap in that rule's own definition, not evidence
-the three-valued model itself is wrong — closing it strengthened the same model rather than replacing
-it); not `APPROVE_WITH_REQUIRED_CHANGES` (every confirmed defect — including the ones these three
-reviewers found in Claude's own same-task fixes — was fixed and independently re-verified against the
-edited text before this verdict was reached, nothing left open pending a further round).
+shape unsound; every confirmed defect was the same three already-diagnosed patterns recurring in
+locations not yet swept, not a new structural problem); not `APPROVE_WITH_REQUIRED_CHANGES` (every
+confirmed defect — including the deeper, same-pattern instances the reviewers found beyond Claude's
+initial fixes — was fixed and independently re-verified against the edited text before this verdict
+was reached, nothing left open pending a further round).
 
 ## Required Changes
 
-None remaining — every confirmed defect from all three reviewers (including residual instances of
-Issues 1–3 that survived Claude's own first-pass fixes) was fixed and re-verified against the edited
-text (`npm test`: 32/32 throughout).
+None remaining — every confirmed defect from all three reviewers (including deeper instances of
+Issues 1–3 surviving Claude's own first-pass fixes) was fixed and re-verified against the edited text
+(`npm test`: 32/32 throughout).
 
 ## Fixes Applied
 
@@ -112,6 +105,28 @@ explicit instruction). Not to be merged by this task. `ADR-0003`'s Status remain
 task instruction — human review of the PR is the next gate.
 
 ## History
+
+- 2026-08-21 — `M0-STEP-03A-FINAL-INTRINSIC-CONSISTENCY-FIX` (PR #13, fourth review round): fixed
+  three issues an external final review found in head prior to `3866304`: (1) "What Qualifies as a
+  Requirement" contradicted R-20 by implying unresolved-force binding content could already become a
+  Requirement — rewritten to an explicit three-way split; (2) R-21 defined Complete/Partial via
+  future-candidate-population phrases ("overwhelming majority of candidates") instead of the artifact's
+  own semantics — rebuilt around a SATISFIED/NOT_SATISFIED/INDETERMINATE model, Case 4 re-derived
+  rather than preserved by default; (3) "User-Selected Technology" let resolving a named technology's
+  negotiability drift into revising its strength — fixed to keep force/strength and
+  negotiability/exclusivity independent. Three reviewers (A: eligibility × force/R-20; B: completeness
+  intrinsicness × Case 4/R-21; C: force × negotiability × cross-document consistency) then found
+  further residual instances of the same three bugs in Claude's own same-task fixes: a second R-20
+  contradiction in the Information-Loss Rules bullet (A); R-21 was gameable — nothing required the
+  procedure to be faithful, so a trivial "always INDETERMINATE" procedure technically satisfied it,
+  closed with a faithfulness/maximal-determinacy requirement (B); a strict-vs-inclusive threshold bug
+  in Case 4's worked procedure, "under $100" needs `<` not `≤` (B); four more stale population phrases
+  in Cases 7b/8/11 (B); three more force/negotiability conflations in R-19's terminology note, inside
+  "User-Selected Technology" itself, ADR-0003's Decision item 3, and Case 15 (C). `npm test`: 32/32.
+  Moved here from "Latest Review" now that those sections describe
+  `M0-STEP-03A-RESIDUAL-CROSS-CONTRACT-FIX` instead, per this file's branch/task scoping (all entries
+  for this branch share PR #13, since each was a continuation, not a new branch). — branch
+  `m0/step-03a-requirement-contract`
 
 - 2026-08-21 — `M0-STEP-03A-BRAIN-ASSISTED-FINAL-AUDIT` (PR #13, third review round): before this
   round, queried MIHVER Brain (`../mihver-brain`) for review-planning lessons and applied two

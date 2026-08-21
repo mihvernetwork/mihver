@@ -43,10 +43,17 @@ exists to test; inventing a specific approval mechanism (CI gate, two-person rul
 environment-scope Ambiguity is carried forward as its own unresolved item, referenced by this
 Requirement as a dependency, not silently folded into the Requirement's text.
 
-**Eligibility:** Partial — the approval-gate Requirement itself derives cleanly (Complete for that
-Requirement), but the environment-scope Ambiguity means the *coverage* of that Requirement (which
-environments) remains open, making the overall `RequirementSpec` version Partial rather than fully
-Complete.
+**Eligibility:** Partial — for both the individual Requirement and the overall `RequirementSpec`
+version, not just the version. The obligation itself is settled (MUST, from the Claim's own force) and
+the Requirement's text is legitimately derived, but per R-21 condition 1 the Requirement is not
+independently **Complete** either: a candidate that gates production deployments but not staging ones
+cannot be evaluated as satisfying or violating this Requirement without first resolving the
+environment-scope Ambiguity, and an Ambiguity can never legitimately drive an INDETERMINATE branch of
+an otherwise-Complete procedure (R-21 condition 1 — only a properly-grounded Unknown can). This
+Requirement therefore is not merely "Complete with an attached open item" the way Case 4's filled
+branch would be; its own satisfiability genuinely depends on the unresolved Ambiguity, so it remains
+Partial at both levels, exactly as "LOW/MEDIUM Open Items and Conflicts" requires for any Requirement
+whose content genuinely depends on which reading is correct.
 
 ---
 
@@ -71,8 +78,15 @@ entirely air-gapped") that the Claim's own wording doesn't support.
 **Provenance expectations:** Traces to the prohibition Claim; the residual boundary Ambiguity is
 carried forward, attached to this Requirement as an open scoping question, not resolved.
 
-**Eligibility:** Partial — the prohibition itself is a Complete, firm Requirement; its exact boundary
-remains open.
+**Eligibility:** Partial — for both the individual Requirement and the overall `RequirementSpec`
+version. The prohibition's force and strength are firm (MUST NOT, unconditionally), but per R-21
+condition 1 the Requirement is not independently Complete either: a candidate that transmits source
+code to network-attached storage the user personally controls cannot be evaluated as satisfying or
+violating this prohibition without first resolving the boundary Ambiguity, and an Ambiguity can never
+legitimately drive an INDETERMINATE branch of an otherwise-Complete procedure. This is a different
+situation from a fillable Unknown with a grounded domain (contrast Case 4's filled branch); the
+Requirement's own satisfiability genuinely depends on the unresolved Ambiguity, so it remains Partial
+at both levels.
 
 ---
 
@@ -110,69 +124,82 @@ though "strong" might tempt an implementation to treat it as effectively mandato
 
 **Prohibited transformations:** Mapping strong preference to MUST (the single most tempting and most
 explicitly forbidden transformation in this corpus — this is the case that most directly tests
-`REQUIREMENT_SPEC.md`'s R-05 invariant); silently deciding the cost-category scope instead of
-carrying the Unknown forward.
+`REQUIREMENT_SPEC.md`'s R-05 invariant); silently deciding the cost-category scope instead of either
+carrying the Unknown forward or explicitly marking a filled default; **constructing an exhaustive
+reading domain for the carried-forward Unknown that `IntentSpec` never actually recorded, merely to
+preserve a three-valued Complete classification** — the specific error an earlier draft of this case
+made, and the error R-21's condition 2 exists to forbid.
 
-**Provenance expectations:** Traces to the preference Claim; the cost-category Unknown is either
-filled with an explicit, marked working default (e.g. "infrastructure and model-usage costs only,
-Requirement-Derivation-introduced default, excluding one-time setup") or carried forward unresolved
-— both are valid per `REQUIREMENT_SPEC.md`; whichever is chosen must be visible in the Requirement's
-provenance, not silently assumed. Filling is legitimate here, unlike Case 10's competitor-identity
-Unknown, because cost-category scope selects an accounting parameter *within* an already-settled
-preference (per R-19's tightened test): no reading of it adds, removes, or narrows a user-facing
-capability, actor, or target — it only changes which dollar amounts count toward a ceiling the user
-has already stated. Contrast competitor identity, which changes the research capability's own target
-scope.
+**Provenance expectations:** Traces to the preference Claim. Per `INTENT_CASES.md` Case 6's own
+recorded semantics, the cost-category Unknown is genuinely **open-ended**, not a closed, exhaustive
+set of readings: the frozen source records it only as "included cost categories," with its Unsafe
+Assumptions bullet naming several open, non-exhaustive possibilities ("infrastructure only? model API
+usage? third-party licenses? MIHVER's own usage, if any?") as illustrations of what remains
+unaddressed — never as a recorded, bounded domain of candidate readings. Requirement Derivation may
+still legitimately **fill** this Unknown with an explicit, marked working default (e.g.,
+"infrastructure and model-usage costs only, Requirement-Derivation-introduced default, excluding
+third-party licenses and MIHVER's own usage") — per R-19's tightened test, cost-category scope selects
+an accounting parameter *within* an already-settled preference: no reading of it adds, removes, or
+narrows a user-facing capability, actor, or target, unlike Case 10's competitor-identity Unknown, which
+changes the research capability's own target scope and is never fillable.
 
-**A candidate-independent satisfaction procedure (per R-21):** if Requirement Derivation fills the
-cost-category Unknown with a marked default, the Requirement becomes an ordinary two-valued test
-(SATISFIED if the candidate's cost under that definition is strictly under $100/month, NOT_SATISFIED
-otherwise) and Completeness is immediate — no further argument is needed. The harder, more instructive
-case is when Requirement Derivation instead carries the Unknown forward unresolved: even then, the
-Requirement's own recorded content — "under $100/month" (a strict, not inclusive, threshold — $100.00
-exactly does not satisfy it under either reading), together with the carried-forward Unknown's own two
-recorded candidate readings ("infrastructure and model-usage costs only," and "all recurring costs") —
-already fully specifies a three-valued procedure, applicable to any one candidate considered entirely
-on its own, with no reference to any other candidate or to how many candidates would land in which
-branch. The procedure presumes the candidate under evaluation supplies the cost figures it needs (its
-own infrastructure/model-usage cost and its own total recurring cost); a candidate description that
-omits a figure the procedure requires is an evaluation-input completeness problem for the downstream
-evaluating stage to resolve, not a defect in this Requirement's own Completeness:
+A candid check against R-19's own "materially different choice" wording: a specific candidate's
+verdict genuinely can flip depending on which cost-category default is chosen (a candidate at $80
+infrastructure/model-usage plus $60 third-party licenses passes under a narrow default and fails under
+a wide one). That is not, by itself, evidence this Unknown touches "the boundary of a stated
+constraint" — the stated **threshold** ($100/month) is identical under every reading; only the
+**measurement** of the quantity compared against that unchanged threshold differs. If "some candidate's
+verdict can change" were the test, no Unknown could ever legitimately be filled under R-19, since
+filling in any genuine measurement parameter necessarily differentiates some candidates — that would
+make R-19's fillable branch vacuous, which cannot be the intended reading given R-19 explicitly
+recognizes such internal/measurement parameters as fillable. The correct test is narrower: does the
+fill change what the Requirement itself asserts (its threshold, its target, its actor, its capability)
+— unaffected here, since "$100/month" stays exactly as stated — or only how compliance with an
+already-fixed assertion is computed — which is what cost-category selection actually is. Contrast Case
+10 precisely on this line: filling competitor identity would change *who/what the capability studies*
+— the capability's own target — not merely how compliance with an unchanged number is measured.
 
-- Let `C_narrow` = the candidate's infrastructure-and-model-usage monthly cost (Reading 1).
-- Let `C_wide` = the candidate's total recurring monthly cost, including third-party licenses etc.
-  (Reading 2). `C_wide` is always ≥ `C_narrow`, since Reading 2's total is a superset of Reading 1's.
-- If `C_wide` < $100 → **SATISFIED** (both readings agree the candidate is strictly under budget).
-- If `C_narrow` ≥ $100 → **NOT_SATISFIED** (both readings agree the candidate is not under budget —
-  this correctly includes a candidate priced at exactly $100 under either reading, which is not
-  "under" $100 by either reading's own strict threshold).
-- Otherwise (`C_narrow` < $100 ≤ `C_wide`) → **INDETERMINATE** (the two recorded readings disagree;
-  *which* applies is exactly the carried-forward Unknown — not something this procedure, or the
-  evaluator, may pick on its own). This is the only branch where the readings actually disagree; the
-  first two branches are exactly where they agree, so the procedure is faithful and maximally
-  determinate per R-21 — it never returns INDETERMINATE for a candidate the recorded readings already
-  agree on.
+Filling and carrying-forward
+remain the two valid choices under "LOW/MEDIUM Open Items and Conflicts" — but, per R-21, they no
+longer lead to the same Eligibility outcome (see below); an earlier draft of this case incorrectly
+treated them as interchangeable.
 
-This procedure is derived entirely from the Requirement's own recorded content (the threshold plus
-the Unknown's own two recorded readings); it requires the evaluator to invent nothing, and it is
-defined once, applied identically to every candidate one at a time. A candidate costing $80/month in
-infrastructure/model usage plus $60/month in third-party licenses (`C_narrow` = $80, `C_wide` = $140)
-lands **INDETERMINATE** — not a defect in the procedure, but its own correctly-specified output for a
-candidate whose classification genuinely depends on the still-open Unknown. A candidate at $30/month
-total (`C_narrow` = `C_wide` = $30) is **SATISFIED**; one at $500/month total is **NOT_SATISFIED** —
-resolved without needing the Unknown at all, not because such candidates happen to be common, but
-because the procedure's own structure (`C_wide` < threshold, or `C_narrow` ≥ threshold) determines it
-for that candidate alone, considered in isolation. Nothing in this procedure, or in the Requirement's
-Complete status, depends on how many real candidates would fall into SATISFIED, NOT_SATISFIED, or
-INDETERMINATE — the procedure is fixed and content-derived before any candidate exists to apply it to.
+**When filled — a plain two-valued procedure (per R-21):** if Requirement Derivation fills the
+cost-category Unknown with a marked default, the Requirement becomes an ordinary two-valued test:
+SATISFIED if the candidate's cost, measured under that specific definition, is strictly under
+$100/month ("under $100/month" is a strict, not inclusive, threshold — $100.00 exactly does not
+satisfy it); NOT_SATISFIED otherwise. Completeness is immediate — the marked default is itself what
+closes the scope, so the procedure needs no INDETERMINATE branch at all, and requires the evaluator to
+invent nothing.
 
-**Eligibility:** Complete either way. Filling the Unknown with a marked default collapses the
-procedure above to an ordinary two-valued test; carrying it forward unresolved keeps the three-valued
-procedure above, which is itself a fully-specified satisfaction procedure per R-21 — INDETERMINATE is
-a legitimate output of that procedure, not evidence of Partial status. This is a genuinely different
-situation from Case 16's "fast," which supplies no metric, comparator, or reading at all from which
-*any* SATISFIED/NOT_SATISFIED/INDETERMINATE procedure could be written down — there, no version of the
-procedure above could even be stated, which is what actually makes a Requirement Partial under R-21.
+**When carried forward unresolved — Partial, not a legitimate three-valued procedure (per R-21):** an
+earlier draft of this case instead kept Completeness even in the carried-forward branch, by
+constructing a three-valued procedure over exactly two "recorded" readings ("infrastructure and
+model-usage costs only" vs. "all recurring costs"). That construction was itself the error R-21's
+two-condition INDETERMINATE test now exists to catch: `INTENT_CASES.md` Case 6 never actually recorded
+those two readings, or any closed set of readings, as the Unknown's domain (see "Provenance
+expectations" above) — partitioning an open-ended gap into exactly two readings was Requirement
+Derivation *inventing* a domain to make a three-valued procedure work, which is precisely what R-21's
+condition 2 forbids: a genuinely closed reading domain must come from the `IntentSpec`'s own recorded
+content, never from Requirement Derivation's own after-the-fact judgment about what a sensible split
+would be. Because no such closed, provenance-preserving domain exists here, no faithful three-valued
+procedure can honestly be written down for this branch — an evaluator would still have to invent which
+of the several named possibilities (or some other reading entirely) counts, which is exactly the
+scope-invention R-21's first sentence forbids. The $100/month threshold is real, and the metric is
+real; what is missing is a closed, grounded domain for what counts toward it — a defect R-21's
+condition 2 is specifically designed to catch, distinct from Case 16's "no metric at all" defect.
+
+**Eligibility:** Complete if Requirement Derivation fills the cost-category Unknown with an explicit,
+marked default (a plain two-valued procedure results, per R-21). **Partial** if the Unknown is carried
+forward unresolved — not because "under $100/month" lacks a real metric and threshold (it has both),
+but because no closed, `IntentSpec`-grounded reading domain exists to support a faithful three-valued
+procedure over the unresolved scope, per R-21's condition 2; inventing one would be exactly the
+scope-invention R-21 forbids. This is a genuinely different reason for Partial than Case 1's, Case 2's,
+or Case 9's (those are Partial because their blocking open item is an Ambiguity — categorically
+ineligible for R-21's INDETERMINATE branch under condition 1, no matter how narrow the affected scope
+looks), and different from Case 15's (unresolved force, not an open reading domain) — here the
+blockage is condition 2 specifically: the open item is the right *kind* (an Unknown, not an Ambiguity),
+but its admissible values were never closed by anything the user, or `IntentSpec`, actually recorded.
 
 ---
 
@@ -238,10 +265,11 @@ exposure generally (Inference-derived, moderate confidence)." SHOULD because the
 SHOULD. Confidence and provisional standing are recorded in provenance alongside the origin marker,
 not folded into the strength. Separately from strength, this Requirement's own recorded content
 supplies no metric, comparator, or procedure for "data-locality exposure" or "minimize... generally"
-— structurally the same testability gap as Case 16's "fast," not the faithful, fully-specified
-SATISFIED/NOT_SATISFIED/INDETERMINATE procedure Case 4's dollar threshold supports (per R-21): no
-version of that procedure could be written down here, for any single candidate considered on its own
-— there is no recorded reading to route even one candidate to a definite branch. Strength (SHOULD) and
+— structurally the same testability gap as Case 16's "fast," not the two-valued procedure Case 4's
+dollar threshold supports once its Unknown is filled (per R-21): no version of any
+SATISFIED/NOT_SATISFIED/INDETERMINATE procedure could be written down here, for any single candidate
+considered on its own — there is no recorded metric or reading to route even one candidate to a
+definite branch, unlike Case 4, which at minimum has a real threshold. Strength (SHOULD) and
 testability (whether a
 satisfaction procedure exists) are independent questions — this Requirement's strength classification
 is correct precisely because it does not depend on, and is not weakened by, its separate testability
@@ -367,8 +395,14 @@ Ambiguity forward.
 mean" Ambiguity is carried forward as an open item attached to this Requirement's trigger condition —
 the Requirement itself (the conditional MAY) is derivable now; its precise firing threshold is not.
 
-**Eligibility:** Partial — the conditional Requirement's existence and shape are Complete; its
-trigger's exact quantitative meaning remains open.
+**Eligibility:** Partial — for both the individual Requirement and the overall `RequirementSpec`
+version. The permission and its conditional structure (MAY, only if [condition]) are legitimately
+derived and recorded, but per R-21 condition 1 the Requirement is not independently Complete either:
+without resolving what "can't support" means, a downstream evaluator cannot determine, for a given
+candidate, whether the trigger condition held, and an Ambiguity can never legitimately drive an
+INDETERMINATE branch of an otherwise-Complete procedure. Deriving the Requirement's conditional
+*text* is not blocked by the Ambiguity; evaluating its *satisfaction* is — and R-21 defines Complete
+in terms of the latter, not the former.
 
 ---
 
@@ -411,8 +445,12 @@ cost-category Unknown may legitimately be.
 **Eligibility:** Partial — the cadence/output-format portion of the Requirement is genuinely testable
 now ("does the system produce a weekly report" can be evaluated independently of which competitors);
 the *target scope* of that report cannot be, so this area remains open rather than Complete, per
-R-19/R-21. Contrast Case 4, which stays Complete either way because its surviving Unknown is a
-genuine technical parameter, not a scope-of-intent question.
+R-19/R-21. Contrast Case 4's carried-forward branch, which is *also* Partial, but for a genuinely
+different reason: this Unknown is Partial because R-19 forbids Requirement Derivation from ever
+filling it (an intent-scope question, not a technical parameter); Case 4's carried-forward Unknown, by
+contrast, is R-19-fillable — its Partial status comes only from R-21's separate, narrower requirement
+that a *carried-forward-unresolved* Unknown still needs a closed, `IntentSpec`-grounded reading domain
+to remain Complete, which this document's own frozen source never recorded for it.
 
 ---
 
@@ -548,7 +586,10 @@ delivery-day value itself stays explicitly open.
 
 **Source IntentSpec semantics:** `IntentSpec` v1: Claim, User-Provided, preference (strong), "I want
 it to cost under $100/month." `IntentSpec` v2 (explicit correction, `INTENT_CASES.md` Case 20):
-supersedes the v1 Claim; new live Claim, "actually up to $500/month."
+supersedes the v1 Claim; new live Claim, "actually up to $500/month." Both versions also carry the
+same MEDIUM cost-scope Unknown established in Case 6 ("included cost categories") — `INTENT_CASES.md`
+Case 20 explicitly confirms the correction does not resolve it, only carries it forward with the
+corrected figure.
 
 **Defensible RequirementSpec result:** The `RequirementSpec` version derived from `IntentSpec` v1
 ("the system SHOULD cost under $100/month") is not edited. A new `RequirementSpec` version is
@@ -570,8 +611,14 @@ when v1 was produced, per Principle 11 (Reproducibility). "Marked invalid" descr
 *new* version records about the old Requirement's identity (this identity is superseded, replaced by
 that one), not an edit applied to the immutable v1 artifact itself.
 
-**Eligibility:** Complete (new version), historical-Complete-but-superseded (old version) — neither
-Partial nor Failed; this is ordinary, expected revision, not a degraded outcome.
+**Eligibility:** The cost-scope Unknown's own fork (Case 4's) applies identically here, independent of
+the versioning question this case exists to test: Complete (new version) if Requirement Derivation
+fills the cost-scope Unknown with a marked default when deriving the v2 Requirement; Partial (new
+version) if it is instead carried forward unresolved, per R-21 condition 2, for the same reason as
+Case 4's carried-forward branch. Historical-Complete-but-superseded (old version, under the same
+fork) — neither Partial nor Failed; this is ordinary, expected revision, not a degraded outcome. The
+versioning/supersession mechanics this case exists to test (immutable v1, correctly superseding v2,
+provenance intact) hold identically under either fork of the cost-scope question.
 
 ---
 
@@ -665,8 +712,10 @@ recording a strength-bearing SHOULD Requirement with zero quantification and cal
 **Provenance expectations:** Traces to the single preference Claim; the "fast" Ambiguity is carried
 forward with its candidate readings (latency/throughput/perceived responsiveness), not collapsed into
 one; "modern" is recorded as a separate open preference. Neither is compiled into a testable
-Requirement yet (contrast Case 4, where a testable Requirement *was* produced and only its accounting
-boundary remains open).
+Requirement yet — contrast Case 4's *filled* branch, where a marked default closes the scope and a
+testable, two-valued Requirement results; Case 4's *carried-forward* branch, like this case, also
+produces no testable Requirement, though for a different reason (a missing grounded reading domain,
+per R-21, rather than a forbidden-to-resolve Ambiguity, per R-08).
 
 **Eligibility:** Partial — for two independently sufficient reasons: the surviving Ambiguity in
 "fast" is never Requirement Derivation's to resolve (R-08), and even setting that aside, no reading of
