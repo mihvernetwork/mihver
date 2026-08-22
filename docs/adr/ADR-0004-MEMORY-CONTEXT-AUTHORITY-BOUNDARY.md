@@ -332,8 +332,9 @@ for Claims:
    (Principle 5) — those are separately computed at the point a memory actually becomes a premise
    for an Inference or a candidate for Evidence, never inherited wholesale from Brain's field.
 7. **Allowed use by stage** — which specific stage(s) may consume this entry at all, and for which
-   Influence Taxonomy tier (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`, Phase 7) —
-   assigned at `MemoryContext` production, never left to the consuming stage's own judgment.
+   Influence Taxonomy tier (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`DECISION_OPTION`/`SEMANTIC_PREMISE`,
+   Phase 7) — assigned at `MemoryContext` production, never left to the consuming stage's own
+   judgment.
 
 ### Mapping Brain's actual eight types to semantic authority classes
 
@@ -342,12 +343,17 @@ type is proposed. But **Brain's `type` field is a weak prior, not a determinant*
 Brain's schema encodes "this record describes a specific user's own historical statement" as
 opposed to, say, MIHVER's own process decision — both would naturally be stored as `decision`
 records, distinguished only by `scope` and body content, which `MemoryContext` production must
-actually read and classify, not infer from `type` alone.
+actually read and classify, not infer from `type` alone. **This weak-prior status is not confined to
+the `decision`/`decision` ambiguity** — a record stored under any other non-`inbox` type that
+production's own content inspection reveals actually describes a historical user statement is gated
+by the Historical User Provenance Gate (`MEMORY_CONTEXT.md`, M-18) exactly as a correctly-filed
+`decision` record would be, regardless of which row of the table below its stored type would
+otherwise place it in. `type` never supplies an epistemic shortcut past that gate.
 
 | Brain type | Typical semantic authority class (a prior, not a guarantee) | Notes |
 |---|---|---|
 | `project` | Durable project *description*, corroborating an already-established `RunContext` identity. | Never itself the anchor establishing that identity (see "Current-Run Scope Anchor" in `MEMORY_CONTEXT.md`); its content is not automatically current-run authoritative either way. |
-| `decision` | **Historical user statement/preference** (when project-scoped and describing something a user said or chose) **or** prior project decision/outcome (when describing MIHVER's own process). Brain does not distinguish these — production must. When the former, further gated into Category A (direct)/Category B (derived/unverified) by `MEMORY_CONTEXT.md`'s "Historical User Provenance Gate" — reading the body only tells production *what kind* of statement this is, never *how directly* it traces to the user's own words. | This is the type most likely to carry Threat-A material; treat with the most scrutiny. |
+| `decision` | **Historical user statement/preference** (when project-scoped and describing something a user said or chose) **or** prior project decision/outcome (when describing MIHVER's own process). Brain does not distinguish these — production must. When the former, further gated into Category A (direct)/Category B (derived/unverified) by `MEMORY_CONTEXT.md`'s "Historical User Provenance Gate" — reading the body only tells production *what kind* of statement this is, never *how directly* it traces to the user's own words. | This is the type most likely to carry Threat-A material; treat with the most scrutiny — but not the only type that can carry it: any other row's type may, on inspection, turn out to describe a historical user statement too, and is gated identically (see above). |
 | `lesson` | `PROCESS_ONLY` always (Phase 7). | Never semantic content of any pipeline artifact. |
 | `incident` | `DISCOVERY_ATTENTION` by default, permanently; may motivate a research hint if it names a specific technology's failure. The entry itself never becomes Evidence — only a wholly new, independently-produced artifact clearing the Evidence gate (Phase 8) may. | |
 | `pattern` | Prior architecture outcome; `DISCOVERY_ATTENTION` when shaping search. | May propose/search candidates (Threat D); never bypasses Requirements/Evidence/Evaluation. |
@@ -355,18 +361,29 @@ actually read and classify, not infer from `type` alone.
 | `reference` | Candidate technology/evidence knowledge; `DISCOVERY_ATTENTION`, permanently. | Exactly Threat E's shape — the entry itself never becomes Evidence; only a wholly new, independently-produced artifact clearing Principle 5's freshness/source/date gate (Phase 8) has `EvidenceBundle` eligibility. |
 | `inbox` | **Excluded entirely — not a low authority tier, a non-classification.** Not retrievable into any stage-facing `MemoryContext` until re-filed into a real type. | Default-excluded from production, not merely low-priority or low-ranked. |
 
+**Every classification above — including "always," "permanently," and "only" — is conditioned on
+content inspection actually confirming the record matches that row's typical class**, per
+`MEMORY_CONTEXT.md`'s identical override note. A `lesson`/`playbook`/`incident`/`pattern`/
+`reference`/`project` record whose body, on inspection, actually describes a historical user
+statement is redirected to the Historical User Provenance Gate, never treated as "misfiled and
+excluded" or foreclosed by its row's typical label — `inbox` alone is a genuine, unconditional,
+type-determined exclusion.
+
 ## Phase 5 — Historical User Memory Rule
 
 A direct statement made by the user in a prior run was genuinely User-Provided *in that historical
 interaction*. It has no automatic standing as a User-Provided Claim in a *new* `IntentSpec`:
 
-> A historical user statement, retrieved via `MemoryContext`, may serve as a stated, cited premise
-> for a current-run Inferred Claim — **only when classified Category A (direct): inspectably
-> traceable to an original historical user-authored source, per `MEMORY_CONTEXT.md`'s "Historical
-> User Provenance Gate."** A Category B (derived/unverified) entry — reading like a user statement
-> but lacking that inspectable traceability, the honest default given Brain's actual schema has no
-> field guaranteeing it — may never serve as such a premise, at any confidence or repetition level;
-> it is restricted to the second path below. Where Category A applies, the premise carries its own
+> A historical user statement, retrieved via `MemoryContext` — **whatever the record's stored Brain
+> `type`, since `type` is only a weak classification prior, never an epistemic shortcut past this
+> gate** — may serve as a stated, cited premise for a current-run Inferred Claim — **only when
+> classified Category A (direct): inspectably and resolvably traceable to an original historical
+> user-authored source, per `MEMORY_CONTEXT.md`'s "Historical User Provenance Gate."** A
+> citation-shaped string that does not actually resolve to a checkable source does not qualify. A
+> Category B (derived/unverified) entry — reading like a user statement but lacking that inspectable,
+> resolvable traceability, the honest default given Brain's actual schema has no field guaranteeing it
+> on any type — may never serve as such a premise, at any confidence or repetition level; it is
+> restricted to the second path below. Where Category A applies, the premise carries its own
 > confidence, its own provisional/reversible marking, and explicit premise citation — exactly
 > Inference Policy's existing discipline, extended to a premise that happens to be an external,
 > well-provenanced artifact rather than another `IntentSpec` Claim. Either category may serve as
@@ -456,14 +473,19 @@ never happen, at any impact level: silently applying memory
 content over current-run authoritative input, or mutating an already-frozen `MemoryContext` snapshot
 to reflect a contradiction discovered after production (see Phase 9).
 
-## Phase 7 — Influence Taxonomy: Process-Only, Discovery/Attention, Semantic Premise
+## Phase 7 — Influence Taxonomy: Process-Only, Discovery/Attention, Decision Option, Semantic Premise
 
 An earlier draft of this design used a two-way procedural/semantic split, and called both "review
 decomposition" and "expanding what Research Planning searches for" equally "procedural" — but the
 second can change `ResearchPlan`'s or `ArchitectureCandidate`'s actual search space and content,
 which the first never can. Collapsing these two, materially different effects into one label was
-itself a defect, corrected into three properties of a specific *use* of a memory entry, not fixed
-properties of the entry itself (full detail in `MEMORY_CONTEXT.md`'s "Influence Taxonomy"):
+itself a defect, corrected into four properties of a specific *use* of a memory entry, not fixed
+properties of the entry itself (full detail in `MEMORY_CONTEXT.md`'s "Influence Taxonomy"). **A
+fourth tier, `DECISION_OPTION`, was added during a later closure round**: re-deriving the taxonomy
+found a memory-informed R-19 default's specific chosen value becomes Requirement content immediately,
+with no further independent screening step the way `DISCOVERY_ATTENTION`'s candidates always have —
+forcing it into `DISCOVERY_ATTENTION` would have required weakening that tier's additive-only
+invariant, which was rejected:
 
 - **`PROCESS_ONLY`**: changes *how* MIHVER performs its own internal work — review decomposition,
   verification rigor, which invariant axes get tested, how many independent reviewers are dispatched.
@@ -472,16 +494,30 @@ properties of the entry itself (full detail in `MEMORY_CONTEXT.md`'s "Influence 
 - **`DISCOVERY_ATTENTION`**: proposes additional research questions, candidate technology
   categories, or architecture shapes for a stage to *consider* — it may alter that stage's search
   space and, downstream, the content of `ResearchPlan`, `TechnologyCandidateSet`, or
-  `ArchitectureCandidate` (which is exactly why it is not `PROCESS_ONLY`), but it never itself
-  establishes truth, eligibility, a Requirement, or a preference. It must be **additive** (never
+  `ArchitectureCandidate` (which is exactly why it is not `PROCESS_ONLY`; this tier is not "zero
+  content effect until a later gate" — it can affect intermediate content immediately, additively),
+  but it never itself **establishes** truth, eligibility, a Requirement, or a preference: a further,
+  independent mechanism (Evidence sourcing, eligibility screening, Evaluation) is always still
+  required before any candidate this tier proposes counts as settled. It must be **additive** (never
   narrowing or substituting for what would otherwise be checked) and **provenance-visible** (the
   stage's own record of why it looked where it looked must cite the memory). `pattern`, `incident`,
   and `reference` types are typically `DISCOVERY_ATTENTION` when used to shape where a stage looks.
+- **`DECISION_OPTION`**: proposes a candidate *value* within a decision a stage **already,
+  independently owns and is already authorized to make** — unlike `DISCOVERY_ATTENTION`, its adoption
+  **is** the immediate establishment of the Requirement's actual content, in the same step, under
+  authority the stage already had; no further independent mechanism remains to clear afterward. It
+  supplies **zero independent authority** for the value chosen and never expands what the stage was
+  already allowed to decide. Must be **provenance-visible** and **non-obligating** (the stage must be
+  able to justify the final choice under its own pre-existing authority alone). The only
+  currently-named instance is a memory-informed R-19-eligible working default at Requirement
+  Derivation (Phase 11) — not a general license to invent new memory-authorized
+  decision points elsewhere.
 - **`SEMANTIC_PREMISE`**: the capacity to directly support a Claim, Requirement, or equivalent
   pipeline-artifact content — reached only by separately clearing the full corresponding epistemic
   or evidence gate (Phase 5's Historical User Memory Rule for Claims; Phase 8 for Evidence), never by
-  mere retrieval or by accumulating `DISCOVERY_ATTENTION` uses. **This is not symmetric across memory
-  kinds:** a Category A historical statement reaches `SEMANTIC_PREMISE` *directly* — the
+  mere retrieval or by accumulating `DISCOVERY_ATTENTION` or `DECISION_OPTION` uses (`DECISION_OPTION`
+  is in fact categorically barred from ever reaching `SEMANTIC_PREMISE` — see above). **This is not
+  symmetric across memory kinds:** a Category A historical statement reaches `SEMANTIC_PREMISE` *directly* — the
   `MemoryContext` entry itself is cited as the Inference's premise. A `pattern`/`incident`/`reference`
   entry **never** itself reaches `SEMANTIC_PREMISE`, at any amount of re-verification — "memory is
   never Evidence" is an identity boundary, not a freshness gate a well-verified memory eventually
@@ -629,10 +665,13 @@ No frozen document is modified in this task. Required future changes, classified
      own stated rationale; where a `MemoryContext` entry informed the choice of value, that rationale
      must additionally, explicitly cite the entry as a **memory-informed rationale**, distinct from
      any `IntentSpec`-recorded provenance — mirroring R-10/R-22's own premise-citation discipline, at
-     R-09's simpler default-filling mechanism. This is a narrower amendment than item 1 (R-09/R-19
-     already exists and permits memory-informed defaults in principle; only the citation/labeling
-     requirement is new), but it is still a required, separate, explicit amendment, not something this
-     ADR performs or pre-authorizes.
+     R-09's simpler default-filling mechanism. This is `DECISION_OPTION` influence (Phase 7, corrected
+     during a later closure round from an earlier draft that mislabeled it `DISCOVERY_ATTENTION`) —
+     the memory supplies zero independent authority for the value chosen; R-09/R-19's own mechanism is
+     what authorizes it. This is a narrower amendment than item 1 (R-09/R-19 already exists and
+     permits memory-informed defaults in principle; only the citation/labeling requirement is new), but
+     it is still a required, separate, explicit amendment, not something this ADR performs or
+     pre-authorizes.
 - **Future `EvidenceBundle` — `CLARIFICATION_ONLY`.** `EvidenceBundle` does not exist yet (`ADR-0001`
   explicitly defers its design). Phase 8's boundary is a constraint on that future design ("memory
   may motivate re-verification, never substitute for it"), not a change to anything currently
@@ -642,22 +681,65 @@ No frozen document is modified in this task. Required future changes, classified
   `RequirementSpec`/`EvidenceBundle`/`ArchitectureCandidate` content upstream, by the time
   Specification Generation runs.
 
-**This ADR remains Proposed until the required `M0_SCOPE.md` amendment is separately, explicitly
-human-authorized and completed** — mirroring exactly how `ADR-0002` and `ADR-0003` stayed Proposed
-pending their own respective completion conditions.
+### Acceptance Gate — decided explicitly, not left ambiguous
+
+Four distinct amendment dependencies are named above, and they do not all gate the same thing.
+**Core `MemoryContext` consumption** — retrieval, mechanical/lifecycle admissibility, `PROCESS_ONLY`
+and `DISCOVERY_ATTENTION` use by any given stage — requires only that stage's `M0_SCOPE.md` amendment
+(dependency A: `RunContext` + the producer's own documented contract + that stage's declared
+`Input:` entry). **Citing a historical-memory entry as an Inferred Claim's premise** additionally
+requires the separate `INTENT_SPEC.md` amendment (dependency B). **Citing a memory entry as a
+Requirement-Level Inference's premise** additionally requires the separate `REQUIREMENT_SPEC.md`
+Requirement-Level-Inference amendment (dependency C). **A memory-informed R-19 default**
+(`DECISION_OPTION` influence) additionally requires the separate, narrower `REQUIREMENT_SPEC.md`
+provenance amendment (dependency D). Dependencies B, C, and D are each independently required only
+for the specific, narrower semantic path they gate — none of them is a precondition for dependency A,
+and dependency A is not a precondition for any specific one of B/C/D beyond the general one of "that
+stage must already be authorized to consume `MemoryContext` at all" before it can go further.
+
+**This ADR becomes eligible for Accepted status once dependency A alone — the core `M0_SCOPE.md`
+integration boundary (`RunContext`, the producer's own contract, and at least one consuming stage's
+declared `MemoryContext` input) — is separately, explicitly human-authorized, completed, and has
+itself been adversarially reviewed against real cases: the same condition `ADR-0002` was actually
+held to and satisfied (Status: Accepted), and the same kind of condition `ADR-0003` has separately
+proposed for its own eventual Acceptance (Status, as of this writing: still Proposed — it is a
+parallel precedent for the *shape* of the condition, not a completed example of this ADR's own
+criterion being met).** It does **not** require dependencies B, C, and D to all be complete first.
+Reaching `SEMANTIC_PREMISE` via the historical-user-memory path (dependency B/C) and reaching
+`DECISION_OPTION` via a memory-informed R-19 default (dependency D) remain **explicitly, structurally
+disabled** — not merely "future work," but unavailable by construction, exactly as they are today —
+until their own respective amendments are separately, explicitly human-authorized and completed, each
+its own future task, independent of this ADR's own Status.
+
+**Why this option, not requiring every amendment first:** (1) it mirrors `ADR-0001`'s own IR-per-stage
+pattern, where a bounded artifact's core definition is accepted independently of every future consumer
+that might eventually cite it — `RequirementSpec` did not wait for `ArchitectureCandidate` to exist
+before `ADR-0001` could describe it soundly; (2) the core boundary (`RunContext`, the producer's own
+authority, least-authority classification, the admissibility/interpretation split, the influence
+taxonomy) is what actually requires adversarial scrutiny as a foundational compiler-authority-boundary
+decision — dependencies B, C, and D are narrower, additive semantic capabilities layered *on top* of
+an already-sound boundary, not part of the boundary's own soundness; (3) gating Acceptance on every
+possible downstream semantic capability would make this ADR hostage to separately-scoped future
+amendment tasks with their own independent review timelines, unnecessarily coupling independently
+scoped amendment timelines and working against Principle 12's (Evolvability) underlying objective —
+introducing a new capability without redesigning MIHVER's core — and against this ADR's own repeated
+practice of naming amendments honestly and narrowly rather
+than bundling them into one all-or-nothing gate.
 
 ## Decision
 
 Adopt **Model C**: a typed, immutable `MemoryContext` artifact, produced by a dedicated retrieval
 boundary from MIHVER Brain, carrying an explicit authority classification per entry (Phase 4),
 consumable by a stage only once that stage's `M0_SCOPE.md` input list is separately amended to
-declare it — and, for any use that would cite a `MemoryContext` entry as the premise of an Inferred
-Claim or a Requirement-Level Inference specifically, only once `INTENT_SPEC.md` and/or
-`REQUIREMENT_SPEC.md` are *also* separately amended (Phase 11 — a distinct, additional requirement
-from the `M0_SCOPE.md` input-declaration amendment, not subsumed by it). `MemoryContext` is never a
-`Claim`, never `Evidence`, never merged into `UserIdea`, and never queried directly by any stage. Full
-semantic detail is in [MEMORY_CONTEXT](../contracts/MEMORY_CONTEXT.md); worked adversarial cases are
-in [MEMORY_CONTEXT_CASES](../examples/MEMORY_CONTEXT_CASES.md).
+declare it (dependency A) — and, for any use that would cite a `MemoryContext` entry as the premise
+of an Inferred Claim (dependency B) or a Requirement-Level Inference (dependency C), or would inform
+a memory-informed R-19 default (dependency D), only once the corresponding `INTENT_SPEC.md` and/or
+`REQUIREMENT_SPEC.md` amendment is *also* separately completed (Phase 11 / "Acceptance Gate" — each a
+distinct, additional requirement from the `M0_SCOPE.md` input-declaration amendment, not subsumed by
+it, and not a precondition for this ADR's own Acceptance). `MemoryContext` is never a `Claim`, never
+`Evidence`, never merged into `UserIdea`, and never queried directly by any stage. Full semantic
+detail is in [MEMORY_CONTEXT](../contracts/MEMORY_CONTEXT.md); worked adversarial cases are in
+[MEMORY_CONTEXT_CASES](../examples/MEMORY_CONTEXT_CASES.md).
 
 ## Rationale
 
@@ -670,7 +752,7 @@ in [MEMORY_CONTEXT_CASES](../examples/MEMORY_CONTEXT_CASES.md).
   use — never a fourth, unprincipled origin category, and never Assumed: Assumption Policy restricts
   Assumptions to narrowly interpretive gaps, never operational defaults, and a historical preference
   is exactly the latter, not the former (see "Historical User Memory Rule" in `MEMORY_CONTEXT.md`).
-- **Makes the three-tier Influence Taxonomy (Phase 7) load-bearing, not incidental** — it is what
+- **Makes the four-tier Influence Taxonomy (Phase 7) load-bearing, not incidental** — it is what
   lets MIHVER benefit from engineering-lesson memory (as this very session already has) without any
   risk of that benefit leaking into a user's actual Requirements.
 - **Names its own cost honestly.** Model C is the most complex option and requires a real,
@@ -680,11 +762,13 @@ in [MEMORY_CONTEXT_CASES](../examples/MEMORY_CONTEXT_CASES.md).
 ## Consequences
 
 - No stage may consume `MemoryContext` until `M0_SCOPE.md` is amended for that specific stage; this
-  ADR's Status stays Proposed until then.
+  ADR's Status stays Proposed until dependency A (see "Acceptance Gate") is separately, explicitly
+  human-authorized, completed, and adversarially reviewed — not until every possible consuming stage
+  is amended, only the core boundary plus at least one.
 - Every future memory-consuming stage must additionally state, in its own future contract work,
-  which authority classes it is permitted to use for which of the three Influence Taxonomy tiers
-  (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`, Phase 7) — `MemoryContext`'s existence does
-  not itself grant blanket permission.
+  which authority classes it is permitted to use for which of the four Influence Taxonomy tiers
+  (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`DECISION_OPTION`/`SEMANTIC_PREMISE`, Phase 7) —
+  `MemoryContext`'s existence does not itself grant blanket permission.
 - `MemoryContext` production becomes a new, disciplined boundary. Its authority boundaries are
   designed here (mechanical scope admissibility against `RunContext`, age/lifecycle-based freshness
   flagging, admissibility-vs-interpretation separation — see "MemoryContext Producer: Role and
@@ -714,8 +798,18 @@ specific to this design, not merely because Model C was suggested by the task.
 - **Historical-statement mis-storage risk.** Brain has no dedicated type for "a user's own
   historical statement." This design recommends `decision` (project-scoped) as the natural fit, but
   that is a MIHVER usage convention, not a Brain schema guarantee — nothing currently prevents such
-  content from being stored as `reference` or `inbox` instead, which would require production-time
-  content inspection to catch. Mitigation: named explicitly here rather than assumed solved.
+  content from being stored as `reference`, `pattern`, `incident`, or another non-`decision` type
+  instead. **Mitigation, corrected this closure round from an earlier draft that only named the risk
+  without closing it:** the Historical User Provenance Gate (`MEMORY_CONTEXT.md`, Invariant M-18) is
+  explicitly type-independent — any admitted record that production's own content inspection reveals
+  as describing a historical user statement is gated into Category A/Category B identically,
+  regardless of its stored Brain `type`; a misfiling into `reference`/`pattern`/`incident` does not
+  bypass the gate, since the gate is triggered by what content-inspection reveals, never by which
+  table row the stored `type` would otherwise suggest. A misfiling into `inbox` specifically is not an
+  admission-safety risk at all: `inbox` records are excluded from `MemoryContext` production entirely,
+  on `type` alone, before any content inspection or provenance-gate question is reached — the residual
+  cost of such a misfiling is coverage loss (a legitimate historical statement never surfaces at all),
+  not a laundering risk requiring content-level detection.
 - **Amendment-scope risk (resolved during this design's own review, recorded for transparency).** An
   earlier draft of this ADR under-classified the `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` premise-
   extension question as `CLARIFICATION_ONLY`, reasoning that citing a `MemoryContext` entry as an
@@ -753,11 +847,20 @@ specific to this design, not merely because Model C was suggested by the task.
 
 ## Future Work
 
-- Design and human-authorize the `M0_SCOPE.md` amendment identified in "Foundation Impact Analysis."
+- Design and human-authorize the core `M0_SCOPE.md` amendment identified in "Foundation Impact
+  Analysis" (dependency A: `RunContext`, the producer's own contract, at least one consuming stage's
+  declared input).
 - Only once that amendment lands: design `MemoryContext`'s machine-readable schema (deliberately not
   done here, mirroring `ADR-0002`/`ADR-0003`'s own schema deferral).
 - Design the actual retrieval-boundary implementation (query construction, scope/supersession
   verification, freshness judgment) that produces `MemoryContext` from Brain.
-- Revisit this ADR's Status once the `M0_SCOPE.md` amendment is completed and at least one
-  adversarial review pass has exercised the model against real cases — the same condition
-  `ADR-0002` and `ADR-0003` were each held to before being considered for acceptance.
+- **Revisit this ADR's Status (Proposed → Accepted) once dependency A is completed and at least one
+  adversarial review pass has exercised the model against real cases** — per "Acceptance Gate" above,
+  this does not require dependencies B/C/D (the `INTENT_SPEC.md` amendment, the
+  `REQUIREMENT_SPEC.md` Requirement-Level-Inference amendment, or the `REQUIREMENT_SPEC.md` R-19
+  provenance amendment) to be complete first; those remain their own, separate, later tasks, each
+  gating only the specific narrower semantic path it names, never this ADR's own Acceptance.
+- As separate, later, explicitly human-authorized tasks, whenever undertaken: the `INTENT_SPEC.md`
+  amendment (dependency B), the `REQUIREMENT_SPEC.md` Requirement-Level-Inference amendment
+  (dependency C), and the `REQUIREMENT_SPEC.md` R-19 provenance amendment (dependency D) — each
+  enabling exactly the one narrower semantic path it names, per "Acceptance Gate" above.

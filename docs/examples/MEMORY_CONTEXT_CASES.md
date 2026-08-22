@@ -25,26 +25,33 @@ draft left several cases' cross-project applicability ambiguous ("a prior projec
 past project"); every such instance has been resolved one way or the other, since ambiguous scope is
 itself a defect this corpus should never model as acceptable.
 
-**Every `decision`-type case that describes a historical user statement states explicitly whether the
-record is Category A (direct — inspectably traceable to an original historical user-authored source)
-or Category B (derived/unverified — reads like a user statement but lacks that traceable linkage), per
-`MEMORY_CONTEXT.md`'s "Historical User Provenance Gate."** Only Category A entries may ever be cited
-as the premise of a current-run Inferred Claim; Category B entries are restricted to
-`DISCOVERY_ATTENTION` use (shaping a clarification question, informing retrieval) under every
-circumstance. Where a case's outcome does not depend on the distinction (the memory is excluded or
-never cited as a premise regardless of category), this is stated explicitly rather than left
-ambiguous.
+**Every case that describes a record read as a historical user statement states explicitly whether it
+is Category A (direct — inspectably and resolvably traceable to an original historical user-authored
+source) or Category B (derived/unverified — reads like a user statement but lacks that traceable
+linkage), per `MEMORY_CONTEXT.md`'s "Historical User Provenance Gate."** This gate applies by content,
+never by stored Brain `type` — most cases below use `decision`-type records, since that is the natural
+fit for this content, but the gate applies identically to a record of any other non-`inbox` type that
+actually describes a historical user statement (Case 23 works this through explicitly, for a
+misfiled `reference`-type record). Only Category A entries may ever be cited as the premise of a
+current-run Inferred Claim; Category B entries are restricted to `DISCOVERY_ATTENTION` use (shaping a
+clarification question, informing retrieval) under every circumstance, regardless of stored type.
+Where a case's outcome does not depend on the distinction (the memory is excluded or never cited as a
+premise regardless of category), this is stated explicitly rather than left ambiguous.
 
 **Read every "Allowed use" and "Expected stage behavior" line below as implicitly prefixed by "once
 that specific stage is separately authorized to consume `MemoryContext` (not yet performed)."** This
 applies uniformly to every case and every stage named in it — Intent Parsing, Research Planning,
-Research + Evidence Collection, Technology Candidate Identification, Architecture Synthesis, and
-Evaluation alike — with no exceptions and no case-by-case re-statement needed. Where a case
-additionally describes citing a `MemoryContext` entry as the premise of an Inferred Claim or a
-Requirement-Level Inference specifically, read that as further conditioned on the corresponding
-`INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` amendment identified in `ADR-0004`'s Foundation Impact
-Analysis, which is a distinct, additional requirement from the `M0_SCOPE.md` input-declaration
-amendment. No case in this corpus authorizes any consumption today.
+Research + Evidence Collection, Technology Candidate Identification, Architecture Synthesis,
+Requirement Derivation, and Evaluation alike — with no exceptions and no case-by-case re-statement
+needed; this is **dependency A** in `ADR-0004`'s "Acceptance Gate" (the core `M0_SCOPE.md` amendment:
+`RunContext`, the producer's own contract, and that stage's declared input). Three narrower paths
+require a separate, additional amendment on top of dependency A, and are read as further conditioned
+on it wherever a case describes them: citing a `MemoryContext` entry as the premise of an Inferred
+Claim requires **dependency B** (`INTENT_SPEC.md`); citing one as a Requirement-Level Inference's
+premise requires **dependency C** (`REQUIREMENT_SPEC.md`); a memory-informed R-19 default's
+"memory-informed rationale" citation requires **dependency D** (`REQUIREMENT_SPEC.md`, narrower than
+and separate from dependency C) — see `ADR-0004`'s Phase 11/"Acceptance Gate" for the precise mapping.
+No case in this corpus authorizes any consumption today.
 
 ---
 
@@ -615,10 +622,12 @@ Decision Impact item (tunes a detail, doesn't change the shape of the solution).
 
 **Allowed use:** May defensibly reduce a repeated question — but only via the Inferred-Claim path at
 Intent Parsing ("weekly cadence, Inference-derived from a historical statement, moderate confidence,
-provisional"), pending its own required amendment (see "Historical User Memory Rule") and available
-here only because the entry is Category A (a Category B entry could only shape the clarification
-question below, never serve as this premise), or via a current-run clarification question shaped by
-the memory — available to either category. **Not** via Requirement Derivation's R-19
+provisional"), pending dependency B (the separate `INTENT_SPEC.md` Inference-premise amendment, in
+addition to Intent Parsing's own dependency-A authorization — see "Historical User Memory Rule" and
+`ADR-0004`'s "Acceptance Gate") and available here only because the entry is Category A (a Category B
+entry could only shape the clarification question below, never serve as this premise), or via a
+current-run clarification question shaped by the memory — available to either category, and needing
+only dependency A. **Not** via Requirement Derivation's R-19
 default-filling mechanism: an earlier draft of this case offered "Requirement-Derivation-introduced
 default" as an equally valid alternative, which was itself a defect, corrected on independent review
 — *which cadence the user prefers* is a question about what the user wants, not a measurement or
@@ -728,7 +737,9 @@ question, which would sidestep the tension this case is designed to test, not re
 **Current-run input:** No current statement resolving this tension.
 
 **Allowed use:** Both may be retrieved and cited, separately, as premises for two separate candidate
-Inferred Claims (a cost-sensitivity preference and a reliability preference) — `MemoryContext`
+Inferred Claims (a cost-sensitivity preference and a reliability preference) — this premise-citation
+path additionally requires dependency B (the separate `INTENT_SPEC.md` Inference-premise amendment,
+per `ADR-0004`'s "Acceptance Gate"); dependency A alone does not enable it. `MemoryContext`
 production does not resolve which one "wins"; that is not its authority any more than `IntentSpec`'s
 own Conflict Policy authorizes Intent Parsing to silently pick a side between two genuinely
 conflicting User-Provided Claims.
@@ -898,3 +909,124 @@ provenance alone, whether the current force was actually reasoned about or merel
 for this Inferred Claim, exactly as it would for confidence or provisional marking; no stage compiles
 a Requirement's normative strength from this Claim without that explicit step having been recorded
 first.
+
+---
+
+## 23. Misfiled historical user statement stored as `reference` — the gate applies by content, not stored type
+
+**Memory input:** `reference`-type record, project-scoped to the current project, body reads: "user
+said their team will only accept an on-prem deployment option, never a managed cloud service" (Brain
+confidence: high, `status: active`). This is a **misfiling** — the content is plainly a historical
+user statement, not the candidate-technology/evidence knowledge `reference` records typically carry
+(contrast Cases 9/10) — but nothing in Brain's write path prevented it from being stored this way, and
+its stored `type` gives production no advance warning that this is what it actually is.
+
+**Current-run input:** Current `UserIdea` describes a system with no stated deployment-target
+constraint at all.
+
+**Allowed use:** Production's own content inspection — not its stored `type` — is what reveals this
+record describes a historical user statement, at which point the Historical User Provenance Gate
+applies exactly as it would to a `decision`-type record making the same claim: production must
+determine Category A or Category B before any semantic use is considered. Here, the record's body
+contains no citation to a specific originating `UserIdea` version/turn at all — no citation-shaped
+text of any kind, let alone a resolvable one — so it defaults to **Category B**. As Category B, it may
+at most shape a current-run clarification question ("a past statement suggests on-prem-only
+deployment may be required here — is that still the case?"); it may never be cited as the premise of
+an Inferred Claim, regardless of its `high` Brain confidence or its `active` status. **Contrast:** had
+this same record instead included an inspectable, resolvable citation ("per `UserIdea` v2, turn 7:
+'..."), it would be Category A and could be cited as an Inferred Claim's premise — the stored `type`
+being `reference` rather than `decision` would still be irrelevant to that determination either way.
+
+**Forbidden transformation:** Two distinct violations, both forbidden: (a) treating the record's
+stored `reference` type as license to skip the Historical User Provenance Gate entirely, reasoning
+"the gate is about `decision` records, and this is a `reference` record" — the gate is triggered by
+what production's content inspection reveals, never by stored `type` (M-18); (b) treating the record's
+stored `reference` type as license to process it through the ordinary `reference`-type path instead
+(a research hint under "Memory and Evidence Boundary," informing Research + Evidence Collection) — that
+path is for candidate technology/evidence knowledge, not a historical statement about what the user
+said; applying it here would silently launder the user's own historical statement into a technology
+research lead, an unrelated category error compounding the first one.
+
+**Clarification required?** Not mandatory — ordinary LOW/MEDIUM-territory handling, same as any other
+Category B entry shaping a clarification question.
+
+**Expected provenance behavior:** `MemoryContext`'s production record notes both facts distinctly:
+the record's stored Brain `type` (`reference`) and production's own content-based classification
+(historical user statement, Category B) — an auditor must be able to see that production correctly
+looked past the stored type rather than trusting it, and that Category B was assigned for a stated
+reason (no resolvable citation present), not merely asserted.
+
+**Expected stage behavior:** Whichever stage consumes this entry treats it exactly as it would treat
+a Category B `decision`-type record making the same claim — no stage grants it different treatment,
+weaker or stronger, because of its stored `reference` type.
+
+---
+
+## 24. Memory-informed R-19 default — `DECISION_OPTION`, contrasted with an intent-level value memory must not fill
+
+**Memory input:** `pattern`-type record, project-scoped to the current project (an earlier phase of
+the same project), "a prior requirement in this project used exponential backoff with a maximum of 3
+retry attempts for background job failures, and this worked well" (medium confidence, active). This
+is a technical/measurement memory, not a historical user statement — the Historical User Provenance
+Gate (Category A/B) is not the relevant test here at all; the relevant question is whether this memory
+may inform an R-19-eligible default, per "No Assumed-Origin Path for Memory."
+
+**Current-run input:** Current `RequirementSpec` (hypothetically, if Requirement Derivation were
+authorized to consume `MemoryContext`) contains an already-settled Requirement: "the system SHALL
+retry a failed background job automatically." A surviving Unknown remains: exactly how many attempts,
+and what backoff strategy, should be used. Per R-19's own test (`REQUIREMENT_SPEC.md`): this Unknown
+selects an internal implementation/measurement detail *within* the already-settled Requirement — it
+does not add, remove, or narrow the Requirement's own asserted actor, target, capability, output,
+condition, permission, prohibition, obligation, or preference (retrying automatically is already
+settled; only the retry count/backoff shape remains open) — so it is R-19-eligible.
+
+**Allowed use:** This is `DECISION_OPTION` influence (see "Influence Taxonomy"), not
+`DISCOVERY_ATTENTION` and not `SEMANTIC_PREMISE`: the memory proposes "3 retries, exponential backoff"
+as a candidate value for a decision Requirement Derivation already, independently owns (whether and
+how to fill this R-19-eligible Unknown) — it supplies **zero independent authority** for that choice.
+This entire path requires **both** dependency A (Requirement Derivation's own `M0_SCOPE.md`
+authorization to consume `MemoryContext` at all) **and** dependency D (the narrower, separate
+`REQUIREMENT_SPEC.md` R-19 provenance/citation amendment that lets the resulting Requirement's
+rationale cite the `MemoryContext` entry as a memory-informed rationale at all — see `ADR-0004`'s
+"Acceptance Gate"); until dependency D lands, this specific citation mechanism is structurally
+disabled even if dependency A alone were already in place. Requirement Derivation may adopt the
+suggested value, but only after independently judging it a defensible measurement/implementation
+choice under its own R-19 authority (e.g. "3 retries with exponential backoff is a common, reasonable
+strategy for this class of transient failure, and does not change what the Requirement itself
+asserts") — never merely because the memory said so. If adopted, the resulting Requirement's
+provenance is marked **Requirement-Derivation-introduced** (R-09) with an explicit stated rationale
+that itself cites the `MemoryContext` entry as a **memory-informed rationale**, labeled distinctly,
+never presented as `IntentSpec`-traced or User-Provided.
+
+**Contrast — an intent-level value memory must NOT fill:** suppose instead the surviving Unknown were
+"should failed background jobs be retried automatically **at all**, or surfaced to a human for manual
+handling?" This is *not* R-19-eligible, regardless of what any memory suggests: deciding whether
+automatic retry exists at all would add or remove a capability the Requirement itself asserts — a
+want-level question about what the system does, not a measurement detail of how an already-settled
+behavior is implemented. No memory-informed suggestion, however confidently stated or however well it
+worked in a prior phase, changes this — R-19's own eligibility test excludes this Unknown before any
+question of memory involvement even arises. A memory suggesting "no human review was needed before"
+could, at most, inform a **clarification question** at Intent Parsing (an entirely different stage
+and mechanism, per "Historical User Memory Rule"), never a Requirement Derivation "default."
+
+**Forbidden transformation:** (a) Requirement Derivation adopting the memory's suggested retry
+count/backoff value without independently judging it defensible — treating the memory's suggestion as
+itself sufficient justification; (b) using the same "R-19 default" mechanism to decide whether
+automatic retry exists at all, on the reasoning that "memory suggested it and R-19 lets Requirement
+Derivation fill some things" — R-19's eligibility test does not bend merely because a memory happens
+to have an opinion; (c) presenting the adopted value as though it derived from `IntentSpec` or User-
+Provided standing, rather than as Requirement-Derivation's own R-09-marked, memory-informed choice.
+
+**Clarification required?** No — this is Requirement Derivation's own R-19 authority being exercised
+on a genuinely R-19-eligible Unknown, not an `IntentSpec`-level open item.
+
+**Expected provenance behavior:** The Requirement's provenance shows, distinctly: (a) marked
+Requirement-Derivation-introduced (R-09); (b) an explicit rationale independently justifying the
+chosen value under R-19's own test; (c) an explicit citation of the `MemoryContext` entry as a
+memory-informed rationale — three separate facts, never collapsed into "informed by memory" alone,
+per M-21.
+
+**Expected stage behavior:** Requirement Derivation (once separately authorized) retains full
+authority to adopt, modify, or reject the suggested value, or to leave the Unknown unresolved and
+carry it forward instead — the memory's presence never obligates a particular outcome, and never
+narrows what Requirement Derivation was already permitted to decide under R-19.

@@ -176,7 +176,16 @@ at a specific retrieval boundary for a specific purpose. It is eligible for incl
 Brain's `type` field is a **weak prior**, not a determinant — nothing in Brain's schema encodes
 whether a record describes a specific user's own historical statement versus MIHVER's own process
 decision; both would naturally be stored as `decision` records. `MemoryContext` production must
-inspect scope and content, not merely read `type`, before assigning an authority class:
+inspect scope and content, not merely read `type`, before assigning an authority class. **This
+weak-prior status cuts both ways, and cuts across every row of the table below, not only the
+`decision` row:** a record's stored type is a hint about where to look, never a guarantee of what the
+record actually is. A record stored as `reference`, `incident`, `pattern`, or any other type may, on
+inspection of its actual content, turn out to describe a historical user statement (a misfiling, not
+a hypothetical — nothing in Brain's write path prevents it) — and when production's own content
+inspection reveals this, the record is gated by "Historical User Provenance Gate" below exactly as a
+correctly-filed `decision` record would be, regardless of which row its stored type would otherwise
+place it in. Brain's `type` is never an epistemic shortcut past that gate; it is only ever a starting
+point for production's own inspection.
 
 | Brain type | Typical authority class (prior) | What production must actually verify |
 |---|---|---|
@@ -189,34 +198,66 @@ inspect scope and content, not merely read `type`, before assigning an authority
 | `reference` | Candidate technology/evidence knowledge. | Must clear the full Evidence-freshness gate before any semantic use — see "Memory and Evidence Boundary." |
 | `inbox` | **Excluded from production entirely.** | Not a lower-priority class — genuinely not retrievable into any stage-facing `MemoryContext` until a human or Claude re-files it into a real type. |
 
+**Every classification in the table above — including words like "always," "permanently," and
+"only" — is conditioned on content inspection actually confirming the record matches that row's
+typical class.** None of these words describes an unconditional, type-determined outcome that
+survives contrary content. A `lesson`, `playbook`, `incident`, `pattern`, `reference`, or `project`
+record whose actual body, on inspection, describes a historical user statement is **not** "misfiled
+and excluded" (as an earlier, now-corrected reading of the `lesson` row implied) and is **not**
+"always"/"permanently"/"only" whatever that row's typical class says — it is redirected to the
+Historical User Provenance Gate below, exactly as a `decision`-type record making the same claim
+would be (Case 23 in `MEMORY_CONTEXT_CASES.md` works this through concretely for a misfiled
+`reference` record). Only `inbox` is a genuine, unconditional, type-determined exclusion — the one
+row this override does not touch, since `inbox` exclusion happens on `type` alone, before content is
+even inspected for classification purposes.
+
 ## Historical User Provenance Gate
 
-Inspecting a `decision` record's body tells production **that** it describes a past user preference
-or statement. It does not tell production **how directly** that description traces to the user's own
-words. A Brain record reading "user prefers PostgreSQL" does not, by that content alone, prove the
-user directly said so in those or equivalent terms — it may equally be an agent-authored summary,
-paraphrase, or inference about the user's preference, written to Brain by a caller who never quoted
-the user at all. Treating "the body says the user prefers X" as equivalent to "the user directly
-stated a preference for X" is exactly the laundering risk this gate exists to close — content-based
-classification (the previous section) tells production *what kind of claim* a record makes; it
-cannot, by itself, tell production *how reliably grounded* that claim is in an actual historical
-user utterance.
+Inspecting an admitted Brain record's body tells production **that** it describes a past user
+preference or statement. It does not tell production **how directly** that description traces to the
+user's own words. A Brain record reading "user prefers PostgreSQL" does not, by that content alone,
+prove the user directly said so in those or equivalent terms — it may equally be an agent-authored
+summary, paraphrase, or inference about the user's preference, written to Brain by a caller who never
+quoted the user at all. Treating "the body says the user prefers X" as equivalent to "the user
+directly stated a preference for X" is exactly the laundering risk this gate exists to close —
+content-based classification (the previous section) tells production *what kind of claim* a record
+makes; it cannot, by itself, tell production *how reliably grounded* that claim is in an actual
+historical user utterance.
 
-Two categories, deliberately exhaustive — every `decision` record read as a historical user statement
-falls into exactly one:
+**This gate applies by what a record's content actually is, never by its stored Brain `type`.** Brain
+`type` is a weak classification prior (per "Semantic Authority Classes" above) — it is never an
+epistemic shortcut past this gate. A record stored as `reference`, `incident`, `pattern`, `project`, or
+any other non-`inbox` type, that production's own content inspection reveals actually describes a
+historical user statement, is gated exactly as a `decision`-type record would be: **any admitted
+Brain record that production classifies as describing a historical user statement must pass the same
+Category A/Category B test below, regardless of stored Brain type.** `inbox` remains excluded before
+this question ever arises (per "What Qualifies as a MemoryContext Entry" above) — a record cannot be
+misfiled *into* eligibility; `inbox` exclusion happens first, on `type` alone, and this gate only
+applies to records that have already cleared that earlier bar.
+
+Two categories, deliberately exhaustive — every admitted Brain record production classifies as
+describing a historical user statement, of whatever stored type, falls into exactly one:
 
 - **A. Direct historical user statement.** Inspectably traceable, via the record's own recorded
   provenance, to an original historical user-authored source — a specific past `UserIdea` version/
   turn, or an equivalent immutable source artifact — such that a later auditor could follow the
   citation back to the actual originating user utterance, not merely trust the record's own
-  characterization of itself. Only Category A entries may ever be eligible to serve as a direct
-  historical-memory premise for the future Inferred-Claim path ("Historical User Memory Rule" above),
-  once its required amendment exists.
+  characterization of itself. **An apparent citation string is not, by itself, sufficient**: the
+  referenced historical source must actually be inspectable and resolvable enough for an auditor to
+  verify the originating user statement it names — a citation to a turn/version that cannot actually
+  be located, resolved, or checked (a dangling reference, a vague "the user said this once," or a
+  citation to an artifact no longer available to inspect) is not Category A merely because it has the
+  surface shape of a citation. The test is whether the citation actually resolves to something
+  checkable, not whether the record contains citation-shaped text. Only Category A entries may ever
+  be eligible to serve as a direct historical-memory premise for the future Inferred-Claim path
+  ("Historical User Memory Rule" above), once its required amendment exists.
 - **B. Derived or unverified user memory.** Says something about the user's past preference or
-  intent, but lacks that inspectable direct-user-source linkage — including every record whose body
-  merely reads as if it quotes or paraphrases the user, with no traceable citation to the originating
-  artifact. This is the **default** classification for any `decision` record read as a historical
-  user statement, absent the inspectable linkage Category A requires.
+  intent, but lacks that inspectable, resolvable direct-user-source linkage — including every record
+  whose body merely reads as if it quotes or paraphrases the user, with no traceable citation to the
+  originating artifact, *and* every record whose citation is present but unresolvable/uninspectable.
+  This is the **default** classification for any admitted Brain record read as a historical user
+  statement, of whatever stored type, absent the inspectable and resolvable linkage Category A
+  requires.
 
 **Category B is not a lesser-confidence version of Category A — it is a different authority
 ceiling.** A Category B entry may at most reach `DISCOVERY_ATTENTION`: it may shape a candidate
@@ -230,21 +271,23 @@ does that, and production must never fabricate, infer, or assume one that the re
 actually carry.
 
 **Honest dependency, not invented here.** Brain's actual schema (`provenance.source`:
-`manual`/`import`/`cli`, `provenance.author`) has **no field that links a `decision` record's body to
-a specific historical `UserIdea` version or turn.** Nothing in this document proposes adding one —
-that would be a `../mihver-brain` schema change, out of scope for this task. Under Brain's schema as
-it actually exists today, the *only* way a record could satisfy Category A is by the record's own
-body containing an explicit, self-declared citation to the originating artifact (e.g. quoting a
-specific `UserIdea` version/turn verbatim, with that citation itself inspectable in the record) — a
-weaker, self-reported signal than a schema-enforced link would be, but still the honest maximum
-Brain's current schema supports, and still meaningfully stronger than an undifferentiated paraphrase
-with no citation at all. **This is recorded here as a named future Brain/integration dependency**: a
-schema or convention change to `../mihver-brain` (e.g. a dedicated field capturing the originating
-`UserIdea` version/turn at write time) would let Category A be established more reliably than a
-self-declared citation can; until and unless such a change is separately proposed and made, most
-historical `decision` records will, honestly, default to Category B, and the Inferred-Claim-premise
-path will have correspondingly few eligible entries to exercise. That is the correct, honest
-consequence of not having schema-level provenance today — not a reason to relax the gate.
+`manual`/`import`/`cli`, `provenance.author`) has **no field, on any of its eight types, that links a
+record's body to a specific historical `UserIdea` version or turn.** Nothing in this document
+proposes adding one — that would be a `../mihver-brain` schema change, out of scope for this task.
+Under Brain's schema as it actually exists today, the *only* way any admitted record — whatever its
+stored type — could satisfy Category A is by the record's own body containing an explicit,
+self-declared citation to the originating artifact (e.g. quoting a specific `UserIdea` version/turn
+verbatim, with that citation itself inspectable *and resolvable* in the record) — a weaker,
+self-reported signal than a schema-enforced link would be, but still the honest maximum Brain's
+current schema supports, and still meaningfully stronger than an undifferentiated paraphrase with no
+citation at all. **This is recorded here as a named future Brain/integration dependency**: a schema or
+convention change to `../mihver-brain` (e.g. a dedicated field capturing the originating `UserIdea`
+version/turn at write time) would let Category A be established more reliably than a self-declared
+citation can; until and unless such a change is separately proposed and made, most records read as
+historical user statements, of whatever stored type, will, honestly, default to Category B, and the
+Inferred-Claim-premise path will have correspondingly few eligible entries to exercise. That is the
+correct, honest consequence of not having schema-level provenance today — not a reason to relax the
+gate.
 
 Historical provenance must remain visible end-to-end: a Claim's provenance that cites a Category A
 `MemoryContext` entry as its premise must itself state that the entry is Category A and name the
@@ -270,8 +313,9 @@ confidence collapse):
 6. **Confidence, where meaningful** — Brain's author-supplied confidence, kept distinct from any
    Inference-derivation or Evidence confidence computed later (Invariant M-02).
 7. **Allowed use by stage** — which specific stage(s) may use this entry, and for which Influence
-   Taxonomy tier (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`, see "Influence Taxonomy"
-   below), assigned at production, never left to the consuming stage's own discretion.
+   Taxonomy tier (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`DECISION_OPTION`/`SEMANTIC_PREMISE`, see
+   "Influence Taxonomy" below), assigned at production, never left to the consuming stage's own
+   discretion.
 
 ## Classification Fail-Closed Rule
 
@@ -305,10 +349,12 @@ classification with the confidence its own "Allowed to decide" authority require
 Producer: Role and Authority") — production must never resolve that ambiguity upward. Specifically,
 and without exception:
 
-- Ambiguity in classification must never promote an entry to `SEMANTIC_PREMISE`. `SEMANTIC_PREMISE`
-  is reached only by separately clearing a full epistemic or evidence gate (Historical User Memory
-  Rule, Memory and Evidence Boundary) — an ambiguous production-time classification can never
-  substitute for, or shortcut, that gate.
+- Ambiguity in classification must never promote an entry to `SEMANTIC_PREMISE`, nor to
+  `DECISION_OPTION`. `SEMANTIC_PREMISE` is reached only by separately clearing a full epistemic or
+  evidence gate (Historical User Memory Rule, Memory and Evidence Boundary); `DECISION_OPTION`
+  requires the consuming stage to already, independently own the specific decision the memory would
+  inform (R-19's own eligibility test, for the currently-named instance) — an ambiguous
+  production-time classification can never substitute for, or shortcut, either determination.
 - Retrieval relevance must never resolve classification ambiguity (extends M-01 — a high FTS5 rank is
   not evidence the record is what it appears to be).
 - Brain's own `confidence` field must never resolve classification ambiguity (extends M-02 — the
@@ -316,10 +362,12 @@ and without exception:
   class or provenance category production should assign it).
 - When no classification can be defensibly assigned at the tier a particular use would require,
   production must choose the **lowest defensible influence tier** consistent with what it can
-  actually establish — and if even the lowest content-bearing tier (`DISCOVERY_ATTENTION`) cannot be
-  defensibly assigned (e.g. the record's own type or scope is itself unclear), production must
-  **exclude the entry from `MemoryContext` entirely**, recording why (M-14), rather than admit it
-  under a default or best-guess classification.
+  actually establish — ordered `PROCESS_ONLY` < `DISCOVERY_ATTENTION` < `DECISION_OPTION` <
+  `SEMANTIC_PREMISE` by how directly the tier can affect an artifact's actual content — and if even
+  the lowest content-bearing tier (`DISCOVERY_ATTENTION`) cannot be defensibly assigned (e.g. the
+  record's own type or scope is itself unclear), production must **exclude the entry from
+  `MemoryContext` entirely**, recording why (M-14), rather than admit it under a default or
+  best-guess classification.
 
 **The exact fallback rule, derived:** production defaults toward *less* authority, never more, at
 every point ambiguity appears — never "admit now, let a downstream stage catch the mistake," since a
@@ -357,9 +405,12 @@ not a confidence-based restriction to be weighed case by case, it is a hard elig
   user — e.g. "a prior project of yours used PostgreSQL; is that still your preference here?" The
   memory motivates the question; only the current user's *current* answer, if given, becomes a
   User-Provided Claim. The memory itself never substitutes for that answer. **This path requires no
-  amendment**: the resulting Claim is an ordinary User-Provided Claim from the current `UserIdea`,
-  produced exactly the way Intent Parsing already produces one — memory only shaped which question
-  got asked. **Available to both Category A and Category B entries** — a Category B entry's lack of
+  additional `INTENT_SPEC.md` amendment (dependency B, per `ADR-0004`'s "Acceptance Gate")** — the
+  resulting Claim is an ordinary User-Provided Claim from the current `UserIdea`, produced exactly the
+  way Intent Parsing already produces one — memory only shaped which question got asked. It still
+  requires dependency A (Intent Parsing's own `M0_SCOPE.md` authorization to consume `MemoryContext`
+  at all) like every other use; "no amendment beyond A" is what is meant here, never "no authorization
+  needed at all." **Available to both Category A and Category B entries** — a Category B entry's lack of
   inspectable direct-user provenance does not disqualify it from motivating a question (the question
   itself is answered by the current user, not by the memory), it only disqualifies it from the first
   path above.
@@ -398,15 +449,34 @@ Requirement-Level Inference's premise citation, applied to R-09's simpler defaul
 the memory motivates *which value* Requirement Derivation chose to fill with, exactly as it may
 motivate *which clarifying question* Intent Parsing asks (per "Historical User Memory Rule" above) —
 in neither case does the memory itself acquire `IntentSpec`/User-Provided standing merely because it
-informed a downstream choice. A Category B (derived/unverified) entry may inform an R-19 default the
-same way it may shape a clarification question — the same gate applies here as at Intent Parsing:
-informing *which value to consider* is `DISCOVERY_ATTENTION`, available to both categories; nothing
-about R-19 default-filling elevates a memory entry to `SEMANTIC_PREMISE` standing, since the default's
-own authority comes from Requirement Derivation's own R-09/R-19 mechanism, not from the memory. This
-provenance requirement is itself part of the `REQUIREMENT_SPEC.md` amendment "Foundation Impact
-Analysis" identifies as required (see `ADR-0004`) — not decided in the abstract here, but named
-precisely so that future amendment does not under-scope itself the way an earlier Foundation Impact
-Analysis draft did for the `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` Inference-premise question.
+informed a downstream choice.
+
+**This is `DECISION_OPTION` influence, not `DISCOVERY_ATTENTION`** (see "Influence Taxonomy" below,
+corrected during a later closure round from an earlier draft that mislabeled it): the memory does not
+merely expand a set of candidates for further, independent downstream screening — it proposes a
+specific *value*, and if Requirement Derivation adopts it, that value becomes the Requirement's actual
+content immediately, with no further independent gate standing between the suggestion and the compiled
+Requirement. The memory supplies **zero independent authority** for that value either way: R-19's own
+eligibility test, and Requirement Derivation's own judgment of whether the specific value is a
+defensible choice, are what actually authorize it — the memory only narrows or proposes within a
+decision Requirement Derivation already, independently owns. Requirement Derivation must be able to
+justify the final value entirely under its own R-09/R-19 authority, without treating the memory's
+suggestion as though it required or authorized that choice; it retains full authority to modify,
+reject, or ignore the suggested value, or to leave the Unknown unresolved and carry it forward instead.
+An entry of either Historical User Provenance Gate category may supply this kind of technical/
+measurement suggestion in principle, but in practice a genuine historical *user statement* almost never
+qualifies here at all: **R-19 categorically excludes any value that would add, remove, or narrow a
+user-facing actor, target, capability, output, condition, permission, prohibition, obligation, or
+preference** — exactly the content a historical user statement typically carries — so a memory
+proposing an R-19-eligible technical/measurement value is typically a `pattern`, `incident`,
+`reference`, or process-`decision` entry, not a historical-user-statement Category A/B entry (Case 24
+works through both the eligible and the excluded case explicitly). Nothing about R-19 default-filling
+ever elevates a memory entry to `SEMANTIC_PREMISE` standing, since the default's own authority comes
+from Requirement Derivation's own R-09/R-19 mechanism, never from the memory. This provenance
+requirement is itself part of the `REQUIREMENT_SPEC.md` amendment "Foundation Impact Analysis"
+identifies as required (see `ADR-0004`) — not decided in the abstract here, but named precisely so
+that future amendment does not under-scope itself the way an earlier Foundation Impact Analysis draft
+did for the `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` Inference-premise question.
 
 **Repetition never increases standing.** A historical statement repeated across many past
 occurrences, many past projects, or many past runs does not thereby become more authoritative —
@@ -537,14 +607,24 @@ provenance, with no clarification required, since current input already authorit
 question (Invariant M-10). What must never happen, at any impact level, is silently applying memory
 content over current-run authoritative input.
 
-## Influence Taxonomy: Process-Only, Discovery/Attention, Semantic Premise
+## Influence Taxonomy: Process-Only, Discovery/Attention, Decision Option, Semantic Premise
 
 An earlier draft used a two-way procedural/semantic split, and called both "review decomposition"
 and "expanding what Research Planning searches for" equally "procedural" — but the second one can
 change `ResearchPlan`'s or `ArchitectureCandidate`'s actual search space and content, which the first
 never can. Collapsing these two, materially different effects into one label was itself a defect,
-corrected here into three properties of a specific *use* of a memory entry, not fixed properties of
-the entry itself:
+corrected here into four properties of a specific *use* of a memory entry, not fixed properties of
+the entry itself. **A fourth tier, `DECISION_OPTION`, was added during a later closure round** —
+re-deriving the taxonomy found that a memory-informed R-19 working default (see "No Assumed-Origin
+Path for Memory" below) does not actually fit `DISCOVERY_ATTENTION`'s own invariant: `DISCOVERY_ATTENTION`
+is additive-only and never itself establishes a Requirement's content, but an R-19 default's *specific
+chosen value* genuinely does become Requirement content, immediately, with no further independent
+screening step standing between the memory's suggestion and the compiled Requirement. Forcing that
+case into `DISCOVERY_ATTENTION` would have required either silently weakening
+`DISCOVERY_ATTENTION`'s additive-only invariant (rejected — no rigorous re-derivation justified it) or
+misclassifying a genuinely different kind of influence as though it were the same as search-space
+expansion. `DECISION_OPTION` names that different kind precisely, without touching
+`DISCOVERY_ATTENTION`'s own definition:
 
 - **`PROCESS_ONLY` influence** changes *how* a stage or reviewer performs its own internal work —
   review decomposition, verification rigor, which axes get tested, how many independent reviewers are
@@ -567,6 +647,37 @@ the entry itself:
   looked where it looked must be able to cite the memory, never silently absorb its influence).
   `pattern`, `incident`, and `reference`-classified entries are typically `DISCOVERY_ATTENTION` when
   used to shape *where a stage looks*.
+- **`DECISION_OPTION` influence** proposes a candidate *value* within a decision a stage **already,
+  independently owns and is already authorized to make** — it never expands what the stage is
+  *allowed* to decide (that boundary is fixed entirely by the stage's own pre-existing authority,
+  e.g. R-19's own eligibility test, untouched by the memory's presence), and it supplies **zero
+  independent authority** for whichever value is ultimately chosen: the stage's own existing
+  decision-making authority is what settles the matter, never the memory. This is structurally
+  different from `DISCOVERY_ATTENTION`, not merely a relabeling of it — the distinction is not that
+  `DISCOVERY_ATTENTION` has zero content effect before some later gate (it does not: it may directly
+  alter `ResearchPlan`'s or `TechnologyCandidateSet`'s own intermediate content the moment a stage
+  acts on it, additively). The real distinction is what the tier can ever **establish**:
+  `DISCOVERY_ATTENTION` proposes candidates that still require a **further, independent mechanism**
+  (Evidence-gate clearance, eligibility screening, Evaluation's scoring) to establish truth,
+  eligibility, or final selection — a `DISCOVERY_ATTENTION`-shaped candidate is never itself the
+  settled answer to anything. `DECISION_OPTION`'s adoption, by contrast, **is** the immediate
+  establishment of the Requirement's actual content, in the very same step, under the consuming
+  stage's own pre-existing authority — there is no further mechanism still to clear afterward. Two
+  conditions apply without exception:
+  it must be **provenance-visible** (the stage's own record of its choice must be able to cite the
+  memory as part of its stated rationale) and **non-obligating** (the consuming stage must be able to
+  justify the final choice entirely under its own pre-existing authority, without the memory's
+  suggestion being treated as though it required or authorized that choice — the stage could equally
+  have chosen a different value, or declined to fill the decision at all, and the memory's absence
+  would not have changed what the stage was allowed to decide in the first place). Reaching
+  `SEMANTIC_PREMISE` is categorically unavailable to a `DECISION_OPTION` use: this tier never
+  establishes truth, eligibility, a Requirement's own scope or boundary, or user intent — it only ever
+  narrows a choice within a scope the consuming stage's own, already-existing authority had already
+  fixed. **The only currently-named instance of this tier is a memory-informed R-19-eligible working
+  default at Requirement Derivation** (see "No Assumed-Origin Path for Memory" below); this is not a
+  general license to invent new memory-authorized decision points elsewhere in the pipeline —
+  extending `DECISION_OPTION` to any other stage/decision requires the same rigorous re-derivation
+  this tier itself received, not an assumption that it now applies wherever convenient.
 - **`SEMANTIC_PREMISE` influence** is the capacity to directly support a `Claim`, `Requirement`, or
   equivalent pipeline-artifact content. This is only ever reached by separately clearing the full
   corresponding epistemic or evidence gate for where it is used (the Historical User Memory Rule for
@@ -587,15 +698,16 @@ the entry itself:
     permanently; only its role as the search lead that prompted the new artifact's creation is ever
     recorded, in the new artifact's own provenance, never as the new artifact's basis.
 
-**Reclassification, corrected against this three-way model:**
+**Reclassification, corrected against this four-way model:**
 
 | Memory kind | Typical classification | Notes |
 |---|---|---|
 | `lesson`, `playbook` (engineering lessons, process guidance) | `PROCESS_ONLY` always | No path to any other category, under any use. |
 | `pattern`, `incident` (prior architecture outcomes/failures) | `DISCOVERY_ATTENTION` when shaping search — **permanently; never itself reaches `SEMANTIC_PREMISE`** | A new, independently re-verified `EvidenceBundle`/`TechnologyCandidateSet` entry may reach `SEMANTIC_PREMISE`; the originating memory entry never does, regardless of re-verification (identity boundary, not a freshness gate). |
 | `reference` (cached technology knowledge) | `DISCOVERY_ATTENTION` as a research lead — **permanently; never itself reaches `SEMANTIC_PREMISE`** | Same identity boundary as `pattern`/`incident`. See "Memory and Evidence Boundary." |
-| `decision` read as a historical user statement, **Category A (direct)** | `DISCOVERY_ATTENTION` when shaping a current-run clarification question; `SEMANTIC_PREMISE` only as a cited Inference premise (pending required amendment) | Never `SEMANTIC_PREMISE` merely because the historical statement is confident or repeated (M-07); its own historical force is never mechanically copied into the current Inferred Claim's force either (see "Historical Force Is Not Current Force"). |
-| `decision` read as a historical user statement, **Category B (derived/unverified)** | `DISCOVERY_ATTENTION` only, when shaping a current-run clarification question — **never** `SEMANTIC_PREMISE`, under any circumstance, at any confidence or repetition level | Lacks the inspectable direct-user provenance "Historical User Provenance Gate" requires for Inference-premise eligibility; no accumulation of uses or confidence promotes it to Category A. |
+| Any classified type (typically `pattern`, `incident`, `reference`, or a process-`decision`; **never** a historical-user-statement Category A/B entry — see below) proposing a candidate value for an R-19-eligible technical/measurement default | `DECISION_OPTION` at Requirement Derivation, once separately authorized — **never** `SEMANTIC_PREMISE`, since the default's authority always comes from Requirement Derivation's own R-09/R-19 mechanism, never the memory | Never eligible for an intent-level, want-shaping value — R-19 itself excludes those regardless of what memory suggests (see Case 24's contrast). |
+| Any admitted record (whatever its stored Brain type) read as a historical user statement, **Category A (direct)** | `DISCOVERY_ATTENTION` when shaping a current-run clarification question; `SEMANTIC_PREMISE` only as a cited Inference premise (pending required amendment) | Never `SEMANTIC_PREMISE` merely because the historical statement is confident or repeated (M-07); its own historical force is never mechanically copied into the current Inferred Claim's force either (see "Historical Force Is Not Current Force"). Category assignment depends on inspectable, resolvable traceability, never on stored `type`. |
+| Any admitted record (whatever its stored Brain type) read as a historical user statement, **Category B (derived/unverified)** | `DISCOVERY_ATTENTION` only, when shaping a current-run clarification question — **never** `SEMANTIC_PREMISE`, under any circumstance, at any confidence or repetition level | Lacks the inspectable and resolvable direct-user provenance "Historical User Provenance Gate" requires for Inference-premise eligibility; no accumulation of uses, confidence, or stored `type` promotes it to Category A. |
 
 A `pattern` memory describing a past message-queue architecture illustrates the full chain: it may
 (once Research Planning is authorized) shape its search strategy as `DISCOVERY_ATTENTION` — additive,
@@ -612,7 +724,7 @@ into `RequirementSpec`'s content (Invariant M-11).
 contracts` engineering lesson, retrieved and applied during M0 Step 03A's later review rounds, is
 `PROCESS_ONLY` — it changed *how* Claude reviewed `REQUIREMENT_SPEC.md` (added pairwise-interaction
 scrutiny) and never touched what the user's actual Requirements were. That is the shape every future
-`lesson`/`playbook` memory must be held to, and the shape the three-tier taxonomy exists to keep
+`lesson`/`playbook` memory must be held to, and the shape the four-tier taxonomy exists to keep
 possible without collapsing it together with the genuinely different `DISCOVERY_ATTENTION` tier that
 *can* touch artifact content.
 
@@ -822,9 +934,11 @@ in the frozen snapshot:**
 - **Raw Brain access**: any stage querying `../mihver-brain` directly instead of consuming a
   produced `MemoryContext`. (Violates the hard constraint in `ADR-0004`'s Authority Map and this
   document's "Stage Consumption Is Not Yet Authorized.")
-- **Direct-provenance fabrication**: treating a `decision` record's body reading like a user quote as
-  proof the user directly said it, with no inspectable citation to an originating artifact. (Violates
-  M-18's Category A/B gate.)
+- **Direct-provenance fabrication**: treating any admitted record's body reading like a user quote as
+  proof the user directly said it, with no inspectable and resolvable citation to an originating
+  artifact — including a record stored under a non-`decision` type that happens to describe a
+  historical user statement, where the stored `type` is mistaken for an epistemic shortcut past the
+  gate. (Violates M-18's Category A/B gate.)
 - **Ambiguity promotion**: admitting an entry at `SEMANTIC_PREMISE`, or resolving a classification
   ambiguity using retrieval relevance or Brain's own `confidence`, when production cannot defensibly
   classify the entry. (Violates M-19.)
@@ -911,15 +1025,18 @@ in the frozen snapshot:**
 - **M-10** Memory contradiction is never an independent blocking mechanism; whether it triggers
   clarification depends entirely on the contradicted item's own, ordinarily-computed Decision
   Impact — never on the fact of contradiction alone.
-- **M-11** A memory's influence classification (`PROCESS_ONLY`, `DISCOVERY_ATTENTION`, or
-  `SEMANTIC_PREMISE`) is a property of a specific *use*, not a fixed property of the memory record; a
-  `lesson`/`playbook`-classified entry is `PROCESS_ONLY` under every use and has no path to
-  `DISCOVERY_ATTENTION` or `SEMANTIC_PREMISE`. `DISCOVERY_ATTENTION` use must be additive and
-  provenance-visible, and never itself establishes truth, eligibility, a Requirement, or a
-  preference. Reaching `SEMANTIC_PREMISE` always requires separately clearing the full corresponding
-  epistemic or evidence gate — and for `pattern`/`incident`/`reference` entries specifically, that
-  gate is never cleared by the entry itself; only a wholly new, independently-produced
-  `EvidenceBundle`/`TechnologyCandidateSet` artifact reaches `SEMANTIC_PREMISE` (see "Identity
+- **M-11** A memory's influence classification (`PROCESS_ONLY`, `DISCOVERY_ATTENTION`,
+  `DECISION_OPTION`, or `SEMANTIC_PREMISE`) is a property of a specific *use*, not a fixed property of
+  the memory record; a `lesson`/`playbook`-classified entry is `PROCESS_ONLY` under every use and has
+  no path to any other tier. `DISCOVERY_ATTENTION` use must be additive and provenance-visible, and
+  never itself establishes truth, eligibility, a Requirement, or a preference; it always leaves a
+  further, independent downstream gate (Evidence sourcing, eligibility screening, Evaluation) between
+  itself and any actual content effect. `DECISION_OPTION` use (M-21) supplies zero independent
+  authority for the value it proposes and never expands what the consuming stage was already,
+  independently authorized to decide. Reaching `SEMANTIC_PREMISE` always requires separately clearing
+  the full corresponding epistemic or evidence gate — and for `pattern`/`incident`/`reference` entries
+  specifically, that gate is never cleared by the entry itself; only a wholly new, independently-
+  produced `EvidenceBundle`/`TechnologyCandidateSet` artifact reaches `SEMANTIC_PREMISE` (see "Identity
   Boundary, Not Merely a Freshness Gate"). The Historical User Memory Rule's Category A path is the
   sole exception where the `MemoryContext` entry itself, not a separately-produced artifact, is what
   reaches `SEMANTIC_PREMISE` standing (as a directly-cited Inference premise).
@@ -970,15 +1087,24 @@ in the frozen snapshot:**
   produces its own fresh snapshot, recomputing each memory's freshness flag against that run's own
   retrieval time. The superseded or prior-run `MemoryContext` itself remains historical and immutable,
   never deleted or mutated in place.
-- **M-18** A `decision`-type entry read as a historical user statement is Category A (direct) only
-  when inspectably traceable, via its own recorded provenance, to an original historical user-authored
-  source; absent that inspectable linkage it is Category B (derived/unverified) by default. Only
-  Category A may ever be cited as the premise of a current-run Inferred Claim (pending the
-  Inference-premise path's own required amendment); Category B is restricted to `DISCOVERY_ATTENTION`
-  use (shaping a clarification question, informing retrieval) under every circumstance, regardless of
-  confidence, repetition, or apparent plausibility. Brain's actual schema has no field guaranteeing
-  this linkage today; this is a named future Brain/integration dependency, not a gap this document
-  closes by relaxing the gate.
+- **M-18** **Any admitted Brain record that production classifies as describing a historical user
+  statement is Category A (direct) only when inspectably traceable, via its own recorded provenance,
+  to an original historical user-authored source — regardless of the record's stored Brain `type`.**
+  Brain `type` is a weak classification prior only, never an epistemic shortcut past this gate: a
+  record misfiled under a type other than `decision` (e.g. `reference`, `incident`, `pattern`) that
+  production's own inspection reveals actually describes a historical user statement is gated
+  identically to a correctly-filed `decision` record. An apparent citation is not sufficient by
+  itself — the referenced historical source must actually be inspectable and resolvable enough for an
+  auditor to verify the originating statement; a dangling, vague, or unresolvable citation does not
+  satisfy Category A merely by having citation-shaped text. Absent that inspectable and resolvable
+  linkage, the record is Category B (derived/unverified) by default. Only Category A may ever be cited
+  as the premise of a current-run Inferred Claim (pending the Inference-premise path's own required
+  amendment); Category B is restricted to `DISCOVERY_ATTENTION` use (shaping a clarification question,
+  informing retrieval) under every circumstance, regardless of confidence, repetition, or apparent
+  plausibility. `inbox`-type records are excluded before this question is ever reached (per "What
+  Qualifies as a MemoryContext Entry"), so this gate never rescues an `inbox` record into eligibility.
+  Brain's actual schema has no field guaranteeing this linkage today, on any type; this is a named
+  future Brain/integration dependency, not a gap this document closes by relaxing the gate.
 - **M-19** When `MemoryContext` production cannot defensibly assign a classification (semantic
   authority class or Influence Taxonomy tier) with the confidence its own authority requires, it must
   resolve the ambiguity toward *less* authority, never more: ambiguity never promotes an entry to
@@ -997,6 +1123,18 @@ in the frozen snapshot:**
   constraint with no confidence-based safeguard anywhere downstream. Force provenance (the reasoning
   basis for the Claim's own current force) is recorded separately from historical-content provenance
   (which `MemoryContext` entry supplied the premise's content).
+- **M-21** `DECISION_OPTION` influence — the currently-named instance being a memory-informed
+  R-19-eligible working default at Requirement Derivation — proposes a candidate value within a
+  decision the consuming stage already, independently owns; it supplies zero independent authority for
+  the value ultimately chosen, and it never expands what the stage was already authorized to decide
+  (R-19's own eligibility test is untouched by the memory's presence). The consuming stage must be
+  able to justify the final value entirely under its own pre-existing authority (R-09's "Requirement-
+  Derivation-introduced, with its own stated rationale"), citing the memory only as an additional,
+  explicitly-labeled **memory-informed rationale** — never as though the memory required, authorized,
+  or established the choice. `DECISION_OPTION` never applies to an intent-level, want-shaping value —
+  R-19 itself categorically excludes those regardless of what memory proposes — and it is not, by
+  default, available to any other stage or decision point beyond the one named here without its own
+  equally rigorous re-derivation.
 
 ## Examples
 
@@ -1017,6 +1155,16 @@ in the frozen snapshot:**
   a research hint prompting Research + Evidence Collection to re-verify current support and
   re-record it with a fresh date; illegitimate use: citing the six-month-old memory itself as the
   `EvidenceBundle` entry.
+- Memory: a `pattern`-type record, same-project, "a prior requirement in this project used
+  exponential backoff with 3 retries for background job failures." Current run: an already-settled
+  Requirement obligates retrying failed background jobs; a surviving Unknown asks how many attempts
+  and what backoff strategy (R-19-eligible — a measurement detail within an already-settled
+  Requirement, per Case 24). → Legitimate use: `DECISION_OPTION` — Requirement Derivation may adopt
+  "3 retries, exponential backoff" as its own R-19-introduced default, citing the memory as a
+  memory-informed rationale, but only after independently judging the value defensible under its own
+  R-19 authority; illegitimate use: treating the memory as though it authorized or required that exact
+  value, or using the same mechanism to decide *whether retries happen at all* (a want-level question
+  R-19 excludes regardless of what memory proposes).
 
 ## Anti-Examples
 
@@ -1035,9 +1183,23 @@ in the frozen snapshot:**
 - Citing a `decision`-type memory that merely reads as if it quotes the user, with no inspectable
   citation to an originating `UserIdea` turn, as the premise of an Inferred Claim. (Violates M-18 —
   a Category B entry may shape a clarification question, never serve as a premise.)
+- Treating a `reference`-type record whose body actually reads "user said they want offline-first
+  behavior" as automatically Category B-only-and-therefore-safe-to-ignore-the-gate-question, on the
+  reasoning that "the Historical User Provenance Gate is about `decision` records" — the gate applies
+  because production's own inspection reveals this record describes a historical user statement,
+  regardless of its stored `reference` type; skipping the Category A/B test because the stored type
+  isn't `decision` is itself the violation. (Violates M-18's type-independence.)
 - Assigning a current-run Inferred Claim the same "MUST NOT" force a historical statement carried,
   purely because the historical statement was itself phrased as a prohibition, with no independent
   current-run reasoning stated for why that force level still applies. (Violates M-20.)
 - Admitting an entry at `SEMANTIC_PREMISE` because its Brain `confidence` is `high`, when
   production's own classification of what kind of statement it is remains genuinely ambiguous.
   (Violates M-19 — Brain confidence never resolves classification ambiguity.)
+- Requirement Derivation adopting a memory-suggested R-19 default value without independently judging
+  it defensible under its own authority — treating the memory's suggestion as itself sufficient
+  justification, rather than as one input to a decision the stage must still own and justify itself.
+  (Violates M-21.)
+- Using a memory-informed "R-19 default" mechanism to decide whether a capability exists at all, or
+  to narrow a user-facing actor/target/output/condition/permission/prohibition/obligation/preference —
+  any of which is a want-level question R-19 itself excludes, regardless of what the memory proposes
+  or how the choice is labeled. (Violates R-19 and M-21 together.)

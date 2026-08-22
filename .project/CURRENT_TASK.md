@@ -5,32 +5,35 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-M0-ADR-0004-AUTHORITY-PROVENANCE-CLOSURE
+M0-ADR-0004-FINAL-TAXONOMY-CLOSURE
 
 ## Objective
 
-A narrow semantic-closure pass, before any foundation-amendment work begins — same constraints as
-prior rounds: no runtime integration, no schema, no MCP, `../mihver-brain` not modified, no frozen
-foundation document touched, no broadening of the architecture beyond what's specified. Continue
-PR #15 in place (no new PR). Closed six further gaps: (1) a **Historical User Provenance Gate**
-distinguishing direct historical user statements (inspectably traceable to an original user-authored
-source) from derived/unverified memory (reads like a user statement but lacks that traceable
-linkage, the honest default given Brain's actual schema has no field guaranteeing it) — only the
-former may ever be cited as an Inference premise; (2) a **Classification Fail-Closed Rule** requiring
-production to record classification basis/method/ambiguity and resolve ambiguity toward less
-authority, never more; (3) removed residual wording that let production treat "an artifact was
-supplied" as equivalent to "a contradiction judgment was supplied"; (4) an explicit **identity
-boundary** — a `pattern`/`incident`/`reference` entry never itself reaches `SEMANTIC_PREMISE`,
-regardless of re-verification; only a wholly new, independently-produced Evidence artifact does;
-(5) a Foundation Impact item for memory-informed R-19 default provenance, closing a gap where this
-capability's provenance discipline was specified without naming its `REQUIREMENT_SPEC.md`
-amendment; (6) a **Historical Force Is Not Current Force** rule plus new Case 22, and an M-07
-correction restoring I-16's "not by itself" qualifier an earlier round had silently over-strengthened.
-Across `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` (Status: Proposed),
-`docs/contracts/MEMORY_CONTEXT.md`, and `docs/examples/MEMORY_CONTEXT_CASES.md` (now 22 cases). A
-four-reviewer round then found and this task fixed several further internal-consistency defects the
-remediation itself introduced or left over (see Status below). No frozen foundation document
-modified. `ADR-0004` remains Proposed.
+A narrow final semantic closure, before any foundation-amendment work begins — same constraints as
+every prior round: no runtime integration, no schema, no MCP, `../mihver-brain` not modified, no
+frozen foundation document touched, no redesign of unrelated parts. Continue PR #15 in place (no new
+PR). Closed three remaining gaps: (1) **made the Historical User Provenance Gate type-independent** —
+the gate (Category A direct / Category B derived-unverified, M-18) now applies to any admitted Brain
+record production's own content inspection reveals as describing a historical user statement,
+regardless of stored Brain `type` (a record misfiled as `reference`/`pattern`/`incident`/etc. is
+gated identically to a `decision` record); added the requirement that an apparent citation must
+actually be inspectable *and resolvable*, not merely citation-shaped; added new Case 23 (a misfiled
+`reference`-type record); (2) **reconciled memory-informed R-19 defaults with the Influence
+Taxonomy** by introducing a fourth tier, `DECISION_OPTION` — a memory-suggested value within a
+decision a stage already, independently owns, supplying zero independent authority and never
+expanding what the stage could already decide, distinct from `DISCOVERY_ATTENTION` (whose candidates
+always require further independent screening before establishing anything) — new Invariant M-21, new
+Case 24 (a genuinely R-19-eligible retry-count default, contrasted with an intent-level value R-19
+excludes regardless of memory); (3) **explicitly decided ADR-0004's Acceptance Gate** — a new
+"Acceptance Gate" subsection names four distinct amendment dependencies (A: core `M0_SCOPE.md`
+integration; B: `INTENT_SPEC.md` Inference-premise; C: `REQUIREMENT_SPEC.md` Requirement-Level-
+Inference; D: `REQUIREMENT_SPEC.md` R-19 provenance) and decides this ADR becomes Accepted-eligible
+once dependency A alone is completed and adversarially reviewed, not all four — with reasoning given
+for that choice. Across `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` (Status: Proposed),
+`docs/contracts/MEMORY_CONTEXT.md`, and `docs/examples/MEMORY_CONTEXT_CASES.md` (now 24 cases). A
+three-reviewer round then found and this task fixed several further internal-consistency defects
+this closure round itself introduced or left incomplete (see Status below). No frozen foundation
+document modified. `ADR-0004` remains Proposed.
 
 ## Branch / Base
 
@@ -41,64 +44,63 @@ context` and `git rev-parse HEAD` before branching)
 ## Status
 
 **Complete.** Continuation of the same branch/PR (#15) — see `REVIEW_STATE.md`'s History for prior
-rounds' full detail. Before any edit, Brain was re-queried for the same four lesson topics
-(`4250a08b`, `96500b29`, `37a0ce2b`, `64d5e902`) — no new memories exist since the prior round; all
-four remain advisory only, per every prior round's own discipline.
+rounds' full detail.
 
-**Closed all six gaps this task specified:**
+**Closed all three gaps this task specified:**
 
-1. **Historical User Provenance Gate** — new section in `MEMORY_CONTEXT.md` plus Invariant M-18:
-   Category A (direct — inspectably traceable to an original historical user-authored source) vs.
-   Category B (derived/unverified — the honest default, since Brain's actual schema has no field
-   linking a `decision` record's body to a specific historical `UserIdea` turn; named as a future
-   Brain/integration dependency, not a gap closed by relaxing the gate). Only Category A may be cited
-   as an Inference premise; Category B is capped at `DISCOVERY_ATTENTION` forever. Gated into
-   "Historical User Memory Rule," M-03, and every relevant case (1, 4, 11, 16, 19, 22 — plus
-   explicit immateriality notes in 2, 3, 12, 15 where the distinction doesn't change the outcome).
-2. **Classification Fail-Closed Rule** — new section plus Invariant M-19: production records
-   classification basis/method (deterministic vs. heuristic, per Principle 6)/ambiguity; ambiguity
-   never promotes to `SEMANTIC_PREMISE`; retrieval relevance and Brain confidence never resolve
-   ambiguity; lowest defensible tier or exclusion when no safe classification exists (Principle 7).
-3. **Residual producer semantic judgment removed** — the Producer's Inputs list, its "Not allowed to
-   decide" bullet, "Separating Admissibility from Interpretation," and M-09 were all tightened:
-   production may only mechanically apply an explicit, already-computed verdict about a *specific*
-   entry — never merely because an upstream artifact/version was supplied, which is not itself a
-   judgment. The Purpose section's residual claim that `MemoryContext` stores "whether it actually
-   mattered" was removed (that fact lives only in consuming-artifact provenance).
-4. **Identity boundary, not merely a freshness gate** — new subsection under "Memory and Evidence
-   Boundary": a `pattern`/`incident`/`reference` entry never itself reaches `SEMANTIC_PREMISE`,
-   regardless of re-verification; only a wholly new, independently-produced Evidence/
-   TechnologyCandidateSet artifact does. Reworded the Influence Taxonomy, reclassification table,
-   M-11, M-12, and Case 7 to remove "the memory reaches/becomes Evidence" phrasing.
-5. **R-19 default provenance** — new Foundation Impact item (narrower than, and distinct from, the
-   existing R-10/R-22 amendment): a memory-informed R-19 default's R-09 "Requirement-Derivation-
-   introduced" provenance must additionally cite the `MemoryContext` entry as a "memory-informed
-   rationale." Requirement Derivation added to Phase 11's consuming-stage list (an omission the
-   reviewer round caught — the capability existed without its consuming stage being named).
-6. **Historical Force Is Not Current Force** — new section plus Invariant M-20: a historical
-   statement's own force is never mechanically copied into a current Inferred Claim's force, because
-   `REQUIREMENT_SPEC.md`'s Force → Strength Mapping compiles force to hard MUST/MUST NOT regardless
-   of confidence. New Case 22 (same-project Category A historical prohibition, no current mention,
-   LOW/MEDIUM impact) works this through concretely. M-07 corrected to restore I-16's "not by itself"
-   qualifier, which an earlier round's wording had silently over-strengthened into a broader claim
-   I-16 does not make.
+1. **Historical User Provenance Gate made type-independent** — Brain `type` is only ever a weak
+   classification prior, never an epistemic shortcut past the Category A/B gate: any admitted record
+   (of any non-`inbox` type) that production's own content inspection reveals as describing a
+   historical user statement is gated identically to a `decision` record. Fixed the Semantic Authority
+   Classes table (both in `MEMORY_CONTEXT.md` and `ADR-0004`'s duplicate), which previously said
+   `lesson`/`playbook` misfiled content is merely "excluded" and `reference`/`incident` are
+   "permanently"/"always" a fixed tier — a direct contradiction of the gate's own exhaustive rule,
+   caught by the reviewer round. Added the requirement that an apparent citation must be inspectably
+   **and resolvably** traceable, not merely citation-shaped. New Case 23 (a misfiled `reference`-type
+   record carrying historical-user-statement content). M-18 and M-03 updated to state
+   type-independence explicitly.
+2. **`DECISION_OPTION` introduced as a fourth Influence Taxonomy tier**, reconciling memory-informed
+   R-19 defaults with the taxonomy without weakening `DISCOVERY_ATTENTION`'s additive-only invariant:
+   a memory-suggested value within a decision the consuming stage already, independently owns,
+   supplying zero independent authority, never expanding what the stage could already decide, and
+   distinguished from `DISCOVERY_ATTENTION` by *what the tier can establish* (a
+   `DISCOVERY_ATTENTION`-shaped candidate always still needs an independent downstream mechanism to
+   settle anything; `DECISION_OPTION`'s adoption *is* the immediate establishment of Requirement
+   content, in the same step, under the stage's own pre-existing authority — not "zero content effect
+   until a later gate," which the reviewer round correctly flagged as an overclaim in the first
+   draft). New Invariant M-21. New Case 24: a `pattern`-type memory suggesting "3 retries, exponential
+   backoff" for a genuinely R-19-eligible Unknown (within an already-settled "SHALL retry" Requirement)
+   vs. an explicit contrast with an intent-level Unknown ("should retry happen at all") R-19
+   categorically excludes regardless of memory.
+3. **ADR-0004's Acceptance Gate decided explicitly** — new subsection naming four distinct amendment
+   dependencies (A: core `M0_SCOPE.md` integration — `RunContext` + producer contract + at least one
+   stage's declared input, required for any consumption at all; B: `INTENT_SPEC.md` Inference-premise,
+   for citing memory as a Claim's premise; C: `REQUIREMENT_SPEC.md` Requirement-Level-Inference, for
+   citing memory as such a premise; D: `REQUIREMENT_SPEC.md` R-19 provenance, for a memory-informed
+   default's citation). Decided: this ADR becomes Accepted-eligible once dependency A alone is
+   completed and adversarially reviewed — mirroring `ADR-0001`'s IR-per-stage pattern and avoiding
+   coupling Acceptance to three separately-scoped, narrower semantic extensions layered on top of an
+   already-sound core boundary. Dependencies B/C/D remain explicitly, structurally disabled — not
+   merely deferred — until their own separate amendments land, each gating only the one path it names.
 
-**Review round:** four independent read-only Codex reviewers, dispatched by interaction axis
-(A: Historical Provenance × Normative Force; B: Producer Classification × Least Authority; C: Memory
-× Evidence × Requirement Defaults; D: cross-document/corpus contradiction sweep). All four found
-real, independently-verified defects — full per-reviewer detail in `REVIEW_STATE.md`'s "Latest
-Review," not duplicated here. Highlights: Case 19 cited two records as Inference premises without any
-Category A/B designation, bypassing M-18 entirely; Case 22's worked force example was internally
-self-contradictory (labeled a preference-strength conclusion "the same prohibition-shaped force" as
-history); ADR-0004's own Phase 4 still granted production a semantic freshness judgment M-05
-forbids, and its Phase 7/8 tables still described the memory itself "reaching" `SEMANTIC_PREMISE`
-after Evidence-gate clearance rather than a new artifact; a second, un-fixed instance of the
-artifact-vs-verdict conflation survived in the Producer's "Not allowed to decide" bullet and ADR
-Phase 6; the Reproducibility/M-14 snapshot inventories weren't updated to include the new
-classification-basis/method/ambiguity facts; Case 8 still claimed Architecture Synthesis was "not
-named" in Phase 11 after a prior round had already added it; M-03 didn't carry the new Category A
-gate; and Cases 3/12 didn't state the immateriality the corpus preamble promised. All fixed and
-independently re-verified against the actual current text (not accepted by reviewer majority vote).
+**Review round:** three independent read-only Codex reviewers, dispatched by interaction axis
+(A: Brain Type × Historical Provenance; B: Influence Taxonomy × R-19; C: Amendment Sequencing ×
+Cross-Document Consistency). All three found real, independently-verified defects — full per-reviewer
+detail in `REVIEW_STATE.md`'s "Latest Review," not duplicated here. Highlights: the Semantic Authority
+Classes table's individual rows (`lesson`, `playbook`, `reference`, `incident`, `pattern`, `project`)
+still used absolute language ("always," "permanently," "only") that foreclosed the type-independence
+fix for a misfiled record, in both `MEMORY_CONTEXT.md` and `ADR-0004`'s copy; the `DECISION_OPTION`
+definition's "no further independent gate" framing overstated the distinction from
+`DISCOVERY_ATTENTION` (which can and does directly affect intermediate artifact content); stale
+three-tier inventories survived in `ADR-0004`'s Phase 4 axis 7 and Consequences section; the
+Historical User Memory Rule's clarification-question path claimed "requires no amendment" when it
+still requires dependency A; Cases 16/19/24 didn't name which specific dependency (B or D) gated the
+capability they demonstrated, and Case 24 didn't mention dependency D at all; and the Acceptance
+Gate's own precedent citation inaccurately implied `ADR-0003` had already been held to and satisfied
+its acceptance condition, when `ADR-0003`'s Status is still Proposed — corrected to cite `ADR-0002`
+(Accepted) as the actual precedent and `ADR-0003` as a parallel proposed criterion, not a completed
+example. All fixed and independently re-verified against the actual current text (not accepted by
+reviewer majority vote).
 
 `npm test`: 32/32 throughout (unaffected — no contract/schema/runtime file touched). `git diff main
 --stat`: the same three docs plus these two `.project` files; no frozen foundation document
@@ -107,10 +109,12 @@ modified. `git diff --check`: clean.
 **Final recommendation: unchanged, `FOUNDATION_AMENDMENT_REQUIRED`** — every finding across all
 rounds has been a scoping, internal-consistency, or terminology defect within the already-selected
 Model C; none has ever shown Model C itself unsound (so not `REDESIGN_REQUIRED`). Not
-`READY_FOR_HUMAN_REVIEW` either: the standing finding that citing a `MemoryContext` entry as an
-Inference's premise requires `SEMANTIC_AMENDMENT_REQUIRED` changes to `INTENT_SPEC.md` and
-`REQUIREMENT_SPEC.md` (now including the R-19 default provenance item), not just the already-expected
-`M0_SCOPE.md` stage-input amendment, still holds and remains unmet.
+`READY_FOR_HUMAN_REVIEW` (this ADR is not itself ready to be merged as final/Accepted — Model C's
+SEMANTIC_PREMISE/DECISION_OPTION paths remain gated behind separate future amendments), but with no
+new semantic blocker remaining in this round: **`READY_FOR_MERGE_AS_PROPOSED_ADR`** — the document
+set is internally consistent, adversarially reviewed across four rounds, and ready for human review
+and merge in its honest, Proposed state, with dependencies B/C/D correctly recorded as future,
+separate, explicitly-gated work.
 
 ## Allowed Scope
 
@@ -141,11 +145,10 @@ Forbidden (frozen, none touched): `VISION.md`, `PRINCIPLES.md`, `M0_SCOPE.md`, `
 - `git diff main --stat`: the same three docs plus `.project/CURRENT_TASK.md`/
   `.project/REVIEW_STATE.md`; no frozen foundation document touched.
 - `git diff --check`: clean.
-- Four independent Codex reviewers by interaction axis this round (A: Historical Provenance ×
-  Normative Force; B: Producer Classification × Least Authority; C: Memory × Evidence × Requirement
-  Defaults; D: cross-document/corpus contradiction sweep), all findings independently re-verified by
-  Claude against the actual current text before being accepted or acted on — not accepted by
-  majority vote.
+- Three independent Codex reviewers by interaction axis this round (A: Brain Type × Historical
+  Provenance; B: Influence Taxonomy × R-19; C: Amendment Sequencing × Cross-Document Consistency),
+  all findings independently re-verified by Claude against the actual current text before being
+  accepted or acted on — not accepted by majority vote.
 
 ## Next Gate
 
