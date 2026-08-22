@@ -685,8 +685,8 @@ Amended `docs/foundation/M0_SCOPE.md` to establish:
 - Dependencies B/C/D remain structurally disabled; `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` untouched.
 
 **This is a semantic/foundation authorization, not an implemented runtime.** At the time of this
-checkpoint there was still no `MemoryContext` schema; one has since been added — see Phase 10 /
-section 10.9 below (PR #20). No Brain read adapter, and no executable Research Planning pipeline
+checkpoint there was still no `MemoryContext` schema; one has since been added — see Phase 10 below
+(PR #20). No Brain read adapter, and no executable Research Planning pipeline
 that actually retrieves anything from MIHVER Brain, exists even now. Research Planning is
 *permitted*, under the M0 contract, to consume an optional `MemoryContext` once one is actually
 produced — it does not yet receive one in practice.
