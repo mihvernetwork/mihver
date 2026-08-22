@@ -57,12 +57,27 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/MEMORY_CONTEXT.md`,
   `docs/examples/MEMORY_CONTEXT_CASES.md`. `ADR-0004`'s Status is **Proposed** on `main` as
   merged — see Open Items; full semantic detail lives in those documents themselves, not restated
-  here. **`MemoryContext` is design-only and not operational or authorized for use by any stage
-  today**: no stage currently declares it as an input, and no stage may consume it, or query
-  `../mihver-brain` directly, until the separate, explicitly human-authorized `M0_SCOPE.md`
-  amendment (`ADR-0004`'s "dependency A" / Foundation Memory Amendment) is completed — see Open
-  Items and Next Authorized Action below; that amendment is not started, and is not pre-authorized,
-  by this checkpoint entry.
+  here. **As of the Dependency A checkpoint immediately below, `MemoryContext` consumption is no
+  longer entirely unauthorized** — see that entry for exactly what changed and what still has not.
+- **`ADR-0004` Dependency A — Foundation Memory Boundary.** Amended `docs/foundation/M0_SCOPE.md`
+  to implement the core `M0_SCOPE.md` integration boundary `ADR-0004`'s Foundation Impact Analysis
+  named as required before any `MemoryContext` consumption. Merged via PR #17, squash commit
+  `9416e857b549bea07d4ce06a5c365524fdf1d51a`. Introduced: `RunContext` (a non-memory,
+  cross-cutting run/invocation identity anchor, distinct from `UserIdea` as M0's sole milestone
+  semantic input); the `MemoryContext` Producer as a declared cross-cutting compiler boundary (not
+  a new linear pipeline stage); and **Research Planning as the first and only stage whose declared
+  `Input:` list includes an optional `MemoryContext`**, restricted to the `DISCOVERY_ATTENTION`
+  influence tier only (additive, provenance-visible, never authoritative). No stage may query
+  `../mihver-brain` directly. Every other pipeline stage, and `ADR-0004`'s dependencies B
+  (`INTENT_SPEC.md` Inference-premise), C (`REQUIREMENT_SPEC.md` Requirement-Level-Inference
+  premise), and D (`REQUIREMENT_SPEC.md` R-19 memory-informed-rationale provenance), remain
+  structurally disabled; `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` are untouched. Adversarially
+  reviewed by four independent read-only Codex reviewers, by axis. **This is a semantic/foundation
+  authorization only, not an implemented runtime**: there is still no `MemoryContext` schema, no
+  Brain read adapter, and no executable pipeline that actually retrieves or produces a
+  `MemoryContext` — Research Planning is now permitted to consume one under the M0 contract, it
+  does not yet receive one in practice. `ADR-0004`'s own `## Status` field is unchanged by this
+  checkpoint (**Proposed**) — see Open Items for its path to Accepted.
 
 ## Open Items
 
@@ -78,18 +93,23 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   dependencies (an `INTENT_SPEC.md` amendment; a `REQUIREMENT_SPEC.md` Requirement-Level-Inference
   amendment; a `REQUIREMENT_SPEC.md` R-19-provenance amendment) that gate specific semantic
   capabilities but not `ADR-0004`'s own Acceptance — not restated here beyond this pointer, to
-  avoid drift from that section's own text. No task in this session has authorized starting any of
-  these amendments, changing `ADR-0004`'s Status, or performing any `mihver-brain` or runtime
-  memory-integration work.
+  avoid drift from that section's own text. **Dependency A is now completed and adversarially
+  reviewed** (PR #17, squash commit `9416e857b549bea07d4ce06a5c365524fdf1d51a` — see the
+  checkpoint above), which makes `ADR-0004` eligible for a separately authorized Acceptance
+  reconsideration under its own Acceptance Gate. No task has authorized or performed that Status
+  change; dependencies B, C, and D remain unauthorized and unstarted; and no `mihver-brain` or
+  runtime memory-integration work has been performed.
 
 ## Next Authorized Action
 
-None beyond the frozen checkpoints above. Per `REVIEW_PROTOCOL.md` item 9, completing a task is
-not authorization to start the next one. In particular: advancing `ADR-0003` or `ADR-0004` toward
-Accepted, beginning M0 Step 03B, and starting the `ADR-0004`-identified Foundation Memory Amendment
-(dependency A) or any of its narrower dependencies are all **not** authorized by this
-synchronization task — each requires its own separate, explicit human task instruction, given
-later. This synchronization only brought durable project state in line with what is already true
-on `main` after `ADR-0004`/PR #15 merged; it introduced no new architecture decision, changed no
-ADR, and started no new work. See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active
-on the currently checked-out branch, if any.
+None automatically. Per `REVIEW_PROTOCOL.md` item 9, completing a task is not authorization to
+start the next one. In particular: moving `ADR-0003` or `ADR-0004` to Accepted, beginning M0
+Step 03B, starting `ADR-0004`'s dependencies B, C, or D, and performing any `mihver-brain` or
+runtime memory-integration work are all **not** authorized by this reconciliation task — each
+requires its own separate, explicit human task instruction, given later. `ADR-0004` Acceptance is
+the logical next recommended checkpoint now that Dependency A is complete and adversarially
+reviewed, but this entry does not pre-authorize it — a future task must explicitly authorize that
+Status change. This reconciliation only brought durable project state in line with what is already
+true on `main` after PR #17 merged; it introduced no new architecture decision, changed no ADR, and
+started no new work. See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the
+currently checked-out branch, if any.
