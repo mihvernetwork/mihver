@@ -4,7 +4,10 @@
 
 **Document status:** Living roadmap / navigation document — **not** a replacement for ADRs, contracts, schemas, or `.project/PROJECT_STATE.md`.
 
-**Last verified public `main`:** `9416e857b549bea07d4ce06a5c365524fdf1d51a` (`M0: integrate core MemoryContext boundary into foundation`, PR #17 — ADR-0004 Dependency A / Foundation Memory Boundary merged).
+**Live repository state:** run `npm run context` and consult `git`/`gh` directly. This roadmap
+deliberately does not pin current `main`'s `HEAD` — that field goes stale after virtually every
+merge and works against this document's own anti-drift purpose. Historical PR/commit references
+below describe completed checkpoints, not current `HEAD`.
 
 **Current product milestone:** **M0 — Idea → Architecture**.
 
@@ -536,7 +539,13 @@ Created:
 - `docs/contracts/MEMORY_CONTEXT.md`
 - `docs/examples/MEMORY_CONTEXT_CASES.md`
 
-## 10.1 ADR-0004 — PROPOSED
+## 10.1 ADR-0004 — ACCEPTED
+
+**Accepted per its own "Acceptance Gate" (10.8): Dependency A alone.** Dependency A merged via
+PR #17 (see 10.9) and was adversarially reviewed before that merge; Acceptance itself was recorded
+in a later, separate task (`ADR-0004-ACCEPTANCE`). Accepting the core authority model does **not**
+imply dependencies B/C/D are enabled, or that a `MemoryContext` runtime/Brain adapter exists — see
+10.7/10.9 and Phase 9 below.
 
 Selected **Model C**:
 
@@ -660,7 +669,7 @@ ADR-0004 becomes Accepted-eligible when **Dependency A** is completed and advers
 
 Dependencies B/C/D remain independently disabled until their own amendments land; they do not all need to exist before ADR-0004 itself can become Accepted.
 
-**Dependency A is now complete** (PR #17, merge commit `9416e857b549bea07d4ce06a5c365524fdf1d51a`), adversarially reviewed, and recorded in `.project/PROJECT_STATE.md`. ADR-0004 is therefore eligible for a separately authorized Acceptance reconsideration task. This roadmap does not perform or authorize that Status change; `ADR-0004`'s own `## Status` field remains **Proposed** until a future task explicitly changes it.
+**This condition is now satisfied and ADR-0004 is Accepted.** Dependency A merged via PR #17 (merge commit `9416e857b549bea07d4ce06a5c365524fdf1d51a`), was adversarially reviewed before that merge, and the Status transition itself was performed by a later, separate, explicitly human-authorized task (`ADR-0004-ACCEPTANCE`). `ADR-0004`'s own `## Status` field, and `.project/PROJECT_STATE.md`, are authoritative for the current Status — not restated further here to avoid this document drifting out of sync with them again. Dependencies B/C/D were not, and are not, prerequisites for this Acceptance; they remain independently disabled — see Phase 9 below.
 
 ## 10.9 Dependency A — DONE (PR #17)
 
@@ -1005,9 +1014,9 @@ The following order is designed to minimize semantic churn and rework.
 
 ---
 
-## Phase 6 — Memory authority boundary — DONE / ADR PROPOSED
+## Phase 6 — Memory authority boundary — DONE / ADR ACCEPTED
 
-- ADR-0004
+- ADR-0004 (Accepted — see 10.1/10.8; Acceptance required Dependency A alone, completed in Phase 7)
 - MemoryContext contract
 - 24-case adversarial corpus
 - RunContext concept
@@ -1015,7 +1024,7 @@ The following order is designed to minimize semantic churn and rework.
 - four influence tiers
 - A/B/C/D dependency model
 
-**Exit:** memory authority semantics are designed without enabling consumption yet.
+**Exit:** memory authority semantics are designed and the core authority boundary is Accepted; consumption remains limited to what Phase 7 explicitly authorized (Research Planning, `DISCOVERY_ATTENTION` only) — Accepted Status does not by itself widen consumption or imply a runtime exists.
 
 ---
 
@@ -1064,19 +1073,25 @@ Forbidden:
 
 ---
 
-## Phase 8 — ADR-0004 Acceptance checkpoint — NEXT
+## Phase 8 — ADR-0004 Acceptance checkpoint — DONE
 
-Dependency A is now merged and adversarially reviewed (Phase 7, PR #17), which makes ADR-0004 Acceptance the recommended next checkpoint. **This roadmap does not authorize or perform that Status change.** A separate, explicit human task is required to:
+Dependency A merged and was adversarially reviewed (Phase 7, PR #17), which made ADR-0004 Acceptance the recommended next checkpoint. A separate, explicit human task (`ADR-0004-ACCEPTANCE`) then:
 
-- reconsider ADR-0004 `Proposed → Accepted`,
-- verify the core boundary exists in foundation (it does, as of PR #17),
-- do not wait for B/C/D if they remain structurally disabled.
+- reconsidered ADR-0004 `Proposed → Accepted` and confirmed the transition,
+- verified the core boundary exists in foundation (it does, as of PR #17),
+- did not wait for B/C/D, which remain structurally disabled — see Phase 9.
 
-**Exit (once separately authorized):** MemoryContext core authority model becomes Accepted.
+**Exit:** MemoryContext core authority model is Accepted. `ADR-0004`'s own `## Status` field is
+authoritative for confirming this — not restated here beyond this checkpoint.
 
 ---
 
-## Phase 9 — Dependencies B/C/D — PLANNED
+## Phase 9 — Dependencies B/C/D — NEXT
+
+Now that ADR-0004 itself is Accepted (Phase 8), dependencies B, C, and D are the recommended next
+roadmap family in this area. **This roadmap does not authorize starting any of them** — each
+requires its own separate, explicit human task instruction, exactly as Dependency A did. They
+remain structurally disabled until then.
 
 ### B — Intent historical-memory premise
 
@@ -1515,9 +1530,9 @@ Purpose:
 - Claude/Codex/human development operating model,
 - Night Runner deterministic planner,
 - fresh-Claude single-task executor,
-- ADR-0004 MemoryContext authority design, Proposed,
+- ADR-0004 MemoryContext authority design, **Accepted** (per Dependency A's completion and adversarial review — see section 10.1/10.8),
 - MemoryContext semantic contract + 24-case adversarial corpus,
-- ADR-0004 Dependency A / Foundation Memory Boundary merged into `docs/foundation/M0_SCOPE.md` (PR #17): `RunContext`, the cross-cutting MemoryContext Producer boundary, and Research Planning as the sole authorized `MemoryContext` consumer (`DISCOVERY_ATTENTION` only) — semantic authorization only, no runtime.
+- ADR-0004 Dependency A / Foundation Memory Boundary merged into `docs/foundation/M0_SCOPE.md` (PR #17): `RunContext`, the cross-cutting MemoryContext Producer boundary, and Research Planning as the sole authorized `MemoryContext` consumer (`DISCOVERY_ATTENTION` only) — semantic authorization only, no runtime. Dependencies B/C/D remain unimplemented and unauthorized.
 
 ## Does not exist yet as an M0 product capability
 
@@ -1555,9 +1570,9 @@ This is the current lowest-rework sequence.
       MemoryContext Producer
       first Research Planning consumer (DISCOVERY_ATTENTION only)
 
-2. ADR-0004 Acceptance checkpoint — NEXT, not yet authorized
+2. ADR-0004 Acceptance checkpoint — DONE
 
-3. Dependency B/C/D
+3. Dependency B/C/D — NEXT, not yet authorized
       INTENT_SPEC historical-memory premise
       REQUIREMENT_SPEC R-10/R-22 premise
       REQUIREMENT_SPEC R-19 DECISION_OPTION provenance

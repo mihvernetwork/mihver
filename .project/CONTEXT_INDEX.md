@@ -23,7 +23,7 @@ that's a gap in the index, not license to guess; search deliberately, and consid
 | Requirement Derivation model decision (Proposed) | `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md` |
 | `RequirementSpec` semantic contract | `docs/contracts/REQUIREMENT_SPEC.md` |
 | Requirement semantic test corpus | `docs/examples/REQUIREMENT_CASES.md` |
-| Memory Context Authority Boundary decision (Proposed) | `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` |
+| Memory Context Authority Boundary decision (Accepted) | `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` |
 | `MemoryContext` semantic contract | `docs/contracts/MEMORY_CONTEXT.md` |
 | MemoryContext semantic test corpus | `docs/examples/MEMORY_CONTEXT_CASES.md` |
 | Schema ↔ contract invariant coverage | `docs/contracts/SCHEMA_MAPPING.md` |
