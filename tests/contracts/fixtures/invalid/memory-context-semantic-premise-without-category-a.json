@@ -1,0 +1,28 @@
+{
+  "contract": "memory-context",
+  "expected_error": "only a Category A entry may reach SEMANTIC_PREMISE",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-semantic-premise",
+    "run_id": "run-invalid-005",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior message-queue decoupling patterns for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-pattern-overclaim",
+        "source": { "brain_memory_id": "brain-a", "brain_type": "pattern", "title": "A", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
+        "content": "A prior architecture used a message queue for decoupling.",
+        "admission_reason": "scope global; brain_status active with no superseded_by link; overclaims SEMANTIC_PREMISE despite no historical Category A standing, which this fixture deliberately triggers",
+        "classification": { "semantic_authority_class": "prior_architecture_outcome", "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type pattern", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "SEMANTIC_PREMISE" },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

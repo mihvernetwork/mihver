@@ -1,0 +1,28 @@
+{
+  "contract": "memory-context",
+  "expected_error": "must not carry influence_tier \"DECISION_OPTION\"",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-decision-option-historical",
+    "run_id": "run-invalid-008",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior reporting-cadence notes for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-decision-option-bad",
+        "source": { "brain_memory_id": "brain-cadence-02", "brain_type": "decision", "title": "Reporting cadence note", "scope": "support-inbox", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "medium", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
+        "content": "User previously indicated a preference for weekly reporting cadence.",
+        "admission_reason": "deliberately invalid: DECISION_OPTION is never available to a historical-user-statement entry, of either category",
+        "classification": { "semantic_authority_class": "historical_user_statement", "is_historical_user_statement": true, "historical_user_category": "B", "historical_citation": null, "classification_basis": "reads as a user cadence preference with no resolvable citation", "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DECISION_OPTION" },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

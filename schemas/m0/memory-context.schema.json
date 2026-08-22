@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/m0/memory-context.schema.json",
+  "title": "MIHVER M0 MemoryContext",
+  "description": "One immutable MemoryContext snapshot produced by exactly one authorized MemoryContext Producer invocation, per docs/contracts/MEMORY_CONTEXT.md (part of the Accepted ADR-0004). A structurally valid document is not, by itself, evidence that any pipeline stage is currently authorized to consume it, or that dependencies B/C/D are enabled — see docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md. Cross-artifact reference resolution, live Brain state, and semantic content judgments are checked outside JSON Schema, where checked at all.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_type", "memory_context_id", "run_id", "run_context",
+    "consuming_stage", "retrieval_purpose", "retrieval_query", "retrieval_time",
+    "upstream_artifact_binding", "retrieval_outcome", "admitted_entries", "excluded_entries"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "artifact_type": { "const": "memory_context" },
+    "memory_context_id": { "$ref": "#/$defs/id", "description": "This artifact's own stable identity. Together with an admitted entry's entry_id, forms the (memory_context_id, entry_id) reference pair a future, separately-authorized amendment may use to cite exactly one MemoryContext entry from another artifact. No such citation is defined or performed here." },
+    "run_id": { "$ref": "#/$defs/id", "description": "The current run/invocation this MemoryContext is bound to. Distinct from run_context, which answers a different question (which project, if any) than this field (which run)." },
+    "run_context": { "$ref": "#/$defs/runContext" },
+    "consuming_stage": { "$ref": "#/$defs/id", "description": "The single stage this MemoryContext was produced for. An open identifier, not a closed enum of currently-authorized stages: whether M0_SCOPE.md actually authorizes this stage to consume MemoryContext is decided entirely by M0_SCOPE.md, never by this schema (Principle 12, Evolvability)." },
+    "retrieval_purpose": { "type": "string", "minLength": 1 },
+    "retrieval_query": { "type": "string", "minLength": 1, "description": "The retrieval basis for this invocation. May be a literal lexical query or a structured description of a non-lexical retrieval purpose (e.g. corroborating an already-established RunContext identity); this schema does not fix a query grammar." },
+    "retrieval_time": { "type": "string", "format": "date-time", "description": "When this Producer invocation retrieved and froze this snapshot. Distinct from any admitted entry's own Brain-recorded brain_created_at/brain_updated_at timestamps." },
+    "upstream_artifact_binding": { "anyOf": [{ "$ref": "#/$defs/upstreamArtifactBinding" }, { "type": "null" }] },
+    "retrieval_outcome": { "enum": ["admitted", "successfully_empty", "retrieval_unavailable"] },
+    "admitted_entries": { "type": "array", "items": { "$ref": "#/$defs/admittedEntry" } },
+    "excluded_entries": { "type": "array", "items": { "$ref": "#/$defs/excludedEntry" }, "description": "Retrieved candidates not admitted, with their exclusion reason, preserved for audit/reproducibility. Never a source of content a consuming stage may cite or use; only admitted_entries may be used." }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$", "minLength": 1 },
+    "runContext": {
+      "description": "Distinguishes RunContext existing (with a project identity) from RunContext being explicitly absent. Never inferred from Brain content; never a substitute for UserIdea.",
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["status"], "properties": { "status": { "const": "absent" } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "project_slug"], "properties": { "status": { "const": "present" }, "project_slug": { "type": "string", "minLength": 1 } } }
+      ]
+    },
+    "upstreamArtifactBinding": {
+      "type": "object", "additionalProperties": false, "required": ["artifact_type", "artifact_id", "version"],
+      "properties": {
+        "artifact_type": { "type": "string", "minLength": 1 },
+        "artifact_id": { "$ref": "#/$defs/id" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false, "required": ["source", "author"],
+      "properties": {
+        "source": { "enum": ["manual", "import", "cli"] },
+        "author": { "type": "string", "minLength": 1 }
+      }
+    },
+    "sourceRecord": {
+      "type": "object",
+      "description": "Brain-recorded facts about the underlying memory, mechanically captured at production time. brain_type is a weak classification prior only, per MEMORY_CONTEXT.md's 'Semantic Authority Classes' section, and carries no epistemic authority by itself.",
+      "additionalProperties": false,
+      "required": [
+        "brain_memory_id", "brain_type", "title", "scope", "brain_status",
+        "brain_created_at", "brain_updated_at", "brain_confidence",
+        "supersedes", "superseded_by", "provenance"
+      ],
+      "properties": {
+        "brain_memory_id": { "$ref": "#/$defs/id" },
+        "brain_type": { "enum": ["project", "decision", "lesson", "incident", "pattern", "playbook", "reference"], "description": "inbox is never a valid brain_type for an admitted entry; inbox records are excluded from production entirely, unconditionally, on type alone." },
+        "title": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string", "minLength": 1, "description": "Either the literal value \"global\" or a project slug. Checked against run_context by the deterministic validator, never assumed compatible from a matching-looking value." },
+        "brain_status": { "enum": ["active", "draft", "superseded", "archived"], "description": "Brain's own record lifecycle. The deterministic validator rejects brain_status \"superseded\" for an admitted entry (M-04); this schema alone does not, since the full Brain status vocabulary is a faithful mirror of Brain's real schema." },
+        "brain_created_at": { "type": "string", "format": "date-time" },
+        "brain_updated_at": { "type": "string", "format": "date-time" },
+        "brain_confidence": { "enum": ["low", "medium", "high"], "description": "The memory author's own durability/usefulness judgment at write time. Never MIHVER's own Inference-derivation or Evidence confidence; this artifact carries no such field at all, structurally preventing that conflation (M-02)." },
+        "supersedes": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "superseded_by": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "historicalCitation": {
+      "description": "The originating historical user-authored source a Category A entry is inspectably traced to. Structural completeness (this shape) is schema-enforced; that the citation actually, genuinely resolves to real content in the named UserIdea artifact is not re-verifiable by this single-artifact validator and remains production's own asserted judgment (mirrors UI-05's identical limitation).",
+      "type": "object", "additionalProperties": false, "required": ["idea_id", "user_idea_version", "turn_id", "quote"],
+      "properties": {
+        "idea_id": { "$ref": "#/$defs/id" },
+        "user_idea_version": { "type": "integer", "minimum": 1 },
+        "turn_id": { "$ref": "#/$defs/id" },
+        "quote": { "type": "string", "minLength": 1 }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "description": "The Accepted contract's per-entry classification, assigned at production, never left to the consuming stage. Ambiguity must resolve toward less authority, never more (M-19) -- enforced where mechanically decidable by the deterministic validator, not by JSON Schema alone.",
+      "additionalProperties": false,
+      "required": [
+        "semantic_authority_class", "is_historical_user_statement", "historical_user_category", "historical_citation",
+        "classification_basis", "classification_method", "classification_ambiguity", "influence_tier"
+      ],
+      "properties": {
+        "semantic_authority_class": {
+          "type": "string", "minLength": 1,
+          "description": "Production's own descriptive semantic authority classification (Axis 3 of MEMORY_CONTEXT.md's 'Seven Independent Authority Axes'), e.g. \"historical_user_statement\", \"prior_project_decision\", \"durable_project_description\", \"prior_architecture_outcome\", \"candidate_technology_knowledge\", \"process_guidance\". Deliberately an open, non-empty string, not a closed enum: MEMORY_CONTEXT.md's 'Semantic Authority Classes' table describes these classes narratively as production's own judgment call, not as a fixed closed taxonomy, and this field must not pretend otherwise. Independent from brain_type (a weak prior only, per M-18), historical_user_category (the separate Historical User Provenance Gate axis), and influence_tier (Axis 7) -- collapsing any of these into another reproduces the force/origin/confidence collapse ADR-0002 already forbids, one layer up."
+        },
+        "is_historical_user_statement": { "type": "boolean", "description": "Whether production's own content inspection classifies this entry as describing a historical user statement -- decided by content inspection, never by brain_type alone (M-18)." },
+        "historical_user_category": {
+          "anyOf": [{ "const": "A" }, { "const": "B" }, { "type": "null" }],
+          "description": "Required (A or B) exactly when is_historical_user_statement is true; null otherwise. A = direct, inspectably and resolvably traceable to an original historical user-authored source. B = derived/unverified: reads like a user statement but lacks that traceable linkage -- the default absent an inspectable, resolvable citation."
+        },
+        "historical_citation": { "anyOf": [{ "$ref": "#/$defs/historicalCitation" }, { "type": "null" }] },
+        "classification_basis": { "type": "string", "minLength": 1, "description": "What in the record (which field, or which specific content) the classification rests on." },
+        "classification_method": { "enum": ["deterministic", "heuristic"], "description": "Per Principle 6: a mechanical field-equality check is deterministic; reading and interpreting free-text content is heuristic (model-assisted) and must declare itself as such." },
+        "classification_ambiguity": { "type": ["string", "null"], "minLength": 1, "description": "Null when the classification was clean. A non-empty description of the competing readings when it was not -- an ambiguous classification never silently disappears." },
+        "influence_tier": {
+          "enum": ["PROCESS_ONLY", "DISCOVERY_ATTENTION", "DECISION_OPTION", "SEMANTIC_PREMISE"],
+          "description": "The ceiling of influence this entry is authorized for, at this consuming stage. A structurally valid value here is not itself stage authorization -- see the artifact-level description and MEMORY_CONTEXT_SCHEMA_MAPPING.md."
+        }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "description": "A mechanical, age/lifecycle-based fact only (M-05). This artifact has no field asserting the underlying real-world claim is still true -- that question belongs to whichever mechanism actually re-verifies current facts, never to MemoryContext production.",
+      "additionalProperties": false, "required": ["freshness_flag", "freshness_basis"],
+      "properties": {
+        "freshness_flag": { "enum": ["fresh", "stale_by_age"] },
+        "freshness_basis": { "type": "string", "minLength": 1, "description": "The mechanical basis for the flag, e.g. elapsed time since brain_updated_at versus a stated threshold." }
+      }
+    },
+    "admittedEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry_id", "source", "content", "admission_reason", "classification", "freshness"],
+      "properties": {
+        "entry_id": { "$ref": "#/$defs/id", "description": "Stable identity for this entry within this MemoryContext, unique among every admitted_entries and excluded_entries entry_id in this artifact." },
+        "source": { "$ref": "#/$defs/sourceRecord" },
+        "content": { "type": "string", "minLength": 1, "description": "The memory's own content, retained as an actual copy at production time -- never merely a hash or pointer into Brain's mutable vault. This schema provides no hash-only or pointer-only alternative shape." },
+        "admission_reason": { "type": "string", "minLength": 1, "description": "Explicit retrieval rationale for why this entry was admitted (M-14's 'why it was admitted or excluded... for both outcomes'), symmetric with excludedEntry's exclusion_reason. Recorded as its own durable fact rather than left to be reconstructed later from scope/status/classification/tier, which would defeat M-14's audit purpose -- those fields remain independently required for their own reasons (mechanical checks, cited authority, etc.), not as a substitute for this one." },
+        "classification": { "$ref": "#/$defs/classification" },
+        "freshness": { "$ref": "#/$defs/freshness" }
+      }
+    },
+    "excludedSourceRecord": {
+      "description": "Same as sourceRecord, except brain_type additionally allows \"inbox\" -- an excluded candidate may be any of Brain's eight real types, since exclusion (unlike admission) is never restricted to the seven non-inbox types.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "brain_memory_id", "brain_type", "title", "scope", "brain_status",
+        "brain_created_at", "brain_updated_at", "brain_confidence",
+        "supersedes", "superseded_by", "provenance"
+      ],
+      "properties": {
+        "brain_memory_id": { "$ref": "#/$defs/id" },
+        "brain_type": { "enum": ["project", "decision", "lesson", "incident", "pattern", "playbook", "reference", "inbox"] },
+        "title": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "brain_status": { "enum": ["active", "draft", "superseded", "archived"] },
+        "brain_created_at": { "type": "string", "format": "date-time" },
+        "brain_updated_at": { "type": "string", "format": "date-time" },
+        "brain_confidence": { "enum": ["low", "medium", "high"] },
+        "supersedes": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "superseded_by": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "exclusionClassification": {
+      "description": "Same fields as classification, minus influence_tier -- an excluded entry is never assigned an influence tier, since it was never admitted for any use. Present only when production actually attempted a classification before excluding (e.g. a fail-closed exclusion where even DISCOVERY_ATTENTION could not be defensibly assigned); null when exclusion happened before any classification was attempted at all (e.g. inbox-type exclusion, or a mechanical scope mismatch -- see M-06/M-16).",
+      "type": "object", "additionalProperties": false,
+      "required": ["semantic_authority_class", "is_historical_user_statement", "historical_user_category", "historical_citation", "classification_basis", "classification_method", "classification_ambiguity"],
+      "properties": {
+        "semantic_authority_class": { "type": "string", "minLength": 1, "description": "Same discipline as classification.semantic_authority_class -- present whenever exclusionClassification itself is non-null (i.e. a classification was actually attempted before exclusion)." },
+        "is_historical_user_statement": { "type": "boolean" },
+        "historical_user_category": { "anyOf": [{ "const": "A" }, { "const": "B" }, { "type": "null" }] },
+        "historical_citation": { "anyOf": [{ "$ref": "#/$defs/historicalCitation" }, { "type": "null" }] },
+        "classification_basis": { "type": "string", "minLength": 1 },
+        "classification_method": { "enum": ["deterministic", "heuristic"] },
+        "classification_ambiguity": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "excludedEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry_id", "source", "content", "exclusion_reason", "classification", "freshness"],
+      "properties": {
+        "entry_id": { "$ref": "#/$defs/id" },
+        "source": { "$ref": "#/$defs/excludedSourceRecord" },
+        "content": { "type": "string", "minLength": 1, "description": "Retained actual copy, same discipline as an admitted entry's content -- Brain returns the full record for anything retrieved, whether ultimately admitted or excluded." },
+        "exclusion_reason": { "type": "string", "minLength": 1 },
+        "classification": { "anyOf": [{ "$ref": "#/$defs/exclusionClassification" }, { "type": "null" }], "description": "Null when exclusion happened before any classification was attempted (e.g. inbox-type exclusion, or a mechanical scope mismatch), since content inspection genuinely never occurred -- distinct from freshness below, which is always mechanically computable regardless of whether classification was attempted." },
+        "freshness": { "$ref": "#/$defs/freshness", "description": "Required, never null, even for an excluded entry: freshness is a purely mechanical, age-based fact derived from Brain's own created/updated timestamps and this invocation's retrieval time (M-05) -- it requires no content inspection at all, unlike classification, so there is no legitimate case where a retrieved-but-excluded candidate lacks a computable freshness judgment (M-14)." }
+      }
+    }
+  }
+}

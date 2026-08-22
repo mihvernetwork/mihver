@@ -1,0 +1,28 @@
+{
+  "contract": "memory-context",
+  "expected_error": "freshness",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-excluded-missing-freshness",
+    "run_id": "run-invalid-017",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior notes possibly relevant to this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "successfully_empty",
+    "admitted_entries": [],
+    "excluded_entries": [
+      {
+        "entry_id": "excluded-missing-freshness",
+        "source": { "brain_memory_id": "brain-inbox-missing-freshness", "brain_type": "inbox", "title": "Unfiled capture", "scope": "support-inbox", "brain_status": "draft", "brain_created_at": "2026-01-20T00:00:00Z", "brain_updated_at": "2026-01-20T00:00:00Z", "brain_confidence": "low", "supersedes": null, "superseded_by": null, "provenance": { "source": "cli", "author": "claude" } },
+        "content": "maybe the user wants offline support?",
+        "exclusion_reason": "inbox type -- excluded from production entirely, unconditionally, before any content inspection",
+        "classification": null,
+        "freshness": null
+      }
+    ]
+  }
+}

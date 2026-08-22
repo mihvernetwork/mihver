@@ -1,0 +1,37 @@
+{
+  "contract": "memory-context",
+  "expected_error": "source.brain_memory_id values across admitted_entries and excluded_entries",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-dual-disposition",
+    "run_id": "run-invalid-014",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior message-queue decoupling patterns for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-dual-disposition-admitted",
+        "source": { "brain_memory_id": "brain-dual-01", "brain_type": "pattern", "title": "A", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
+        "content": "Content A.",
+        "admission_reason": "scope global; brain_status active with no superseded_by link; classified non-historical at DISCOVERY_ATTENTION",
+        "classification": { "semantic_authority_class": "prior_architecture_outcome", "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type pattern", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
+      }
+    ],
+    "excluded_entries": [
+      {
+        "entry_id": "entry-dual-disposition-excluded",
+        "source": { "brain_memory_id": "brain-dual-01", "brain_type": "pattern", "title": "A", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
+        "content": "Content A.",
+        "exclusion_reason": "deliberately invalid: the same canonical Brain record (brain-dual-01) cannot simultaneously be admitted (above) and excluded (here), under different entry_id values, within one MemoryContext snapshot -- one Producer invocation retrieves one canonical Brain record into exactly one disposition",
+        "classification": null,
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
+      }
+    ]
+  }
+}

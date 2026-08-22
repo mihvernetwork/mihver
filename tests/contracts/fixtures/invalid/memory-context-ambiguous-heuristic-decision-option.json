@@ -1,0 +1,28 @@
+{
+  "contract": "memory-context",
+  "expected_error": "ambiguity must resolve toward less authority",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-ambiguous-decision-option",
+    "run_id": "run-invalid-012",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior retry-count defaults for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-ambiguous-bad",
+        "source": { "brain_memory_id": "brain-retry-1", "brain_type": "pattern", "title": "Retry count note", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "medium", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
+        "content": "A prior requirement used exponential backoff with 3 retries.",
+        "admission_reason": "deliberately invalid: an ambiguous heuristic classification must not carry DECISION_OPTION",
+        "classification": { "semantic_authority_class": "prior_architecture_outcome", "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "content could describe either a general pattern or a project-specific measurement default", "classification_method": "heuristic", "classification_ambiguity": "unclear whether this is a generalizable pattern or a project-specific value", "influence_tier": "DECISION_OPTION" },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

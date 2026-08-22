@@ -1093,6 +1093,19 @@ roadmap family in this area. **This roadmap does not authorize starting any of t
 requires its own separate, explicit human task instruction, exactly as Dependency A did. They
 remain structurally disabled until then.
 
+**Sequencing correction, discovered from actual repository state, not renumbering this phase:**
+`schemas/m0/intent-spec.schema.json` currently represents an Inferred Claim's premises only as
+`premise_claim_ids[]`, resolved by `tests/contracts/validate-contracts.mjs` only against Claims
+inside the same `IntentSpec`. Implementing dependency B (a `MemoryContext` entry as an Inferred
+Claim's premise) before `MemoryContext` has its own stable, machine-readable entry identity would
+force a choice between leaving `INTENT_SPEC` semantics ahead of its own schema, or inventing an
+ad-hoc `MemoryContext` reference shape likely to churn once `MemoryContext`'s schema is actually
+designed. The lowest-churn order is therefore: **ADR-0004 Accepted (Phase 8) → MemoryContext schema
+foundation (Phase 10 below) → Dependency B → Dependency C → Dependency D → RequirementSpec Step 03B
+(Phase 11)** — see Section 22's ordered list for the authoritative sequence. This phase's own
+content (B/C/D's semantic requirements) is unchanged; only its position relative to Phase 10 in the
+actual execution order is corrected here.
+
 ### B — Intent historical-memory premise
 
 Amend `INTENT_SPEC` to support qualified Category A MemoryContext premises without laundering them into current User-Provided status.
@@ -1119,20 +1132,37 @@ Memory supplies no authority; it is a provenance-visible suggestion/rationale.
 
 ---
 
-## Phase 10 — MemoryContext schema + Brain read-side adapter — PLANNED
+## Phase 10 — MemoryContext schema foundation — NEXT (this PR, unmerged)
 
-Only after the semantic boundaries are stable:
+**Do not claim this schema exists until this PR merges to `main`.** Establishes, ahead of
+dependencies B/C/D (Phase 9) per the sequencing correction above:
 
-- define machine-readable `MemoryContext` schema,
-- define RunContext representation if required by runtime,
-- define producer result/outcome representation,
-- encode scope/lifecycle/classification metadata,
-- preserve immutable snapshot content/provenance,
-- distinguish `retrieval-unavailable` vs successful-empty,
-- build provider-independent Brain adapter boundary,
-- add deterministic fixtures for classification, supersession, scope, and lifecycle.
+- machine-readable `MemoryContext` schema (`schemas/m0/memory-context.schema.json`),
+- `RunContext`-present-vs-explicitly-absent representation,
+- retrieval-outcome representation, structurally distinguishing admitted / successfully-empty /
+  retrieval-unavailable,
+- scope/lifecycle/classification/freshness/provenance metadata, mapped invariant-by-invariant in
+  `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`,
+- a stable `(memory_context_id, entry_id)` identity pair future dependency B/C/D amendments may cite
+  — without itself defining `IntentSpec`/`RequirementSpec`'s side of that citation,
+- deterministic validator checks and fixtures in `tests/contracts/validate-contracts.mjs`.
 
-Do **not** let schema design create new semantic authority.
+Does **not** authorize any new `MemoryContext` consumer, change `M0_SCOPE.md`, or implement any of
+dependencies B/C/D. Schema design must not create new semantic authority beyond what
+`MEMORY_CONTEXT.md` (unchanged) already establishes.
+
+### Brain read-side adapter / runtime — PLANNED, separate, later
+
+**Distinct from the schema foundation above — do not conflate the two.** Only after dependencies
+B/C/D (or as many of them as a future task separately authorizes) are stable:
+
+- build a provider-independent Brain adapter boundary,
+- implement the actual `MemoryContext` Producer (retrieval, scope/supersession resolution, freshness
+  computation) against `../mihver-brain`,
+- add deterministic fixtures exercising real retrieval outcomes end-to-end.
+
+No runtime code, MCP surface, or network retrieval exists yet. This remains entirely future work,
+not started or implied by the schema foundation above.
 
 ---
 
@@ -1547,7 +1577,7 @@ Purpose:
 - Evaluation engine,
 - MihverArchitectureSpec schema/runtime,
 - product CLI/API,
-- `MemoryContext` schema, Brain read adapter, and an executable retrieval path — Research Planning is semantically authorized to consume an optional `MemoryContext` under the M0 contract, but no `MemoryContext` is actually produced or retrieved yet,
+- `MemoryContext` schema on `main` (a schema foundation PR is open, per Phase 10 above, not yet merged), Brain read adapter, and an executable retrieval path — Research Planning is semantically authorized to consume an optional `MemoryContext` under the M0 contract, but no `MemoryContext` is actually produced or retrieved yet,
 - governed Brain write-back,
 - accepted three-agent Decision Council,
 - Decision Council deterministic kernel,
@@ -1572,19 +1602,27 @@ This is the current lowest-rework sequence.
 
 2. ADR-0004 Acceptance checkpoint — DONE
 
-3. Dependency B/C/D — NEXT, not yet authorized
+3. MemoryContext schema foundation — NEXT (this PR, unmerged)
+      machine-readable MemoryContext schema
+      deterministic validator + fixtures
+      stable (memory_context_id, entry_id) reference primitive for B/C/D to later cite
+      discovered dependency: intent-spec.schema.json permits only claim-based inference
+      premises today, so this must land before Dependency B to avoid an ad-hoc premise
+      reference shape that would churn once MemoryContext's own schema existed
+
+4. Dependency B/C/D — NEXT, not yet authorized
       INTENT_SPEC historical-memory premise
       REQUIREMENT_SPEC R-10/R-22 premise
       REQUIREMENT_SPEC R-19 DECISION_OPTION provenance
 
-4. MemoryContext schema + Brain read-side adapter contract
+5. Brain SB-02 retrieval parity/freeze
+      then MIHVER ↔ Brain integration
+      then the Brain read-side adapter / runtime (Phase 10's second half — distinct from
+      the schema foundation in step 3, not started by it)
 
-5. RequirementSpec Step 03B
+6. RequirementSpec Step 03B
       schema + validator + fixtures
       ADR-0003 acceptance reconsideration
-
-6. Brain SB-02 retrieval parity/freeze
-      then MIHVER ↔ Brain integration
 
 7. ResearchPlan
 

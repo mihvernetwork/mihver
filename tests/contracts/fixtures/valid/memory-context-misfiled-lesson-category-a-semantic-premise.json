@@ -1,0 +1,48 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-research-planning-9",
+    "run_id": "run-2026-08-23-009",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior deployment-target constraints for this project",
+    "retrieval_time": "2026-08-23T09:40:00Z",
+    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-misfiled-lesson-1",
+        "source": {
+          "brain_memory_id": "brain-misfiled-lesson-01",
+          "brain_type": "lesson",
+          "title": "Deployment note (misfiled)",
+          "scope": "support-inbox",
+          "brain_status": "active",
+          "brain_created_at": "2026-01-08T00:00:00Z",
+          "brain_updated_at": "2026-01-08T00:00:00Z",
+          "brain_confidence": "high",
+          "supersedes": null,
+          "superseded_by": null,
+          "provenance": { "source": "manual", "author": "claude" }
+        },
+        "content": "User said (UserIdea v2, turn 7): 'our team will only accept an on-prem deployment option, never a managed cloud service.'",
+        "admission_reason": "scope matches run_context.project_slug; brain_status active with no superseded_by link; content inspection reclassified this misfiled lesson-typed record as a Category A historical user statement, clearing the gate for direct citation as an Inferred Claim premise at SEMANTIC_PREMISE",
+        "classification": {
+          "semantic_authority_class": "historical_user_statement",
+          "is_historical_user_statement": true,
+          "historical_user_category": "A",
+          "historical_citation": { "idea_id": "idea-support-inbox", "user_idea_version": 2, "turn_id": "turn-7", "quote": "our team will only accept an on-prem deployment option" },
+          "classification_basis": "stored brain_type is lesson, but content inspection reveals a historical user statement with an inspectable, resolvable citation -- a misfiling, not a hypothetical; the gate applies by content, never by stored type, and lesson/playbook's PROCESS_ONLY-always default applies only when content inspection does not redirect the entry here",
+          "classification_method": "heuristic",
+          "classification_ambiguity": null,
+          "influence_tier": "SEMANTIC_PREMISE"
+        },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "46 days since brain_updated_at, under the 180-day staleness threshold" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}
