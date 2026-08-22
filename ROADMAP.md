@@ -4,7 +4,7 @@
 
 **Document status:** Living roadmap / navigation document — **not** a replacement for ADRs, contracts, schemas, or `.project/PROJECT_STATE.md`.
 
-**Last verified public `main`:** `9fb4ab5e0f64b050c9399a2d24376b688d44d082` (`chore: sync project state after ADR-0004`, PR #16).
+**Last verified public `main`:** `9416e857b549bea07d4ce06a5c365524fdf1d51a` (`M0: integrate core MemoryContext boundary into foundation`, PR #17 — ADR-0004 Dependency A / Foundation Memory Boundary merged).
 
 **Current product milestone:** **M0 — Idea → Architecture**.
 
@@ -624,7 +624,8 @@ A future Evidence design may decide whether its own prior immutable Evidence art
 
 ## 10.7 Dependency gates
 
-ADR-0004 separates four future dependencies:
+ADR-0004 separates four dependencies (Dependency A is now complete — see 10.9 below; B, C, and D
+remain future/disabled):
 
 ### Dependency A — core `M0_SCOPE` integration
 
@@ -658,6 +659,23 @@ Required only for memory-informed `DECISION_OPTION` working defaults and their e
 ADR-0004 becomes Accepted-eligible when **Dependency A** is completed and adversarially reviewed.
 
 Dependencies B/C/D remain independently disabled until their own amendments land; they do not all need to exist before ADR-0004 itself can become Accepted.
+
+**Dependency A is now complete** (PR #17, merge commit `9416e857b549bea07d4ce06a5c365524fdf1d51a`), adversarially reviewed, and recorded in `.project/PROJECT_STATE.md`. ADR-0004 is therefore eligible for a separately authorized Acceptance reconsideration task. This roadmap does not perform or authorize that Status change; `ADR-0004`'s own `## Status` field remains **Proposed** until a future task explicitly changes it.
+
+## 10.9 Dependency A — DONE (PR #17)
+
+**PR #17:** `9416e857b549bea07d4ce06a5c365524fdf1d51a` — `M0: integrate core MemoryContext boundary into foundation`.
+
+Amended `docs/foundation/M0_SCOPE.md` to establish:
+
+- `RunContext` as a non-memory, cross-cutting run/invocation identity anchor, distinct from `UserIdea` (M0's sole milestone semantic input),
+- the `MemoryContext` Producer as a declared cross-cutting compiler boundary (not a new linear pipeline stage),
+- **Research Planning** as the first and only stage whose declared `Input:` list includes an optional `MemoryContext`,
+- consumption restricted to the `DISCOVERY_ATTENTION` influence tier only — additive and provenance-visible, never authoritative,
+- no stage may query MIHVER Brain directly; the only path is `Brain → MemoryContext Producer → immutable MemoryContext → explicitly-authorized stage`,
+- Dependencies B/C/D remain structurally disabled; `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` untouched.
+
+**This is a semantic/foundation authorization, not an implemented runtime.** There is still no `MemoryContext` schema, no Brain read adapter, and no executable Research Planning pipeline that actually retrieves anything from MIHVER Brain. Research Planning is now *permitted*, under the M0 contract, to consume an optional `MemoryContext` once one exists — it does not yet receive one in practice.
 
 ---
 
@@ -816,9 +834,9 @@ M0 must not claim mathematical/global optimality.
 
 # 13. Decision Council — future governed decision plane
 
-A detailed 22-Aug-2026 research report exists as an **architectural research input**, not an accepted MIHVER ADR:
-
-`MIHVER_3_AJANLI_KARAR_KURULU_TEKNIK_RAPORU_2026-08-22(1).md`
+A detailed external research report prepared on 22 Aug 2026 informed this section. It is a
+historical research input, not an accepted MIHVER artifact, and is not required to reconstruct the
+roadmap; the durable conclusions relevant to MIHVER are summarized below.
 
 Its strongest candidate architecture is a separated heterogeneous rotating council:
 
@@ -1001,22 +1019,20 @@ The following order is designed to minimize semantic churn and rework.
 
 ---
 
-## Phase 7 — Foundation Memory Boundary / Dependency A — NEXT
+## Phase 7 — Foundation Memory Boundary / Dependency A — DONE
 
-Amend `M0_SCOPE.md` to introduce the **core memory integration boundary**.
+**PR #17:** `9416e857b549bea07d4ce06a5c365524fdf1d51a` — `M0: integrate core MemoryContext boundary into foundation`.
 
-Recommended first consumer: **Research Planning**, with `DISCOVERY_ATTENTION` only.
+Amended `M0_SCOPE.md` to introduce the **core memory integration boundary**:
 
-Required work:
+1. defined `RunContext` as cross-cutting invocation context, not semantic user input,
+2. defined MemoryContext Producer as a declared cross-cutting boundary,
+3. declared the first consumer's optional `MemoryContext` input,
+4. preserved Brain-unavailable / empty-memory graceful behavior,
+5. preserved lifecycle binding to run, consumer, purpose, upstream artifact version,
+6. explicitly kept dependencies B/C/D disabled.
 
-1. define `RunContext` as cross-cutting invocation context, not semantic user input,
-2. define MemoryContext Producer as a declared cross-cutting boundary,
-3. declare the first consumer's optional `MemoryContext` input,
-4. preserve Brain-unavailable / empty-memory graceful behavior,
-5. preserve lifecycle binding to run, consumer, purpose, upstream artifact version,
-6. explicitly keep dependencies B/C/D disabled.
-
-### Recommended first consumer: Research Planning
+### First consumer: Research Planning
 
 Why Research Planning first:
 
@@ -1025,7 +1041,7 @@ Why Research Planning first:
 - it exercises the core boundary while minimizing provenance risk,
 - failure/absence of Brain can degrade gracefully to ordinary RequirementSpec-derived research planning.
 
-Allowed first capability:
+Authorized capability:
 
 ```text
 MemoryContext
@@ -1042,19 +1058,21 @@ Forbidden:
 - choose technologies,
 - alter Requirements or intent.
 
-**Exit gate:** Dependency A implemented and adversarially reviewed with no hidden Brain read or stage-authority leak.
+**Exit gate met:** Dependency A implemented and adversarially reviewed (four independent read-only Codex reviewers, by axis) with no hidden Brain read or stage-authority leak — see `.project/PROJECT_STATE.md` / `.project/DECISIONS_LOG.md` for the durable record.
+
+**Still not implemented:** `MemoryContext` schema, Brain read adapter, and an executable Research Planning pipeline that actually retrieves memory. This phase is a semantic/foundation authorization only — see 10.9 above.
 
 ---
 
-## Phase 8 — ADR-0004 Acceptance checkpoint — PLANNED
+## Phase 8 — ADR-0004 Acceptance checkpoint — NEXT
 
-Once Dependency A is merged and adversarially reviewed:
+Dependency A is now merged and adversarially reviewed (Phase 7, PR #17), which makes ADR-0004 Acceptance the recommended next checkpoint. **This roadmap does not authorize or perform that Status change.** A separate, explicit human task is required to:
 
 - reconsider ADR-0004 `Proposed → Accepted`,
-- verify the core boundary exists in foundation,
+- verify the core boundary exists in foundation (it does, as of PR #17),
 - do not wait for B/C/D if they remain structurally disabled.
 
-**Exit:** MemoryContext core authority model becomes Accepted.
+**Exit (once separately authorized):** MemoryContext core authority model becomes Accepted.
 
 ---
 
@@ -1498,7 +1516,8 @@ Purpose:
 - Night Runner deterministic planner,
 - fresh-Claude single-task executor,
 - ADR-0004 MemoryContext authority design, Proposed,
-- MemoryContext semantic contract + 24-case adversarial corpus.
+- MemoryContext semantic contract + 24-case adversarial corpus,
+- ADR-0004 Dependency A / Foundation Memory Boundary merged into `docs/foundation/M0_SCOPE.md` (PR #17): `RunContext`, the cross-cutting MemoryContext Producer boundary, and Research Planning as the sole authorized `MemoryContext` consumer (`DISCOVERY_ATTENTION` only) — semantic authorization only, no runtime.
 
 ## Does not exist yet as an M0 product capability
 
@@ -1513,7 +1532,7 @@ Purpose:
 - Evaluation engine,
 - MihverArchitectureSpec schema/runtime,
 - product CLI/API,
-- automatic Brain→MIHVER integration,
+- `MemoryContext` schema, Brain read adapter, and an executable retrieval path — Research Planning is semantically authorized to consume an optional `MemoryContext` under the M0 contract, but no `MemoryContext` is actually produced or retrieved yet,
 - governed Brain write-back,
 - accepted three-agent Decision Council,
 - Decision Council deterministic kernel,
@@ -1531,12 +1550,12 @@ This distinction must remain explicit: merged architecture design is not the sam
 This is the current lowest-rework sequence.
 
 ```text
-1. Dependency A — Foundation Memory Boundary
+1. Dependency A — Foundation Memory Boundary — DONE (PR #17)
       RunContext
       MemoryContext Producer
       first Research Planning consumer (DISCOVERY_ATTENTION only)
 
-2. ADR-0004 Acceptance checkpoint
+2. ADR-0004 Acceptance checkpoint — NEXT, not yet authorized
 
 3. Dependency B/C/D
       INTENT_SPEC historical-memory premise

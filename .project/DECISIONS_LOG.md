@@ -112,3 +112,18 @@ Entries above this line are unmodified, per this log's append-only policy.
   merge fact, not a reconstructed human quote. `MemoryContext` remains design-only: no stage
   declares it as an input on `main` at this commit, and no `mihver-brain` or runtime change
   accompanied this merge.
+- 2026-08-22 — `M0-FOUNDATION-MEMORY-BOUNDARY-A` (PR #17) merged to `main`: verified via
+  `gh pr view 17 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-22T16:09:50Z`) and `git log`/`git status` on `main` (`HEAD`
+  matches the reported merge commit exactly) — squash commit
+  `9416e857b549bea07d4ce06a5c365524fdf1d51a`. Amended `docs/foundation/M0_SCOPE.md` to implement
+  `ADR-0004`'s Dependency A: introduced `RunContext` (a non-memory run/invocation scope anchor,
+  distinct from `UserIdea`), the cross-cutting `MemoryContext` Producer boundary, and authorized
+  Research Planning as the first and only `MemoryContext`-consuming stage (`DISCOVERY_ATTENTION`
+  tier only, additive, provenance-visible). `ADR-0004`'s own `## Status` field on `main` at this
+  commit still reads **Proposed** — not Accepted, and not claimed as such here. Every other stage,
+  and `ADR-0004`'s dependencies B, C, and D, remain structurally disabled; `INTENT_SPEC.md`/
+  `REQUIREMENT_SPEC.md` are untouched. No `mihver-brain`, schema, or runtime change accompanied
+  this merge — this is a semantic/foundation authorization only. No prior entry in this log
+  recorded an approval decision for this merge; this entry records only the independently-verified
+  merge fact, not a reconstructed human quote.
