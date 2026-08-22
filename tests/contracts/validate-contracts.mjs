@@ -54,7 +54,50 @@ function validateUserIdea(document) {
   }
 }
 
-function validateIntentSpec(document) {
+function validateMemoryPremiseAgainstCompanion(claimId, memoryPremise, companion) {
+  if (memoryPremise.memory_context_id !== companion.memory_context_id) {
+    fail(`inference ${claimId} memory premise memory_context_id "${memoryPremise.memory_context_id}" does not resolve to the supplied companion MemoryContext "${companion.memory_context_id}"`);
+  }
+  const entry = companion.admitted_entries.find((candidate) => candidate.entry_id === memoryPremise.entry_id);
+  if (!entry) {
+    const excluded = companion.excluded_entries.some((candidate) => candidate.entry_id === memoryPremise.entry_id);
+    if (excluded) fail(`inference ${claimId} memory premise entry_id "${memoryPremise.entry_id}" is an excluded entry in the supplied MemoryContext, not admitted`);
+    fail(`inference ${claimId} memory premise entry_id "${memoryPremise.entry_id}" does not resolve in the supplied companion MemoryContext`);
+  }
+  if (companion.consuming_stage !== "intent_parsing") {
+    fail(`inference ${claimId} cites a MemoryContext produced for consuming_stage "${companion.consuming_stage}", not "intent_parsing"`);
+  }
+  const classification = entry.classification;
+  if (!classification.is_historical_user_statement || classification.historical_user_category !== "A") {
+    fail(`inference ${claimId} memory premise entry "${memoryPremise.entry_id}" is not a Category A historical user statement in the supplied MemoryContext`);
+  }
+  if (classification.influence_tier !== "SEMANTIC_PREMISE") {
+    fail(`inference ${claimId} memory premise entry "${memoryPremise.entry_id}" does not carry influence_tier "SEMANTIC_PREMISE" in the supplied MemoryContext`);
+  }
+  const citation = classification.historical_citation;
+  const claimed = memoryPremise.historical_citation;
+  const citationMatches = citation && citation.idea_id === claimed.idea_id && citation.user_idea_version === claimed.user_idea_version
+    && citation.turn_id === claimed.turn_id && citation.quote === claimed.quote;
+  if (!citationMatches) {
+    fail(`inference ${claimId} memory premise historical_citation does not match the citation recorded on entry "${memoryPremise.entry_id}" in the supplied MemoryContext`);
+  }
+}
+
+function validateDiscoveryRefAgainstCompanion(openItemId, ref, companion) {
+  if (ref.memory_context_id !== companion.memory_context_id) {
+    fail(`open item ${openItemId} memory_discovery_refs memory_context_id "${ref.memory_context_id}" does not resolve to the supplied companion MemoryContext "${companion.memory_context_id}"`);
+  }
+  const entry = companion.admitted_entries.find((candidate) => candidate.entry_id === ref.entry_id);
+  if (!entry) fail(`open item ${openItemId} memory_discovery_refs entry_id "${ref.entry_id}" does not resolve to an admitted entry in the supplied companion MemoryContext`);
+  if (companion.consuming_stage !== "intent_parsing") {
+    fail(`open item ${openItemId} memory_discovery_refs cites a MemoryContext produced for consuming_stage "${companion.consuming_stage}", not "intent_parsing"`);
+  }
+  if (entry.classification.influence_tier !== "DISCOVERY_ATTENTION") {
+    fail(`open item ${openItemId} memory_discovery_refs entry "${ref.entry_id}" does not carry influence_tier "DISCOVERY_ATTENTION" in the supplied MemoryContext`);
+  }
+}
+
+function validateIntentSpec(document, companionMemoryContext = null) {
   const claims = new Map(document.claims.map((item) => [item.claim_id, item]));
   const openItems = new Map(document.open_items.map((item) => [item.open_item_id, item]));
   const conflicts = new Map(document.conflicts.map((item) => [item.conflict_id, item]));
@@ -67,15 +110,47 @@ function validateIntentSpec(document) {
     fail("all IntentSpec user_idea_refs must belong to the same idea_id");
   }
 
+  if (companionMemoryContext && companionMemoryContext.upstream_artifact_binding
+    && companionMemoryContext.upstream_artifact_binding.artifact_type === "user_idea") {
+    const binding = companionMemoryContext.upstream_artifact_binding;
+    const key = `${binding.artifact_id}@${binding.version}`;
+    if (!sourceRefs.has(key)) {
+      fail(`companion MemoryContext is bound to UserIdea ${key}, which is not among this IntentSpec's user_idea_refs`);
+    }
+  }
+
   for (const claim of document.claims) {
     if (claim.origin === "user_provided") {
       const key = `${claim.provenance.idea_id}@${claim.provenance.user_idea_version}`;
       if (!sourceRefs.has(key)) fail(`user-provided claim ${claim.claim_id} must trace to a listed UserIdea version`);
     }
     if (claim.origin === "inferred") {
-      for (const premiseId of claim.provenance.premise_claim_ids) {
+      const premiseClaimIds = claim.provenance.premise_claim_ids ?? [];
+      const memoryPremises = claim.provenance.memory_premises ?? [];
+      if (premiseClaimIds.length === 0 && memoryPremises.length === 0) {
+        fail(`inference ${claim.claim_id} must carry at least one Claim or MemoryContext premise`);
+      }
+      for (const premiseId of premiseClaimIds) {
         if (!claims.has(premiseId)) fail(`inference premise ${premiseId} does not resolve`);
         if (premiseId === claim.claim_id) fail(`inference ${claim.claim_id} cannot be its own premise`);
+      }
+      const memoryPairKeys = memoryPremises.map((premise) => JSON.stringify([premise.memory_context_id, premise.entry_id]));
+      unique(memoryPairKeys, `memory premise (memory_context_id, entry_id) pairs of inference ${claim.claim_id}`);
+      if (memoryPremises.length > 0) {
+        if (claim.provenance.provisional !== true || claim.provenance.reversible !== true) {
+          fail(`inference ${claim.claim_id} cites a memory premise and must carry provisional:true and reversible:true`);
+        }
+        if (claim.force !== undefined && !claim.provenance.force_reasoning) {
+          fail(`inference ${claim.claim_id} carries force and a memory premise; force_reasoning is required so historical force is never mistaken for independently-reasoned current force`);
+        }
+        if (claim.force === undefined && claim.provenance.force_reasoning) {
+          fail(`inference ${claim.claim_id} has no force but carries force_reasoning; force_reasoning is only meaningful when the Claim carries force`);
+        }
+        if (companionMemoryContext) {
+          for (const memoryPremise of memoryPremises) {
+            validateMemoryPremiseAgainstCompanion(claim.claim_id, memoryPremise, companionMemoryContext);
+          }
+        }
       }
     }
   }
@@ -89,6 +164,14 @@ function validateIntentSpec(document) {
         if (!sourceRefs.has(key)) fail(`ambiguity ${openItem.open_item_id} must trace to a listed UserIdea version`);
       }
     }
+    const discoveryRefs = openItem.memory_discovery_refs ?? [];
+    const discoveryPairKeys = discoveryRefs.map((ref) => JSON.stringify([ref.memory_context_id, ref.entry_id]));
+    unique(discoveryPairKeys, `memory_discovery_refs pairs of open item ${openItem.open_item_id}`);
+    if (companionMemoryContext) {
+      for (const ref of discoveryRefs) {
+        validateDiscoveryRefAgainstCompanion(openItem.open_item_id, ref, companionMemoryContext);
+      }
+    }
   }
 
   const visiting = new Set();
@@ -98,7 +181,7 @@ function validateIntentSpec(document) {
     if (visited.has(claimId)) return;
     visiting.add(claimId);
     const claim = claims.get(claimId);
-    if (claim?.origin === "inferred") claim.provenance.premise_claim_ids.forEach(visit);
+    if (claim?.origin === "inferred") (claim.provenance.premise_claim_ids ?? []).forEach(visit);
     visiting.delete(claimId);
     visited.add(claimId);
   }
@@ -108,7 +191,7 @@ function validateIntentSpec(document) {
   for (const claim of document.claims) {
     if (claim.origin !== "inferred") continue;
     const childConfidence = confidenceRank[claim.provenance.derivation_confidence];
-    for (const premiseId of claim.provenance.premise_claim_ids) {
+    for (const premiseId of claim.provenance.premise_claim_ids ?? []) {
       const premise = claims.get(premiseId);
       if (premise.origin !== "inferred") continue;
       const premiseConfidence = confidenceRank[premise.provenance.derivation_confidence];
@@ -283,8 +366,23 @@ for (const expectation of ["valid", "invalid"]) {
     assert.ok(validator, `${file}: unknown contract selector`);
     let valid = validator.schema(fixture.document);
     let diagnostic = valid ? "" : JSON.stringify(validator.schema.errors);
+    let companionDocument = null;
+    if (valid && fixture.companion) {
+      const companionValidator = validators[fixture.companion.contract];
+      assert.ok(companionValidator, `${file}: unknown companion contract selector`);
+      const companionValid = companionValidator.schema(fixture.companion.document);
+      if (!companionValid) {
+        valid = false;
+        diagnostic = JSON.stringify(companionValidator.schema.errors);
+      } else {
+        try {
+          companionValidator.semantic(fixture.companion.document);
+          companionDocument = fixture.companion.document;
+        } catch (error) { valid = false; diagnostic = error.message; }
+      }
+    }
     if (valid) {
-      try { validator.semantic(fixture.document); }
+      try { validator.semantic(fixture.document, companionDocument); }
       catch (error) { valid = false; diagnostic = error.message; }
     }
     if (expectation === "valid") assert.equal(valid, true, `${file} should be valid:\n${diagnostic}`);

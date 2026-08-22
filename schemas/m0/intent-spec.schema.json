@@ -60,12 +60,47 @@
       },
       "dependentRequired": { "turn_id": ["statement_quote"], "statement_quote": ["turn_id"] }
     },
-    "inferenceProvenance": {
-      "type": "object", "additionalProperties": false, "required": ["kind", "premise_claim_ids", "reasoning_kind", "derivation_confidence"],
+    "historicalCitationRef": {
+      "type": "object", "additionalProperties": false, "required": ["idea_id", "user_idea_version", "turn_id", "quote"],
       "properties": {
-        "kind": { "const": "derivation" }, "premise_claim_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
-        "reasoning_kind": { "type": "string", "minLength": 1 }, "derivation_confidence": { "enum": ["low", "moderate", "high"] }
-      }
+        "idea_id": { "$ref": "#/$defs/id" }, "user_idea_version": { "type": "integer", "minimum": 1 },
+        "turn_id": { "$ref": "#/$defs/id" }, "quote": { "type": "string", "minLength": 1 }
+      },
+      "description": "The originating historical user-authored source a cited Category A MemoryContext entry is itself inspectably traced to. Structural completeness is schema-enforced; that this citation actually matches the referenced MemoryContext entry's own historical_citation is checked by the deterministic validator only when a companion MemoryContext document is supplied alongside this fixture -- otherwise it remains an asserted, unverified fact, exactly as UI-05's own citation limitation."
+    },
+    "memoryPremise": {
+      "type": "object", "additionalProperties": false, "required": ["memory_context_id", "entry_id", "historical_user_category", "historical_citation"],
+      "properties": {
+        "memory_context_id": { "$ref": "#/$defs/id" },
+        "entry_id": { "$ref": "#/$defs/id" },
+        "historical_user_category": { "const": "A", "description": "Structurally forecloses citing a Category B entry as an Inference premise -- Category B has no representable shape here at all (INTENT_SPEC.md I-23)." },
+        "historical_citation": { "$ref": "#/$defs/historicalCitationRef" }
+      },
+      "description": "A stable (memory_context_id, entry_id) reference to a qualified Category A MemoryContext entry cited directly as an Inference premise, per MEMORY_CONTEXT.md's Historical User Memory Rule. Never a Claim -- the referenced MemoryContext entry itself remains a MemoryContext entry."
+    },
+    "inferenceProvenance": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "reasoning_kind", "derivation_confidence"],
+      "properties": {
+        "kind": { "const": "derivation" },
+        "premise_claim_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "memory_premises": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/memoryPremise" }, "description": "Qualified Category A MemoryContext-entry premises, in addition to or instead of premise_claim_ids. Cross-artifact resolution against the cited MemoryContext (admitted, Intent Parsing-bound, Category A, SEMANTIC_PREMISE) is validator-enforced only when a companion MemoryContext document is supplied." },
+        "reasoning_kind": { "type": "string", "minLength": 1 },
+        "derivation_confidence": { "enum": ["low", "moderate", "high"] },
+        "provisional": { "const": true, "description": "Required whenever memory_premises is present (INTENT_SPEC.md 'Memory-Derived Inference Premises'); forbidden otherwise, to avoid a meaningless field on an ordinary Claim-only inference." },
+        "reversible": { "const": true },
+        "force_reasoning": {
+          "type": "object", "additionalProperties": false, "required": ["basis"],
+          "properties": { "basis": { "type": "string", "minLength": 1 } },
+          "description": "The independent reasoning basis for this Inferred Claim's own current-run force, required whenever a memory-premised Inference's Claim also carries force (validator-enforced, since force lives on the sibling Claim, not here) -- never a pass-through of the historical statement's own force. Distinct from reasoning_kind, which explains the proposition's derivation, not the force's."
+        }
+      },
+      "anyOf": [
+        { "properties": { "premise_claim_ids": true }, "required": ["premise_claim_ids"] },
+        { "properties": { "memory_premises": true }, "required": ["memory_premises"] }
+      ],
+      "if": { "properties": { "memory_premises": true }, "required": ["memory_premises"] },
+      "then": { "properties": { "provisional": true, "reversible": true }, "required": ["provisional", "reversible"] },
+      "else": { "properties": { "provisional": false, "reversible": false, "force_reasoning": false } }
     },
     "assumptionProvenance": {
       "type": "object", "additionalProperties": false, "required": ["kind", "gap", "rationale", "scope", "reversible"],
@@ -122,6 +157,11 @@
         "unresolved_item": { "type": "string", "minLength": 1 }, "downstream_decision": { "type": "string", "minLength": 1 }, "level_rationale": { "type": "string", "minLength": 1 }
       }
     },
+    "memoryDiscoveryRef": {
+      "type": "object", "additionalProperties": false, "required": ["memory_context_id", "entry_id"],
+      "properties": { "memory_context_id": { "$ref": "#/$defs/id" }, "entry_id": { "$ref": "#/$defs/id" } },
+      "description": "Records that this Open Item's candidate clarification question was shaped by this specific MemoryContext entry (Category A or B), per INTENT_SPEC.md's DISCOVERY_ATTENTION discovery path. Never a Claim premise, never an answer, never a substitute for the current user's own clarification."
+    },
     "openItem": {
       "oneOf": [
         {
@@ -130,7 +170,8 @@
           "properties": {
             "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "unknown" },
             "question": { "type": "string", "minLength": 1 }, "relevance_rationale": { "type": "string", "minLength": 1 },
-            "decision_impact": { "$ref": "#/$defs/decisionImpact" }
+            "decision_impact": { "$ref": "#/$defs/decisionImpact" },
+            "memory_discovery_refs": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/memoryDiscoveryRef" } }
           }
         },
         {
@@ -147,7 +188,8 @@
                 "properties": { "reading_id": { "$ref": "#/$defs/id" }, "reading": { "type": "string", "minLength": 1 }, "plausibility_basis": { "type": "string", "minLength": 1 } }
               }
             },
-            "decision_impact": { "$ref": "#/$defs/decisionImpact" }
+            "decision_impact": { "$ref": "#/$defs/decisionImpact" },
+            "memory_discovery_refs": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/memoryDiscoveryRef" } }
           }
         }
       ]

@@ -1,0 +1,35 @@
+{
+  "contract": "intent-spec",
+  "expected_error": "force_reasoning is required",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-memory-force-without-reasoning", "version": 1,
+    "created_at": "2026-08-23T11:30:00Z", "user_idea_refs": [{ "idea_id": "idea-acme-crm", "version": 2 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [
+      {
+        "claim_id": "claim-force-without-reasoning",
+        "proposition": "The system should avoid introducing a message queue for this phase.",
+        "origin": "inferred",
+        "force": { "modality": "preference", "strength": "moderate" },
+        "discourse_role": "operative",
+        "provenance": {
+          "kind": "derivation",
+          "memory_premises": [
+            {
+              "memory_context_id": "mc-intent-acme-crm-1",
+              "entry_id": "entry-db-pref-1",
+              "historical_user_category": "A",
+              "historical_citation": { "idea_id": "idea-acme-crm", "user_idea_version": 1, "turn_id": "turn-3", "quote": "we decided against a message queue for v1" }
+            }
+          ],
+          "reasoning_kind": "historical-preference-citation",
+          "derivation_confidence": "moderate",
+          "provisional": true,
+          "reversible": true
+        }
+      }
+    ],
+    "open_items": [], "conflicts": [], "clarification_decisions": []
+  }
+}

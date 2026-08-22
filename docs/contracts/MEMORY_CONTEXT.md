@@ -1,8 +1,12 @@
 # Contract: MemoryContext
 
 Status: part of M0 `ADR-0004` (Memory Context Authority Boundary, Status: **Accepted** — see that
-ADR's own "Acceptance Gate" for exactly what Acceptance did and did not authorize: dependency A
-alone, not dependencies B/C/D).
+ADR's own "Acceptance Gate" for exactly what Acceptance did and did not authorize). Dependency A
+(Research Planning's own `DISCOVERY_ATTENTION`-only consumption) and Dependency B (Intent Parsing's
+consumption, including the Category A `SEMANTIC_PREMISE` → Inferred Claim premise path) are both
+now implemented, per `M0_SCOPE.md`'s and `INTENT_SPEC.md`'s own amendments. Dependencies C and D
+remain not implemented.
+
 This semantic contract remains implementation-independent — no serialization or field names are
 defined here, mirroring [REQUIREMENT_SPEC](./REQUIREMENT_SPEC.md)'s relationship to its own schema.
 A separate machine-readable representation now exists at
@@ -12,9 +16,11 @@ invariant-by-invariant enforcement mapping at
 authoritative for meaning; the schema and its mapping represent and enforce that meaning where
 mechanically possible, and neither redefines or supersedes this document. **This document does not
 itself authorize any stage to consume `MemoryContext`** — that authority belongs exclusively to
-`M0_SCOPE.md`. Research Planning is, as of `M0_SCOPE.md`'s Dependency-A amendment, the first and
-only stage so authorized, restricted to the `DISCOVERY_ATTENTION` influence tier — see "Stage
-Consumption Authorization" below for exactly what is, and is not, authorized today.
+`M0_SCOPE.md`. Research Planning and Intent Parsing are, as of `M0_SCOPE.md`'s Dependency-A and
+Dependency-B amendments respectively, the only two stages so authorized — Research Planning
+restricted to the `DISCOVERY_ATTENTION` influence tier, Intent Parsing to `DISCOVERY_ATTENTION` and
+`SEMANTIC_PREMISE` — see "Stage Consumption Authorization" below for exactly what is, and is not,
+authorized today.
 
 ## Purpose
 
@@ -37,19 +43,21 @@ Evidence sourcing) that already govern every other external input to the pipelin
 
 Per Principle 3 (Structured Artifacts Between Stages) and `M0_SCOPE.md`'s stage table, a stage may
 consume only its explicitly declared inputs. `M0_SCOPE.md` currently declares `MemoryContext` as an
-input for exactly one stage: **Research Planning**, and only at the `DISCOVERY_ATTENTION` influence
-tier — optional, additive, provenance-visible, non-authoritative, and never permitted to narrow,
-skip, or replace `RequirementSpec`-derived research coverage. This document defines what
-`MemoryContext` *would* mean and how it *would* have to be constrained if and when any *further*
-stage's `M0_SCOPE.md` entry is amended to declare it. Until each such further amendment happens,
-separately, with explicit human authorization, **every stage other than Research Planning (at
-DISCOVERY_ATTENTION) may not consume `MemoryContext` at all, and no stage — Research Planning
-included — may ever query MIHVER Brain directly.** This is not a placeholder rule pending
-implementation; it is the hard boundary this whole document exists to protect. Dependencies B, C,
-and D (citing a `MemoryContext` entry as an Inferred Claim premise, a Requirement-Level Inference
-premise, or a memory-informed R-19 rationale, respectively) remain unavailable regardless of
-Research Planning's own authorization — see `ADR-0004`'s "Acceptance Gate" for the precise
-dependency boundaries.
+input for exactly two stages: **Research Planning**, at the `DISCOVERY_ATTENTION` influence tier
+only — optional, additive, provenance-visible, non-authoritative, and never permitted to narrow,
+skip, or replace `RequirementSpec`-derived research coverage; and **Intent Parsing**, at the
+`DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE` tiers, per `INTENT_SPEC.md`'s own Inference Policy
+amendment (Dependency B) — see "Historical User Memory Rule" below for exactly what that
+authorizes and does not. This document defines what `MemoryContext` *would* mean and how it *would*
+have to be constrained if and when any *further* stage's `M0_SCOPE.md` entry is amended to declare
+it. Until each such further amendment happens, separately, with explicit human authorization,
+**every stage other than Research Planning and Intent Parsing may not consume `MemoryContext` at
+all, and no stage — Research Planning and Intent Parsing included — may ever query MIHVER Brain
+directly.** This is not a placeholder rule pending implementation; it is the hard boundary this
+whole document exists to protect. Dependencies C and D (citing a `MemoryContext` entry as a
+Requirement-Level Inference premise or a memory-informed R-19 rationale, respectively) remain
+unavailable regardless of Research Planning's or Intent Parsing's own authorization — see
+`ADR-0004`'s "Acceptance Gate" for the precise dependency boundaries.
 
 ## Relationship to MIHVER Brain
 
@@ -265,8 +273,8 @@ describing a historical user statement, of whatever stored type, falls into exac
   citation to an artifact no longer available to inspect) is not Category A merely because it has the
   surface shape of a citation. The test is whether the citation actually resolves to something
   checkable, not whether the record contains citation-shaped text. Only Category A entries may ever
-  be eligible to serve as a direct historical-memory premise for the future Inferred-Claim path
-  ("Historical User Memory Rule" above), once its required amendment exists.
+  be eligible to serve as a direct historical-memory premise for the Inferred-Claim path
+  ("Historical User Memory Rule" below), per `INTENT_SPEC.md`'s own Inference Policy amendment.
 - **B. Derived or unverified user memory.** Says something about the user's past preference or
   intent, but lacks that inspectable, resolvable direct-user-source linkage — including every record
   whose body merely reads as if it quotes or paraphrases the user, with no traceable citation to the
@@ -410,13 +418,12 @@ not a confidence-based restriction to be weighed case by case, it is a hard elig
   Inferred — never User-Provided, and never Assumed either** (Assumption Policy restricts
   Assumptions to narrowly interpretive gaps, never operational defaults, and a historical preference
   is exactly the latter, not the former — see "No Assumed-Origin Path for Memory" below) — no matter
-  how confident the match or how recently the historical statement was made. **This path is not yet
-  available**: `INTENT_SPEC.md`'s Inference Policy and Provenance model, as frozen, define an
-  Inference's premises as other `IntentSpec` Claims tracing to the current `UserIdea`; a
-  `MemoryContext` entry satisfies neither, and citing one as an Inference's premise requires the
-  `SEMANTIC_AMENDMENT_REQUIRED` change `ADR-0004`'s Foundation Impact Analysis identifies, not yet
-  performed. Until then, this path is described here as the eventual target shape, not a currently
-  authorized mechanism.
+  how confident the match or how recently the historical statement was made. **This path is
+  available**: `INTENT_SPEC.md`'s Inference Policy, per its own "Memory-Derived Inference Premises"
+  amendment (`ADR-0004` Dependency B, `M0_SCOPE.md`'s Intent Parsing input list), now defines an
+  Inference's premises as other `IntentSpec` Claims, one or more qualified Category A `MemoryContext`
+  entries, or a combination — never a `MemoryContext` entry becoming a fourth Claim origin, and never
+  weakening the existing Claim-premise rules I-05/I-16 already establish.
 - **As informational input shaping a candidate clarification question** posed to the *current*
   user — e.g. "a prior project of yours used PostgreSQL; is that still your preference here?" The
   memory motivates the question; only the current user's *current* answer, if given, becomes a
@@ -443,8 +450,8 @@ interpretive gaps... never technical or operational working defaults." A histori
 (a database choice, a reporting cadence, a technology default) is precisely an operational default,
 not an interpretive gap about what the user meant — it is categorically the kind of content
 Assumption Policy already excludes. The only Intent-Parsing-stage path for a memory-derived Claim is
-the Inferred-origin path above (pending its own required amendment); there is no Assumed-origin
-path, and none is introduced by this document.
+the Inferred-origin path above; there is no Assumed-origin path, and none is introduced by this
+document.
 
 This is distinct from **Requirement Derivation's own, already-existing, non-`IntentSpec` default
 mechanism** (`REQUIREMENT_SPEC.md`'s R-19-eligible-Unknown filling, R-09): if Requirement Derivation
@@ -517,9 +524,9 @@ question gets asked* — never substitute for asking it, and never silently clos
 Memory may defensibly reduce repeated clarification, subject to all of:
 
 - surfaced as an explicitly marked, provisional, reversible candidate — at Intent Parsing, only ever
-  as a labeled Inferred Claim (pending its required amendment) or a clarification-question input,
-  per "Historical User Memory Rule" above; **never** as an Assumed Claim, per "No Assumed-Origin
-  Path for Memory"; at Requirement Derivation (once separately authorized), an R-19-eligible working
+  as a labeled Inferred Claim or a clarification-question input, per "Historical User Memory Rule"
+  above; **never** as an Assumed Claim, per "No Assumed-Origin Path for Memory"; at Requirement
+  Derivation (once separately authorized), an R-19-eligible working
   default is a distinct, already-existing, non-`IntentSpec` mechanism, not a third Intent-Parsing
   option — never presented as settled without qualification either way;
 - remains visible in provenance — never silently applied without a trace an auditor could follow;
@@ -702,7 +709,7 @@ expansion. `DECISION_OPTION` names that different kind precisely, without touchi
   symmetric, and must not be read as though they were:**
   - A Category A historical user statement (per "Historical User Provenance Gate") reaches
     `SEMANTIC_PREMISE` **directly** — the `MemoryContext` entry itself is cited, by reference, as an
-    Inferred Claim's premise (pending the Inference-premise path's own required amendment). The entry
+    Inferred Claim's premise, per `INTENT_SPEC.md`'s own Inference Policy amendment. The entry
     remains a `MemoryContext` entry; it does not become a `Claim`, but it is directly relied upon.
   - A `pattern`/`incident`/`reference` entry **never itself reaches `SEMANTIC_PREMISE` at all, under
     any amount of re-verification.** "Memory is never Evidence" (see "Memory and Evidence Boundary")
@@ -722,7 +729,7 @@ expansion. `DECISION_OPTION` names that different kind precisely, without touchi
 | `pattern`, `incident` (prior architecture outcomes/failures) | `DISCOVERY_ATTENTION` when shaping search — **permanently; never itself reaches `SEMANTIC_PREMISE`** | A new, independently re-verified `EvidenceBundle`/`TechnologyCandidateSet` entry may reach `SEMANTIC_PREMISE`; the originating memory entry never does, regardless of re-verification (identity boundary, not a freshness gate). |
 | `reference` (cached technology knowledge) | `DISCOVERY_ATTENTION` as a research lead — **permanently; never itself reaches `SEMANTIC_PREMISE`** | Same identity boundary as `pattern`/`incident`. See "Memory and Evidence Boundary." |
 | Any classified type (typically `pattern`, `incident`, `reference`, or a process-`decision`; **never** a historical-user-statement Category A/B entry — see below) proposing a candidate value for an R-19-eligible technical/measurement default | `DECISION_OPTION` at Requirement Derivation, once separately authorized — **never** `SEMANTIC_PREMISE`, since the default's authority always comes from Requirement Derivation's own R-09/R-19 mechanism, never the memory | Never eligible for an intent-level, want-shaping value — R-19 itself excludes those regardless of what memory suggests (see Case 24's contrast). |
-| Any admitted record (whatever its stored Brain type) read as a historical user statement, **Category A (direct)** | `DISCOVERY_ATTENTION` when shaping a current-run clarification question; `SEMANTIC_PREMISE` only as a cited Inference premise (pending required amendment) | Never `SEMANTIC_PREMISE` merely because the historical statement is confident or repeated (M-07); its own historical force is never mechanically copied into the current Inferred Claim's force either (see "Historical Force Is Not Current Force"). Category assignment depends on inspectable, resolvable traceability, never on stored `type`. |
+| Any admitted record (whatever its stored Brain type) read as a historical user statement, **Category A (direct)** | `DISCOVERY_ATTENTION` when shaping a current-run clarification question; `SEMANTIC_PREMISE` when cited directly as an Inference premise | Never `SEMANTIC_PREMISE` merely because the historical statement is confident or repeated (M-07); its own historical force is never mechanically copied into the current Inferred Claim's force either (see "Historical Force Is Not Current Force"). Category assignment depends on inspectable, resolvable traceability, never on stored `type`. |
 | Any admitted record (whatever its stored Brain type) read as a historical user statement, **Category B (derived/unverified)** | `DISCOVERY_ATTENTION` only, when shaping a current-run clarification question — **never** `SEMANTIC_PREMISE`, under any circumstance, at any confidence or repetition level | Lacks the inspectable and resolvable direct-user provenance "Historical User Provenance Gate" requires for Inference-premise eligibility; no accumulation of uses, confidence, or stored `type` promotes it to Category A. |
 
 A `pattern` memory describing a past message-queue architecture illustrates the full chain: now that
@@ -788,7 +795,7 @@ Influence Taxonomy tier for this purpose is, and remains, `DISCOVERY_ATTENTION` 
 tier transition, only a new artifact's independent creation.
 
 This is deliberately asymmetric with the Historical User Memory Rule's Category A path, where the
-`MemoryContext` entry itself, once the required amendment exists, may be **directly** cited as an
+`MemoryContext` entry itself may be **directly** cited as an
 Inferred Claim's premise — no new, separately-produced artifact stands between the entry and the
 Claim there. The asymmetry is intentional, not an oversight: an Inferred Claim's own epistemic
 machinery (derivation confidence, provisional/reversible marking, explicit premise citation) already
@@ -978,7 +985,7 @@ in the frozen snapshot:**
 - **M-03** A historical user statement never becomes a current-run User-Provided Claim merely
   because the user originally said it, however directly it matches or however recently it was
   stated. **Only a Category A (direct) entry** (M-18) may become a cited premise for a current-run
-  Inferred Claim (pending the `SEMANTIC_AMENDMENT_REQUIRED` change this requires, per `ADR-0004`);
+  Inferred Claim, per `INTENT_SPEC.md`'s own Inference Policy amendment (`ADR-0004` Dependency B);
   **a Category B (derived/unverified) entry may never serve as such a premise, at any confidence or
   repetition level.** Either category may serve as informational input to a clarification question
   whose current answer (if given) is what becomes User-Provided. **Neither category may ever become
@@ -1115,8 +1122,8 @@ in the frozen snapshot:**
   auditor to verify the originating statement; a dangling, vague, or unresolvable citation does not
   satisfy Category A merely by having citation-shaped text. Absent that inspectable and resolvable
   linkage, the record is Category B (derived/unverified) by default. Only Category A may ever be cited
-  as the premise of a current-run Inferred Claim (pending the Inference-premise path's own required
-  amendment); Category B is restricted to `DISCOVERY_ATTENTION` use (shaping a clarification question,
+  as the premise of a current-run Inferred Claim, per `INTENT_SPEC.md`'s own Inference Policy
+  amendment; Category B is restricted to `DISCOVERY_ATTENTION` use (shaping a clarification question,
   informing retrieval) under every circumstance, regardless of confidence, repetition, or apparent
   plausibility. `inbox`-type records are excluded before this question is ever reached (per "What
   Qualifies as a MemoryContext Entry"), so this gate never rescues an `inbox` record into eligibility.

@@ -1,0 +1,57 @@
+{
+  "contract": "intent-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-acme-crm-discovery-b", "version": 1,
+    "created_at": "2026-08-23T10:20:00Z", "user_idea_refs": [{ "idea_id": "idea-acme-crm", "version": 2 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [],
+    "open_items": [
+      {
+        "open_item_id": "unknown-notification-channel",
+        "kind": "unknown",
+        "question": "A related note suggests you may have wanted email notifications previously -- is that still relevant here?",
+        "relevance_rationale": "Notification channel was never mentioned in the current UserIdea and affects integration scope.",
+        "decision_impact": { "level": "low", "unresolved_item": "Notification channel", "downstream_decision": "Which integration, if any, is included", "level_rationale": "Purely a detail-level integration choice, does not change architecture shape." },
+        "memory_discovery_refs": [
+          { "memory_context_id": "mc-intent-acme-crm-discovery-2", "entry_id": "entry-notify-note-1" }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "clarification_decisions": [
+      { "subject_kind": "open_item", "subject_id": "unknown-notification-channel", "needed": false, "rationale": "Low-impact detail, deferrable; the candidate question is recorded for later, not asked now." }
+    ]
+  },
+  "companion": {
+    "contract": "memory-context",
+    "document": {
+      "schema_version": "1.0.0", "artifact_type": "memory_context", "memory_context_id": "mc-intent-acme-crm-discovery-2",
+      "run_id": "run-2026-08-23-103", "run_context": { "status": "present", "project_slug": "acme-crm" },
+      "consuming_stage": "intent_parsing", "retrieval_purpose": "clarification-question-discovery",
+      "retrieval_query": "prior notification-related notes for this project", "retrieval_time": "2026-08-23T10:18:00Z",
+      "upstream_artifact_binding": { "artifact_type": "user_idea", "artifact_id": "idea-acme-crm", "version": 2 },
+      "retrieval_outcome": "admitted",
+      "admitted_entries": [
+        {
+          "entry_id": "entry-notify-note-1",
+          "source": {
+            "brain_memory_id": "brain-notify-note-1", "brain_type": "reference", "title": "Notification channel note",
+            "scope": "acme-crm", "brain_status": "active", "brain_created_at": "2026-01-20T00:00:00Z", "brain_updated_at": "2026-01-20T00:00:00Z",
+            "brain_confidence": "low", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" }
+          },
+          "content": "Notes suggest the user wanted email notifications, paraphrased from an earlier conversation with no quoted wording preserved.",
+          "admission_reason": "scope matches run_context.project_slug; brain_status active with no superseded_by link; content inspection classifies this as reading like a historical user statement, but with no inspectable, resolvable citation to an originating UserIdea turn -- default Category B, restricted to DISCOVERY_ATTENTION",
+          "classification": {
+            "semantic_authority_class": "historical_user_statement", "is_historical_user_statement": true, "historical_user_category": "B",
+            "historical_citation": null,
+            "classification_basis": "reference-type record whose body paraphrases a user preference with no verbatim quote or turn citation",
+            "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION"
+          },
+          "freshness": { "freshness_flag": "fresh", "freshness_basis": "34 days since brain_updated_at, under the 180-day staleness threshold" }
+        }
+      ],
+      "excluded_entries": []
+    }
+  }
+}
