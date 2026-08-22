@@ -1,11 +1,20 @@
 # Contract: MemoryContext
 
-Status: part of M0 `ADR-0004` (Memory Context Authority Boundary, Status: Proposed).
-Implementation-independent — no serialization, field names, or schema are defined here, mirroring
-[REQUIREMENT_SPEC](./REQUIREMENT_SPEC.md)'s relationship to its own future schema. **This document
-does not itself authorize any stage to consume `MemoryContext`.** Consumption requires the
-`M0_SCOPE.md` amendment `ADR-0004` identifies as required and not yet performed — see "Stage
-Consumption Is Not Yet Authorized" below.
+Status: part of M0 `ADR-0004` (Memory Context Authority Boundary, Status: **Accepted** — see that
+ADR's own "Acceptance Gate" for exactly what Acceptance did and did not authorize: dependency A
+alone, not dependencies B/C/D).
+This semantic contract remains implementation-independent — no serialization or field names are
+defined here, mirroring [REQUIREMENT_SPEC](./REQUIREMENT_SPEC.md)'s relationship to its own schema.
+A separate machine-readable representation now exists at
+[schemas/m0/memory-context.schema.json](../../schemas/m0/memory-context.schema.json), with its
+invariant-by-invariant enforcement mapping at
+[MEMORY_CONTEXT_SCHEMA_MAPPING](./MEMORY_CONTEXT_SCHEMA_MAPPING.md). This semantic contract remains
+authoritative for meaning; the schema and its mapping represent and enforce that meaning where
+mechanically possible, and neither redefines or supersedes this document. **This document does not
+itself authorize any stage to consume `MemoryContext`** — that authority belongs exclusively to
+`M0_SCOPE.md`. Research Planning is, as of `M0_SCOPE.md`'s Dependency-A amendment, the first and
+only stage so authorized, restricted to the `DISCOVERY_ATTENTION` influence tier — see "Stage
+Consumption Authorization" below for exactly what is, and is not, authorized today.
 
 ## Purpose
 
@@ -24,16 +33,23 @@ it must still separately earn any semantic effect that retrieved content has on 
 output, through the same disciplined mechanisms (Inference Policy, Requirement-Level Inference,
 Evidence sourcing) that already govern every other external input to the pipeline.
 
-## Stage Consumption Is Not Yet Authorized
+## Stage Consumption Authorization
 
 Per Principle 3 (Structured Artifacts Between Stages) and `M0_SCOPE.md`'s stage table, a stage may
-consume only its explicitly declared inputs. No stage currently declares `MemoryContext` — or any
-memory/Brain artifact — as an input. This document defines what `MemoryContext` *would* mean and
-how it *would* have to be constrained if and when a specific stage's `M0_SCOPE.md` entry is amended
-to declare it. Until that amendment happens, separately, with explicit human authorization,
-**no stage may consume `MemoryContext` at all, and no stage may query MIHVER Brain directly.** This
-is not a placeholder rule pending implementation; it is the hard boundary this whole document exists
-to protect.
+consume only its explicitly declared inputs. `M0_SCOPE.md` currently declares `MemoryContext` as an
+input for exactly one stage: **Research Planning**, and only at the `DISCOVERY_ATTENTION` influence
+tier — optional, additive, provenance-visible, non-authoritative, and never permitted to narrow,
+skip, or replace `RequirementSpec`-derived research coverage. This document defines what
+`MemoryContext` *would* mean and how it *would* have to be constrained if and when any *further*
+stage's `M0_SCOPE.md` entry is amended to declare it. Until each such further amendment happens,
+separately, with explicit human authorization, **every stage other than Research Planning (at
+DISCOVERY_ATTENTION) may not consume `MemoryContext` at all, and no stage — Research Planning
+included — may ever query MIHVER Brain directly.** This is not a placeholder rule pending
+implementation; it is the hard boundary this whole document exists to protect. Dependencies B, C,
+and D (citing a `MemoryContext` entry as an Inferred Claim premise, a Requirement-Level Inference
+premise, or a memory-informed R-19 rationale, respectively) remain unavailable regardless of
+Research Planning's own authorization — see `ADR-0004`'s "Acceptance Gate" for the precise
+dependency boundaries.
 
 ## Relationship to MIHVER Brain
 
@@ -709,8 +725,9 @@ expansion. `DECISION_OPTION` names that different kind precisely, without touchi
 | Any admitted record (whatever its stored Brain type) read as a historical user statement, **Category A (direct)** | `DISCOVERY_ATTENTION` when shaping a current-run clarification question; `SEMANTIC_PREMISE` only as a cited Inference premise (pending required amendment) | Never `SEMANTIC_PREMISE` merely because the historical statement is confident or repeated (M-07); its own historical force is never mechanically copied into the current Inferred Claim's force either (see "Historical Force Is Not Current Force"). Category assignment depends on inspectable, resolvable traceability, never on stored `type`. |
 | Any admitted record (whatever its stored Brain type) read as a historical user statement, **Category B (derived/unverified)** | `DISCOVERY_ATTENTION` only, when shaping a current-run clarification question — **never** `SEMANTIC_PREMISE`, under any circumstance, at any confidence or repetition level | Lacks the inspectable and resolvable direct-user provenance "Historical User Provenance Gate" requires for Inference-premise eligibility; no accumulation of uses, confidence, or stored `type` promotes it to Category A. |
 
-A `pattern` memory describing a past message-queue architecture illustrates the full chain: it may
-(once Research Planning is authorized) shape its search strategy as `DISCOVERY_ATTENTION` — additive,
+A `pattern` memory describing a past message-queue architecture illustrates the full chain: now that
+Research Planning is authorized to consume `MemoryContext` (`M0_SCOPE.md`), it may shape its search
+strategy as `DISCOVERY_ATTENTION` — additive,
 provenance-visible — while **itself remaining permanently `DISCOVERY_ATTENTION`**, never advancing any
 further. Research + Evidence Collection may use that lead to independently produce a wholly new
 `EvidenceBundle` entry, and, after Technology Candidate Identification's ordinary eligibility
@@ -735,7 +752,7 @@ section fixes only the boundary a future `EvidenceBundle` design must respect:
 
 | Path | Allowed? | Condition |
 |---|---|---|
-| memory → search/research hint (`DISCOVERY_ATTENTION`) | Allowed once Research Planning is separately authorized to consume `MemoryContext` (not yet performed) | Informs Research Planning's own query strategy; must be *additive* (expanding what gets checked), never *substitutive* (narrowing or skipping requirement-derived research coverage); never appears directly as `RequirementSpec` or `ArchitectureCandidate` content. |
+| memory → search/research hint (`DISCOVERY_ATTENTION`) | Allowed — Research Planning is authorized to consume `MemoryContext`, `DISCOVERY_ATTENTION` tier only (`M0_SCOPE.md`) | Informs Research Planning's own query strategy; must be *additive* (expanding what gets checked), never *substitutive* (narrowing or skipping requirement-derived research coverage); never appears directly as `RequirementSpec` or `ArchitectureCandidate` content. |
 | memory → candidate evidence requiring freshness/source verification (`DISCOVERY_ATTENTION`; the memory itself never advances beyond this tier — see "Identity Boundary" below) | Allowed, gated | Hands Research + Evidence Collection a lead to independently re-source, re-**version** (identify the exact current technology/product version the re-verification actually applies to — Principle 5 names version as its own, distinct required property, not implied by a fresh date), re-date, and re-confidence per Principle 5, producing a wholly new artifact that alone may reach `SEMANTIC_PREMISE` — the cached *memory record* is never itself the citation, and never itself becomes that new artifact. |
 | memory → direct `EvidenceBundle` entry | **Never allowed, absolutely** | A Brain memory record itself can never satisfy Principle 5's requirements merely by being remembered confidently (Invariant M-12) — this rule concerns the *memory record*, not the general question of Evidence reuse. |
 
@@ -933,7 +950,7 @@ in the frozen snapshot:**
   verifying the scope actually matches. (Violates M-13.)
 - **Raw Brain access**: any stage querying `../mihver-brain` directly instead of consuming a
   produced `MemoryContext`. (Violates the hard constraint in `ADR-0004`'s Authority Map and this
-  document's "Stage Consumption Is Not Yet Authorized.")
+  document's "Stage Consumption Authorization.")
 - **Direct-provenance fabrication**: treating any admitted record's body reading like a user quote as
   proof the user directly said it, with no inspectable and resolvable citation to an originating
   artifact — including a record stored under a non-`decision` type that happens to describe a
