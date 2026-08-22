@@ -100,3 +100,15 @@ Entries above this line are unmodified, per this log's append-only policy.
   `gh pr list --state merged`; the merge-authorization decision itself is not something `git log`
   or `gh pr list` can show, is not independently verifiable from those sources, and is not claimed
   as Claude-witnessed here.
+- 2026-08-22 — `M0-ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY` (PR #15) merged to `main`: verified
+  via `gh pr view 15 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-22T11:23:44Z`) and `git log`/`git status` on `main` (`HEAD`
+  matches the reported merge commit exactly) — squash commit `aa1fe66072ae780a910eb458f8263c4886fd37fd`.
+  Produced `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
+  `docs/contracts/MEMORY_CONTEXT.md`, `docs/examples/MEMORY_CONTEXT_CASES.md`. `ADR-0004`'s own
+  `## Status` field on `main` at this commit reads **Proposed**, confirmed by direct read of the
+  file at this commit — not Accepted, and not claimed as such here. No prior entry in this log
+  recorded an approval decision for this merge; this entry records only the independently-verified
+  merge fact, not a reconstructed human quote. `MemoryContext` remains design-only: no stage
+  declares it as an input on `main` at this commit, and no `mihver-brain` or runtime change
+  accompanied this merge.
