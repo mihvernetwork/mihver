@@ -169,3 +169,20 @@ Entries above this line are unmodified, per this log's append-only policy.
   the sole authorized consumer per `docs/foundation/M0_SCOPE.md`); dependencies B, C, and D remain
   structurally disabled. No prior entry in this log recorded an approval decision for this merge;
   this entry records only the independently-verified merge fact, not a reconstructed human quote.
+- 2026-08-23 — `M0-DEPENDENCY-B-INTENT-MEMORY-PREMISE` (PR #22) merged to `main`: verified via
+  `gh pr view 22 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-22T23:14:04Z`) and `git log`/`git status` on `main` (`HEAD`
+  at this task's start matched the reported merge commit exactly) — squash commit
+  `2cee16af702804127472af0470b3ce4ef2600f88`. Landed `ADR-0004` Dependency B: Intent Parsing became
+  an authorized `MemoryContext` consumer (`docs/foundation/M0_SCOPE.md`); the Category A
+  `SEMANTIC_PREMISE` → Inferred Claim path landed (`docs/contracts/INTENT_SPEC.md`'s Inference
+  Policy amendment, `schemas/m0/intent-spec.schema.json`'s typed `memoryPremise` reference); the
+  Category A/B `DISCOVERY_ATTENTION` clarification-provenance path landed; deterministic companion-
+  `MemoryContext` cross-artifact validation landed in `tests/contracts/validate-contracts.mjs`
+  (mandatory, not optional, whenever a memory reference is present), confirmed by direct read of
+  the merged files at this commit. Contract suite at this commit: **83/83**, confirmed by running
+  `npm test` directly against `main`. Dependencies C and D remain unimplemented; Requirement
+  Derivation remains unauthorized to consume `MemoryContext`; no MIHVER Brain adapter or runtime
+  exists — confirmed by direct read, not assumed. No prior entry in this log recorded an approval
+  decision for this merge; this entry records only the independently-verified merge fact, not a
+  reconstructed human quote.

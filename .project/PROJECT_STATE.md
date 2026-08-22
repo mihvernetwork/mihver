@@ -65,22 +65,23 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   `9416e857b549bea07d4ce06a5c365524fdf1d51a`. Introduced: `RunContext` (a non-memory,
   cross-cutting run/invocation identity anchor, distinct from `UserIdea` as M0's sole milestone
   semantic input); the `MemoryContext` Producer as a declared cross-cutting compiler boundary (not
-  a new linear pipeline stage); and **Research Planning as the first and only stage whose declared
+  a new linear pipeline stage); and **Research Planning as the first stage whose declared
   `Input:` list includes an optional `MemoryContext`**, restricted to the `DISCOVERY_ATTENTION`
   influence tier only (additive, provenance-visible, never authoritative). No stage may query
-  `../mihver-brain` directly. Every other pipeline stage, and `ADR-0004`'s dependencies B
-  (`INTENT_SPEC.md` Inference-premise), C (`REQUIREMENT_SPEC.md` Requirement-Level-Inference
-  premise), and D (`REQUIREMENT_SPEC.md` R-19 memory-informed-rationale provenance), remain
-  structurally disabled; `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` are untouched. Adversarially
-  reviewed by four independent read-only Codex reviewers, by axis. **This is a semantic/foundation
-  authorization only, not an implemented runtime**: at the time of this checkpoint there was still no
-  `MemoryContext` schema, no Brain read adapter, and no executable pipeline that actually retrieves
-  or produces a `MemoryContext` — Research Planning was newly permitted to consume one under the M0
-  contract, without yet receiving one in practice. A machine-readable schema has since been added —
-  see the "MemoryContext Schema Foundation" checkpoint below; a Brain read adapter and executable
-  retrieval pipeline still do not exist even now. `ADR-0004`'s own `## Status` field is unchanged by
-  this checkpoint (**Proposed**) — see the Acceptance checkpoint immediately below for the later
-  Status change.
+  `../mihver-brain` directly. At the time of this checkpoint, every other pipeline stage, and
+  `ADR-0004`'s dependencies B (`INTENT_SPEC.md` Inference-premise), C (`REQUIREMENT_SPEC.md`
+  Requirement-Level-Inference premise), and D (`REQUIREMENT_SPEC.md` R-19 memory-informed-rationale
+  provenance), remained structurally disabled; `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` were untouched.
+  **Dependency B has since landed — see the "`ADR-0004` Dependency B" checkpoint below.** Dependencies
+  C and D remain structurally disabled even now. Adversarially reviewed by four independent read-only
+  Codex reviewers, by axis. **This is a semantic/foundation authorization only, not an implemented
+  runtime**: at the time of this checkpoint there was still no `MemoryContext` schema, no Brain read
+  adapter, and no executable pipeline that actually retrieves or produces a `MemoryContext` —
+  Research Planning was newly permitted to consume one under the M0 contract, without yet receiving
+  one in practice. A machine-readable schema has since been added — see the "MemoryContext Schema
+  Foundation" checkpoint below; a Brain read adapter and executable retrieval pipeline still do not
+  exist even now. `ADR-0004`'s own `## Status` field is unchanged by this checkpoint (**Proposed**) —
+  see the Acceptance checkpoint immediately below for the later Status change.
 - **`ADR-0004` Acceptance** — Memory Context Authority Boundary moved Proposed → Accepted, per its
   own "Acceptance Gate" section's condition: dependency A alone (the core `M0_SCOPE.md` integration
   boundary), separately, explicitly human-authorized, completed, and adversarially reviewed against
@@ -105,15 +106,49 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   enforceable at this layer / not applicable). Merged via PR #20, squash commit
   `b8fc6fe6558adbb560b48f1bbe937db53ac09555`; contract suite at merge-ready head: **59/59**.
   Establishes a stable `(memory_context_id, entry_id)` reference primitive a future Dependency
-  B/C/D amendment could cite — `INTENT_SPEC.md`, `intent-spec.schema.json`, and
-  `REQUIREMENT_SPEC.md` remain untouched, and no such citation is defined here. **Schema
-  representability is not stage authorization**: the schema deliberately represents all four
-  Influence Taxonomy tiers and an open `consuming_stage` identifier so that a future authorized
-  consumer never requires redesigning the artifact's shape, but `M0_SCOPE.md` remains the sole
-  authority for which stage may actually consume `MemoryContext` — still only Research Planning,
-  `DISCOVERY_ATTENTION` tier only. No MIHVER Brain adapter, retrieval runtime, or executable
-  Producer implementation exists; dependencies B, C, and D remain exactly as structurally disabled
-  as before this checkpoint.
+  B/C/D amendment could cite — at the time of this checkpoint, `INTENT_SPEC.md`,
+  `intent-spec.schema.json`, and `REQUIREMENT_SPEC.md` remained untouched, and no such citation was
+  yet defined. **Schema representability is not stage authorization**: the schema deliberately
+  represents all four Influence Taxonomy tiers and an open `consuming_stage` identifier so that a
+  future authorized consumer never requires redesigning the artifact's shape, but `M0_SCOPE.md`
+  remains the sole authority for which stage may actually consume `MemoryContext`. At the time of
+  this checkpoint, Research Planning (`DISCOVERY_ATTENTION` tier only) was still the sole authorized
+  consumer, and dependencies B, C, and D remained exactly as structurally disabled as before this
+  checkpoint. **Dependency B has since landed — see the "`ADR-0004` Dependency B" checkpoint below**;
+  C and D remain structurally disabled even now. No MIHVER Brain adapter, retrieval runtime, or
+  executable Producer implementation exists.
+- **`ADR-0004` Dependency B — Intent Memory Premise.** Amended `docs/foundation/M0_SCOPE.md`,
+  `docs/contracts/INTENT_SPEC.md`, `schemas/m0/intent-spec.schema.json`, and
+  `tests/contracts/validate-contracts.mjs` to let Intent Parsing consume bounded `MemoryContext` and
+  let a qualified Category A historical-user `MemoryContext` entry become a cited premise of a
+  current-run Inferred Claim. Merged via PR #22, squash commit
+  `2cee16af702804127472af0470b3ce4ef2600f88`.
+  - **Intent Parsing is now the second authorized `MemoryContext` consumer** (Research Planning
+    remains the first, unchanged). Its authorized influence tiers are exactly `DISCOVERY_ATTENTION`
+    and `SEMANTIC_PREMISE`.
+  - **`DISCOVERY_ATTENTION`**: a Category A or Category B historical-user `MemoryContext` entry may
+    shape a provenance-visible candidate clarification question posed to the current user. It never
+    itself creates a Claim, resolves an Open Item, or substitutes for the current user's own answer.
+  - **`SEMANTIC_PREMISE`**: only a Category A entry may be directly cited, by the stable
+    `(memory_context_id, entry_id)` reference, as a premise of a current-run Inferred Claim. Category
+    B is categorically ineligible at this tier, at any confidence or repetition level.
+  - A companion immutable `MemoryContext` document is **mandatory** for deterministic validation of
+    any `memory_premises` or `memory_discovery_refs` reference — an `IntentSpec` cannot pass
+    validation merely by self-asserting Category A standing.
+  - A memory-derived Claim's origin remains **Inferred only** — never User-Provided, never Assumed.
+  - The current `UserIdea` always wins over historical memory; a `MemoryContext` entry is never a
+    Conflict participant.
+  - A historical statement's own normative force is never mechanically copied into a current
+    Inferred Claim's force — an independent, explicit current-run reasoning basis is required
+    whenever such a Claim carries force.
+  - Memory alone never closes a HIGH or CRITICAL Decision Impact item.
+  - Contract suite at merged head: **83/83**.
+  - **What this did not do**: Requirement Derivation is still **not** a `MemoryContext` consumer;
+    Dependency C (`REQUIREMENT_SPEC.md` Requirement-Level-Inference premise) and Dependency D
+    (`REQUIREMENT_SPEC.md` R-19 memory-informed-rationale provenance) remain unimplemented; no
+    MIHVER Brain adapter or retrieval runtime exists. Full detail in `INTENT_SPEC.md`'s
+    "Memory-Derived Inference Premises" section and `docs/contracts/MEMORY_CONTEXT.md`'s "Stage
+    Consumption Authorization" section.
 
 ## Open Items
 
@@ -127,23 +162,28 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
 
 None automatically. Per `REVIEW_PROTOCOL.md` item 9, completing a task is not authorization to
 start the next one. In particular: moving `ADR-0003` to Accepted, beginning M0 Step 03B, starting
-`ADR-0004`'s dependencies B, C, or D, and performing any `mihver-brain` or runtime
-memory-integration work are all **not** authorized by any checkpoint recorded above — each requires
-its own separate, explicit human task instruction, given later.
+`ADR-0004`'s dependencies C or D, and performing any `mihver-brain` or runtime memory-integration
+work are all **not** authorized by any checkpoint recorded above — each requires its own separate,
+explicit human task instruction, given later. **Dependency B is now complete** (see the
+"`ADR-0004` Dependency B" checkpoint above) — its completion is not, by itself, authorization to
+start Dependency C.
 
-**Dependency B is the logical next, lowest-churn task family**, now that the core `MemoryContext`
-schema foundation exists — but it is **not authorized by this entry**. A future Dependency B task
-cannot be scoped as an `INTENT_SPEC.md` prose amendment alone; to make the capability actually
-available coherently it must account for both: (a) **pipeline authorization** — `M0_SCOPE.md` must
-explicitly declare that Intent Parsing may consume `MemoryContext` (its own separate amendment,
-distinct from Research Planning's) — and (b) **artifact provenance** — `INTENT_SPEC.md`,
-`intent-spec.schema.json`, and the deterministic validator must together represent a qualified
-Category A `MemoryContext` entry as an Inferred Claim's premise without laundering it into
-User-Provided or Assumed origin; `intent-spec.schema.json` currently supports only claim-based
-inference premises (`premise_claim_ids[]`), so that future task must keep the semantic contract,
-schema, validator, and fixtures in sync with each other, not just with `MEMORY_CONTEXT.md`. Neither
-dimension is started or pre-authorized here. Dependencies C and D remain separate, narrower, later
-tasks of their own. This task only synchronized durable documentation/state after PR #20's merge;
-it performed no semantic redesign, changed no ADR status, and started no new work.
+**Dependency C is the logical next task family**, now that Dependency B has landed — but it is
+**not authorized by this entry**. Its expected conceptual scope, recorded here for future reference
+only, not designed or implemented by this reconciliation:
+
+- Requirement Derivation must first receive its own, separate `M0_SCOPE.md` authorization to
+  consume `MemoryContext` at all — Dependency B's authorization of Intent Parsing does not extend to
+  Requirement Derivation; each stage's `MemoryContext` consumption is authorized individually.
+- `REQUIREMENT_SPEC.md`'s R-10/R-22 provenance model would then need to recognize a qualified
+  `MemoryContext` entry as a Requirement-Level Inference premise, mirroring the discipline
+  `INTENT_SPEC.md`'s own Inference Policy amendment already established for Dependency B — without
+  becoming a fourth Requirement premise origin, `IntentSpec`-provenance laundering, User-Provided
+  Requirement authority, or a substitute for `Evidence`; a memory entry must never become a
+  Requirement by itself.
+- Dependency D (`REQUIREMENT_SPEC.md` R-19 memory-informed `DECISION_OPTION` rationale) remains a
+  separate, later, narrower task of its own — not designed here.
+
+This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out
 branch, if any.
