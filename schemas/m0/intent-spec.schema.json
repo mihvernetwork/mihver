@@ -66,7 +66,7 @@
         "idea_id": { "$ref": "#/$defs/id" }, "user_idea_version": { "type": "integer", "minimum": 1 },
         "turn_id": { "$ref": "#/$defs/id" }, "quote": { "type": "string", "minLength": 1 }
       },
-      "description": "The originating historical user-authored source a cited Category A MemoryContext entry is itself inspectably traced to. Structural completeness is schema-enforced; that this citation actually matches the referenced MemoryContext entry's own historical_citation is checked by the deterministic validator only when a companion MemoryContext document is supplied alongside this fixture -- otherwise it remains an asserted, unverified fact, exactly as UI-05's own citation limitation."
+      "description": "The originating historical user-authored source a cited Category A MemoryContext entry is itself inspectably traced to. Structural completeness is schema-enforced; a companion MemoryContext document is required (validator-enforced) whenever this citation appears at all, and the deterministic validator checks this citation matches the referenced MemoryContext entry's own historical_citation exactly. Even with a companion supplied, whether that entry's own historical_citation genuinely resolves to real content in an external UserIdea artifact remains an asserted, unverified fact, exactly as UI-05's own citation limitation."
     },
     "memoryPremise": {
       "type": "object", "additionalProperties": false, "required": ["memory_context_id", "entry_id", "historical_user_category", "historical_citation"],
@@ -83,7 +83,7 @@
       "properties": {
         "kind": { "const": "derivation" },
         "premise_claim_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
-        "memory_premises": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/memoryPremise" }, "description": "Qualified Category A MemoryContext-entry premises, in addition to or instead of premise_claim_ids. Cross-artifact resolution against the cited MemoryContext (admitted, Intent Parsing-bound, Category A, SEMANTIC_PREMISE) is validator-enforced only when a companion MemoryContext document is supplied." },
+        "memory_premises": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/memoryPremise" }, "description": "Qualified Category A MemoryContext-entry premises, in addition to or instead of premise_claim_ids. A companion MemoryContext document is required (validator-enforced) whenever this array is non-empty -- an unresolved memory reference is a validator failure, not a silently-skipped check. Cross-artifact resolution against that companion (admitted, Intent Parsing-bound, Category A, SEMANTIC_PREMISE, compatible upstream binding) is validator-enforced." },
         "reasoning_kind": { "type": "string", "minLength": 1 },
         "derivation_confidence": { "enum": ["low", "moderate", "high"] },
         "provisional": { "const": true, "description": "Required whenever memory_premises is present (INTENT_SPEC.md 'Memory-Derived Inference Premises'); forbidden otherwise, to avoid a meaningless field on an ordinary Claim-only inference." },

@@ -15,103 +15,110 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-DEPENDENCY-B-INTENT-MEMORY-PREMISE
+Task: DEPENDENCY-B-CROSS-ARTIFACT-GATE-CLOSURE
 Branch: `m0/dependency-b-intent-memory-premise`
-PR: to be opened against `mihvernetwork/mihver:main` (title "M0: implement Dependency B for Intent
-Parsing memory provenance") — not yet created as of this entry
+PR: `mihvernetwork/mihver#22` (continued, not a new PR)
 
-Implements `ADR-0004` Dependency B: Intent Parsing becomes an authorized `MemoryContext` consumer
-(`M0_SCOPE.md`), and a qualified Category A historical-user `MemoryContext` entry may be cited as a
-premise of a current-run Inferred Claim (`INTENT_SPEC.md`'s Inference Policy amendment). STOP
-conditions explicitly re-derived and found not triggered (see `CURRENT_TASK.md`'s Status). Two
-coherent dimensions landed together, as required: `M0_SCOPE.md`'s pipeline authorization and
-`INTENT_SPEC.md`/`intent-spec.schema.json`/`validate-contracts.mjs`'s artifact-provenance
-representation. Full detail of every changed file in `CURRENT_TASK.md`'s Status section.
+A narrow gate-closure pass on top of PR #22's already-implemented `ADR-0004` Dependency B: an
+external review found four technical deterministic-validator gaps plus one `REVIEW_STATE.md`
+factual-hygiene defect. Every technical finding independently re-verified against the owning
+contract before any fix was applied — all five confirmed real, none blindly applied. Full detail of
+every changed file in `CURRENT_TASK.md`'s Status section. Does not redesign Dependency B, does not
+modify C/D, does not authorize Requirement Derivation, does not modify `ADR-0002`/`ADR-0004` or
+`MemoryContext`'s schema, adds no runtime/Brain access.
 
-### Review — four fresh independent read-only Codex reviewers, by invariant axis
+### Review — two fresh independent read-only Codex reviewers, by axis
 
-- **Reviewer A — Epistemic Origin/Provenance.** All six checks (origin isolation; Category A gate;
-  frozen `(memory_context_id, entry_id)` reference; citation continuity when a companion is
-  supplied; Brain confidence never becoming authority; prose/schema/validator consistency) — **no
-  findings**. Independently re-verified: confirmed `userClaimProvenance`/`assumptionProvenance`'s
-  closed shapes structurally forbid a `memory_premises` field (not merely by convention), confirmed
-  `memoryPremise.historical_user_category` is a hard `const: "A"`, and confirmed the cross-artifact
-  validator resolves the companion's own classification rather than trusting the citing document's
-  self-assertion.
-- **Reviewer B — Current Input/Decision Impact/Conflict.** Five of six checks — **no findings**
-  (HIGH/CRITICAL never closed by memory; `MemoryContext` never a Conflict participant;
-  `memoryDiscoveryRef` carries no answer-bearing field; I-13/I-18/I-21 permanence unweakened; Case C
-  substantively correct). One finding proposed ("current-UserIdea-always-wins is not
-  validator-checkable") — **independently reviewed and rejected**: `MEMORY_CONTEXT.md`'s own
-  "Separating Admissibility from Interpretation" section explicitly forbids a mechanical validator
-  from making semantic-contradiction judgments between current input and memory; that authority
-  belongs exclusively to the consuming stage's own reasoning. This was already honestly classified
-  "Not enforceable at this layer" in `SCHEMA_MAPPING.md`'s I-25 row before the reviewer ran; adding a
-  validator-side contradiction check would itself violate the contract's design, not fix a gap. One
-  documentation-clarity finding accepted and fixed: Case D's Unknown/question wording risked
-  implying the user's own declared answer alone settles PCI-DSS applicability — reworded to center
-  the actual data-flow facts that determine it.
-- **Reviewer C — Schema/Validator/Cross-Artifact References.** Six of seven checks — **no findings**
-  (backward compatibility hand-traced against the schema's `anyOf`/`if`/`then`/`else` logic and
-  `intent-spec-eligible.json`; memory-only and mixed premises; companion resolution
-  admitted-vs-excluded/`consuming_stage`/Category A/tier/citation-equality; cycle/confidence-loop
-  `?? []` guards; no Brain-confidence read anywhere in the validator; clean `ajv` strict-mode
-  compile). One finding confirmed and fixed: the `(memory_context_id, entry_id)` pair-uniqueness key
-  used naive `"::"`-joined string concatenation, which two distinct pairs could collide under since
-  the `id` pattern permits `:` (e.g. `("a","b::c")` and `("a::b","c")` produce the same key) —
-  independently re-verified against the actual `id` regex, confirmed real, fixed in
-  `tests/contracts/validate-contracts.mjs` (both the memory-premise and discovery-ref checks) using
-  `JSON.stringify([...])`-encoded keys.
-- **Reviewer D — Force/Cross-Axis/Corpus.** Six of seven checks — **no findings**
-  (force/force_reasoning field coupling both directions; derivation-confidence independence from
-  Brain confidence; provisional/reversible required-and-forbidden via schema `if`/`then`/`else`;
-  repetition honestly "Not enforceable at this layer" rather than falsely validator-enforced;
-  corpus-wide sweep confirming all pre-existing `origin: inferred` fixtures unaffected; no hidden
-  Dependency C/D authority leak anywhere in the diff). One finding confirmed and fixed: the
-  `force_reasoned` valid fixture's stated basis argued only from absence-of-contradiction
-  ("nothing currently contradicts it, so the same force still applies") rather than an affirmative
-  current-run basis — independently re-verified against `MEMORY_CONTEXT.md`'s M-20 text (force must
-  be an independently reasoned property, not a persisted default), confirmed as a real weakness in
-  what is meant to be a positive illustration of correct practice, fixed by restructuring the fixture
-  into a mixed Claim+memory premise grounded in an actual current `UserIdea` Claim. The identical
-  weak pattern, independently found in `INTENT_SPEC.md`'s own worked Example during the same sweep,
-  was fixed the same way. A corpus-wide grep for the pattern across all fixtures found no further
-  instances.
+- **Reviewer A — Cross-Artifact Authority Gate.** All six checks — **no findings**: confirmed no
+  code path lets a non-empty `memory_premises` or `memory_discovery_refs` pass without a companion
+  (traced the exact `fail()` placements, confirmed fail-fast semantics can't let an unrelated earlier
+  failure mask a later missing-companion case); confirmed Category A standing is read from the
+  companion's own `entry.classification`, never the `IntentSpec` side's self-assertion; confirmed the
+  discovery-path historical-standing check genuinely rejects a non-historical entry even at
+  `DISCOVERY_ATTENTION` tier, verified against the actual `is_historical_user_statement: false`
+  fixture data; confirmed admitted/excluded/stage/tier/citation checks are unweakened and correctly
+  ordered; confirmed the upstream-binding check is correctly scoped to
+  `consuming_stage === "intent_parsing"` and does not misfire against the pre-existing wrong-stage
+  fixture; confirmed no code path reads `brain_confidence` for authority.
+- **Reviewer B — Force/Regression/State Hygiene.** Six of eight checks — **no findings**
+  (whitespace-only `force_reasoning.basis` correctly rejected via `.trim().length === 0`, distinct
+  from the pre-existing "missing entirely" check; `force_reasoning` remains structurally separate
+  from `reasoning_kind`; `provisional`/`reversible` schema `if`/`then`/`else` untouched this round;
+  `intent-spec-eligible.json` hand-traced claim-by-claim as unaffected by any new mandatory-companion
+  logic; acyclic `visit()` and confidence-escalation loop unchanged; no C/D/Requirement Derivation/
+  Brain-runtime authority granted anywhere in the diff). One finding independently reviewed and
+  **confirmed real**: two `schemas/m0/intent-spec.schema.json` field descriptions
+  (`memory_premises`, `historicalCitationRef`) still said cross-artifact resolution happens "only
+  when a companion... is supplied," stale wording implying optionality the validator no longer
+  permits — fixed to state the companion is now required whenever the corresponding field is
+  non-empty. One finding independently reviewed and **confirmed real**: `REVIEW_STATE.md`'s own
+  `npm test` total (and `CURRENT_TASK.md`'s matching total) still read `78/78`, the count from before
+  this round's five new fixtures existed — fixed to the actually-run `83/83` (both files, this same
+  edit). Independently re-verified the PR #21/`DECISIONS_LOG.md` hygiene fix itself (grepped
+  `DECISIONS_LOG.md` directly for "PR #19"/"PR #20"/"PR #21", confirmed no PR #21 entry exists,
+  confirmed `DECISIONS_LOG.md` itself carries zero diff) and confirmed no recursive metadata-sync
+  mechanism was introduced (`PROJECT_STATE.md`/`CONTEXT_INDEX.md`/`ROADMAP.md` all zero-diff).
 
-`npm test`: 78/78 (59 pre-existing, unmodified, still passing; 19 new). `git diff --check`: clean.
-`git diff main --stat`: exactly the allowed files listed in `CURRENT_TASK.md`. Targeted `git diff
-main --stat` against every forbidden path produced empty output. No `mihver-brain` file touched. No
-runtime/MCP/network code introduced. Dependency C/D remain not implemented; Requirement Derivation
-remains unauthorized to consume `MemoryContext`; Research Planning's own authorization unchanged.
+`npm test`: 83/83 (78 from PR #22's original round, unmodified in substance; 5 new gate-closure
+fixtures). `git diff --check`: clean. `git diff main --stat`: exactly the allowed files listed in
+`CURRENT_TASK.md`. Targeted `git diff main --stat` against every forbidden path (including
+`M0_SCOPE.md`, `MEMORY_CONTEXT.md`, `memory-context.schema.json`, every ADR, `PROJECT_STATE.md`,
+`DECISIONS_LOG.md`, `CONTEXT_INDEX.md`, `ROADMAP.md`) produced empty output. No `mihver-brain` file
+touched. No runtime/MCP/network code introduced. Dependency C/D remain not implemented; Requirement
+Derivation remains unauthorized to consume `MemoryContext`.
 
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** Three reviewer findings were independently
-re-verified and fixed (a validator key-collision bug, a weak illustrative-fixture reasoning pattern
-also present in the semantic contract's own worked example, and a documentation-clarity wording
-issue); one proposed finding was independently reviewed and rejected as contrary to the contract's
-own explicit design (memory-vs-current-input contradiction detection is deliberately reserved to the
-consuming stage, never the deterministic validator).
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** All five external findings were independently
+re-verified and fixed; two further reviewer findings (stale schema-description wording, a stale
+fixture-count total in this file and `CURRENT_TASK.md`) were independently re-verified and fixed in
+the same round.
 
 ## Required Changes
 
-None remaining — the three confirmed findings above are fixed by this same round.
+None remaining — every confirmed finding above is fixed by this same round.
 
 ## Fixes Applied
 
-See "Latest Review" above: `tests/contracts/validate-contracts.mjs`'s pair-uniqueness key encoding
-(both memory-premise and discovery-ref checks); `tests/contracts/fixtures/valid/intent-spec-memory-premise-force-reasoned.json`
-restructured to a mixed premise with an affirmative current-run force basis;
-`docs/contracts/INTENT_SPEC.md`'s parallel worked Example fixed identically;
-`docs/examples/INTENT_CASES.md`'s Case D wording tightened.
+See "Latest Review" above: `tests/contracts/validate-contracts.mjs`'s mandatory-companion gate for
+`memory_premises`/`memory_discovery_refs`, the discovery-path historical-standing check, the
+upstream-artifact-type incompatibility check, and the `force_reasoning.basis` whitespace guard;
+`schemas/m0/intent-spec.schema.json`'s two field-description updates (no structural change);
+`docs/contracts/SCHEMA_MAPPING.md`'s validation-boundary paragraph and I-05/I-15/I-23/I-26/I-27 rows;
+five new invalid fixtures; this file's own PR #21/`DECISIONS_LOG.md` factual correction and
+fixture-count total.
 
 ## Pending Human Gate
 
-Commit, push, and open one PR against `mihvernetwork/mihver:main`, title "M0: implement Dependency B
-for Intent Parsing memory provenance", per this task's explicit instruction. Not merged by this task.
-Human review of that PR is the next gate; it authorizes only Dependency B as scoped in
+Commit and push to the existing `m0/dependency-b-intent-memory-premise` branch / PR #22, per this
+task's explicit instruction. No new PR opened. Not merged by this task. Human review of PR #22, now
+including this closure round, is the next gate; it authorizes only Dependency B as scoped in
 `CURRENT_TASK.md` — not Dependency C/D, not Requirement Derivation's own `MemoryContext`
 authorization, and not any `mihver-brain` or runtime memory-integration work.
 
 ## History
+
+- 2026-08-23 — `M0-DEPENDENCY-B-INTENT-MEMORY-PREMISE` (PR #22, opened, not yet merged): implemented
+  `ADR-0004` Dependency B — Intent Parsing became an authorized `MemoryContext` consumer
+  (`M0_SCOPE.md`), and a qualified Category A historical-user `MemoryContext` entry may be cited as a
+  premise of a current-run Inferred Claim (`INTENT_SPEC.md`'s Inference Policy amendment). STOP
+  conditions explicitly re-derived and found not triggered. Two coherent dimensions landed together:
+  `M0_SCOPE.md`'s pipeline authorization and `INTENT_SPEC.md`/`intent-spec.schema.json`/
+  `validate-contracts.mjs`'s artifact-provenance representation, plus 9 new `INTENT_CASES.md`
+  adversarial cases and 19 new fixtures. Four independent read-only Codex reviewers by invariant axis
+  (Epistemic Origin/Provenance; Current Input/Decision Impact/Conflict; Schema/Validator/
+  Cross-Artifact References; Force/Cross-Axis/Corpus) found three real, independently-re-verified
+  defects — a validator pair-uniqueness key-collision bug (naive `"::"`-joined string keys), a weak
+  "persistence-by-default" force-reasoning pattern in an illustrative fixture (also fixed identically
+  in `INTENT_SPEC.md`'s own worked example), and a documentation-clarity wording issue in a case — all
+  fixed; one proposed finding (validator-side current-input-vs-memory contradiction detection) was
+  independently reviewed and rejected as contrary to `MEMORY_CONTEXT.md`'s own explicit design.
+  `npm test`: 78/78. Verdict: `READY_FOR_HUMAN_REVIEW`. A subsequent external review of the opened PR
+  found the four technical gaps and one factual-hygiene defect that
+  `DEPENDENCY-B-CROSS-ARTIFACT-GATE-CLOSURE` (below) closed, on the same branch/PR, before any human
+  merge decision. Moved here from "Latest Review" now that those sections describe
+  `DEPENDENCY-B-CROSS-ARTIFACT-GATE-CLOSURE` instead, per this file's branch/task scoping — both
+  entries share branch `m0/dependency-b-intent-memory-premise` and PR #22, since the closure round was
+  a continuation on the same open PR, not a new branch. — branch
+  `m0/dependency-b-intent-memory-premise`
 
 - 2026-08-22/2026-08-23 — `MEMORY-CONTEXT-POST-SCHEMA-RECONCILIATION` (PR #21, merged, squash commit
   `5054a64fd2a95ee3d139c6a43442f65a8fafb837`, plus one follow-up single-line ROADMAP.md
@@ -133,7 +140,10 @@ authorization, and not any `mihver-brain` or runtime memory-integration work.
   ("section 10.9" → "Phase 10," since 10.9 is Dependency A/PR#17, not the schema foundation),
   pushed to the same PR. `npm test`: 59/59 throughout (unaffected — no contract/schema/runtime file
   touched). Verdict: `READY_FOR_HUMAN_REVIEW`. PR #21 subsequently merged to `main` (verified via `gh
-  pr view 21`) — that merge event is recorded in `.project/DECISIONS_LOG.md`. Moved here from "Latest
+  pr view 21`, mergedAt `2026-08-22T22:05:50Z`, merge commit
+  `5054a64fd2a95ee3d139c6a43442f65a8fafb837`) — noted here as historical context only; unlike PR #19
+  and PR #20, no separate PR #21 merge-fact entry exists in `.project/DECISIONS_LOG.md` as of this
+  entry (verified directly against that file's current content, not assumed). Moved here from "Latest
   Review" now that those sections describe `M0-DEPENDENCY-B-INTENT-MEMORY-PREMISE` instead, per this
   file's branch/task scoping — this is the first entry on a new branch, since this task's own round
   was self-contained on `chore/memory-context-post-schema-reconcile`. — branch
