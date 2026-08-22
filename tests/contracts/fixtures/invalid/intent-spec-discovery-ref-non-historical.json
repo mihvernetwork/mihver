@@ -1,0 +1,58 @@
+{
+  "contract": "intent-spec",
+  "expected_error": "not a historical user statement (Category A or B)",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-discovery-non-historical", "version": 1,
+    "created_at": "2026-08-23T12:10:00Z", "user_idea_refs": [{ "idea_id": "idea-acme-crm", "version": 2 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [],
+    "open_items": [
+      {
+        "open_item_id": "unknown-mq-approach",
+        "kind": "unknown",
+        "question": "A prior architecture pattern used exponential backoff for retries -- is a similar approach relevant here?",
+        "relevance_rationale": "Retry strategy was never mentioned in the current UserIdea.",
+        "decision_impact": { "level": "low", "unresolved_item": "Retry strategy", "downstream_decision": "Background job retry configuration", "level_rationale": "Detail-level, does not change architecture shape." },
+        "memory_discovery_refs": [
+          { "memory_context_id": "mc-intent-acme-crm-pattern-1", "entry_id": "entry-pattern-backoff-1" }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "clarification_decisions": [
+      { "subject_kind": "open_item", "subject_id": "unknown-mq-approach", "needed": false, "rationale": "Low-impact detail, deferrable." }
+    ]
+  },
+  "companion": {
+    "contract": "memory-context",
+    "document": {
+      "schema_version": "1.0.0", "artifact_type": "memory_context", "memory_context_id": "mc-intent-acme-crm-pattern-1",
+      "run_id": "run-2026-08-23-105", "run_context": { "status": "present", "project_slug": "acme-crm" },
+      "consuming_stage": "intent_parsing", "retrieval_purpose": "clarification-question-discovery",
+      "retrieval_query": "prior architecture patterns relevant to retry strategy", "retrieval_time": "2026-08-23T12:08:00Z",
+      "upstream_artifact_binding": { "artifact_type": "user_idea", "artifact_id": "idea-acme-crm", "version": 2 },
+      "retrieval_outcome": "admitted",
+      "admitted_entries": [
+        {
+          "entry_id": "entry-pattern-backoff-1",
+          "source": {
+            "brain_memory_id": "brain-pattern-backoff-1", "brain_type": "pattern", "title": "Exponential backoff retry pattern",
+            "scope": "acme-crm", "brain_status": "active", "brain_created_at": "2026-01-10T00:00:00Z", "brain_updated_at": "2026-01-10T00:00:00Z",
+            "brain_confidence": "medium", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" }
+          },
+          "content": "A prior architecture used exponential backoff with 3 retries for background job failures -- a description of a prior architecture decision, not a historical user statement.",
+          "admission_reason": "scope matches run_context.project_slug; brain_status active with no superseded_by link; content inspection confirms this describes a prior architecture outcome, not a historical user statement -- eligible only for DISCOVERY_ATTENTION as a search/candidate lead, not for Intent Parsing's historical-user-memory discovery path",
+          "classification": {
+            "semantic_authority_class": "prior_architecture_pattern", "is_historical_user_statement": false, "historical_user_category": null,
+            "historical_citation": null,
+            "classification_basis": "pattern-type record whose body describes a prior architecture decision, not anything the user said",
+            "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION"
+          },
+          "freshness": { "freshness_flag": "fresh", "freshness_basis": "44 days since brain_updated_at, under the 180-day staleness threshold" }
+        }
+      ],
+      "excluded_entries": []
+    }
+  }
+}

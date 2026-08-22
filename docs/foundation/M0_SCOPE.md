@@ -194,10 +194,37 @@ not exist when that principle, or this document, was first written.
 ### Stage: Intent Parsing
 
 - **Purpose:** Understand what the user is actually asking for, disambiguated from how they phrased it.
-- **Input:** `UserIdea`
+- **Input:** `UserIdea`, plus an optional `MemoryContext` — produced specifically for Intent
+  Parsing by the MemoryContext Producer boundary above, bound to the current `UserIdea` version
+  the retrieval purpose depends on, the current `RunContext` (or its explicit absence), and this
+  stage's own retrieval purpose. `MemoryContext` absence, an empty retrieval, or MIHVER Brain being
+  unavailable must never block Intent Parsing — it proceeds exactly as it would with no memory
+  system at all. `UserIdea` remains Intent Parsing's sole primary semantic input; wherever current
+  `UserIdea` content is relevant at all, it wins completely over an admitted `MemoryContext` entry
+  (`MEMORY_CONTEXT.md`'s "Current Input Must Win").
 - **Output:** `IntentSpec`
-- **Allowed to decide:** What the user's goal appears to be; what in the idea is explicit vs. left implicit at the level of intent (not requirements); what is ambiguous enough to flag for clarification.
-- **Not allowed to decide:** Any technology, framework, or architecture; functional or non-functional requirements — deriving those from the intent belongs to Requirement Derivation; what the user "should" want instead of what they asked for.
+- **Allowed to decide:** What the user's goal appears to be; what in the idea is explicit vs. left
+  implicit at the level of intent (not requirements); what is ambiguous enough to flag for
+  clarification. Where an admitted `MemoryContext` entry is used at all, it is authorized only at
+  exactly the two tiers `INTENT_SPEC.md`'s Inference Policy now defines, and no other:
+  - **`DISCOVERY_ATTENTION`** — a Category A or Category B historical `MemoryContext` entry may
+    shape or add a candidate clarification question posed to the current user. It may never itself
+    create a User-Provided Claim, create an Assumed Claim, settle an Open Item or Conflict, alter a
+    Decision Impact level, or narrow current `UserIdea` meaning — only the current user's own
+    current answer, if given, becomes a User-Provided Claim.
+  - **`SEMANTIC_PREMISE`** — a qualified Category A historical `MemoryContext` entry (per
+    `MEMORY_CONTEXT.md`'s "Historical User Provenance Gate," classified `influence_tier:
+    SEMANTIC_PREMISE` for this use) may be cited directly, by reference, as a premise of a
+    current-run Inferred Claim, per `INTENT_SPEC.md`'s Inference Policy. Category B is
+    categorically ineligible for this tier, at any confidence or repetition level. The resulting
+    Claim's origin is Inferred, and only Inferred — never User-Provided, never Assumed. A memory
+    premise never, by itself, closes a HIGH or CRITICAL Decision Impact item, and a memory-premised
+    Claim's own force is never mechanically copied from the historical statement's force.
+- **Not allowed to decide:** Any technology, framework, or architecture; functional or
+  non-functional requirements — deriving those from the intent belongs to Requirement Derivation;
+  what the user "should" want instead of what they asked for. A `MemoryContext` entry is never a
+  `Conflict` participant, is never treated as `Evidence`, and never causes Intent Parsing to query
+  MIHVER Brain directly.
 
 ### Stage: Requirement Derivation
 
@@ -285,18 +312,21 @@ not exist when that principle, or this document, was first written.
 
 ### Cross-Cutting: MemoryContext Consumption Remains Otherwise Disabled
 
-Research Planning (above) is the only stage in this document whose declared `Input:` list includes
-`MemoryContext`. Intent Parsing, Requirement Derivation, Research + Evidence Collection, Technology
-Candidate Identification, Architecture Synthesis, Evaluation and Decision, and Specification
-Generation each keep exactly the `Input:` list already stated for them above, unchanged — none of
-them may consume `MemoryContext`, or query MIHVER Brain in any form, until this document is
-separately amended again to declare it for that specific stage.
+Research Planning and Intent Parsing (above) are the only two stages in this document whose
+declared `Input:` list includes `MemoryContext`. Requirement Derivation, Research + Evidence
+Collection, Technology Candidate Identification, Architecture Synthesis, Evaluation and Decision,
+and Specification Generation each keep exactly the `Input:` list already stated for them above,
+unchanged — none of them may consume `MemoryContext`, or query MIHVER Brain in any form, until
+this document is separately amended again to declare it for that specific stage.
 
-This document also does not, by itself, authorize citing a `MemoryContext` entry as the premise of
-an Inferred Claim, a Requirement-Level Inference, or a memory-informed R-19 default — each of those
-remains gated behind its own separate, narrower amendment to `INTENT_SPEC.md` or
-`REQUIREMENT_SPEC.md` (`ADR-0004`'s dependencies B, C, and D respectively), neither performed nor
-pre-authorized here. `INTENT_SPEC.md` and `REQUIREMENT_SPEC.md` are unchanged by this document.
+This document, together with Intent Parsing's own amendment above, authorizes exactly one
+`MemoryContext`-premise path: citing a qualified Category A `MemoryContext` entry as the premise of
+a current-run Inferred Claim in `IntentSpec`, per `INTENT_SPEC.md`'s own Inference Policy amendment
+(`ADR-0004`'s dependency B). It does **not** authorize a Requirement-Level Inference premise or a
+memory-informed R-19 default — each of those remains gated behind its own separate, narrower
+amendment to `REQUIREMENT_SPEC.md` (`ADR-0004`'s dependencies C and D respectively), neither
+performed nor pre-authorized here. `REQUIREMENT_SPEC.md` is unchanged by this document, and
+Requirement Derivation remains unauthorized to consume `MemoryContext` at all.
 
 ### Cross-Cutting: Stage Failure and Revision
 

@@ -1,0 +1,57 @@
+{
+  "contract": "intent-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-acme-crm-discovery-a", "version": 1,
+    "created_at": "2026-08-23T10:15:00Z", "user_idea_refs": [{ "idea_id": "idea-acme-crm", "version": 2 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [],
+    "open_items": [
+      {
+        "open_item_id": "unknown-deploy-target",
+        "kind": "unknown",
+        "question": "A prior project of yours used on-prem deployment -- is that still your preference here?",
+        "relevance_rationale": "Deployment target was never mentioned in the current UserIdea and directly shapes the architecture shape.",
+        "decision_impact": { "level": "medium", "unresolved_item": "Deployment target", "downstream_decision": "Hosting/infrastructure shape of the architecture", "level_rationale": "Shifts architecture details but is safe to defer to a clarifying question." },
+        "memory_discovery_refs": [
+          { "memory_context_id": "mc-intent-acme-crm-discovery-1", "entry_id": "entry-deploy-note-1" }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "clarification_decisions": [
+      { "subject_kind": "open_item", "subject_id": "unknown-deploy-target", "needed": true, "rationale": "Deployment target is unspecified in the current UserIdea and a prior-project memory only motivates the question, never the answer." }
+    ]
+  },
+  "companion": {
+    "contract": "memory-context",
+    "document": {
+      "schema_version": "1.0.0", "artifact_type": "memory_context", "memory_context_id": "mc-intent-acme-crm-discovery-1",
+      "run_id": "run-2026-08-23-102", "run_context": { "status": "present", "project_slug": "acme-crm" },
+      "consuming_stage": "intent_parsing", "retrieval_purpose": "clarification-question-discovery",
+      "retrieval_query": "prior deployment-target statements for this project", "retrieval_time": "2026-08-23T10:12:00Z",
+      "upstream_artifact_binding": { "artifact_type": "user_idea", "artifact_id": "idea-acme-crm", "version": 2 },
+      "retrieval_outcome": "admitted",
+      "admitted_entries": [
+        {
+          "entry_id": "entry-deploy-note-1",
+          "source": {
+            "brain_memory_id": "brain-deploy-note-1", "brain_type": "decision", "title": "Deployment target (prior run)",
+            "scope": "acme-crm", "brain_status": "active", "brain_created_at": "2026-01-15T00:00:00Z", "brain_updated_at": "2026-01-15T00:00:00Z",
+            "brain_confidence": "medium", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" }
+          },
+          "content": "User said (UserIdea v1, turn 2): 'we run everything on-prem, no cloud.'",
+          "admission_reason": "scope matches run_context.project_slug; brain_status active with no superseded_by link; content inspection classifies this as a Category A historical user statement, admitted at DISCOVERY_ATTENTION to shape a candidate clarification question only",
+          "classification": {
+            "semantic_authority_class": "historical_user_statement", "is_historical_user_statement": true, "historical_user_category": "A",
+            "historical_citation": { "idea_id": "idea-acme-crm", "user_idea_version": 1, "turn_id": "turn-2", "quote": "we run everything on-prem, no cloud" },
+            "classification_basis": "decision-type record whose body directly quotes and cites the originating UserIdea turn",
+            "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION"
+          },
+          "freshness": { "freshness_flag": "fresh", "freshness_basis": "39 days since brain_updated_at, under the 180-day staleness threshold" }
+        }
+      ],
+      "excluded_entries": []
+    }
+  }
+}

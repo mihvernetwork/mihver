@@ -1,0 +1,60 @@
+{
+  "contract": "intent-spec",
+  "expected_error": "is an excluded entry in the supplied MemoryContext, not admitted",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "intent-memory-excluded-entry", "version": 1,
+    "created_at": "2026-08-23T10:40:00Z", "user_idea_refs": [{ "idea_id": "idea-acme-crm", "version": 2 }],
+    "supersedes_intent_spec_id": null,
+    "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+    "claims": [
+      {
+        "claim_id": "claim-excluded-premise",
+        "proposition": "The team's historical preference points away from a message queue.",
+        "origin": "inferred",
+        "discourse_role": "operative",
+        "provenance": {
+          "kind": "derivation",
+          "memory_premises": [
+            {
+              "memory_context_id": "mc-intent-acme-crm-excl-1",
+              "entry_id": "entry-excluded-1",
+              "historical_user_category": "A",
+              "historical_citation": { "idea_id": "idea-acme-crm", "user_idea_version": 1, "turn_id": "turn-9", "quote": "some other project used on-prem" }
+            }
+          ],
+          "reasoning_kind": "historical-preference-citation",
+          "derivation_confidence": "low",
+          "provisional": true,
+          "reversible": true
+        }
+      }
+    ],
+    "open_items": [], "conflicts": [], "clarification_decisions": []
+  },
+  "companion": {
+    "contract": "memory-context",
+    "document": {
+      "schema_version": "1.0.0", "artifact_type": "memory_context", "memory_context_id": "mc-intent-acme-crm-excl-1",
+      "run_id": "run-2026-08-23-104", "run_context": { "status": "present", "project_slug": "acme-crm" },
+      "consuming_stage": "intent_parsing", "retrieval_purpose": "historical-preference-premise-check",
+      "retrieval_query": "prior architecture-shape decisions for this project", "retrieval_time": "2026-08-23T10:38:00Z",
+      "upstream_artifact_binding": { "artifact_type": "user_idea", "artifact_id": "idea-acme-crm", "version": 2 },
+      "retrieval_outcome": "successfully_empty",
+      "admitted_entries": [],
+      "excluded_entries": [
+        {
+          "entry_id": "entry-excluded-1",
+          "source": {
+            "brain_memory_id": "brain-excluded-1", "brain_type": "decision", "title": "Unrelated project note",
+            "scope": "other-project", "brain_status": "active", "brain_created_at": "2026-01-05T00:00:00Z", "brain_updated_at": "2026-01-05T00:00:00Z",
+            "brain_confidence": "medium", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" }
+          },
+          "content": "Some other project used on-prem deployment.",
+          "exclusion_reason": "scope \"other-project\" does not match run_context.project_slug \"acme-crm\" and is not \"global\" -- excluded before content-based classification was attempted",
+          "classification": null,
+          "freshness": { "freshness_flag": "fresh", "freshness_basis": "49 days since brain_updated_at, under the 180-day staleness threshold" }
+        }
+      ]
+    }
+  }
+}

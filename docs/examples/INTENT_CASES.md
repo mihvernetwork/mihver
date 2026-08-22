@@ -868,3 +868,226 @@ actually up to $500/month."
   Inferences or Assumptions from v1 need reconsideration — that reconsideration must happen, per
   the Revision and Version Semantics policy, but *what* changes as a result is a case-by-case
   analysis, not a fixed rule this corpus entry can predetermine.
+
+---
+
+## Dependency B: Memory-Derived Inference Premises
+
+Nine adversarial cases exercising `INTENT_SPEC.md`'s "Memory-Derived Inference Premises" amendment
+(ADR-0004 Dependency B). Each assumes an admitted `MemoryContext` entry, produced specifically for
+Intent Parsing, is already available — the classification shown on each entry (Category A/B,
+`influence_tier`) is exactly what `MEMORY_CONTEXT.md`'s Historical User Provenance Gate and
+Influence Taxonomy would have already assigned it before Intent Parsing ever sees it; these cases
+test what Intent Parsing is and is not permitted to do with an entry already carrying that
+classification, not how the classification itself was reached.
+
+### A. Valid Category A premise
+
+**UserIdea (v2):** "Build a support-ticket triage system for our team." (No statement about message
+queues.)
+**MemoryContext entry (admitted, Category A, `influence_tier: SEMANTIC_PREMISE`):** "User said
+(UserIdea v1, turn 3): 'we decided against a message queue for v1, the team isn't familiar with
+one.'" — inspectably citing that exact prior `UserIdea` turn.
+
+- **User-provided claims:** the domain is support-ticket triage for "our team"; no current statement
+  about message queues.
+- **Permissible inferences:** the system SHOULD avoid introducing a message queue for this phase,
+  Inferred, citing the Category A `MemoryContext` entry as its sole premise, `derivation_confidence`
+  moderate, marked provisional and reversible.
+- **Unsafe assumptions:** treating the historical preference as a User-Provided Claim because it
+  matches so directly; treating it as an Assumption instead of an Inference (a historical preference
+  is an operational default, not a narrowly interpretive gap — Assumption Policy already excludes
+  it).
+- **Unknowns:** none newly introduced by the memory citation itself.
+- **Conflicts:** none — the memory entry is not a Conflict participant.
+- **Clarification needs:** none — a moderate-confidence, provisional Inference with no HIGH/CRITICAL
+  item in play does not itself require clarification.
+- **Decision-impact reasoning:** not applicable to the Inference itself (Decision Impact applies to
+  Open Items/Conflicts, not resolved Claims); no HIGH/CRITICAL item is closed by this memory
+  citation.
+- **What IntentSpec must NOT decide:** labeling the resulting Claim User-Provided or Assumed; citing
+  the entry's underlying `brain_memory_id` instead of the stable `(memory_context_id, entry_id)`
+  pair; copying the entry's Brain confidence into `derivation_confidence`.
+
+### B. Category B ceiling
+
+**UserIdea (v1):** "Build a support-ticket triage system." (No statement about notification
+channels.)
+**MemoryContext entry (admitted, Category B, `influence_tier: DISCOVERY_ATTENTION`):** paraphrased
+notes reading "user wanted email notifications," with no inspectable citation to any originating
+`UserIdea` turn.
+
+- **User-provided claims:** the domain is support-ticket triage; no current statement about
+  notifications.
+- **Permissible inferences:** none from the memory entry directly — Category B is categorically
+  ineligible as an Inference premise, at any confidence or repetition level.
+- **Unsafe assumptions/inferences:** citing the Category B entry as the premise of an Inferred Claim
+  that the system should support email notifications; treating its lack of citation as merely
+  "lower confidence" rather than a hard eligibility gate.
+- **Unknowns:** notification channel, if relevant to the stated scope — Intent Parsing may record a
+  candidate clarification question, provenance-visible to the memory entry, without treating the
+  memory as the answer.
+- **Conflicts:** none.
+- **Clarification needs:** LOW/MEDIUM depending on scope — resolvable via the shaped clarification
+  question below, never via the memory entry itself.
+- **Decision-impact reasoning:** the entry may shape *what question gets asked*; it never settles
+  the answer, regardless of Decision Impact level.
+- **What IntentSpec must NOT decide:** citing the Category B entry as an Inference premise under any
+  circumstance; promoting it to Category A because it "seems" directly stated.
+
+### C. Current input overrides memory
+
+**MemoryContext entry (admitted, Category A, `influence_tier: SEMANTIC_PREMISE`):** "user decided
+against a managed cloud service for v1," inspectably cited.
+**UserIdea (current version):** "This time, use a managed cloud database — we don't want to run our
+own infrastructure."
+
+- **User-provided claims:** the user explicitly wants a managed cloud database this time; does not
+  want to self-host infrastructure.
+- **Permissible inferences:** none in the memory's direction — the current, explicit statement wins
+  completely. If a prior version's `IntentSpec` had already recorded a memory-premised Inferred
+  Claim against managed cloud, the new version withdraws or revises that Claim under ordinary
+  version semantics.
+- **Unsafe assumptions:** treating the historical preference and the current statement as a
+  symmetric Conflict requiring clarification — the memory entry never had Claim standing to conflict
+  with anything; recording it as a Conflict participant.
+- **Unknowns:** none introduced by this case.
+- **Conflicts:** none — see above; this is revision, not Conflict.
+- **Clarification needs:** none — the current `UserIdea` already resolves the question
+  authoritatively.
+- **Decision-impact reasoning:** not applicable; nothing is left open.
+- **What IntentSpec must NOT decide:** recording a Conflict between the user and memory; silently
+  keeping the withdrawn Inferred Claim alongside the new one as though both were still live.
+
+### D. HIGH/CRITICAL is never closed by memory alone
+
+**UserIdea:** "Build a system to process customer payment data." (No statement about compliance
+scope.)
+**MemoryContext entry (admitted, Category A, `influence_tier: SEMANTIC_PREMISE`-eligible content,
+but the unresolved item here is CRITICAL):** "user said their prior project was PCI-DSS scoped."
+
+- **User-provided claims:** the system processes customer payment data.
+- **Permissible inferences:** none that close the compliance-scope question — even though the memory
+  entry is Category A and otherwise premise-eligible, a CRITICAL item is never closed by memory
+  alone.
+- **Unsafe assumptions/inferences:** citing the entry as the premise of an Inferred Claim that
+  settles "this system is PCI-DSS scoped," and marking the `IntentSpec` eligible on that basis.
+- **Unknowns:** what payment/cardholder data this system stores, processes, or transmits, and what
+  role it plays in that flow — the facts that actually determine PCI-DSS applicability, not the
+  user's own label for the prior project — CRITICAL, since proceeding on the wrong reading risks a
+  non-compliant architecture.
+- **Conflicts:** none.
+- **Clarification needs:** CRITICAL — the produced `IntentSpec` is Blocked. The memory entry may at
+  most shape the clarification question ("a prior project of yours was PCI-DSS scoped — is that true
+  here too?"), provenance-visible to the entry, never the version's eligibility.
+- **Decision-impact reasoning:** payment-data processing without a settled compliance scope risks an
+  unsafe or non-compliant architecture — the defining CRITICAL case.
+- **What IntentSpec must NOT decide:** marking this version eligible because a Category A memory
+  entry "answers" the compliance question; treating memory-shaped clarification as equivalent to
+  actually clarifying.
+
+### E. Historical force is not current force
+
+**MemoryContext entry (admitted, Category A, `influence_tier: SEMANTIC_PREMISE`):** "user said (v1,
+turn 4): 'we must never store customer data outside our home region,'" force = prohibition, as
+historically stated.
+**UserIdea (current version):** no statement about data residency.
+
+- **User-provided claims:** none about data residency in the current version.
+- **Permissible inferences (force present, independently reasoned):** the system SHOULD avoid
+  storing customer data outside the home region, Inferred, citing the entry as premise, force =
+  preference (not prohibition) with an explicit, independent current-run reasoning basis ("no
+  current statement addresses residency, and a historical prohibition is not, by itself, sufficient
+  grounds to independently justify a current MUST-level constraint without further current-run
+  support") — deliberately *not* mechanically inheriting the historical statement's prohibition
+  force.
+- **Permissible inferences (force absent, alternative valid disposition):** the same proposition
+  Inferred with no force at all, if Intent Parsing judges no independent current-run basis exists
+  for assigning any force level.
+- **Unsafe assumptions/inferences:** assigning the current Inferred Claim `force: prohibition`
+  (MUST NOT) solely because the historical statement carried that force, with no independent
+  current-run reasoning stated — this would let a stale historical prohibition harden into a current
+  hard constraint with no confidence-based safeguard.
+- **Unknowns:** data residency, if the stated scope implicates it.
+- **Conflicts:** none.
+- **Clarification needs:** depends on the stated scope; not automatically CRITICAL merely because
+  the historical statement was strongly worded.
+- **Decision-impact reasoning:** case-specific; the point under test is force derivation, not impact
+  level.
+- **What IntentSpec must NOT decide:** copying "must never" into the current Claim's force without
+  an explicit, independent reasoning basis recorded separately from the historical-content
+  provenance.
+
+### F. No Assumed path for memory
+
+**MemoryContext entry (admitted, Category A, `influence_tier: SEMANTIC_PREMISE`):** a historical
+preference for a specific reporting cadence.
+
+- **Permissible inferences:** the same historical-preference-as-premise pattern as Case A, origin
+  Inferred.
+- **Unsafe assumptions:** recording the memory-derived value as an Assumed Claim instead ("assume
+  weekly reporting, per a prior project") — a historical preference is an operational default in
+  Assumption Policy's own terms, not a narrowly interpretive gap, so there is no Assumed-origin path
+  for memory-derived content at Intent Parsing, regardless of Decision Impact level.
+- **What IntentSpec must NOT decide:** using Assumption Policy as an alternate, lower-ceremony path
+  for memory content that doesn't clear the Category A gate, or for content that does.
+
+### G. Repetition confers no authority
+
+**MemoryContext entries (three admitted, all Category A, `influence_tier: SEMANTIC_PREMISE`,
+`historical_user_category: A`):** three separate past runs all recording the same team's preference
+against a specific cloud provider.
+
+- **Permissible inferences:** an Inferred Claim citing one, several, or all three entries as
+  premises still carries whatever `derivation_confidence` the reasoning itself independently
+  supports — not automatically "high" merely because three entries agree.
+- **Unsafe assumptions/inferences:** raising `derivation_confidence` to high, or upgrading the
+  Claim's standing, specifically because the preference recurs across three memories rather than
+  one — consistent with I-16, repetition, paraphrase, or multi-pass agreement does not by itself
+  increase confidence or promote an item's origin.
+- **What IntentSpec must NOT decide:** treating three duplicate/correlated historical statements as
+  independent corroboration of each other; citing all three as separate premises of separate
+  Inferences on the theory that more citations look more thorough.
+
+### H. Type independence
+
+**MemoryContext entry (admitted, stored Brain `type: reference`, but content-inspected and
+reclassified `is_historical_user_statement: true`, `historical_user_category: A`,
+`influence_tier: SEMANTIC_PREMISE`):** a `reference`-typed record whose body, on inspection, directly
+quotes and cites an originating `UserIdea` turn.
+
+- **Permissible inferences:** citable as an Inference premise exactly as a correctly-filed
+  `decision`-typed Category A entry would be — eligibility here comes entirely from the
+  `MemoryContext` classification (`is_historical_user_statement`, `historical_user_category`,
+  `influence_tier`) already assigned at production, never from the entry's stored Brain `type`.
+- **Unsafe assumptions/inferences:** refusing to cite the entry as a premise on the reasoning that
+  "the Historical User Provenance Gate is about `decision` records" — Intent Parsing consumes the
+  classification `MemoryContext` already computed, and never re-derives or second-guesses stored
+  `type` against that classification.
+- **What IntentSpec must NOT decide:** re-deriving Category A/B status from Brain `type` itself;
+  treating a non-`decision` stored type as automatically disqualifying, or automatically Category B.
+
+### I. Discovery provenance stays visible
+
+**UserIdea:** "Build an internal knowledge-base search tool." (No statement about deployment
+target.)
+**MemoryContext entry (admitted, Category A, `influence_tier: DISCOVERY_ATTENTION`):** "user said
+(v1, turn 2): 'we run everything on-prem, no cloud.'"
+
+- **User-provided claims:** the domain is internal knowledge-base search; no current statement about
+  deployment target.
+- **Permissible inferences:** none from the memory directly (it is not cleared for `SEMANTIC_PREMISE`
+  here) — instead, the Open Item for deployment target records a candidate clarification question
+  ("a prior project of yours used on-prem deployment — is that still your preference here?"),
+  provenance-visible to this specific `MemoryContext` entry.
+- **Unsafe assumptions/inferences:** treating the shaped question's plausible answer as already
+  known; recording a Claim before the current user actually answers.
+- **Unknowns:** deployment target — MEDIUM, shifts architecture detail but is safe to defer to a
+  clarifying question.
+- **Conflicts:** none.
+- **Clarification needs:** the candidate question is recorded, citing the memory entry; only the
+  current user's own answer, if and when given, becomes a User-Provided Claim in a later version.
+- **Decision-impact reasoning:** deferrable detail, not goal-level — MEDIUM.
+- **What IntentSpec must NOT decide:** recording "on-prem" as any kind of Claim before the current
+  user answers; letting the discovery-path reference be mistaken for, or promoted into, an Inference
+  premise.

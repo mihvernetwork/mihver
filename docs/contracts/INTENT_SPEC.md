@@ -50,8 +50,12 @@ A proposition MIHVER holds, with an explicit **origin**:
 
 - **User-Provided** — traceable directly to something the user said in a specific `UserIdea`
   version. See "Terminology: Claim, Not Fact" below for why this is not called a "fact."
-- **Inferred** — derived by MIHVER from one or more other Claims through an identifiable
-  reasoning step. Carries its premises and the kind of reasoning applied (see "Inference Policy").
+- **Inferred** — derived by MIHVER from one or more other Claims, one or more qualified Category A
+  historical `MemoryContext` entries (see "Memory-Derived Inference Premises" below), or a
+  combination of both, through an identifiable reasoning step. Carries its premises and the kind of
+  reasoning applied (see "Inference Policy"). A `MemoryContext` entry never becomes a fourth origin
+  of its own — it is only ever a premise source for an Inferred Claim, and the Claim it supports
+  remains Inferred exactly like any other.
 - **Assumed** — adopted provisionally so MIHVER can proceed despite a gap, not because it is
   believed to follow from anything (see "Assumption Policy").
 
@@ -200,10 +204,15 @@ inspect without re-running any model:
 
 - A **User-Provided** Claim traces to a specific `UserIdea` version and, where practical, the
   specific statement within it.
-- An **Inferred** Claim traces to its premises (the specific Claims it was derived from) and names
-  the kind of reasoning step taken (e.g., "generalization," "implication," "domain default
+- An **Inferred** Claim traces to its premises — the specific Claims it was derived from, one or
+  more qualified Category A `MemoryContext` entries it was derived from, or a combination — and
+  names the kind of reasoning step taken (e.g., "generalization," "implication," "domain default
   applied") at a level someone can audit — not MIHVER's full internal reasoning trace. Store enough
-  to justify and challenge the inference, not a hidden chain-of-thought transcript.
+  to justify and challenge the inference, not a hidden chain-of-thought transcript. Where a
+  `MemoryContext` entry is among the premises, its provenance additionally identifies the exact
+  `MemoryContext` snapshot and entry cited, that the entry is Category A, and the originating
+  historical `UserIdea` source that entry was itself inspectably traced to (see "Memory-Derived
+  Inference Premises" below) — never merely "cites a memory."
 - An **Assumed** Claim traces to the gap it bridges and its stated rationale (see "Assumption
   Policy").
 
@@ -250,6 +259,81 @@ does require, even informally, is that the premises be identifiable and the infe
 asserted as if it needed no support at all — an inference with no stated basis is not an inference
 under this policy; it is an unlabeled Assumption (see "Assumption Policy") and must be corrected as
 such.
+
+### Memory-Derived Inference Premises
+
+An Inference's premises may include one or more qualified Category A historical `MemoryContext`
+entries, alongside or instead of Claim premises, per [MEMORY_CONTEXT](./MEMORY_CONTEXT.md)'s
+"Historical User Memory Rule." This is an addition to Inference Policy, not a new Claim origin and
+not a relaxation of anything above: the resulting Claim is Inferred, exactly as any other Inference
+is, subject to every rule already stated in this policy, plus the following, which apply
+specifically because a memory premise is not an `IntentSpec` Claim tracing to the current
+`UserIdea`.
+
+- **Category A gate.** Only a `MemoryContext` entry that is (a) an admitted entry of a
+  `MemoryContext` produced for Intent Parsing, (b) classified
+  `classification.is_historical_user_statement = true`, (c) classified
+  `historical_user_category = A`, (d) carries an inspectable `historical_citation`, and (e)
+  classified `influence_tier = SEMANTIC_PREMISE` for this specific use, may be cited as a premise.
+  A Category B entry is categorically ineligible as an Inference premise, at any confidence,
+  recency, or repetition level — Category B is restricted to the discovery path below. This is a
+  hard eligibility gate, not a confidence-weighted judgment call (see
+  [MEMORY_CONTEXT](./MEMORY_CONTEXT.md)'s M-03/M-18).
+- **Stable reference.** A cited memory premise identifies the exact `MemoryContext` snapshot and
+  entry it relies on — the pair `(memory_context_id, entry_id)` — never merely the underlying Brain
+  memory's own identifier (`brain_memory_id`) and never merely "a memory," either of which would
+  cite mutable, unclassified, or unauditable state instead of the frozen, classified snapshot that
+  is the actual epistemic premise.
+- **Never a fourth origin.** Citing a `MemoryContext` entry does not make the entry a Claim, and
+  does not make the Claim it supports User-Provided or Assumed. The Claim's origin remains Inferred,
+  and only Inferred, no matter how directly the historical statement matches current subject
+  matter. Assumption Policy's restriction to narrowly interpretive gaps already forecloses treating
+  a historical preference as an Assumption — a historical preference is an operational default in
+  Assumption Policy's own terms, not an interpretive gap — so there is no second, Assumed-origin
+  path for memory-derived content at Intent Parsing (see "No Assumed-Origin Path for Memory" in
+  [MEMORY_CONTEXT](./MEMORY_CONTEXT.md)).
+- **Current input always wins.** Wherever the current `UserIdea` contains relevant current input, it
+  wins completely over historical memory — memory must never override, weaken, strengthen, or
+  silently reinterpret it, and must never manufacture a competing current-user preference. A
+  `MemoryContext` entry is not itself a Conflict participant (see "Conflict Policy" below); an
+  earlier memory-premised Inferred Claim may be withdrawn or revised, under ordinary version
+  semantics, if superseded by current input — that is MIHVER revising its own Inference, per
+  "Conflict Policy" below, not memory competing with the user on equal footing.
+- **Provisional and reversible.** A memory-premised Inference is explicitly marked provisional and
+  reversible, in addition to carrying its own `derivation_confidence` — this is the same standing
+  every Inference already has under ordinary revision semantics, made an explicit, inspectable
+  property here because a memory premise is external to the current run in a way a Claim premise is
+  not.
+- **Historical force is not current force.** A historical statement's own normative force
+  (obligation, prohibition, permission, or preference) is never mechanically copied into the force
+  of a current-run Inferred Claim that cites it as a premise. If the Claim carries force at all, its
+  provenance must separately state an explicit, independent reasoning basis for that current force
+  — a fact distinct from, and recorded separately from, which `MemoryContext` entry supplied the
+  premise's content. If no such independent basis exists, the Claim's force is left absent rather
+  than inherited by default (see [MEMORY_CONTEXT](./MEMORY_CONTEXT.md)'s M-20). An auditor must be
+  able to tell, from the Claim's own provenance, whether its force was independently reasoned or
+  silently inherited — generic inference-reasoning text alone does not satisfy this.
+- **No repetition bonus.** Consistent with I-16, several similar historical `MemoryContext` entries,
+  or the same historical preference recurring across multiple past runs, does not by itself raise a
+  memory-premised Inference's `derivation_confidence` or authority.
+- **Brain confidence is not derivation confidence.** A memory-premised Inference's
+  `derivation_confidence` is computed independently of the cited entry's own Brain-author-supplied
+  confidence; the latter is never copied into, capped against, or otherwise used to justify the
+  former (see [MEMORY_CONTEXT](./MEMORY_CONTEXT.md)'s M-02).
+- **HIGH/CRITICAL is never closed by memory alone.** A memory-premised Inferred Claim may not, by
+  itself, resolve a HIGH or CRITICAL Decision Impact Open Item or Conflict, convert its Blocked
+  version to consumable, or substitute for current-user clarification — see "Handoff Status:
+  Blocked vs. Failed" below. At most, a Category A or Category B entry may shape *what clarifying
+  question is asked* (the discovery path immediately below); it never settles the item itself.
+
+**Discovery path (not a premise).** Separately from the direct-premise path above, a Category A or
+Category B `MemoryContext` entry may shape or add a candidate clarification question posed to the
+current user, at the `DISCOVERY_ATTENTION` influence tier. This is provenance-visible — an Open
+Item may record which `MemoryContext` entry shaped a specific candidate clarification question — but
+it never itself creates a User-Provided Claim, creates an Assumed Claim, resolves an Open Item or
+Conflict, or narrows current `UserIdea` meaning. Only the current user's own current answer, if
+given, becomes a User-Provided Claim; the memory entry itself never substitutes for that answer, and
+a discovery-path reference must never be represented, or mistaken for, an Inference premise.
 
 ## Assumption Policy
 
@@ -322,6 +406,16 @@ In both cases the resolution — whichever kind — always produces a **new `Int
 never mutates the version that recorded the Conflict. The version that recorded the Conflict
 remains in the historical record exactly as it was (see "Revision and Version Semantics" below and
 Invariant I-13).
+
+**A `MemoryContext` entry is never a Conflict participant.** A historical `MemoryContext` entry is
+never elevated to Claim status merely by being cited as an Inference premise or by shaping a
+clarification question — `IntentSpec`'s Conflict machinery is defined over Claims (and Ambiguity
+readings), and a `MemoryContext` entry, never having been elevated to Claim status, is not one. A
+memory-cited Inferred Claim that turns out to conflict with current-run authoritative input is
+handled through ordinary revision (the memory-derived Claim is withdrawn or revised in a new
+version, per "Current input always wins" in "Memory-Derived Inference Premises" above) — never
+recorded as a two-sided Conflict between the user and memory, since memory never had standing
+symmetric with the current user's own statement in the first place.
 
 ## Clarification Policy
 
@@ -443,6 +537,11 @@ and the difference matters:
 
 Most HIGH/CRITICAL cases are Blocked, not Failed. Failure is the narrower, more severe outcome.
 
+A HIGH/CRITICAL item is never resolved by memory alone — a memory-premised Inferred Claim (see
+"Memory-Derived Inference Premises" above) may at most shape what clarifying question gets asked; it
+may never itself close the item, convert the Blocked version to consumable, or substitute for the
+current user's own clarification.
+
 **A Blocked `IntentSpec` never becomes unblocked in place.** There is no operation that flips a
 Blocked artifact's status to eligible once the blocking item resolves — that would be exactly the
 in-place mutation this contract's revision model forbids (see Invariant I-13). Resolution, however
@@ -490,7 +589,11 @@ Confidence is not attached uniformly to everything — that produces false preci
 
 Confidence must never increase merely because an unsupported claim was repeated, copied across
 versions, or agreed on by multiple model passes — repetition and self-consistency are not
-independent evidence (see Invariant I-16 in the ADR).
+independent evidence (see Invariant I-16 in the ADR). This applies identically to a memory-premised
+Inference: several similar historical `MemoryContext` entries repeating the same preference do not,
+by themselves, raise `derivation_confidence` (see "Memory-Derived Inference Premises" above), and a
+cited entry's own Brain-author-supplied confidence is never copied into or used to justify
+`derivation_confidence` either.
 
 ## IntentSpec vs. RequirementSpec Boundary
 
@@ -683,6 +786,29 @@ to force an output where the input does not support one.
   user's own epistemic hedging, e.g. "maybe," "I think"), and discourse role
   (operative/example/quotation) are independent axes; none may be collapsed into or inferred from
   another, and epistemic hedge words must never be read as a force value.
+- **I-23** An Inference's premises may include one or more qualified Category A historical
+  `MemoryContext` entries, identified by the stable `(memory_context_id, entry_id)` reference, in
+  addition to or instead of Claim premises; a Category B entry is categorically ineligible as an
+  Inference premise, at any confidence, recency, or repetition level, and is restricted to shaping a
+  candidate clarification question instead.
+- **I-24** A memory-premised Inferred Claim's origin is Inferred, and only Inferred — a
+  `MemoryContext` entry never becomes a Claim, never confers User-Provided standing, and never
+  confers Assumed standing (Assumption Policy's narrowly-interpretive-gap restriction already
+  excludes the operational-default content a historical preference typically carries).
+- **I-25** Wherever the current `UserIdea` contains relevant current input, it wins completely over
+  historical memory; a `MemoryContext` entry is never a Conflict participant, and a memory-premised
+  Inferred Claim superseded by current input is withdrawn or revised under ordinary version
+  semantics, never recorded as a symmetric Conflict between the user and memory.
+- **I-26** A historical statement's own normative force is never mechanically copied into the force
+  of a current-run Inferred Claim that cites it as a premise; if the Claim carries force, its
+  provenance must separately state an explicit, independent reasoning basis for that current force,
+  distinct from which `MemoryContext` entry supplied the premise's content, or else the force is
+  left absent.
+- **I-27** Memory alone — whether cited as an Inference premise or shaping a candidate clarification
+  question — never closes a HIGH or CRITICAL Decision Impact Open Item or Conflict, converts a
+  Blocked version to consumable, or substitutes for the current user's own clarification; a
+  discovery-path `MemoryContext` reference is provenance-visible on the Open Item it shaped but is
+  never itself represented as an Inference premise or as an answer.
 
 ## Examples
 
@@ -712,6 +838,15 @@ to force an output where the input does not support one.
 - User: "Maybe you could add a dark mode?" → Claim, force = preference (weak — the desiderative
   content is "add a dark mode"), self-reported uncertainty = hedged ("maybe"). "Maybe" is not read
   as the force value itself; force and hedge are recorded as two separate properties of one Claim.
+- Same project. Current `UserIdea` separately states the team still has no dedicated infrastructure
+  role. A Category A `MemoryContext` entry, inspectably citing a prior `UserIdea` turn, reads "user
+  decided against a managed cloud service, citing team unfamiliarity." → Claim, origin = Inferred,
+  proposition "the system SHOULD avoid a managed cloud service," premises = both the current
+  team-capacity Claim and the `MemoryContext` entry, `derivation_confidence` = moderate,
+  provisional/reversible, force = preference with an explicit current-run reasoning basis grounded
+  in the current team-capacity Claim itself — not merely the absence of a contradicting statement —
+  never a stronger force than the historical statement independently supports, and never labeled
+  User-Provided.
 
 ## Anti-Examples
 
@@ -745,3 +880,11 @@ to force an output where the input does not support one.
 - Recording "maybe we should use Redis" with force = "weakly-held possibility." There is no such
   force category; the correct record is force = preference (weak) plus self-reported uncertainty =
   hedged, as two separate properties. (Violates I-22.)
+- Citing a Category B `MemoryContext` entry (no inspectable, resolvable citation to an originating
+  `UserIdea` turn) as the premise of an Inferred Claim, on the reasoning that the entry's Brain
+  confidence is high or that it has appeared in several past runs. (Violates I-23.)
+- Assigning a memory-premised Inferred Claim the same "MUST NOT" force a historical statement
+  carried, purely because the historical statement was itself phrased as a prohibition, with no
+  independent current-run reasoning stated. (Violates I-26.)
+- Treating a HIGH-impact Open Item as resolved because a Category A `MemoryContext` entry appears to
+  answer it, and marking the `IntentSpec` version eligible instead of Blocked. (Violates I-27.)

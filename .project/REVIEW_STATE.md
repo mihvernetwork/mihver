@@ -15,10 +15,139 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: MEMORY-CONTEXT-POST-SCHEMA-RECONCILIATION
-Branch: `chore/memory-context-post-schema-reconcile`
-PR: to be opened against `mihvernetwork/mihver:main` (title `chore: reconcile MemoryContext state
-after schema foundation`) — not yet created as of this entry
+Task: DEPENDENCY-B-CROSS-ARTIFACT-GATE-CLOSURE
+Branch: `m0/dependency-b-intent-memory-premise`
+PR: `mihvernetwork/mihver#22` (continued, not a new PR)
+
+A narrow gate-closure pass on top of PR #22's already-implemented `ADR-0004` Dependency B: an
+external review found four technical deterministic-validator gaps plus one `REVIEW_STATE.md`
+factual-hygiene defect. Every technical finding independently re-verified against the owning
+contract before any fix was applied — all five confirmed real, none blindly applied. Full detail of
+every changed file in `CURRENT_TASK.md`'s Status section. Does not redesign Dependency B, does not
+modify C/D, does not authorize Requirement Derivation, does not modify `ADR-0002`/`ADR-0004` or
+`MemoryContext`'s schema, adds no runtime/Brain access.
+
+### Review — two fresh independent read-only Codex reviewers, by axis
+
+- **Reviewer A — Cross-Artifact Authority Gate.** All six checks — **no findings**: confirmed no
+  code path lets a non-empty `memory_premises` or `memory_discovery_refs` pass without a companion
+  (traced the exact `fail()` placements, confirmed fail-fast semantics can't let an unrelated earlier
+  failure mask a later missing-companion case); confirmed Category A standing is read from the
+  companion's own `entry.classification`, never the `IntentSpec` side's self-assertion; confirmed the
+  discovery-path historical-standing check genuinely rejects a non-historical entry even at
+  `DISCOVERY_ATTENTION` tier, verified against the actual `is_historical_user_statement: false`
+  fixture data; confirmed admitted/excluded/stage/tier/citation checks are unweakened and correctly
+  ordered; confirmed the upstream-binding check is correctly scoped to
+  `consuming_stage === "intent_parsing"` and does not misfire against the pre-existing wrong-stage
+  fixture; confirmed no code path reads `brain_confidence` for authority.
+- **Reviewer B — Force/Regression/State Hygiene.** Six of eight checks — **no findings**
+  (whitespace-only `force_reasoning.basis` correctly rejected via `.trim().length === 0`, distinct
+  from the pre-existing "missing entirely" check; `force_reasoning` remains structurally separate
+  from `reasoning_kind`; `provisional`/`reversible` schema `if`/`then`/`else` untouched this round;
+  `intent-spec-eligible.json` hand-traced claim-by-claim as unaffected by any new mandatory-companion
+  logic; acyclic `visit()` and confidence-escalation loop unchanged; no C/D/Requirement Derivation/
+  Brain-runtime authority granted anywhere in the diff). One finding independently reviewed and
+  **confirmed real**: two `schemas/m0/intent-spec.schema.json` field descriptions
+  (`memory_premises`, `historicalCitationRef`) still said cross-artifact resolution happens "only
+  when a companion... is supplied," stale wording implying optionality the validator no longer
+  permits — fixed to state the companion is now required whenever the corresponding field is
+  non-empty. One finding independently reviewed and **confirmed real**: `REVIEW_STATE.md`'s own
+  `npm test` total (and `CURRENT_TASK.md`'s matching total) still read `78/78`, the count from before
+  this round's five new fixtures existed — fixed to the actually-run `83/83` (both files, this same
+  edit). Independently re-verified the PR #21/`DECISIONS_LOG.md` hygiene fix itself (grepped
+  `DECISIONS_LOG.md` directly for "PR #19"/"PR #20"/"PR #21", confirmed no PR #21 entry exists,
+  confirmed `DECISIONS_LOG.md` itself carries zero diff) and confirmed no recursive metadata-sync
+  mechanism was introduced (`PROJECT_STATE.md`/`CONTEXT_INDEX.md`/`ROADMAP.md` all zero-diff).
+
+`npm test`: 83/83 (78 from PR #22's original round, unmodified in substance; 5 new gate-closure
+fixtures). `git diff --check`: clean. `git diff main --stat`: exactly the allowed files listed in
+`CURRENT_TASK.md`. Targeted `git diff main --stat` against every forbidden path (including
+`M0_SCOPE.md`, `MEMORY_CONTEXT.md`, `memory-context.schema.json`, every ADR, `PROJECT_STATE.md`,
+`DECISIONS_LOG.md`, `CONTEXT_INDEX.md`, `ROADMAP.md`) produced empty output. No `mihver-brain` file
+touched. No runtime/MCP/network code introduced. Dependency C/D remain not implemented; Requirement
+Derivation remains unauthorized to consume `MemoryContext`.
+
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** All five external findings were independently
+re-verified and fixed; two further reviewer findings (stale schema-description wording, a stale
+fixture-count total in this file and `CURRENT_TASK.md`) were independently re-verified and fixed in
+the same round.
+
+## Required Changes
+
+None remaining — every confirmed finding above is fixed by this same round.
+
+## Fixes Applied
+
+See "Latest Review" above: `tests/contracts/validate-contracts.mjs`'s mandatory-companion gate for
+`memory_premises`/`memory_discovery_refs`, the discovery-path historical-standing check, the
+upstream-artifact-type incompatibility check, and the `force_reasoning.basis` whitespace guard;
+`schemas/m0/intent-spec.schema.json`'s two field-description updates (no structural change);
+`docs/contracts/SCHEMA_MAPPING.md`'s validation-boundary paragraph and I-05/I-15/I-23/I-26/I-27 rows;
+five new invalid fixtures; this file's own PR #21/`DECISIONS_LOG.md` factual correction and
+fixture-count total.
+
+## Pending Human Gate
+
+Commit and push to the existing `m0/dependency-b-intent-memory-premise` branch / PR #22, per this
+task's explicit instruction. No new PR opened. Not merged by this task. Human review of PR #22, now
+including this closure round, is the next gate; it authorizes only Dependency B as scoped in
+`CURRENT_TASK.md` — not Dependency C/D, not Requirement Derivation's own `MemoryContext`
+authorization, and not any `mihver-brain` or runtime memory-integration work.
+
+## History
+
+- 2026-08-23 — `M0-DEPENDENCY-B-INTENT-MEMORY-PREMISE` (PR #22, opened, not yet merged): implemented
+  `ADR-0004` Dependency B — Intent Parsing became an authorized `MemoryContext` consumer
+  (`M0_SCOPE.md`), and a qualified Category A historical-user `MemoryContext` entry may be cited as a
+  premise of a current-run Inferred Claim (`INTENT_SPEC.md`'s Inference Policy amendment). STOP
+  conditions explicitly re-derived and found not triggered. Two coherent dimensions landed together:
+  `M0_SCOPE.md`'s pipeline authorization and `INTENT_SPEC.md`/`intent-spec.schema.json`/
+  `validate-contracts.mjs`'s artifact-provenance representation, plus 9 new `INTENT_CASES.md`
+  adversarial cases and 19 new fixtures. Four independent read-only Codex reviewers by invariant axis
+  (Epistemic Origin/Provenance; Current Input/Decision Impact/Conflict; Schema/Validator/
+  Cross-Artifact References; Force/Cross-Axis/Corpus) found three real, independently-re-verified
+  defects — a validator pair-uniqueness key-collision bug (naive `"::"`-joined string keys), a weak
+  "persistence-by-default" force-reasoning pattern in an illustrative fixture (also fixed identically
+  in `INTENT_SPEC.md`'s own worked example), and a documentation-clarity wording issue in a case — all
+  fixed; one proposed finding (validator-side current-input-vs-memory contradiction detection) was
+  independently reviewed and rejected as contrary to `MEMORY_CONTEXT.md`'s own explicit design.
+  `npm test`: 78/78. Verdict: `READY_FOR_HUMAN_REVIEW`. A subsequent external review of the opened PR
+  found the four technical gaps and one factual-hygiene defect that
+  `DEPENDENCY-B-CROSS-ARTIFACT-GATE-CLOSURE` (below) closed, on the same branch/PR, before any human
+  merge decision. Moved here from "Latest Review" now that those sections describe
+  `DEPENDENCY-B-CROSS-ARTIFACT-GATE-CLOSURE` instead, per this file's branch/task scoping — both
+  entries share branch `m0/dependency-b-intent-memory-premise` and PR #22, since the closure round was
+  a continuation on the same open PR, not a new branch. — branch
+  `m0/dependency-b-intent-memory-premise`
+
+- 2026-08-22/2026-08-23 — `MEMORY-CONTEXT-POST-SCHEMA-RECONCILIATION` (PR #21, merged, squash commit
+  `5054a64fd2a95ee3d139c6a43442f65a8fafb837`, plus one follow-up single-line ROADMAP.md
+  cross-reference fix pushed to the same PR before merge): status/navigation/authorization-prose
+  synchronization after PR #19 (ADR-0004 Acceptance) and PR #20 (MemoryContext Schema Foundation)
+  both merged to `main`. Corrected `docs/contracts/MEMORY_CONTEXT.md`'s stale top-of-file status
+  (`Proposed` → `Accepted`), renamed and rewrote its "Stage Consumption Is Not Yet Authorized"
+  section to "Stage Consumption Authorization" reflecting Research Planning as the sole authorized
+  consumer (`DISCOVERY_ATTENTION` only), and fixed two narrower stale Research-Planning-authorization
+  hedges elsewhere in the same document — while leaving every legitimately-still-future Dependency
+  B/C/D statement untouched. Added a "MemoryContext Schema Foundation" checkpoint to
+  `.project/PROJECT_STATE.md` and rewrote its "Next Authorized Action" to describe Dependency B's two
+  coherent prerequisite dimensions. Appended two fact-only merge-confirmation entries to
+  `.project/DECISIONS_LOG.md`. Updated `ROADMAP.md`'s Phase 10 to DONE, its capability map, and its
+  Section 22 near-term order. One lightweight read-only Codex reviewer (Post-Schema Authority / State
+  Consistency) found one confirmed, fixed finding (two residual stale-present-tense `ROADMAP.md`
+  sentences contradicting Phase 10's own DONE status); all other 11 checks independently re-confirmed
+  clean. A separate follow-up instruction then fixed one incorrect `ROADMAP.md` cross-reference
+  ("section 10.9" → "Phase 10," since 10.9 is Dependency A/PR#17, not the schema foundation),
+  pushed to the same PR. `npm test`: 59/59 throughout (unaffected — no contract/schema/runtime file
+  touched). Verdict: `READY_FOR_HUMAN_REVIEW`. PR #21 subsequently merged to `main` (verified via `gh
+  pr view 21`, mergedAt `2026-08-22T22:05:50Z`, merge commit
+  `5054a64fd2a95ee3d139c6a43442f65a8fafb837`) — noted here as historical context only; unlike PR #19
+  and PR #20, no separate PR #21 merge-fact entry exists in `.project/DECISIONS_LOG.md` as of this
+  entry (verified directly against that file's current content, not assumed). Moved here from "Latest
+  Review" now that those sections describe `M0-DEPENDENCY-B-INTENT-MEMORY-PREMISE` instead, per this
+  file's branch/task scoping — this is the first entry on a new branch, since this task's own round
+  was self-contained on `chore/memory-context-post-schema-reconcile`. — branch
+  `chore/memory-context-post-schema-reconcile`
 
 Status/navigation/authorization-prose synchronization after PR #19 (ADR-0004 Acceptance, merge
 commit `8b0c0b65b3d8e6f2cb3034d9f395b2008694cc75`) and PR #20 (MemoryContext Schema Foundation,
