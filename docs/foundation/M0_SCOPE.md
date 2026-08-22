@@ -16,6 +16,14 @@ the pipeline run (see the Evaluation and Decision stage below) — it does not m
 tested by running the candidate. Empirical validation through sandbox experiments is M1's concern,
 not M0's.
 
+M0's milestone semantic input remains solely `UserIdea` — this document's cross-cutting memory
+integration (below) does not add a second semantic input. Separately, an M0 invocation also carries
+a `RunContext` — or its explicit absence: a non-semantic run/invocation identity anchor, established
+outside both the pipeline's own artifact chain and MIHVER Brain. `RunContext` answers "which run,
+and optionally which project, is this" — never "what does the user want" (`UserIdea`'s and Intent
+Parsing's question alone) — and is never itself a milestone input, a Claim's provenance, or
+Evidence. See "Cross-Cutting: RunContext" below.
+
 ## Pipeline
 
 ```text
@@ -48,6 +56,141 @@ stage's output, not a schema. Field names, cardinality, and serialization are de
 foundation document to subsequent M0 design work (the Requirement IR / Architecture IR schema
 effort and its siblings) — they are still in scope for M0, just not for this scope document.
 
+## Cross-Cutting: RunContext (Run/Invocation Scope Anchor)
+
+`RunContext` is a non-memory, non-semantic identity anchor for the current MIHVER invocation —
+established by whatever invokes MIHVER (a session, workspace, or engagement binding) before Intent
+Parsing runs, entirely outside MIHVER Brain (`../mihver-brain`) and outside the pipeline's own
+artifact chain (`UserIdea` → ... → `MihverArchitectureSpec`). It answers "which run, and optionally
+which project, is this" — never "what does the user want" (that remains Intent Parsing's exclusive
+question, answered from `UserIdea`) and never "what happened before" (that is what Brain, filtered
+through `RunContext` via the MemoryContext Producer boundary below, may supply).
+
+`RunContext` is:
+
+- established once, by the invoking context, not derived, inferred, or reconstructed from anything
+  Brain stores;
+- independent of Brain — Brain may be *asked about* a project matching this identity; it may never
+  *supply* the identity being asked about (a Brain record must never authenticate its own
+  applicability);
+- allowed to be explicitly absent — a genuinely projectless, exploratory, or one-off engagement is a
+  valid, complete state, not an error requiring escalation;
+- never a substitute for `UserIdea`, never part of a Claim's provenance chain, and never itself
+  Evidence.
+
+**Primary semantic pipeline input vs. cross-cutting run context.** M0's declared milestone semantic
+input stays exactly `UserIdea` (see "Milestone Input and Output" above), unchanged by this
+amendment. `RunContext` is not a second semantic input competing with it, and no stage's declared
+`Input:` list in the Pipeline section below is amended to add `RunContext` itself — it is consulted
+only by the MemoryContext Producer boundary immediately below, never read directly by a pipeline
+stage as if it were a declared artifact input.
+
+**Global vs. project-scoped memory when `RunContext` is absent.** With no `RunContext` established,
+only `global`-scoped Brain memory can mechanically pass the MemoryContext Producer's
+scope-admissibility check below; no project-scoped record may be admitted, because there is no
+anchor to verify it against.
+
+**What a Brain `project` memory may do instead.** Once `RunContext` already establishes an
+identity, a Brain `project` record matching that identity may **corroborate** it — supplying
+additional durable description or history about a project whose identity is already independently
+known. It may never **establish** that identity in the first place, and it is never consulted
+before `RunContext` exists to help decide what `RunContext` should be.
+
+## Cross-Cutting: MemoryContext Producer Boundary
+
+This is the sole boundary through which durable memory (MIHVER Brain) may reach a pipeline stage.
+It is **not a new linear pipeline stage** — it does not sit at a fixed point in the diagram above,
+transforming one primary artifact into the next the way each stage in the Pipeline section does. It
+is a cross-cutting boundary/service, invoked repeatedly, once per authorized retrieval, by whichever
+already-authorized stage currently needs it, at that stage's own point in the pipeline. Each
+invocation produces its own fresh, independently immutable `MemoryContext`.
+
+**Inputs:**
+
+- the current run's `RunContext`, or its explicit absence;
+- the identity of the specific consuming stage invoking it;
+- a stated retrieval purpose;
+- the relevant upstream-artifact-version binding, where the retrieval purpose depends on one (see
+  "MemoryContext Lifecycle and Failure" below);
+- an explicit, already-computed semantic verdict about a specific memory entry — only when one is
+  being mechanically carried through from the consuming stage that already owns it (e.g. a stage's
+  own already-stated finding that a specific entry no longer applies). Merely supplying an upstream
+  artifact or its version is not, by itself, such a verdict and confers no license to form one.
+
+**Output:** exactly one immutable `MemoryContext` per authorized invocation.
+
+**Allowed to decide:**
+
+- retrieval and filtering against the stated purpose;
+- resolving Brain's own lifecycle and supersession chain;
+- mechanical scope admissibility against `RunContext` (identity match only — including
+  `global`-scope admission, which is scope-tag equality only, never a judgment that a
+  `global`-tagged record's content is genuinely project-agnostic);
+- mechanical, age/lifecycle-based freshness flags, derived from a record's own timestamps — never a
+  judgment that the record's underlying real-world claim is still true;
+- source/provenance capture;
+- the least-authority classification needed to deliver an entry under the correct authority tier;
+- fail-closed exclusion of an entry when it cannot be safely classified — ambiguity is resolved
+  toward less authority, never more, and never toward the entry being admitted under a default or
+  best-guess classification.
+
+**Not allowed to decide, under any circumstance:**
+
+- what the current user means;
+- whether a memory's content semantically contradicts current-run meaning — unless the specific,
+  already-computed verdict about that specific entry has itself been supplied as an explicit input
+  (in which case the boundary may mechanically apply that literal verdict, never form a new one);
+- Requirements;
+- technology eligibility;
+- Evidence truth;
+- architecture selection;
+- candidate ranking;
+- any other decision that belongs to a specific downstream stage's own declared authority.
+
+**Stage isolation, preserved explicitly:** a stage never queries MIHVER Brain directly, under any
+circumstance. The only path memory may take to reach a stage is:
+
+```text
+Brain
+  → MemoryContext Producer
+  → immutable MemoryContext
+  → explicitly-authorized consuming stage
+```
+
+### MemoryContext Lifecycle and Failure
+
+Each `MemoryContext` is bound, at production, to: the run, the `RunContext` (or its explicit
+absence) it was verified against, the consuming stage it was produced for, the retrieval purpose,
+and the specific version of any upstream artifact that purpose depended on.
+
+If a bound upstream artifact is superseded, the `MemoryContext` produced against its prior version
+is no longer current: it remains immutable historical state (never deleted, never mutated in place)
+but must not be silently reused by new reasoning — a consuming stage that still needs memory context
+obtains a fresh `MemoryContext` bound to the new version instead, mirroring "Cross-Cutting: Stage
+Failure and Revision" below for the artifacts a stage is re-run against.
+
+A `MemoryContext` produced for one run is never carried forward and reused, as-is, by a later run,
+even one bound to an identical `RunContext`-or-absence and identical upstream version — each run's
+own authorized invocation produces its own fresh snapshot.
+
+If MIHVER Brain is unavailable at retrieval time, the Producer still emits its one immutable
+`MemoryContext` for that invocation, carrying zero admitted entries and an explicit
+retrieval-unavailable outcome — distinct from a successful retrieval that simply found nothing. The
+consuming stage proceeds without any admitted memory content in either case; Brain's availability is
+never a precondition for any stage to function, since no stage's declared input list requires memory
+as anything other than an optional, additional input whose absence degrades gracefully.
+
+### Principle 3 Compliance
+
+This boundary is a declared, cross-cutting compiler boundary, not undeclared stage-internal state:
+`RunContext` and MIHVER Brain are never named in any stage's declared `Input:` list, in this
+document or any future one — a stage's only possible path to memory content is a `MemoryContext`
+its own `Input:` list explicitly declares (currently, only Research Planning declares one — see
+below). No stage may query Brain directly, and no stage may treat a `MemoryContext` it was not
+explicitly authorized to consume as an implicit input. This preserves Principle 3 (Structured Artifacts Between
+Stages, [PRINCIPLES](./PRINCIPLES.md)) exactly as already stated — applied to a boundary that did
+not exist when that principle, or this document, was first written.
+
 ### Stage: Intent Parsing
 
 - **Purpose:** Understand what the user is actually asking for, disambiguated from how they phrased it.
@@ -67,10 +210,38 @@ effort and its siblings) — they are still in scope for M0, just not for this s
 ### Stage: Research Planning
 
 - **Purpose:** Determine what needs to be researched to responsibly satisfy the `RequirementSpec`.
-- **Input:** `RequirementSpec`
+- **Input:** `RequirementSpec`, plus an optional `MemoryContext` — produced specifically for
+  Research Planning by the MemoryContext Producer boundary above, bound to the current
+  `RequirementSpec` version, the current `RunContext` (or its explicit absence), and this stage's
+  own retrieval purpose. `MemoryContext` absence, an empty retrieval, or MIHVER Brain being
+  unavailable must never block Research Planning — it proceeds exactly as it would with no memory
+  system at all.
 - **Output:** `ResearchPlan`
-- **Allowed to decide:** What questions need answers, what categories of technology are in scope, what sources are authoritative enough to consult, and what counts as sufficient evidence coverage for this plan.
-- **Not allowed to decide:** The answers themselves; which technology is best.
+- **Allowed to decide:** What questions need answers, what categories of technology are in scope,
+  what sources are authoritative enough to consult, and what counts as sufficient evidence coverage
+  for this plan — decided on `RequirementSpec`'s own authority alone. Where an admitted
+  `MemoryContext` entry is used at all, it is authorized only at the `DISCOVERY_ATTENTION` influence
+  tier: it may **add** research questions worth checking, technology categories worth considering,
+  or candidate directions worth investigating, beyond what `RequirementSpec` alone already requires.
+  Any such addition must be additive (it never narrows or substitutes for `RequirementSpec`-derived
+  coverage) and provenance-visible — `ResearchPlan`'s own future contract must be able to show that a
+  specific question, category, or direction originated from a cited `MemoryContext` entry, without
+  this document fixing the field or serialization that records it. For a `global`-scoped entry
+  specifically, the MemoryContext Producer's admission is mechanical scope-tag equality only (see
+  above) — that is never itself confirmation that the entry's content actually generalizes to the
+  current project. Research Planning must independently confirm a `global`-scoped entry's content is
+  genuinely project-agnostic before using it with this content-shaping effect; an entry it cannot so
+  confirm is not used for this purpose.
+- **Not allowed to decide:** The answers themselves; which technology is best. Memory must never
+  cause Research Planning to remove or skip a `RequirementSpec`-derived research question, narrow
+  required research coverage, establish an answer as true, determine technology eligibility,
+  determine which technology is best, determine architecture, change a Requirement, or change user
+  intent — nor may a `MemoryContext` entry be treated as current Evidence. Research Planning's own
+  existing authority over which sources count as authoritative and what evidence coverage is
+  sufficient is exercised solely from `RequirementSpec`; it is never delegated to, weakened by, or
+  shared with memory merely because a `MemoryContext` was produced for this invocation. A
+  `MemoryContext` entry may suggest where else to look; it never decides how trustworthy an answer
+  is.
 
 ### Stage: Research + Evidence Collection
 
@@ -111,6 +282,21 @@ effort and its siblings) — they are still in scope for M0, just not for this s
 - **Output:** `MihverArchitectureSpec`
 - **Allowed to decide:** How the decision's incorporated content is represented as a complete, self-contained spec.
 - **Not allowed to decide:** Anything about provisioning, execution, or runtime behavior of the spec — that is out of scope for M0; any architectural tradeoff not already settled by the `ArchitectureDecision`.
+
+### Cross-Cutting: MemoryContext Consumption Remains Otherwise Disabled
+
+Research Planning (above) is the only stage in this document whose declared `Input:` list includes
+`MemoryContext`. Intent Parsing, Requirement Derivation, Research + Evidence Collection, Technology
+Candidate Identification, Architecture Synthesis, Evaluation and Decision, and Specification
+Generation each keep exactly the `Input:` list already stated for them above, unchanged — none of
+them may consume `MemoryContext`, or query MIHVER Brain in any form, until this document is
+separately amended again to declare it for that specific stage.
+
+This document also does not, by itself, authorize citing a `MemoryContext` entry as the premise of
+an Inferred Claim, a Requirement-Level Inference, or a memory-informed R-19 default — each of those
+remains gated behind its own separate, narrower amendment to `INTENT_SPEC.md` or
+`REQUIREMENT_SPEC.md` (`ADR-0004`'s dependencies B, C, and D respectively), neither performed nor
+pre-authorized here. `INTENT_SPEC.md` and `REQUIREMENT_SPEC.md` are unchanged by this document.
 
 ### Cross-Cutting: Stage Failure and Revision
 

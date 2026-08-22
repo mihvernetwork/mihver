@@ -5,111 +5,112 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-PROJECT-STATE-SYNC-AFTER-ADR-0004
+M0-FOUNDATION-MEMORY-BOUNDARY-A
 
 ## Objective
 
-Pure durable-state synchronization after `ADR-0004` (Memory Context Authority Boundary, PR #15) was
-merged to `main`. No architecture-semantic change: `ADR-0004` itself, `M0_SCOPE.md`, `INTENT_SPEC.md`,
-and `REQUIREMENT_SPEC.md` are not touched; the Foundation Memory Amendment (`ADR-0004`'s "dependency
-A") is not started, and no `mihver-brain` or memory-runtime work is performed. This task only brings
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CURRENT_TASK.md`, and
-`.project/REVIEW_STATE.md` in line with what is already true on `main`.
+Implement `ADR-0004`'s (Memory Context Authority Boundary) **dependency A only**: the core
+`M0_SCOPE.md` foundation amendment that makes `MemoryContext` integration real without enabling any
+narrower dependency (B/C/D). This task deliberately, explicitly amends the frozen M0 foundation, as
+directly authorized by the human. Dependency A consists of three parts, all delivered:
+
+1. a non-memory `RunContext` boundary (a cross-cutting run/invocation identity anchor, distinct from
+   `UserIdea` as M0's sole milestone semantic input);
+2. the cross-cutting `MemoryContext Producer` boundary (inputs, output, allowed/not-allowed
+   authority, lifecycle/failure semantics, Principle 3 compliance note);
+3. explicit stage declaration for exactly one `MemoryContext` consumer — Research Planning, the
+   first and only newly-authorized consuming stage, restricted to `DISCOVERY_ATTENTION`-tier,
+   additive, provenance-visible use.
+
+`ADR-0004` itself remains **Proposed** — this task does not change its `## Status` field. Dependency
+B (`INTENT_SPEC.md` Inference-premise), dependency C (`REQUIREMENT_SPEC.md` Requirement-Level
+Inference premise), and dependency D (`REQUIREMENT_SPEC.md` R-19 memory-informed-rationale
+provenance) are **not** implemented by this task and remain structurally disabled.
 
 ## Branch / Base
 
-Branch: `chore/project-state-sync-after-adr-0004`
-Base: `main` (`aa1fe66` — the actual current `main` `HEAD` at task start, verified directly via
-`git status`, `git log --oneline --decorate --graph -15`, and `npm run context` before branching;
-not assumed from prior conversation)
+Branch: `m0/foundation-memory-boundary-a`
+Base: `main` at `9fb4ab5e0f64b050c9399a2d24376b688d44d082` (verified via `git status`/`git log` before
+branching, matching this task's explicit instruction).
 
 ## Status
 
-**Complete.** Verified actual repository reality before making any change:
+**Complete, pending human review.**
 
-- `git status` on `main`: clean, `HEAD` at `aa1fe66`, branch up to date with `origin/main`.
-- `git log --oneline --decorate --graph -15`: confirms `aa1fe66` ("docs: define memory context
-  authority boundary") is the tip commit on `main`/`origin/main`/`origin/HEAD`, directly following
-  `0ec25a0` (the prior `PROJECT-STATE-RECONCILE-POST-STEP-03A` checkpoint).
-- `gh pr view 15 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`: confirmed
-  `state: MERGED`, `mergedAt: 2026-08-22T11:23:44Z`, `mergeCommit.oid:
-  aa1fe66072ae780a910eb458f8263c4886fd37fd` — the full SHA whose short form matches `main`'s actual
-  `HEAD` exactly. Not assumed from prior conversation, per this task's explicit instruction.
-- `git show --stat aa1fe66` / `git diff 0ec25a0 aa1fe66 --stat`: confirmed the merge introduced
-  exactly five files — `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
-  `docs/contracts/MEMORY_CONTEXT.md`, `docs/examples/MEMORY_CONTEXT_CASES.md`,
-  `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` — no frozen foundation document, no
-  `mihver-brain` file, no schema or runtime file.
-- Direct read of `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own `## Status` field
-  at this commit: **Proposed** (and `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`'s: also
-  **Proposed**) — confirmed by direct read, not inferred from prior-session summaries.
+- Authored the full `docs/foundation/M0_SCOPE.md` amendment directly (per
+  `AGENT_POLICY.md`'s documentation/architecture-milestone default: Codex read-only review, Claude
+  sole file author), adding: a `RunContext` clarification to "Milestone Input and Output"; a new
+  "Cross-Cutting: RunContext (Run/Invocation Scope Anchor)" section; a new "Cross-Cutting:
+  MemoryContext Producer Boundary" section (with "MemoryContext Lifecycle and Failure" and
+  "Principle 3 Compliance" subsections); an amended "Stage: Research Planning" `Input:`/`Allowed to
+  decide:`/`Not allowed to decide:` set; and a new "Cross-Cutting: MemoryContext Consumption Remains
+  Otherwise Disabled" section naming every other stage as unauthorized and confirming
+  `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` are untouched.
+- Dispatched four independent read-only Codex reviewers by axis, per this task's explicit
+  instruction: A (Principle 3 / Stage Isolation), B (Producer Authority), C (Research Planning Least
+  Authority), D (Cross-Document Contradiction).
+  - **A** found one blocking issue: the "Principle 3 Compliance" paragraph's parenthetical
+    ambiguously read as if Research Planning's declared input covered `RunContext`/Brain, not only
+    `MemoryContext`. Independently verified against the actual text — confirmed real. Fixed by
+    stating unconditionally that `RunContext`/Brain are never named in any stage's `Input:` list.
+  - **B** found one blocking issue: the Research Planning amendment never required Research Planning
+    to independently confirm a `global`-scoped entry's content is genuinely project-agnostic before
+    using it with content-shaping effect, a safeguard `MEMORY_CONTEXT.md`'s "Cross-Project Scope
+    Verification" section requires of the consuming stage. Independently verified by direct re-read
+    of that section — confirmed real and applicable, since Research Planning's only permitted memory
+    use *is* content-shaping `DISCOVERY_ATTENTION`. Fixed by adding this confirmation requirement to
+    Research Planning's `Allowed to decide:` bullet.
+  - **C** found no defect on the least-authority axis — independently reviewed its stated reasoning
+    against the actual amended text and agreed no fix was needed.
+  - **D** found one non-blocking wording drift: "an M0 invocation also carries a `RunContext`" read
+    as mandatory, before the explicit-absence allowance appeared two paragraphs later. Independently
+    verified and fixed to "a `RunContext` — or its explicit absence" at first mention.
+  - Claude independently verified every finding against the actual file contents and the cited
+    source documents (`ADR-0004`, `MEMORY_CONTEXT.md`) before applying any fix — findings were not
+    accepted by reviewer say-so alone, and none was rejected by majority vote (there was no
+    disagreement among reviewers to adjudicate).
+- All three confirmed findings fixed; re-ran validation after fixing.
 
-Updated durable state accordingly:
-
-- **`PROJECT_STATE.md`** — added `ADR-0004` / Memory Context Authority Boundary as a new Frozen
-  Steps/Checkpoints entry (merged via PR #15, squash commit `aa1fe66`), recorded its Status
-  accurately as **Proposed**, stated explicitly that `MemoryContext` is design-only and not
-  operational or authorized for any stage yet, and added a matching Open Item and Next-Authorized-
-  Action note that the Foundation Memory Amendment (dependency A) remains future, separately
-  human-authorized work — not started or pre-authorized by this entry. Also removed a now-stale
-  parenthetical in the old "Next Authorized Action" text that referred to "a prospective `ADR-0004`"
-  as not-yet-existing, since `ADR-0004` now exists and is merged.
-- **`DECISIONS_LOG.md`** — appended one new entry recording the verified PR #15 merge fact
-  (squash commit `aa1fe66072ae780a910eb458f8263c4886fd37fd`, verified via `gh pr view` and `git
-  log`/`git status`) and `ADR-0004`'s Status as merged (**Proposed**, confirmed by direct file
-  read). No existing entry edited, reordered, or removed, per this log's append-only policy. No
-  approval-decision quote fabricated — no prior entry recorded one for this merge, so only the
-  independently-verifiable merge fact is recorded, mirroring the PR #13 entry's own established
-  pattern for an unlogged merge.
-- **`CURRENT_TASK.md`** (this file) — fully rewritten to describe this task on this branch, per its
-  own branch-scoped update policy; the previous content (`M0-ADR-0004-FINAL-TAXONOMY-CLOSURE`, on
-  the now-merged `m0/adr-0004-memory-context-authority` branch) is superseded, not a history of
-  past tasks per this file's own preamble — its detail remains available in `git log`/PR #15's own
-  history, not duplicated here.
-- **`REVIEW_STATE.md`** — the four prior rounds' "Latest Review" content (branch
-  `m0/adr-0004-memory-context-authority`) is now stale/historical per this file's own branch/task
-  scoping rule (declared branch no longer matches the checked-out branch); condensed into a
-  History entry, and a new "Latest Review" section written for this task once its own reviewer
-  round completes.
-
-`npm test`: 32/32 (unaffected — no contract/schema/runtime file touched by this task). `git diff
-main --stat`: exactly the four allowed `.project/` files. `git diff main --`: confirmed no frozen
-document, ADR, contract, schema, or `mihver-brain` file changed. `git diff --check`: clean. No
-existing `DECISIONS_LOG.md` entry modified or deleted. No future task (the Foundation Memory
-Amendment or any `ADR-0004` semantic amendment) silently authorized anywhere in this change.
+`npm test`: 32/32. `git diff --check`: clean (only a benign CRLF-normalization warning, exit 0).
+`git diff main --stat` / `git diff main --name-only`: exactly one file changed,
+`docs/foundation/M0_SCOPE.md`. No schema, runtime, `mihver-brain`, `INTENT_SPEC.md`, or
+`REQUIREMENT_SPEC.md` file touched.
 
 ## Allowed Scope
 
-Update only:
-- `.project/PROJECT_STATE.md`
-- `.project/CURRENT_TASK.md`
-- `.project/REVIEW_STATE.md`
-- `.project/DECISIONS_LOG.md` (append only)
+- Semantic change: `docs/foundation/M0_SCOPE.md` (used).
+- Operational updates: `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` (this update).
 
-Forbidden (none touched): `ADR-0004`, `M0_SCOPE.md`, `INTENT_SPEC.md`, `REQUIREMENT_SPEC.md`, any
-other frozen foundation document, `../mihver-brain/**`, `schemas/**`, `tests/**`, `scripts/**`.
+Forbidden and confirmed untouched: `docs/foundation/PRINCIPLES.md`, `docs/foundation/VISION.md`,
+`docs/adr/ADR-0001-ARCHITECTURE-COMPILER-MODEL.md`, `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`,
+`docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`,
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/USER_IDEA.md`,
+`docs/contracts/INTENT_SPEC.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/contracts/MEMORY_CONTEXT.md`, `docs/examples/**`, `schemas/**`, `tests/**`, `scripts/**`,
+`../mihver-brain/**`.
 
 ## Required Context
 
-- `CLAUDE.md`, `docs/development/AGENT_POLICY.md`'s "Operational State Scope",
-  `docs/development/REVIEW_PROTOCOL.md`
-- `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md` (prior content, read directly before
-  editing)
-- Live `git`/`gh` state (see Status above) — not prior-conversation assumptions
+- `CLAUDE.md`, `docs/foundation/PRINCIPLES.md`, `docs/foundation/M0_SCOPE.md` (pre-amendment),
+  `docs/adr/ADR-0001-ARCHITECTURE-COMPILER-MODEL.md`, `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`,
+  `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`,
+  `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` (read in full),
+  `docs/contracts/MEMORY_CONTEXT.md` (read in full), `docs/examples/MEMORY_CONTEXT_CASES.md` (read
+  in full), `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`.
+- Live `git` state (`git status`, `git log`) — not prior-conversation assumptions.
 
 ## Validation
 
 - `npm test`: 32/32.
-- `npm run context`: reports `main`, clean tree, `HEAD` matching the verified merge commit.
 - `git diff --check`: clean.
-- `git diff main --stat` / `git diff main --`: exactly the four allowed `.project/` files; no
-  frozen document, ADR, contract, schema, or `mihver-brain` file touched.
-- One lightweight read-only Codex reviewer (State Authority / Handoff Integrity) — see
-  `REVIEW_STATE.md`'s "Latest Review" for its finding(s) and disposition.
+- `git diff main --stat` / `git diff main --`: exactly `docs/foundation/M0_SCOPE.md`.
+- Four independent read-only Codex reviewers (A/B/C/D by axis, see Status above) — see
+  `REVIEW_STATE.md`'s "Latest Review" for full findings and disposition.
 
 ## Next Gate
 
-A PR from the `devSerdar` fork to `mihvernetwork/mihver:main`, title `chore: sync project state
-after ADR-0004`, is to be opened per this task's explicit instruction. Do not merge. Human review of
-that PR is the next gate; it does not itself authorize the Foundation Memory Amendment or any other
-future work named above.
+A PR from the `devSerdar` fork to `mihvernetwork/mihver:main`, title `M0: integrate core
+MemoryContext boundary into foundation`, is to be opened per this task's explicit instruction. Do
+not merge. Human review of that PR is the next gate; it authorizes only this dependency-A amendment
+— it does not authorize dependencies B/C/D, does not move `ADR-0004` to Accepted, and does not
+authorize any `mihver-brain`, schema, or runtime memory-integration work.
