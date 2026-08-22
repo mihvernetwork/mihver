@@ -18,14 +18,16 @@
         "entry_id": "entry-dup-1",
         "source": { "brain_memory_id": "brain-a", "brain_type": "pattern", "title": "A", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
         "content": "Content A.",
-        "classification": { "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type pattern", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "admission_reason": "scope global; brain_status active with no superseded_by link; classified non-historical at DISCOVERY_ATTENTION",
+        "classification": { "semantic_authority_class": "prior_architecture_outcome", "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type pattern", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
         "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
       },
       {
         "entry_id": "entry-dup-1",
         "source": { "brain_memory_id": "brain-b", "brain_type": "pattern", "title": "B", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-02T00:00:00Z", "brain_updated_at": "2026-01-02T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
         "content": "Content B.",
-        "classification": { "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type pattern", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "admission_reason": "scope global; brain_status active with no superseded_by link; classified non-historical at DISCOVERY_ATTENTION",
+        "classification": { "semantic_authority_class": "prior_architecture_outcome", "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type pattern", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
         "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
       }
     ],

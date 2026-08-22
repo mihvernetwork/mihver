@@ -18,7 +18,8 @@
         "entry_id": "entry-inbox-bad",
         "source": { "brain_memory_id": "brain-inbox", "brain_type": "inbox", "title": "Unfiled capture", "scope": "global", "brain_status": "draft", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "low", "supersedes": null, "superseded_by": null, "provenance": { "source": "cli", "author": "claude" } },
         "content": "maybe the user wants offline support?",
-        "classification": { "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "unclassified inbox capture", "classification_method": "heuristic", "classification_ambiguity": "unfiled, no classification is defensible", "influence_tier": "DISCOVERY_ATTENTION" },
+        "admission_reason": "deliberately invalid: an inbox-typed record must never be admitted at all",
+        "classification": { "semantic_authority_class": "unclassified", "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "unclassified inbox capture", "classification_method": "heuristic", "classification_ambiguity": "unfiled, no classification is defensible", "influence_tier": "DISCOVERY_ATTENTION" },
         "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
       }
     ],

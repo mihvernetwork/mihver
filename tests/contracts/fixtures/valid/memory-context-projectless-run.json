@@ -29,7 +29,9 @@
           "provenance": { "source": "manual", "author": "claude" }
         },
         "content": "Background job retries should use exponential backoff with jitter.",
+        "admission_reason": "scope global admitted -- the only eligible scope with run_context explicitly absent; brain_status active with no superseded_by link; content classified as a non-historical engineering pattern authorized at DISCOVERY_ATTENTION",
         "classification": {
+          "semantic_authority_class": "prior_architecture_outcome",
           "is_historical_user_statement": false,
           "historical_user_category": null,
           "historical_citation": null,

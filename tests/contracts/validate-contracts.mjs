@@ -165,6 +165,9 @@ function validateIntentSpec(document) {
 }
 
 function validateMemoryContextClassification(label, classification) {
+  if (classification.semantic_authority_class.trim().length === 0) {
+    fail(`${label} semantic_authority_class must not be whitespace-only`);
+  }
   if (classification.is_historical_user_statement) {
     if (classification.historical_user_category === null) {
       fail(`${label} is a historical user statement and must carry historical_user_category "A" or "B"`);
@@ -200,7 +203,11 @@ function validateMemoryContext(document) {
     ...document.excluded_entries.map((entry) => entry.entry_id)
   ];
   unique(allEntryIds, "entry_id values across admitted_entries and excluded_entries");
-  unique(document.admitted_entries.map((entry) => entry.source.brain_memory_id), "brain_memory_id values across admitted_entries");
+  const allBrainMemoryIds = [
+    ...document.admitted_entries.map((entry) => entry.source.brain_memory_id),
+    ...document.excluded_entries.map((entry) => entry.source.brain_memory_id)
+  ];
+  unique(allBrainMemoryIds, "source.brain_memory_id values across admitted_entries and excluded_entries");
 
   const runContext = document.run_context;
   for (const entry of document.admitted_entries) {

@@ -32,6 +32,7 @@
         "content": "note to self: check this later",
         "exclusion_reason": "classification attempted but not defensible even at DISCOVERY_ATTENTION -- content gives no basis to determine what technology, category, or statement this refers to; per the Classification Fail-Closed Rule, an entry that cannot clear even the lowest content-bearing tier is excluded entirely rather than admitted under a best-guess classification",
         "classification": {
+          "semantic_authority_class": "unclassifiable",
           "is_historical_user_statement": false,
           "historical_user_category": null,
           "historical_citation": null,

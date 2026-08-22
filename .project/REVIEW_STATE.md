@@ -15,129 +15,114 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: M0-MEMORY-CONTEXT-SCHEMA-FOUNDATION
-Branch: `m0/memory-context-schema-foundation`
-PR: to be opened against `mihvernetwork/mihver:main` (title `M0: add MemoryContext schema
-foundation`) — not yet created as of this entry
+Task: MEMORY-CONTEXT-SCHEMA-CONTRACT-CLOSURE
+Branch: `m0/memory-context-schema-foundation` (continued)
+PR: `mihvernetwork/mihver#20` (`M0: add MemoryContext schema foundation`) — existing, open, continued
+(not newly opened by this task)
 
-Creates the first machine-readable JSON Schema and deterministic validator for the Accepted
-`MemoryContext` semantic contract (`schemas/m0/memory-context.schema.json`, a `validateMemoryContext`
-function in `tests/contracts/validate-contracts.mjs`, 22 new fixtures, and a new
-`docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`), plus a minimal `ROADMAP.md`/`CONTEXT_INDEX.md`
-sequencing correction. Does not enable any new `MemoryContext` consumer, does not implement Brain
-retrieval/runtime, and does not touch `MEMORY_CONTEXT.md`, `ADR-0004`, `M0_SCOPE.md`,
-`INTENT_SPEC.md`, `intent-spec.schema.json`, or `REQUIREMENT_SPEC.md`.
+A narrow contract→schema closure pass on top of PR #20, closing four structural gaps an external
+review found — re-verified directly against `MEMORY_CONTEXT.md`'s actual text before implementing
+anything; all four were genuinely supported. Adds `classification.semantic_authority_class`/
+`exclusionClassification.semantic_authority_class` (Axis 3, independent of `brain_type`/
+`historical_user_category`/`influence_tier`, deliberately an open non-empty string not a closed
+enum), an explicit `admission_reason` on `admittedEntry` (symmetric with `exclusion_reason`), a
+required non-null `freshness` on `excludedEntry` (previously nullable), and a `source.brain_memory_id`
+uniqueness check extended across the combined `admitted_entries`+`excluded_entries` sets (previously
+admitted-only). Full corpus sweep performed: every existing `MemoryContext` fixture (valid and
+invalid) updated to the corrected required shape, each invalid fixture re-confirmed to still fail for
+its own originally-declared reason. Does not redesign `ADR-0004`, modify `MEMORY_CONTEXT.md`, enable
+Dependency B/C/D, or implement runtime/Brain integration.
 
-### Review — three fresh independent read-only Codex reviewers
+### Review — two fresh independent read-only Codex reviewers
 
-Per this task's explicit instruction: Reviewer A (Schema ↔ Accepted Contract Coverage), Reviewer B
-(Epistemic Authority / Provenance), Reviewer C (Lifecycle / Evolvability / Future References). All
-three independently converged on overlapping findings; every finding was independently re-verified
-by Claude by directly re-reading the cited `MEMORY_CONTEXT.md` text and re-tracing the actual schema/
-validator code before any fix was applied.
+Per this task's explicit instruction: Reviewer A (Classification Axis Separation) and Reviewer B
+(M-14 Audit Completeness).
 
-- **M-04 (superseded record never admitted as live) — confirmed by Reviewers A and C.** The
-  validator checked only `source.brain_status === "superseded"`; `MEMORY_CONTEXT.md`'s M-04
-  explicitly names a second, independent disqualifying signal ("`status: superseded`, **or linked
-  via** `supersedes`/`superseded_by`") the validator never examined — an admitted entry could carry
-  `brain_status: "active"` with a non-null `superseded_by` and still pass. Independently re-verified
-  by quoting M-04's exact text. Fixed: an admitted entry with a non-null `superseded_by` is now also
-  rejected. New invalid fixture (`memory-context-superseded-by-link-admitted.json`) proves the fix.
-- **M-11 / Historical User Provenance Gate type-independence — confirmed by Reviewers A and B.**
-  The validator forced every `lesson`/`playbook`-typed entry to `influence_tier: "PROCESS_ONLY"`
-  unconditionally on stored `brain_type` alone. Independently re-verified against `MEMORY_CONTEXT.md`'s
-  "Semantic Authority Classes" section, which explicitly states every classification word including
-  "always"/"permanently" is conditioned on content inspection, and that only `inbox` is a genuine,
-  unconditional, type-determined exclusion — a misfiled `lesson`/`playbook` whose content
-  content-inspection reveals as a historical user statement is redirected to the Category A/B gate
-  exactly as a misfiled `decision`/`reference` would be. The prior code silently reintroduced the
-  "lesson/playbook are an unconditional exception" reading the contract explicitly rejects — a real
-  authority-suppression defect (it could force a Category A entry down to `PROCESS_ONLY`) and,
-  structurally, the same class of error as an authority-inflation bug. Fixed: the `PROCESS_ONLY`-only
-  rule is now conditioned on `!classification.is_historical_user_statement`. New valid fixture
-  (`memory-context-misfiled-lesson-category-a-semantic-premise.json`) proves a misfiled `lesson` can
-  now correctly reach `SEMANTIC_PREMISE` via genuine Category A reclassification.
-- **M-14 (audit-trail completeness for excluded entries) — confirmed by Reviewer A.** `excludedEntry`
-  carried only `entry_id`/`brain_memory_id`/`brain_type`/`exclusion_reason`, missing the retained
-  content copy, scope/provenance, and (where actually attempted) classification/freshness facts M-14
-  requires for "which memories were retrieved" generally, not only admitted ones. Independently
-  re-verified against M-14's literal list. Fixed: redesigned `excludedEntry` with a new
-  `excludedSourceRecord` $def (full source metadata, `inbox` permitted) and `exclusionClassification`
-  $def (identical to `classification` minus `influence_tier`, since an excluded entry is never
-  assigned a tier) — both nullable, since some exclusions (`inbox`-type, mechanical scope mismatch)
-  genuinely happen before any classification is attempted, per Cases 3/12/13. New valid fixture
-  (`memory-context-excluded-fail-closed-unclassifiable.json`) exercises the case where classification
-  *was* attempted (non-null) but no tier could be defensibly assigned.
-- **M-19 mapping overclaim — confirmed by Reviewers A and B; Reviewer B constructed a working
-  counterexample.** The mapping document classified M-19 "Validator-enforced." Reviewer B constructed,
-  on paper, a document whose `classification_basis` prose itself describes a competing/ambiguous
-  reading while the structured `classification_ambiguity` field is left `null`, claiming
-  `DECISION_OPTION` — the validator checks consistency *between* structured fields, not whether
-  free-text `classification_basis` is honestly reflected in them, so this passes. Independently
-  reconstructed the counterexample against the actual schema/validator and confirmed it validates.
-  Fixed: reclassified M-19 (and, for the identical reason — a real, named, unenforceable remnant of
-  each full invariant — M-11 and M-16) from "Validator-enforced" to "Not enforceable at this layer,"
-  consistent with this document's own stated discipline that a row stays in that class even given a
-  strong partial guard. No code fix is possible or appropriate for the honesty-dependent gap itself
-  (verifying prose-to-field consistency is exactly the kind of semantic judgment Principle 6/7 reserve
-  from a deterministic layer); the mapping document now says so explicitly instead of overclaiming.
-- **Fixture accuracy — confirmed by Reviewer B.** Three valid fixtures declared
-  `classification_method: "deterministic"` while their own `classification_basis` text described
-  reading/interpreting body content — heuristic by the contract's own Principle-6-grounded
-  definition. Fixed: corrected to `"heuristic"` in all three.
-- Every other check across all three reviewers (RunContext presence/absence disjointness, open
-  `consuming_stage` identifier, retrieval-outcome cardinality, entry-identity uniqueness, the
-  Category A/B gate's genuine type-independence for `reference`/`pattern`/`incident`/`project`, the
-  identity boundary preventing `pattern`/`incident`/`reference` from ever reaching `SEMANTIC_PREMISE`,
-  Brain-confidence/relevance structural separation from authority, `INTENT_SPEC.md`/
-  `REQUIREMENT_SPEC.md`/`intent-spec.schema.json` untouched, `ROADMAP.md` not claiming the schema
-  exists pre-merge) was independently re-checked and confirmed clean — not merely trusted from the
-  reviewers' own "Pass" verdicts.
+- **Reviewer B — no findings across all 11 checks.** Independently re-verified by Claude: combined
+  `brain_memory_id` uniqueness genuinely spans both dispositions; retained content/scope/provenance
+  present on both entry shapes; freshness required and non-null on both; explicit admission/exclusion
+  rationale on both; the new dual-disposition invalid fixture (`memory-context-same-brain-memory-
+  admitted-and-excluded.json`) actually exercises and fails for that exact scenario; and
+  pre-classification exclusions (`inbox`-type, mechanical scope mismatch) retain every unrelated
+  mechanical audit fact even with `classification: null`.
+- **Reviewer A — one confirmed, fixed finding; seven checks passed.** `semantic_authority_class`'s
+  `minLength: 1` constraint does not reject a whitespace-only value (e.g. `"   "`), which is
+  lexically non-empty but preserves no actual classification, undermining the "assigned at
+  production" requirement Axis 3 exists to record. Independently re-verified: real, and specific to
+  the field this task introduces — not a pre-existing systemic pattern that would require touching a
+  forbidden file (`intent-spec.schema.json` uses the identical `minLength: 1` convention throughout
+  its own pre-existing fields; fixing it there would be out of scope and unnecessary churn). Fixed
+  with a targeted validator check (`classification.semantic_authority_class.trim().length === 0` →
+  fail), scoped only to the new field, with a new invalid fixture
+  (`memory-context-whitespace-only-semantic-authority-class.json`) proving it. The other seven checks
+  (genuine independent-axis existence and exercise via fixtures where `brain_type`/
+  `semantic_authority_class`/`historical_user_category`/`influence_tier` all differ meaningfully;
+  `brain_type` remaining a weak prior — the lesson/playbook rule is conditioned on
+  `is_historical_user_statement`, never on stored type alone; Historical User Provenance Gate
+  independence; `influence_tier` independence; no closed taxonomy invented; M-19 fail-closed behavior
+  intact with no new bypass; fixture accuracy) were independently re-verified and confirmed clean.
 
-`npm test`: 54/54 (32 original + 9 valid + 13 invalid `MemoryContext` fixtures). `git diff --check`:
-clean. `git diff main --stat`: exactly three modified files (`.project/CONTEXT_INDEX.md`,
-`ROADMAP.md`, `tests/contracts/validate-contracts.mjs`) plus the new untracked files
-(`schemas/m0/memory-context.schema.json`, `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`,
-`tests/contracts/fixtures/{valid,invalid}/memory-context-*.json`,
-`.project/CURRENT_TASK.md`/`REVIEW_STATE.md`). Targeted `git diff main --stat` against every
-forbidden file (`MEMORY_CONTEXT.md`, `ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
-`INTENT_SPEC.md`, `intent-spec.schema.json`, `REQUIREMENT_SPEC.md`, `M0_SCOPE.md`, `PRINCIPLES.md`,
-`VISION.md`) produced empty output, confirming none changed. No `mihver-brain` file touched. No new
-`MemoryContext` consumer authorized; no Dependency B/C/D implemented; no runtime/MCP/network code
-introduced.
+`npm test`: 59/59 (32 original + 27 `MemoryContext` fixtures). `git diff --check`: clean. Targeted
+`git diff main --stat` against every forbidden file (`MEMORY_CONTEXT.md`,
+`ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `M0_SCOPE.md`, `INTENT_SPEC.md`,
+`intent-spec.schema.json`, `REQUIREMENT_SPEC.md`) produced empty output. `ROADMAP.md`/
+`CONTEXT_INDEX.md` correctly left untouched — the sequencing PR #20 already recorded did not need
+correction. No `mihver-brain` file touched. No new `MemoryContext` consumer authorized; no
+Dependency B/C/D implemented; no runtime/MCP/network code introduced.
 
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** Neither STOP condition
-(`SEMANTIC_AMENDMENT_REQUIRED` / `SCHEMA_DESIGN_GAP`) applies: every finding was a schema/validator/
-documentation defect fixable without touching the Accepted semantic contract, and every fix was
-independently re-verified against the actual contract text and re-confirmed by a full test re-run
-(54/54) after each round of changes.
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** All four confirmed findings were genuinely
+grounded in the Accepted contract (none was rejected), and Reviewer A's one additional finding was
+fixed with a narrowly-scoped, task-appropriate validator check. The full corpus sweep confirms no
+existing fixture accidentally now passes/fails for an unintended reason.
 
 ## Required Changes
 
-None remaining — all five confirmed finding clusters (M-04, M-11, M-14, M-19-and-related
-reclassifications, and the three mislabeled fixtures) are fixed by this same change set, each with a
-new or corrected fixture demonstrating the fix.
+None remaining — all four confirmed findings, plus Reviewer A's whitespace-guard finding, are fixed
+by this same change set, each with a new or corrected fixture demonstrating the fix.
 
 ## Fixes Applied
 
 See "Latest Review" above for the full list. Applied to `schemas/m0/memory-context.schema.json`
-(added `excludedSourceRecord`/`exclusionClassification` $defs, redesigned `excludedEntry`),
-`tests/contracts/validate-contracts.mjs` (added the `superseded_by` check, conditioned the
-lesson/playbook rule on `is_historical_user_statement`, extended classification-consistency checks
-to `excluded_entries`), three existing valid fixtures (`classification_method` correction), the
-existing `memory-context-excluded-entries-audit-trail.json` fixture (updated to the redesigned
-`excludedEntry` shape), and `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md` (M-04/M-11/M-14/M-16/
-M-19 rows rewritten). Three new fixtures added, each proving one specific fix.
+(added `semantic_authority_class` to `classification`/`exclusionClassification`, added
+`admission_reason` to `admittedEntry`, made `excludedEntry.freshness` required/non-null),
+`tests/contracts/validate-contracts.mjs` (extended `brain_memory_id` uniqueness to the combined
+admitted+excluded set, added the whitespace-only `semantic_authority_class` guard), the full existing
+`MemoryContext` fixture corpus (corpus sweep — every valid and invalid fixture updated to the
+corrected required shape), six new fixtures (one dual-disposition invalid fixture, four field-cannot-
+disappear invalid fixtures, one whitespace-guard invalid fixture), and
+`docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md` (new "Seven Independent Authority Axes, as
+represented" section, M-14 row rewritten to remove the "implicit admission rationale" claim, "Stable
+identity" section extended with the canonical Brain-memory-identity partition note).
 
 ## Pending Human Gate
 
-Commit, push, and open one PR against `mihvernetwork/mihver:main`, title `M0: add MemoryContext
-schema foundation`, per this task's explicit instruction. Not merged by this task. Human review of
-that PR is the next gate; it authorizes only this schema/validator/fixture/mapping-doc foundation —
-not any new `MemoryContext` consumer, not Dependencies B/C/D, and not any Brain read adapter or
-runtime integration.
+Commit and push to the existing `m0/memory-context-schema-foundation` branch, per this task's
+explicit instruction. Do not open a new PR. Not merged by this task. Human review of PR #20 (now
+updated) is the next gate; it authorizes only this schema/validator/fixture/mapping-doc closure — not
+any new `MemoryContext` consumer, not Dependencies B/C/D, and not any Brain read adapter or runtime
+integration.
 
 ## History
+
+- 2026-08-23 — `M0-MEMORY-CONTEXT-SCHEMA-FOUNDATION` (PR #20, opened, not yet merged as of this
+  entry): created the first
+  machine-readable JSON Schema and deterministic validator for the Accepted `MemoryContext` semantic
+  contract (`schemas/m0/memory-context.schema.json`, a `validateMemoryContext` function, 22 new
+  fixtures, and `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`), plus a minimal `ROADMAP.md`/
+  `CONTEXT_INDEX.md` sequencing correction. Did not enable any new `MemoryContext` consumer, implement
+  Brain retrieval/runtime, or touch `MEMORY_CONTEXT.md`/`ADR-0004`/`M0_SCOPE.md`/`INTENT_SPEC.md`/
+  `intent-spec.schema.json`/`REQUIREMENT_SPEC.md`. Three independent read-only Codex reviewers
+  (Schema ↔ Accepted Contract Coverage; Epistemic Authority/Provenance; Lifecycle/Evolvability/Future
+  References) found five real, convergent defects, all independently re-verified by Claude and fixed:
+  an incomplete M-04 supersession check (missed `superseded_by`), an M-11 rule that unconditionally
+  forced `lesson`/`playbook` entries to `PROCESS_ONLY` (contradicting the contract's explicit
+  type-independence override), a missing audit trail for excluded entries (M-14), an M-19 mapping
+  overclaim (a constructed counterexample bypasses ambiguity detection via prose/field
+  inconsistency), and three fixtures with mislabeled `classification_method` values. `npm test`:
+  54/54. Verdict: `READY_FOR_HUMAN_REVIEW`. Moved here from "Latest Review" now that those sections
+  describe `MEMORY-CONTEXT-SCHEMA-CONTRACT-CLOSURE` instead, per this file's branch/task scoping —
+  both entries share branch `m0/memory-context-schema-foundation` and PR #20, since this was a
+  continuation, not a new branch. — branch `m0/memory-context-schema-foundation`
 
 - 2026-08-23 — `ADR-0004-ACCEPTANCE` (PR #19, merged, plus one follow-up state-hygiene push):
   moved `ADR-0004` (Memory Context Authority Boundary) from Proposed to Accepted, per its own

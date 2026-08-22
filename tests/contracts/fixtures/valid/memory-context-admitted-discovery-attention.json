@@ -29,7 +29,9 @@
           "provenance": { "source": "manual", "author": "claude" }
         },
         "content": "A prior architecture used a message queue for decoupling, and it worked well for that project's concurrency profile.",
+        "admission_reason": "scope global admitted against present run_context; brain_status active with no superseded_by link; content classified as a non-historical prior architecture outcome authorized at DISCOVERY_ATTENTION",
         "classification": {
+          "semantic_authority_class": "prior_architecture_outcome",
           "is_historical_user_statement": false,
           "historical_user_category": null,
           "historical_citation": null,

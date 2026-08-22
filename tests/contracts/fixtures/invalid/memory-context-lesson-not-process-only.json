@@ -18,7 +18,8 @@
         "entry_id": "entry-lesson-leak",
         "source": { "brain_memory_id": "brain-lesson-1", "brain_type": "lesson", "title": "Review coverage should be decomposed by invariant axis", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
         "content": "Review coverage should be decomposed by invariant axis.",
-        "classification": { "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type lesson", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "admission_reason": "deliberately invalid: a lesson-typed entry not reclassified as historical must be PROCESS_ONLY, not DISCOVERY_ATTENTION",
+        "classification": { "semantic_authority_class": "process_guidance", "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type lesson", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
         "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
       }
     ],

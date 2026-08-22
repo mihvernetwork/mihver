@@ -29,7 +29,9 @@
           "provenance": { "source": "manual", "author": "claude" }
         },
         "content": "User said (UserIdea v2, turn 7): 'our team will only accept an on-prem deployment option, never a managed cloud service.'",
+        "admission_reason": "scope matches run_context.project_slug; brain_status active with no superseded_by link; content inspection reclassified this reference-typed record as a Category A historical user statement, admitted at DISCOVERY_ATTENTION to shape a candidate clarification question",
         "classification": {
+          "semantic_authority_class": "historical_user_statement",
           "is_historical_user_statement": true,
           "historical_user_category": "A",
           "historical_citation": { "idea_id": "idea-support-inbox", "user_idea_version": 2, "turn_id": "turn-7", "quote": "our team will only accept an on-prem deployment option" },

@@ -29,7 +29,9 @@
           "provenance": { "source": "manual", "author": "claude" }
         },
         "content": "Weekly reporting was decided for this project.",
+        "admission_reason": "scope matches run_context.project_slug; brain_status active with no superseded_by link; ambiguous classification resolved toward the lower-authority Category B reading and admitted only at DISCOVERY_ATTENTION, per the Classification Fail-Closed Rule",
         "classification": {
+          "semantic_authority_class": "historical_user_statement",
           "is_historical_user_statement": true,
           "historical_user_category": "B",
           "historical_citation": null,

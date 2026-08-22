@@ -87,10 +87,14 @@
       "description": "The Accepted contract's per-entry classification, assigned at production, never left to the consuming stage. Ambiguity must resolve toward less authority, never more (M-19) -- enforced where mechanically decidable by the deterministic validator, not by JSON Schema alone.",
       "additionalProperties": false,
       "required": [
-        "is_historical_user_statement", "historical_user_category", "historical_citation",
+        "semantic_authority_class", "is_historical_user_statement", "historical_user_category", "historical_citation",
         "classification_basis", "classification_method", "classification_ambiguity", "influence_tier"
       ],
       "properties": {
+        "semantic_authority_class": {
+          "type": "string", "minLength": 1,
+          "description": "Production's own descriptive semantic authority classification (Axis 3 of MEMORY_CONTEXT.md's 'Seven Independent Authority Axes'), e.g. \"historical_user_statement\", \"prior_project_decision\", \"durable_project_description\", \"prior_architecture_outcome\", \"candidate_technology_knowledge\", \"process_guidance\". Deliberately an open, non-empty string, not a closed enum: MEMORY_CONTEXT.md's 'Semantic Authority Classes' table describes these classes narratively as production's own judgment call, not as a fixed closed taxonomy, and this field must not pretend otherwise. Independent from brain_type (a weak prior only, per M-18), historical_user_category (the separate Historical User Provenance Gate axis), and influence_tier (Axis 7) -- collapsing any of these into another reproduces the force/origin/confidence collapse ADR-0002 already forbids, one layer up."
+        },
         "is_historical_user_statement": { "type": "boolean", "description": "Whether production's own content inspection classifies this entry as describing a historical user statement -- decided by content inspection, never by brain_type alone (M-18)." },
         "historical_user_category": {
           "anyOf": [{ "const": "A" }, { "const": "B" }, { "type": "null" }],
@@ -118,11 +122,12 @@
     "admittedEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["entry_id", "source", "content", "classification", "freshness"],
+      "required": ["entry_id", "source", "content", "admission_reason", "classification", "freshness"],
       "properties": {
         "entry_id": { "$ref": "#/$defs/id", "description": "Stable identity for this entry within this MemoryContext, unique among every admitted_entries and excluded_entries entry_id in this artifact." },
         "source": { "$ref": "#/$defs/sourceRecord" },
         "content": { "type": "string", "minLength": 1, "description": "The memory's own content, retained as an actual copy at production time -- never merely a hash or pointer into Brain's mutable vault. This schema provides no hash-only or pointer-only alternative shape." },
+        "admission_reason": { "type": "string", "minLength": 1, "description": "Explicit retrieval rationale for why this entry was admitted (M-14's 'why it was admitted or excluded... for both outcomes'), symmetric with excludedEntry's exclusion_reason. Recorded as its own durable fact rather than left to be reconstructed later from scope/status/classification/tier, which would defeat M-14's audit purpose -- those fields remain independently required for their own reasons (mechanical checks, cited authority, etc.), not as a substitute for this one." },
         "classification": { "$ref": "#/$defs/classification" },
         "freshness": { "$ref": "#/$defs/freshness" }
       }
@@ -153,8 +158,9 @@
     "exclusionClassification": {
       "description": "Same fields as classification, minus influence_tier -- an excluded entry is never assigned an influence tier, since it was never admitted for any use. Present only when production actually attempted a classification before excluding (e.g. a fail-closed exclusion where even DISCOVERY_ATTENTION could not be defensibly assigned); null when exclusion happened before any classification was attempted at all (e.g. inbox-type exclusion, or a mechanical scope mismatch -- see M-06/M-16).",
       "type": "object", "additionalProperties": false,
-      "required": ["is_historical_user_statement", "historical_user_category", "historical_citation", "classification_basis", "classification_method", "classification_ambiguity"],
+      "required": ["semantic_authority_class", "is_historical_user_statement", "historical_user_category", "historical_citation", "classification_basis", "classification_method", "classification_ambiguity"],
       "properties": {
+        "semantic_authority_class": { "type": "string", "minLength": 1, "description": "Same discipline as classification.semantic_authority_class -- present whenever exclusionClassification itself is non-null (i.e. a classification was actually attempted before exclusion)." },
         "is_historical_user_statement": { "type": "boolean" },
         "historical_user_category": { "anyOf": [{ "const": "A" }, { "const": "B" }, { "type": "null" }] },
         "historical_citation": { "anyOf": [{ "$ref": "#/$defs/historicalCitation" }, { "type": "null" }] },
@@ -172,8 +178,8 @@
         "source": { "$ref": "#/$defs/excludedSourceRecord" },
         "content": { "type": "string", "minLength": 1, "description": "Retained actual copy, same discipline as an admitted entry's content -- Brain returns the full record for anything retrieved, whether ultimately admitted or excluded." },
         "exclusion_reason": { "type": "string", "minLength": 1 },
-        "classification": { "anyOf": [{ "$ref": "#/$defs/exclusionClassification" }, { "type": "null" }] },
-        "freshness": { "anyOf": [{ "$ref": "#/$defs/freshness" }, { "type": "null" }] }
+        "classification": { "anyOf": [{ "$ref": "#/$defs/exclusionClassification" }, { "type": "null" }], "description": "Null when exclusion happened before any classification was attempted (e.g. inbox-type exclusion, or a mechanical scope mismatch), since content inspection genuinely never occurred -- distinct from freshness below, which is always mechanically computable regardless of whether classification was attempted." },
+        "freshness": { "$ref": "#/$defs/freshness", "description": "Required, never null, even for an excluded entry: freshness is a purely mechanical, age-based fact derived from Brain's own created/updated timestamps and this invocation's retrieval time (M-05) -- it requires no content inspection at all, unlike classification, so there is no legitimate case where a retrieved-but-excluded candidate lacks a computable freshness judgment (M-14)." }
       }
     }
   }

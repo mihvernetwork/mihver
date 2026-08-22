@@ -18,7 +18,8 @@
         "entry_id": "entry-scope-bad",
         "source": { "brain_memory_id": "brain-hipaa-1", "brain_type": "decision", "title": "HIPAA compliance obligation", "scope": "other-project", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
         "content": "User requires HIPAA compliance for this system.",
-        "classification": { "is_historical_user_statement": true, "historical_user_category": "B", "historical_citation": null, "classification_basis": "cross-project record admitted despite scope mismatch, which this fixture deliberately triggers", "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "admission_reason": "deliberately invalid: scope \"other-project\" does not match run_context.project_slug \"support-inbox\" and is not \"global\"",
+        "classification": { "semantic_authority_class": "historical_user_statement", "is_historical_user_statement": true, "historical_user_category": "B", "historical_citation": null, "classification_basis": "cross-project record admitted despite scope mismatch, which this fixture deliberately triggers", "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
         "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
       }
     ],

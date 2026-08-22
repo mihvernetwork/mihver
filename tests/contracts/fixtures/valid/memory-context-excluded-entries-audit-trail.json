@@ -29,7 +29,9 @@
           "provenance": { "source": "manual", "author": "claude" }
         },
         "content": "A prior architecture used a message queue for decoupling, and it worked well for that project's concurrency profile.",
+        "admission_reason": "scope global admitted against present run_context; brain_status active with no superseded_by link; content classified as a non-historical prior architecture outcome authorized at DISCOVERY_ATTENTION",
         "classification": {
+          "semantic_authority_class": "prior_architecture_outcome",
           "is_historical_user_statement": false,
           "historical_user_category": null,
           "historical_citation": null,
@@ -60,7 +62,7 @@
         "content": "maybe the user wants offline support?",
         "exclusion_reason": "inbox type -- excluded from production entirely, unconditionally, before any content inspection",
         "classification": null,
-        "freshness": null
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "34 days since brain_updated_at, under the 180-day staleness threshold -- freshness is mechanical and computable even though classification was never attempted" }
       },
       {
         "entry_id": "excluded-cross-project-1",
@@ -80,7 +82,7 @@
         "content": "User requires HIPAA compliance for this system.",
         "exclusion_reason": "scope mismatch: record scoped to project slug \"other-project\", current run_context is \"support-inbox\" -- a mechanical check performed before any content classification",
         "classification": null,
-        "freshness": null
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "49 days since brain_updated_at, under the 180-day staleness threshold -- freshness is mechanical and computable even though classification was never attempted" }
       }
     ]
   }

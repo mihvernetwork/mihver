@@ -18,7 +18,8 @@
         "entry_id": "entry-category-a-bad",
         "source": { "brain_memory_id": "brain-onprem-02", "brain_type": "decision", "title": "Deployment constraint note", "scope": "support-inbox", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
         "content": "User said their team will only accept an on-prem deployment option.",
-        "classification": { "is_historical_user_statement": true, "historical_user_category": "A", "historical_citation": null, "classification_basis": "claims Category A without a resolvable citation, which this fixture deliberately omits", "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "admission_reason": "deliberately invalid: Category A requires historical_citation",
+        "classification": { "semantic_authority_class": "historical_user_statement", "is_historical_user_statement": true, "historical_user_category": "A", "historical_citation": null, "classification_basis": "claims Category A without a resolvable citation, which this fixture deliberately omits", "classification_method": "heuristic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
         "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
       }
     ],

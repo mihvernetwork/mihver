@@ -18,7 +18,8 @@
         "entry_id": "entry-superseded-link-bad",
         "source": { "brain_memory_id": "brain-budget-old-2", "brain_type": "decision", "title": "Old budget ceiling", "scope": "support-inbox", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "medium", "supersedes": null, "superseded_by": "brain-budget-new-2", "provenance": { "source": "manual", "author": "claude" } },
         "content": "User wants a $100/month budget ceiling.",
-        "classification": { "is_historical_user_statement": true, "historical_user_category": "A", "historical_citation": { "idea_id": "idea-support-inbox", "user_idea_version": 1, "turn_id": "turn-3", "quote": "$100/month budget ceiling" }, "classification_basis": "brain_status still reads active despite a recorded superseded_by link, which this fixture deliberately exercises", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "admission_reason": "deliberately invalid: a non-null superseded_by must never be admitted, even with brain_status active",
+        "classification": { "semantic_authority_class": "historical_user_statement", "is_historical_user_statement": true, "historical_user_category": "A", "historical_citation": { "idea_id": "idea-support-inbox", "user_idea_version": 1, "turn_id": "turn-3", "quote": "$100/month budget ceiling" }, "classification_basis": "brain_status still reads active despite a recorded superseded_by link, which this fixture deliberately exercises", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
         "freshness": { "freshness_flag": "stale_by_age", "freshness_basis": "230 days since brain_updated_at, over the 180-day staleness threshold" }
       }
     ],
