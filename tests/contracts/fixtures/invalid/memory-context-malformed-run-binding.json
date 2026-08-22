@@ -1,0 +1,19 @@
+{
+  "contract": "memory-context",
+  "expected_error": "oneOf",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-run-binding",
+    "run_id": "run-invalid-003",
+    "run_context": { "status": "present" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior message-queue decoupling patterns for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "successfully_empty",
+    "admitted_entries": [],
+    "excluded_entries": []
+  }
+}

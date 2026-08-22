@@ -1,0 +1,27 @@
+{
+  "contract": "memory-context",
+  "expected_error": "enum",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-tier-value",
+    "run_id": "run-invalid-004",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior message-queue decoupling patterns for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-bad-tier",
+        "source": { "brain_memory_id": "brain-a", "brain_type": "pattern", "title": "A", "scope": "global", "brain_status": "active", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "high", "supersedes": null, "superseded_by": null, "provenance": { "source": "manual", "author": "claude" } },
+        "content": "Content A.",
+        "classification": { "is_historical_user_statement": false, "historical_user_category": null, "historical_citation": null, "classification_basis": "brain_type pattern", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "ADVISORY" },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "recent" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-research-planning-2",
+    "run_id": "run-2026-08-23-002",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior offline-first mobile sync patterns for this project",
+    "retrieval_time": "2026-08-23T09:05:00Z",
+    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "retrieval_outcome": "successfully_empty",
+    "admitted_entries": [],
+    "excluded_entries": []
+  }
+}

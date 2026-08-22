@@ -15,105 +15,148 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: ADR-0004-ACCEPTANCE
-Branch: `docs/adr-0004-acceptance`
-PR: to be opened against `mihvernetwork/mihver:main` (title `docs: accept ADR-0004 memory context
-authority boundary`) — not yet created as of this entry
+Task: M0-MEMORY-CONTEXT-SCHEMA-FOUNDATION
+Branch: `m0/memory-context-schema-foundation`
+PR: to be opened against `mihvernetwork/mihver:main` (title `M0: add MemoryContext schema
+foundation`) — not yet created as of this entry
 
-Moves `ADR-0004` (Memory Context Authority Boundary) from Proposed to Accepted, per its own
-previously-defined Acceptance Gate (dependency A alone, separately human-authorized, completed, and
-adversarially reviewed — B/C/D not required). This is an acceptance/status checkpoint, not a
-semantic redesign: Model C and the full `MEMORY_CONTEXT.md` contract are unchanged. Updated
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` (`## Status` only, plus a compact
-acceptance note), `.project/PROJECT_STATE.md` (new Acceptance checkpoint, removed the now-stale
-Proposed-status Open Item, rewrote Next Authorized Action), `.project/DECISIONS_LOG.md` (one new
-fact-only entry, append-only), `.project/CONTEXT_INDEX.md` (`ADR-0004` row: Proposed → Accepted),
-and `ROADMAP.md` (Accepted-status propagation across sections 10/Phase 6/Phase 8/Phase 9/21/22, plus
-the explicitly-instructed staleness-hardening replacement of the volatile "Last verified public
-`main`" line).
+Creates the first machine-readable JSON Schema and deterministic validator for the Accepted
+`MemoryContext` semantic contract (`schemas/m0/memory-context.schema.json`, a `validateMemoryContext`
+function in `tests/contracts/validate-contracts.mjs`, 22 new fixtures, and a new
+`docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`), plus a minimal `ROADMAP.md`/`CONTEXT_INDEX.md`
+sequencing correction. Does not enable any new `MemoryContext` consumer, does not implement Brain
+retrieval/runtime, and does not touch `MEMORY_CONTEXT.md`, `ADR-0004`, `M0_SCOPE.md`,
+`INTENT_SPEC.md`, `intent-spec.schema.json`, or `REQUIREMENT_SPEC.md`.
 
-### Review — two fresh independent read-only Codex reviewers
+### Review — three fresh independent read-only Codex reviewers
 
-Per this task's explicit instruction: Reviewer A (Acceptance Gate Verification) and Reviewer B
-(Authority / State Consistency) — not a broad re-review of Model C's semantic soundness, which is
-already complete and out of scope here.
+Per this task's explicit instruction: Reviewer A (Schema ↔ Accepted Contract Coverage), Reviewer B
+(Epistemic Authority / Provenance), Reviewer C (Lifecycle / Evolvability / Future References). All
+three independently converged on overlapping findings; every finding was independently re-verified
+by Claude by directly re-reading the cited `MEMORY_CONTEXT.md` text and re-tracing the actual schema/
+validator code before any fix was applied.
 
-- **Reviewer A — verdict `GATE_SATISFIED`.** Independently confirmed, by direct file
-  reads/`git`/`gh` commands: ADR-0004's own "Acceptance Gate" text is unchanged by this edit and
-  literally states Accepted status requires dependency A alone, not B/C/D; `docs/foundation/M0_SCOPE.md`
-  contains every required element (non-memory `RunContext`, cross-cutting non-linear Producer,
-  Research Planning's optional `MemoryContext` input, `DISCOVERY_ATTENTION`-only restriction,
-  additive/provenance-visible requirements, explicit no-direct-Brain-query statement,
-  unavailable/empty-retrieval non-blocking language, lifecycle/supersession binding);
-  `.project/REVIEW_STATE.md`'s History records four independent Codex reviewers actually
-  adversarially reviewed that amendment (three confirmed defects, fixed); PR #17's merge commit is
-  confirmed an ancestor of current `main`; and both pre- and post-edit ADR-0004 text explicitly
-  states B/C/D are not required for its own Acceptance. Independently re-verified by Claude against
-  the same source text — agreed, gate satisfied.
-- **Reviewer B — one blocking finding at time of review, resolved by this same edit; one
-  non-blocking note, addressed with justification rather than a code change.**
-  - *Blocking finding, confirmed:* at the time Reviewer B ran, `.project/REVIEW_STATE.md` itself had
-    not yet been updated for this task — it still declared `MASTER-ROADMAP-POST-DEPENDENCY-A-INTEGRITY`
-    as "Latest Review" and still said ADR-0004 was "still literally Proposed," while
-    `.project/CURRENT_TASK.md` already referenced this file for current reviewer verdicts. This is the
-    same expected, structural ordering artifact recorded in this file's own `PROJECT-STATE-SYNC-AFTER-
-    ADR-0004` history entry: `REVIEW_STATE.md` is necessarily the last of the seven files updated,
-    since its own content must describe the review that checks the other six. Resolved by this edit:
-    the prior task's material is moved to History below, and this section now accurately describes
-    `ADR-0004-ACCEPTANCE`.
-  - *Non-blocking note, independently reconsidered and not applied:* Reviewer B flagged `ROADMAP.md`'s
-    replacement of the volatile "Last verified public `main`" line as "scope overreach... unrelated to
-    the ADR status transition." Independently re-checked against this task's own prompt: Section 6
-    ("Update every current-status reference that would become stale after this acceptance") and
-    Section 7 ("ROADMAP STALENESS HARDENING... Replace that volatile HEAD assertion with a durable
-    instruction") explicitly authorize and require exactly this change within this task's Allowed
-    Files (`ROADMAP.md` is listed). Reviewer B could not see the task prompt and flagged it as an
-    apparent scope violation without that context; on independent verification this is not
-    overreach — it is explicitly instructed. No change made in response to this note.
-  - All eight of Reviewer B's remaining checks (ADR-0004 diff isolated to `## Status` plus a short
-    note only; dependencies B/C/D never claimed enabled anywhere; no `MemoryContext` runtime/schema/
-    Brain adapter claimed; `ADR-0003`'s own `## Status` field still literally Proposed and no changed
-    file claims otherwise; `PROJECT_STATE.md`/`CONTEXT_INDEX.md`/`ROADMAP.md` agree ADR-0004 is
-    Accepted; `DECISIONS_LOG.md`'s diff purely additive; "Next Authorized Action" never pre-authorizing
-    B/C/D, Step 03B, or `mihver-brain` work) confirmed clean — independently re-verified by Claude
-    against the same source text.
+- **M-04 (superseded record never admitted as live) — confirmed by Reviewers A and C.** The
+  validator checked only `source.brain_status === "superseded"`; `MEMORY_CONTEXT.md`'s M-04
+  explicitly names a second, independent disqualifying signal ("`status: superseded`, **or linked
+  via** `supersedes`/`superseded_by`") the validator never examined — an admitted entry could carry
+  `brain_status: "active"` with a non-null `superseded_by` and still pass. Independently re-verified
+  by quoting M-04's exact text. Fixed: an admitted entry with a non-null `superseded_by` is now also
+  rejected. New invalid fixture (`memory-context-superseded-by-link-admitted.json`) proves the fix.
+- **M-11 / Historical User Provenance Gate type-independence — confirmed by Reviewers A and B.**
+  The validator forced every `lesson`/`playbook`-typed entry to `influence_tier: "PROCESS_ONLY"`
+  unconditionally on stored `brain_type` alone. Independently re-verified against `MEMORY_CONTEXT.md`'s
+  "Semantic Authority Classes" section, which explicitly states every classification word including
+  "always"/"permanently" is conditioned on content inspection, and that only `inbox` is a genuine,
+  unconditional, type-determined exclusion — a misfiled `lesson`/`playbook` whose content
+  content-inspection reveals as a historical user statement is redirected to the Category A/B gate
+  exactly as a misfiled `decision`/`reference` would be. The prior code silently reintroduced the
+  "lesson/playbook are an unconditional exception" reading the contract explicitly rejects — a real
+  authority-suppression defect (it could force a Category A entry down to `PROCESS_ONLY`) and,
+  structurally, the same class of error as an authority-inflation bug. Fixed: the `PROCESS_ONLY`-only
+  rule is now conditioned on `!classification.is_historical_user_statement`. New valid fixture
+  (`memory-context-misfiled-lesson-category-a-semantic-premise.json`) proves a misfiled `lesson` can
+  now correctly reach `SEMANTIC_PREMISE` via genuine Category A reclassification.
+- **M-14 (audit-trail completeness for excluded entries) — confirmed by Reviewer A.** `excludedEntry`
+  carried only `entry_id`/`brain_memory_id`/`brain_type`/`exclusion_reason`, missing the retained
+  content copy, scope/provenance, and (where actually attempted) classification/freshness facts M-14
+  requires for "which memories were retrieved" generally, not only admitted ones. Independently
+  re-verified against M-14's literal list. Fixed: redesigned `excludedEntry` with a new
+  `excludedSourceRecord` $def (full source metadata, `inbox` permitted) and `exclusionClassification`
+  $def (identical to `classification` minus `influence_tier`, since an excluded entry is never
+  assigned a tier) — both nullable, since some exclusions (`inbox`-type, mechanical scope mismatch)
+  genuinely happen before any classification is attempted, per Cases 3/12/13. New valid fixture
+  (`memory-context-excluded-fail-closed-unclassifiable.json`) exercises the case where classification
+  *was* attempted (non-null) but no tier could be defensibly assigned.
+- **M-19 mapping overclaim — confirmed by Reviewers A and B; Reviewer B constructed a working
+  counterexample.** The mapping document classified M-19 "Validator-enforced." Reviewer B constructed,
+  on paper, a document whose `classification_basis` prose itself describes a competing/ambiguous
+  reading while the structured `classification_ambiguity` field is left `null`, claiming
+  `DECISION_OPTION` — the validator checks consistency *between* structured fields, not whether
+  free-text `classification_basis` is honestly reflected in them, so this passes. Independently
+  reconstructed the counterexample against the actual schema/validator and confirmed it validates.
+  Fixed: reclassified M-19 (and, for the identical reason — a real, named, unenforceable remnant of
+  each full invariant — M-11 and M-16) from "Validator-enforced" to "Not enforceable at this layer,"
+  consistent with this document's own stated discipline that a row stays in that class even given a
+  strong partial guard. No code fix is possible or appropriate for the honesty-dependent gap itself
+  (verifying prose-to-field consistency is exactly the kind of semantic judgment Principle 6/7 reserve
+  from a deterministic layer); the mapping document now says so explicitly instead of overclaiming.
+- **Fixture accuracy — confirmed by Reviewer B.** Three valid fixtures declared
+  `classification_method: "deterministic"` while their own `classification_basis` text described
+  reading/interpreting body content — heuristic by the contract's own Principle-6-grounded
+  definition. Fixed: corrected to `"heuristic"` in all three.
+- Every other check across all three reviewers (RunContext presence/absence disjointness, open
+  `consuming_stage` identifier, retrieval-outcome cardinality, entry-identity uniqueness, the
+  Category A/B gate's genuine type-independence for `reference`/`pattern`/`incident`/`project`, the
+  identity boundary preventing `pattern`/`incident`/`reference` from ever reaching `SEMANTIC_PREMISE`,
+  Brain-confidence/relevance structural separation from authority, `INTENT_SPEC.md`/
+  `REQUIREMENT_SPEC.md`/`intent-spec.schema.json` untouched, `ROADMAP.md` not claiming the schema
+  exists pre-merge) was independently re-checked and confirmed clean — not merely trusted from the
+  reviewers' own "Pass" verdicts.
 
-`npm test`: 32/32. `git diff --check`: clean. `git diff main --stat` / `git diff main --`: exactly
-the seven allowed files (`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `ROADMAP.md`). `docs/foundation/M0_SCOPE.md`,
-`docs/contracts/MEMORY_CONTEXT.md`, `docs/contracts/INTENT_SPEC.md`,
-`docs/contracts/REQUIREMENT_SPEC.md`, `schemas/**`, `tests/**`, `scripts/**`, and
-`../mihver-brain/**` are unchanged. `ADR-0003`'s own `## Status` field is unchanged (**Proposed**).
-Dependencies B, C, and D remain structurally disabled everywhere they are mentioned. No
-`MemoryContext` runtime, schema, or Brain adapter is claimed to exist. No future task (Dependencies
-B/C/D, Step 03B) silently authorized anywhere in this change.
+`npm test`: 54/54 (32 original + 9 valid + 13 invalid `MemoryContext` fixtures). `git diff --check`:
+clean. `git diff main --stat`: exactly three modified files (`.project/CONTEXT_INDEX.md`,
+`ROADMAP.md`, `tests/contracts/validate-contracts.mjs`) plus the new untracked files
+(`schemas/m0/memory-context.schema.json`, `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`,
+`tests/contracts/fixtures/{valid,invalid}/memory-context-*.json`,
+`.project/CURRENT_TASK.md`/`REVIEW_STATE.md`). Targeted `git diff main --stat` against every
+forbidden file (`MEMORY_CONTEXT.md`, `ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
+`INTENT_SPEC.md`, `intent-spec.schema.json`, `REQUIREMENT_SPEC.md`, `M0_SCOPE.md`, `PRINCIPLES.md`,
+`VISION.md`) produced empty output, confirming none changed. No `mihver-brain` file touched. No new
+`MemoryContext` consumer authorized; no Dependency B/C/D implemented; no runtime/MCP/network code
+introduced.
 
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** Reviewer A independently confirmed the
-Acceptance Gate is factually satisfied; Reviewer B's one blocking finding was a last-file-updated
-ordering artifact, resolved by this same edit, and its one non-blocking note was independently
-reconsidered and found to be explicitly authorized by this task's own prompt, not overreach.
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** Neither STOP condition
+(`SEMANTIC_AMENDMENT_REQUIRED` / `SCHEMA_DESIGN_GAP`) applies: every finding was a schema/validator/
+documentation defect fixable without touching the Accepted semantic contract, and every fix was
+independently re-verified against the actual contract text and re-confirmed by a full test re-run
+(54/54) after each round of changes.
 
 ## Required Changes
 
-None remaining — Reviewer B's blocking finding (this file's own not-yet-updated state, at review
-time) is fixed by this same edit; its non-blocking note required no code change, per the
-justification above.
+None remaining — all five confirmed finding clusters (M-04, M-11, M-14, M-19-and-related
+reclassifications, and the three mislabeled fixtures) are fixed by this same change set, each with a
+new or corrected fixture demonstrating the fix.
 
 ## Fixes Applied
 
-See "Latest Review" above. No content fix was required to any of the seven changed files beyond
-completing `.project/REVIEW_STATE.md` itself (this file), which was the literal subject of Reviewer
-B's blocking finding.
+See "Latest Review" above for the full list. Applied to `schemas/m0/memory-context.schema.json`
+(added `excludedSourceRecord`/`exclusionClassification` $defs, redesigned `excludedEntry`),
+`tests/contracts/validate-contracts.mjs` (added the `superseded_by` check, conditioned the
+lesson/playbook rule on `is_historical_user_statement`, extended classification-consistency checks
+to `excluded_entries`), three existing valid fixtures (`classification_method` correction), the
+existing `memory-context-excluded-entries-audit-trail.json` fixture (updated to the redesigned
+`excludedEntry` shape), and `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md` (M-04/M-11/M-14/M-16/
+M-19 rows rewritten). Three new fixtures added, each proving one specific fix.
 
 ## Pending Human Gate
 
-Commit, push, and open one PR against `mihvernetwork/mihver:main`, title `docs: accept ADR-0004
-memory context authority boundary`, per this task's explicit instruction. Not merged by this task.
-Human review of that PR is the next gate; it authorizes only this Status transition — not
-dependencies B/C/D, not Step 03B, and not any `mihver-brain` or runtime memory-integration work.
+Commit, push, and open one PR against `mihvernetwork/mihver:main`, title `M0: add MemoryContext
+schema foundation`, per this task's explicit instruction. Not merged by this task. Human review of
+that PR is the next gate; it authorizes only this schema/validator/fixture/mapping-doc foundation —
+not any new `MemoryContext` consumer, not Dependencies B/C/D, and not any Brain read adapter or
+runtime integration.
 
 ## History
+
+- 2026-08-23 — `ADR-0004-ACCEPTANCE` (PR #19, merged, plus one follow-up state-hygiene push):
+  moved `ADR-0004` (Memory Context Authority Boundary) from Proposed to Accepted, per its own
+  previously-defined Acceptance Gate (dependency A alone, completed via PR #17 and adversarially
+  reviewed — B/C/D not required). Acceptance/status checkpoint only: Model C and the full
+  `MEMORY_CONTEXT.md` contract were unchanged. Two fresh independent read-only Codex reviewers —
+  Reviewer A (Acceptance Gate Verification) verdict `GATE_SATISFIED`; Reviewer B (Authority / State
+  Consistency) found one blocking finding (a last-file-updated ordering artifact in this file,
+  resolved by that same edit) and one non-blocking note (flagging the `ROADMAP.md`
+  staleness-hardening change as apparent scope overreach, independently reconsidered and found to be
+  explicitly authorized by that task's own prompt — no change made). `npm test`: 32/32. Verdict:
+  `READY_FOR_HUMAN_REVIEW`. A follow-up task, `ADR-0004-ACCEPTANCE-FINAL-STATE-HYGIENE`, later
+  corrected one false factual sentence in this file's own text (a claim that `DECISIONS_LOG.md`
+  recorded a separate PR #18 merge entry, which it did not) without adding a new `DECISIONS_LOG.md`
+  entry or opening a new PR — pushed to the same `docs/adr-0004-acceptance` branch/PR #19. Moved here
+  from "Latest Review" now that those sections describe `M0-MEMORY-CONTEXT-SCHEMA-FOUNDATION`
+  instead, per this file's branch/task scoping — this is the first entry on a new branch, since both
+  the acceptance task and its state-hygiene follow-up shared `docs/adr-0004-acceptance` and PR #19. —
+  branch `docs/adr-0004-acceptance`
 
 - 2026-08-22 — `MASTER-ROADMAP-POST-DEPENDENCY-A-INTEGRITY` (PR #18, merged): durable
   navigation/state reconciliation after `ADR-0004` Dependency A (PR #17, squash commit

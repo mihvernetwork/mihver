@@ -1,0 +1,46 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-research-planning-4",
+    "run_id": "run-2026-08-23-004",
+    "run_context": { "status": "absent" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "background job retry/backoff patterns",
+    "retrieval_time": "2026-08-23T09:15:00Z",
+    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-exploratory-v1", "version": 1 },
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-pattern-backoff-1",
+        "source": {
+          "brain_memory_id": "brain-backoff-01",
+          "brain_type": "pattern",
+          "title": "Exponential backoff with jitter for background job retries",
+          "scope": "global",
+          "brain_status": "active",
+          "brain_created_at": "2026-02-01T00:00:00Z",
+          "brain_updated_at": "2026-02-01T00:00:00Z",
+          "brain_confidence": "high",
+          "supersedes": null,
+          "superseded_by": null,
+          "provenance": { "source": "manual", "author": "claude" }
+        },
+        "content": "Background job retries should use exponential backoff with jitter.",
+        "classification": {
+          "is_historical_user_statement": false,
+          "historical_user_category": null,
+          "historical_citation": null,
+          "classification_basis": "brain_type pattern; body describes a general engineering technique, not a user statement",
+          "classification_method": "heuristic",
+          "classification_ambiguity": null,
+          "influence_tier": "DISCOVERY_ATTENTION"
+        },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "22 days since brain_updated_at, under the 180-day staleness threshold" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}
