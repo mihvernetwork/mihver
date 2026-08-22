@@ -129,8 +129,10 @@ dependencies B/C/D, not Step 03B, and not any `mihver-brain` or runtime memory-i
   Handoff Integrity), per a 9-point checklist, found one confirmed defect (a stale "four future
   dependencies" phrase in `ROADMAP.md`), fixed; eight other checks confirmed clean. `npm test`:
   32/32. Verdict: `CLEAN`. PR #18 subsequently merged to `main` (squash commit
-  `823ff9f41f6e7b89814c2246df6ea9db41f7e97c`, verified via `gh pr view 18`) — that merge event is
-  recorded in `.project/DECISIONS_LOG.md`'s prior entries, not here. Moved here from "Latest Review"
+  `823ff9f41f6e7b89814c2246df6ea9db41f7e97c`, verified via `gh pr view 18`) — noted here as
+  historical context only; `.project/DECISIONS_LOG.md`'s pre-existing last merge-fact entry before
+  this acceptance task remains PR #17's, and no separate PR #18 merge entry was added to it (no new
+  state-sync cycle was run merely to record PR #18's own merge metadata). Moved here from "Latest Review"
   now that those sections describe `ADR-0004-ACCEPTANCE` instead, per this file's branch/task
   scoping — this is the first entry on a new branch, since `MASTER-ROADMAP-POST-DEPENDENCY-A-
   INTEGRITY`'s own round continued the pre-existing `docs/master-roadmap` branch rather than
