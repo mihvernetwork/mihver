@@ -684,7 +684,12 @@ Amended `docs/foundation/M0_SCOPE.md` to establish:
 - no stage may query MIHVER Brain directly; the only path is `Brain → MemoryContext Producer → immutable MemoryContext → explicitly-authorized stage`,
 - Dependencies B/C/D remain structurally disabled; `INTENT_SPEC.md`/`REQUIREMENT_SPEC.md` untouched.
 
-**This is a semantic/foundation authorization, not an implemented runtime.** There is still no `MemoryContext` schema, no Brain read adapter, and no executable Research Planning pipeline that actually retrieves anything from MIHVER Brain. Research Planning is now *permitted*, under the M0 contract, to consume an optional `MemoryContext` once one exists — it does not yet receive one in practice.
+**This is a semantic/foundation authorization, not an implemented runtime.** At the time of this
+checkpoint there was still no `MemoryContext` schema; one has since been added — see Phase 10 below
+(PR #20). No Brain read adapter, and no executable Research Planning pipeline
+that actually retrieves anything from MIHVER Brain, exists even now. Research Planning is
+*permitted*, under the M0 contract, to consume an optional `MemoryContext` once one is actually
+produced — it does not yet receive one in practice.
 
 ---
 
@@ -1069,7 +1074,11 @@ Forbidden:
 
 **Exit gate met:** Dependency A implemented and adversarially reviewed (four independent read-only Codex reviewers, by axis) with no hidden Brain read or stage-authority leak — see `.project/PROJECT_STATE.md` / `.project/DECISIONS_LOG.md` for the durable record.
 
-**Still not implemented:** `MemoryContext` schema, Brain read adapter, and an executable Research Planning pipeline that actually retrieves memory. This phase is a semantic/foundation authorization only — see 10.9 above.
+**Still not implemented, at the time of this checkpoint:** `MemoryContext` schema, Brain read
+adapter, and an executable Research Planning pipeline that actually retrieves memory. This phase is
+a semantic/foundation authorization only — see 10.9 above. A machine-readable schema has since been
+added (Phase 10 below, PR #20); a Brain read adapter and executable retrieval pipeline still do not
+exist even now.
 
 ---
 
@@ -1132,10 +1141,13 @@ Memory supplies no authority; it is a provenance-visible suggestion/rationale.
 
 ---
 
-## Phase 10 — MemoryContext schema foundation — NEXT (this PR, unmerged)
+## Phase 10 — MemoryContext schema foundation — DONE
 
-**Do not claim this schema exists until this PR merges to `main`.** Establishes, ahead of
-dependencies B/C/D (Phase 9) per the sequencing correction above:
+**PR #20:** `b8fc6fe6558adbb560b48f1bbe937db53ac09555` — `M0: add MemoryContext schema foundation`
+(plus one same-branch/PR follow-up commit closing four reviewer-found structural gaps: an explicit
+`semantic_authority_class` axis, an explicit `admission_reason`, required non-null `freshness` on
+excluded entries, and canonical Brain-memory-identity uniqueness across admitted+excluded). Merged,
+ahead of dependencies B/C/D (Phase 9) per the sequencing correction above. Established:
 
 - machine-readable `MemoryContext` schema (`schemas/m0/memory-context.schema.json`),
 - `RunContext`-present-vs-explicitly-absent representation,
@@ -1145,11 +1157,17 @@ dependencies B/C/D (Phase 9) per the sequencing correction above:
   `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`,
 - a stable `(memory_context_id, entry_id)` identity pair future dependency B/C/D amendments may cite
   — without itself defining `IntentSpec`/`RequirementSpec`'s side of that citation,
-- deterministic validator checks and fixtures in `tests/contracts/validate-contracts.mjs`.
+- deterministic validator checks and fixtures in `tests/contracts/validate-contracts.mjs` (59/59 at
+  merge-ready head).
 
-Does **not** authorize any new `MemoryContext` consumer, change `M0_SCOPE.md`, or implement any of
-dependencies B/C/D. Schema design must not create new semantic authority beyond what
-`MEMORY_CONTEXT.md` (unchanged) already establishes.
+Did **not** authorize any new `MemoryContext` consumer, change `M0_SCOPE.md`, or implement any of
+dependencies B/C/D — Research Planning, `DISCOVERY_ATTENTION` only, remains the sole authorized
+consumer. Schema design created no new semantic authority beyond what `MEMORY_CONTEXT.md`
+(unchanged) already establishes. **Schema representability is not stage authorization**: the schema
+represents all four Influence Taxonomy tiers and an open `consuming_stage` identifier so a future
+authorized consumer never requires redesigning the artifact's shape, but that representability is
+not itself an authorization — `M0_SCOPE.md` alone grants that. No MIHVER Brain adapter, retrieval
+runtime, or executable Producer implementation exists — see the next subsection.
 
 ### Brain read-side adapter / runtime — PLANNED, separate, later
 
@@ -1563,6 +1581,7 @@ Purpose:
 - ADR-0004 MemoryContext authority design, **Accepted** (per Dependency A's completion and adversarial review — see section 10.1/10.8),
 - MemoryContext semantic contract + 24-case adversarial corpus,
 - ADR-0004 Dependency A / Foundation Memory Boundary merged into `docs/foundation/M0_SCOPE.md` (PR #17): `RunContext`, the cross-cutting MemoryContext Producer boundary, and Research Planning as the sole authorized `MemoryContext` consumer (`DISCOVERY_ATTENTION` only) — semantic authorization only, no runtime. Dependencies B/C/D remain unimplemented and unauthorized.
+- MemoryContext Schema Foundation merged (PR #20, squash commit `b8fc6fe6558adbb560b48f1bbe937db53ac09555`): `schemas/m0/memory-context.schema.json`, deterministic validator integration, `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`, and a stable `(memory_context_id, entry_id)` reference primitive for a future Dependency B/C/D citation shape — schema representability only, not stage authorization; Research Planning (`DISCOVERY_ATTENTION` only) remains the sole authorized consumer.
 
 ## Does not exist yet as an M0 product capability
 
@@ -1577,7 +1596,7 @@ Purpose:
 - Evaluation engine,
 - MihverArchitectureSpec schema/runtime,
 - product CLI/API,
-- `MemoryContext` schema on `main` (a schema foundation PR is open, per Phase 10 above, not yet merged), Brain read adapter, and an executable retrieval path — Research Planning is semantically authorized to consume an optional `MemoryContext` under the M0 contract, but no `MemoryContext` is actually produced or retrieved yet,
+- a Brain read adapter and an executable retrieval path — the `MemoryContext` schema itself now exists on `main` (Phase 10 above), but Research Planning does not yet actually retrieve or produce any real `MemoryContext`; no MIHVER Brain adapter, retrieval runtime, or executable Producer implementation exists,
 - governed Brain write-back,
 - accepted three-agent Decision Council,
 - Decision Council deterministic kernel,
@@ -1602,64 +1621,83 @@ This is the current lowest-rework sequence.
 
 2. ADR-0004 Acceptance checkpoint — DONE
 
-3. MemoryContext schema foundation — NEXT (this PR, unmerged)
+3. MemoryContext Schema Foundation — DONE (PR #20)
       machine-readable MemoryContext schema
-      deterministic validator + fixtures
+      deterministic validator + fixtures (59/59 at merge-ready head)
       stable (memory_context_id, entry_id) reference primitive for B/C/D to later cite
-      discovered dependency: intent-spec.schema.json permits only claim-based inference
-      premises today, so this must land before Dependency B to avoid an ad-hoc premise
-      reference shape that would churn once MemoryContext's own schema existed
+      schema representability is not stage authorization -- Research Planning
+      (DISCOVERY_ATTENTION only) remains the sole authorized consumer
 
-4. Dependency B/C/D — NEXT, not yet authorized
-      INTENT_SPEC historical-memory premise
-      REQUIREMENT_SPEC R-10/R-22 premise
+4. Dependency B — NEXT, not authorized
+      conceptual future chain, not enabled by this document:
+        MemoryContext
+          -> Intent Parsing authorized consumer (M0_SCOPE.md pipeline authorization)
+          -> Category A SEMANTIC_PREMISE
+          -> Inferred Claim
+          -> IntentSpec provenance/schema/validator
+      two prerequisite dimensions that must land coherently:
+        (a) pipeline authorization -- M0_SCOPE.md must explicitly declare that
+            Intent Parsing may consume MemoryContext (its own separate amendment,
+            distinct from Research Planning's)
+        (b) artifact provenance -- INTENT_SPEC.md, intent-spec.schema.json, and the
+            deterministic validator must together represent a qualified Category A
+            MemoryContext entry as an Inferred Claim premise without laundering it
+            into User-Provided or Assumed origin
+      intent-spec.schema.json today supports only claim-based inference premises
+      (premise_claim_ids[]); a future B task must keep semantic contract, schema,
+      validator, and fixtures in sync with each other, not only with MEMORY_CONTEXT.md
+      this document does not define the IntentSpec-side citation shape
+
+5. Dependency C — PLANNED
+      REQUIREMENT_SPEC R-10/R-22 Requirement-Level-Inference premise
+
+6. Dependency D — PLANNED
       REQUIREMENT_SPEC R-19 DECISION_OPTION provenance
 
-5. Brain SB-02 retrieval parity/freeze
-      then MIHVER ↔ Brain integration
-      then the Brain read-side adapter / runtime (Phase 10's second half — distinct from
-      the schema foundation in step 3, not started by it)
-
-6. RequirementSpec Step 03B
+7. RequirementSpec Step 03B
       schema + validator + fixtures
       ADR-0003 acceptance reconsideration
 
-7. ResearchPlan
+8. Brain SB-02 retrieval parity/freeze
+      then MIHVER ↔ Brain adapter/runtime afterward -- distinct from the schema
+      foundation in step 3, not started by it
 
-8. EvidenceBundle
+9. ResearchPlan
 
-9. Technology Registry + Compatibility Graph
+10. EvidenceBundle
 
-10. Technology Candidate Identification
+11. Technology Registry + Compatibility Graph
 
-11. Architecture Synthesis
+12. Technology Candidate Identification
 
-12. Evaluation + ArchitectureDecision
+13. Architecture Synthesis
 
-13. MihverArchitectureSpec + user-facing CLI/API
+14. Evaluation + ArchitectureDecision
 
-14. Decision Council ADRs
+15. MihverArchitectureSpec + user-facing CLI/API
 
-15. Decision Council Deterministic Kernel v0
+16. Decision Council ADRs
 
-16. Night Runner vNext / Control Plane integration
+17. Decision Council Deterministic Kernel v0
 
-17. Shadow Council — real 3 models, no execution authority
+18. Night Runner vNext / Control Plane integration
 
-18. Advisory autonomy
+19. Shadow Council — real 3 models, no execution authority
+
+20. Advisory autonomy
       Council → Control Plane → Night Runner → Claude → Workers → Verifier
       human approves all effects
 
-19. Bounded overnight autonomy
+21. Bounded overnight autonomy
       graduated R0/R1 only
       PR preparation allowed
       automatic main merge still forbidden
 
-20. M1 Architecture Experimentation
+22. M1 Architecture Experimentation
 
-21. M2 Architecture Build
+23. M2 Architecture Build
 
-22. M3 Architecture Run / governed production operation
+24. M3 Architecture Run / governed production operation
 ```
 
 ### Ordering rule

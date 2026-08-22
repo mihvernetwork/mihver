@@ -145,3 +145,27 @@ Entries above this line are unmodified, per this log's append-only policy.
   `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own `## Status` field. The PR opened for
   this change has not merged as of this entry — merge execution requires a separate, later, explicit
   human instruction.
+- 2026-08-23 — `ADR-0004-ACCEPTANCE` (PR #19) merged to `main`: verified via
+  `gh pr view 19 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-22T16:48:25Z`) and `git log`/`git status` on `main` (`HEAD`
+  at this task's start matched the reported merge commit exactly) — squash commit
+  `8b0c0b65b3d8e6f2cb3034d9f395b2008694cc75`. Fulfills the Status: Accepted decision recorded above
+  — that entry recorded the decision and its basis only, noting explicitly its PR had not yet
+  merged; this entry records only the independently-verified merge fact, not a reconstructed human
+  quote. `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own `## Status` field on `main`
+  at this commit reads **Accepted**, confirmed by direct read of the file at this commit.
+- 2026-08-23 — `M0-MEMORY-CONTEXT-SCHEMA-FOUNDATION` (PR #20, plus one same-branch/PR follow-up
+  commit closing four reviewer-found structural gaps) merged to `main`: verified via
+  `gh pr view 20 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-22T21:27:25Z`) and `git log`/`git status` on `main` (`HEAD`
+  at this task's start matched the reported merge commit exactly) — squash commit
+  `b8fc6fe6558adbb560b48f1bbe937db53ac09555`. Produced the first machine-readable `MemoryContext`
+  JSON Schema (`schemas/m0/memory-context.schema.json`), deterministic validator integration, a
+  27-fixture contract corpus, and `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`. Established
+  only the `MemoryContext`-side `(memory_context_id, entry_id)` reference primitive; `INTENT_SPEC.md`,
+  `intent-spec.schema.json`, and `REQUIREMENT_SPEC.md` are untouched on `main` at this commit,
+  confirmed by direct read. No `mihver-brain`, runtime, or MCP change accompanied this merge; no new
+  `MemoryContext` consumer was authorized (Research Planning, `DISCOVERY_ATTENTION` only, remains
+  the sole authorized consumer per `docs/foundation/M0_SCOPE.md`); dependencies B, C, and D remain
+  structurally disabled. No prior entry in this log recorded an approval decision for this merge;
+  this entry records only the independently-verified merge fact, not a reconstructed human quote.
