@@ -825,8 +825,15 @@ the first place (Case 14).
 admitted, record (b) is available to whichever stage is authorized to consume it only as
 `DISCOVERY_ATTENTION`, subject to the same consuming-stage project-agnosticism confirmation as any
 other `global`-scoped record (see "Cross-Project Scope Verification"), additive-only use, visible
-provenance, and the full Evidence/eligibility/Evaluation gates before it could ever reach
-`SEMANTIC_PREMISE` standing. Record (a) is excluded outright: with no `RunContext` to match a project
+provenance — and it **remains `DISCOVERY_ATTENTION` permanently, never itself reaching
+`SEMANTIC_PREMISE`** (identity boundary, per "Identity Boundary, Not Merely a Freshness Gate"). Only
+a wholly new, independently-produced artifact — a fresh `EvidenceBundle` entry Research + Evidence
+Collection produces after its own verification, and, downstream, a separately-produced
+`TechnologyCandidateSet`/`ArchitectureCandidate` entry that clears Technology Candidate
+Identification's eligibility screening and Evaluation's scoring — may ever reach `SEMANTIC_PREMISE`
+standing; record (b) itself never advances past `DISCOVERY_ATTENTION`, no matter how thoroughly a
+downstream artifact it prompted is later verified. Record (a) is excluded outright: with no
+`RunContext` to match a project
 slug against, a project-scoped record has nothing to verify identity against and is never admitted
 "by default" or "just in case" (M-16). This is the same mechanical scope check as any other run, not
 a relaxed one — the absence of `RunContext` narrows eligibility, it never widens it.
