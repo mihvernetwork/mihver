@@ -77,7 +77,22 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   Brain read adapter, and no executable pipeline that actually retrieves or produces a
   `MemoryContext` — Research Planning is now permitted to consume one under the M0 contract, it
   does not yet receive one in practice. `ADR-0004`'s own `## Status` field is unchanged by this
-  checkpoint (**Proposed**) — see Open Items for its path to Accepted.
+  checkpoint (**Proposed**) — see the Acceptance checkpoint immediately below for the later Status
+  change.
+- **`ADR-0004` Acceptance** — Memory Context Authority Boundary moved Proposed → Accepted, per its
+  own "Acceptance Gate" section's condition: dependency A alone (the core `M0_SCOPE.md` integration
+  boundary), separately, explicitly human-authorized, completed, and adversarially reviewed against
+  real cases — the same checkpoint recorded immediately above (PR #17, squash commit
+  `9416e857b549bea07d4ce06a5c365524fdf1d51a`), already adversarially reviewed by four independent
+  read-only Codex reviewers before that merge. Implemented as task `ADR-0004-ACCEPTANCE`; the Status
+  change itself is recorded in `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own
+  `## Status` field, not restated here beyond this checkpoint, per the same drift-avoidance pattern
+  `ADR-0002`'s and `ADR-0003`'s entries already use. This Acceptance changes only the ADR's Status:
+  dependencies B (`INTENT_SPEC.md` Inference-premise), C (`REQUIREMENT_SPEC.md`
+  Requirement-Level-Inference premise), and D (`REQUIREMENT_SPEC.md` R-19 memory-informed-rationale
+  provenance) remain exactly as structurally disabled as before — they were never prerequisites for
+  this Acceptance and are not enabled by it. No `MemoryContext` runtime, schema, or Brain adapter
+  exists, and Research Planning does not currently retrieve any actual memory.
 
 ## Open Items
 
@@ -86,30 +101,15 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   require its own future condition (e.g. schema design plus an adversarial review pass against
   real cases) — see its own "Future Work" section for the actual condition, not restated here to
   avoid drift. No task in this session has been authorized to change `ADR-0003`'s Status.
-- `ADR-0004` (Memory Context Authority Boundary) Status is **Proposed**, not Accepted, on `main` as
-  merged via PR #15. `ADR-0004`'s own "Acceptance Gate" section defines its path to Accepted (its
-  core `M0_SCOPE.md` integration amendment — "dependency A" — completed and adversarially
-  reviewed); that section also names three further, narrower, separately-scoped amendment
-  dependencies (an `INTENT_SPEC.md` amendment; a `REQUIREMENT_SPEC.md` Requirement-Level-Inference
-  amendment; a `REQUIREMENT_SPEC.md` R-19-provenance amendment) that gate specific semantic
-  capabilities but not `ADR-0004`'s own Acceptance — not restated here beyond this pointer, to
-  avoid drift from that section's own text. **Dependency A is now completed and adversarially
-  reviewed** (PR #17, squash commit `9416e857b549bea07d4ce06a5c365524fdf1d51a` — see the
-  checkpoint above), which makes `ADR-0004` eligible for a separately authorized Acceptance
-  reconsideration under its own Acceptance Gate. No task has authorized or performed that Status
-  change; dependencies B, C, and D remain unauthorized and unstarted; and no `mihver-brain` or
-  runtime memory-integration work has been performed.
-
 ## Next Authorized Action
 
 None automatically. Per `REVIEW_PROTOCOL.md` item 9, completing a task is not authorization to
-start the next one. In particular: moving `ADR-0003` or `ADR-0004` to Accepted, beginning M0
-Step 03B, starting `ADR-0004`'s dependencies B, C, or D, and performing any `mihver-brain` or
-runtime memory-integration work are all **not** authorized by this reconciliation task — each
-requires its own separate, explicit human task instruction, given later. `ADR-0004` Acceptance is
-the logical next recommended checkpoint now that Dependency A is complete and adversarially
-reviewed, but this entry does not pre-authorize it — a future task must explicitly authorize that
-Status change. This reconciliation only brought durable project state in line with what is already
-true on `main` after PR #17 merged; it introduced no new architecture decision, changed no ADR, and
-started no new work. See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the
-currently checked-out branch, if any.
+start the next one. In particular: moving `ADR-0003` to Accepted, beginning M0 Step 03B, starting
+`ADR-0004`'s dependencies B, C, or D, and performing any `mihver-brain` or runtime
+memory-integration work are all **not** authorized by this Acceptance task — each requires its own
+separate, explicit human task instruction, given later. Dependencies B, C, and D are the logical
+next roadmap family now that `ADR-0004` itself is Accepted, but this entry does not pre-authorize
+starting any of them. This task only changed `ADR-0004`'s Status per its own already-satisfied
+Acceptance Gate; it performed no semantic redesign, changed no other ADR, and started no new work.
+See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out
+branch, if any.

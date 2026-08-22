@@ -2,7 +2,23 @@
 
 ## Status
 
-Proposed
+Accepted
+
+**Acceptance note (this revision):** per this ADR's own "Acceptance Gate" (below), Accepted status
+requires dependency A alone — the core `M0_SCOPE.md` integration boundary (`RunContext`, the
+`MemoryContext` Producer's own contract, and at least one consuming stage's declared `MemoryContext`
+input), separately, explicitly human-authorized, completed, and adversarially reviewed against real
+cases. That condition is now met: dependency A merged via PR #17
+(`9416e857b549bea07d4ce06a5c365524fdf1d51a`), amending `docs/foundation/M0_SCOPE.md` to introduce
+`RunContext`, the `MemoryContext` Producer as a declared cross-cutting boundary, and Research
+Planning as the first and only authorized `MemoryContext`-consuming stage (`DISCOVERY_ATTENTION`
+tier only); four independent read-only Codex reviewers adversarially reviewed that amendment, and
+three confirmed findings were fixed before merge (see `.project/REVIEW_STATE.md`'s history for
+`M0-FOUNDATION-MEMORY-BOUNDARY-A`). This Status transition changes nothing else: dependencies B, C,
+and D remain exactly as structurally disabled as before — see "Acceptance Gate" below — and are not
+prerequisites for, and are not enabled by, this Acceptance. No `MemoryContext` runtime, schema, or
+Brain adapter exists; Research Planning does not currently retrieve any actual memory; and this
+Acceptance does not change `ADR-0003`'s own Status.
 
 ## Context
 

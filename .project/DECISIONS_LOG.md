@@ -127,3 +127,21 @@ Entries above this line are unmodified, per this log's append-only policy.
   this merge — this is a semantic/foundation authorization only. No prior entry in this log
   recorded an approval decision for this merge; this entry records only the independently-verified
   merge fact, not a reconstructed human quote.
+- 2026-08-22 — `ADR-0004` (Memory Context Authority Boundary) Status: **Accepted** — human decision
+  stated directly via the `ADR-0004-ACCEPTANCE` task prompt itself ("Move ADR-0004 ... from Proposed
+  to Accepted, but ONLY if its own previously-defined Acceptance Gate is demonstrably satisfied by
+  current `main`"), which this task treats as the explicit human authorization for the Status
+  transition. Basis: `ADR-0004`'s own "Acceptance Gate" section requires dependency A alone
+  (the core `M0_SCOPE.md` integration boundary), separately, explicitly human-authorized, completed,
+  and adversarially reviewed against real cases — independently reverified against current `main`
+  before this change: dependency A completed via PR #17 (squash commit
+  `9416e857b549bea07d4ce06a5c365524fdf1d51a`, confirmed merged via `gh pr view 17`), and
+  adversarially reviewed by four independent read-only Codex reviewers before that merge (see
+  `.project/REVIEW_STATE.md`'s history for `M0-FOUNDATION-MEMORY-BOUNDARY-A`). No semantic redesign
+  was performed in this task — Model C and the full `MEMORY_CONTEXT.md` contract are unchanged.
+  Dependencies B, C, and D remain exactly as structurally disabled as before this Status change; no
+  `MemoryContext` runtime, schema, or Brain adapter exists; `ADR-0003`'s own Status is unchanged
+  (**Proposed**). The Status change itself is recorded in
+  `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own `## Status` field. The PR opened for
+  this change has not merged as of this entry — merge execution requires a separate, later, explicit
+  human instruction.

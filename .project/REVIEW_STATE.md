@@ -15,83 +15,126 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: MASTER-ROADMAP-POST-DEPENDENCY-A-INTEGRITY
-Branch: `docs/master-roadmap`
-PR: `mihvernetwork/mihver#18` (`docs: add durable MIHVER master roadmap`) — existing, open, continued
-(not newly opened by this task)
+Task: ADR-0004-ACCEPTANCE
+Branch: `docs/adr-0004-acceptance`
+PR: to be opened against `mihvernetwork/mihver:main` (title `docs: accept ADR-0004 memory context
+authority boundary`) — not yet created as of this entry
 
-Durable navigation/state reconciliation only, after `ADR-0004` Dependency A (PR #17, squash commit
-`9416e857b549bea07d4ce06a5c365524fdf1d51a`) merged to `main`. No architecture redesign, no
-`M0_SCOPE.md` change, no ADR Status change, no Dependency B/C/D or Step 03B work, no `mihver-brain`
-change. Updated `ROADMAP.md` (last-verified-`main` pointer, Phase 7 → DONE with a new `## 10.9`
-section, Phase 8 → NEXT/not-authorized, capability-map and near-term-order updates, removal of the
-dangling external-report filename reference), `.project/PROJECT_STATE.md` (new Dependency A
-checkpoint, corrected stale "not started"/"no stage declares it" language, `ADR-0004` still Proposed
-but now Acceptance-eligible without pre-authorizing that change), `.project/DECISIONS_LOG.md`
-(one new fact-only entry, append-only), and `.project/CONTEXT_INDEX.md` (corrected `ADR-0002` row to
-Accepted; added `ADR-0003`/`REQUIREMENT_SPEC.md`/`REQUIREMENT_CASES.md`,
-`ADR-0004`/`MEMORY_CONTEXT.md`/`MEMORY_CONTEXT_CASES.md`, Night Runner, and `ROADMAP.md` rows, the
-last explicitly labeled navigational/non-authoritative).
+Moves `ADR-0004` (Memory Context Authority Boundary) from Proposed to Accepted, per its own
+previously-defined Acceptance Gate (dependency A alone, separately human-authorized, completed, and
+adversarially reviewed — B/C/D not required). This is an acceptance/status checkpoint, not a
+semantic redesign: Model C and the full `MEMORY_CONTEXT.md` contract are unchanged. Updated
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` (`## Status` only, plus a compact
+acceptance note), `.project/PROJECT_STATE.md` (new Acceptance checkpoint, removed the now-stale
+Proposed-status Open Item, rewrote Next Authorized Action), `.project/DECISIONS_LOG.md` (one new
+fact-only entry, append-only), `.project/CONTEXT_INDEX.md` (`ADR-0004` row: Proposed → Accepted),
+and `ROADMAP.md` (Accepted-status propagation across sections 10/Phase 6/Phase 8/Phase 9/21/22, plus
+the explicitly-instructed staleness-hardening replacement of the volatile "Last verified public
+`main`" line).
 
-### Review — one lightweight read-only Codex reviewer (Context Authority / Handoff Integrity)
+### Review — two fresh independent read-only Codex reviewers
 
-Per this task's explicit instruction: one reviewer only, checked against a 9-point checklist (PR #17
-fact accuracy, no stale "Dependency A not done" language, `ADR-0004` still literally Proposed,
-dependencies B/C/D still disabled, `ROADMAP.md` not claiming its own authority, `PROJECT_STATE.md`
-not pre-authorizing `ADR-0004` Acceptance, `DECISIONS_LOG.md` append-only, the external
-Decision-Council report reference no longer dangling, and no runtime capability claimed where only
-semantic authorization exists) — not a broad semantic review round.
+Per this task's explicit instruction: Reviewer A (Acceptance Gate Verification) and Reviewer B
+(Authority / State Consistency) — not a broad re-review of Model C's semantic soundness, which is
+already complete and out of scope here.
 
-- **Finding (confirmed, fixed):** `ROADMAP.md`'s "## 10.7 Dependency gates" section still opened
-  with "ADR-0004 separates four *future* dependencies:", stale now that Dependency A is complete
-  (recorded two subsections later, in the same edit, as `## 10.9`). Independently re-verified by
-  direct re-read of the line: real, if minor, internal inconsistency within the same file. Fixed by
-  rewording to "ADR-0004 separates four dependencies (Dependency A is now complete — see 10.9 below;
-  B, C, and D remain future/disabled):".
-- **Confirmed clean, no defect (checks 1, 3–9):** PR #17 facts (merge commit, title) match
-  `ROADMAP.md`/`PROJECT_STATE.md`/`DECISIONS_LOG.md` and live `main`; `ADR-0004`'s own `## Status`
-  field, read directly, is still literally **Proposed**, and none of the four changed files claims
-  otherwise; dependencies B/C/D are stated as disabled in all three; `ROADMAP.md` explicitly
-  subordinates itself to live git/GitHub, the owning artifact, and `PROJECT_STATE.md`, and
-  `CONTEXT_INDEX.md` labels it navigational/non-authoritative; `PROJECT_STATE.md` names `ADR-0004`
-  Acceptance only as the recommended next checkpoint requiring separate authorization, never as
-  pre-authorized; the `DECISIONS_LOG.md` diff is append-only (no `-` content lines, only the new
-  entry); the dangling `MIHVER_3_AJANLI_KARAR_KURULU_TEKNIK_RAPORU_2026-08-22(1).md` filename
-  reference is gone, replaced with non-importing descriptive wording; no changed file claims or
-  implies an implemented `MemoryContext` runtime, schema, or Brain adapter exists.
+- **Reviewer A — verdict `GATE_SATISFIED`.** Independently confirmed, by direct file
+  reads/`git`/`gh` commands: ADR-0004's own "Acceptance Gate" text is unchanged by this edit and
+  literally states Accepted status requires dependency A alone, not B/C/D; `docs/foundation/M0_SCOPE.md`
+  contains every required element (non-memory `RunContext`, cross-cutting non-linear Producer,
+  Research Planning's optional `MemoryContext` input, `DISCOVERY_ATTENTION`-only restriction,
+  additive/provenance-visible requirements, explicit no-direct-Brain-query statement,
+  unavailable/empty-retrieval non-blocking language, lifecycle/supersession binding);
+  `.project/REVIEW_STATE.md`'s History records four independent Codex reviewers actually
+  adversarially reviewed that amendment (three confirmed defects, fixed); PR #17's merge commit is
+  confirmed an ancestor of current `main`; and both pre- and post-edit ADR-0004 text explicitly
+  states B/C/D are not required for its own Acceptance. Independently re-verified by Claude against
+  the same source text — agreed, gate satisfied.
+- **Reviewer B — one blocking finding at time of review, resolved by this same edit; one
+  non-blocking note, addressed with justification rather than a code change.**
+  - *Blocking finding, confirmed:* at the time Reviewer B ran, `.project/REVIEW_STATE.md` itself had
+    not yet been updated for this task — it still declared `MASTER-ROADMAP-POST-DEPENDENCY-A-INTEGRITY`
+    as "Latest Review" and still said ADR-0004 was "still literally Proposed," while
+    `.project/CURRENT_TASK.md` already referenced this file for current reviewer verdicts. This is the
+    same expected, structural ordering artifact recorded in this file's own `PROJECT-STATE-SYNC-AFTER-
+    ADR-0004` history entry: `REVIEW_STATE.md` is necessarily the last of the seven files updated,
+    since its own content must describe the review that checks the other six. Resolved by this edit:
+    the prior task's material is moved to History below, and this section now accurately describes
+    `ADR-0004-ACCEPTANCE`.
+  - *Non-blocking note, independently reconsidered and not applied:* Reviewer B flagged `ROADMAP.md`'s
+    replacement of the volatile "Last verified public `main`" line as "scope overreach... unrelated to
+    the ADR status transition." Independently re-checked against this task's own prompt: Section 6
+    ("Update every current-status reference that would become stale after this acceptance") and
+    Section 7 ("ROADMAP STALENESS HARDENING... Replace that volatile HEAD assertion with a durable
+    instruction") explicitly authorize and require exactly this change within this task's Allowed
+    Files (`ROADMAP.md` is listed). Reviewer B could not see the task prompt and flagged it as an
+    apparent scope violation without that context; on independent verification this is not
+    overreach — it is explicitly instructed. No change made in response to this note.
+  - All eight of Reviewer B's remaining checks (ADR-0004 diff isolated to `## Status` plus a short
+    note only; dependencies B/C/D never claimed enabled anywhere; no `MemoryContext` runtime/schema/
+    Brain adapter claimed; `ADR-0003`'s own `## Status` field still literally Proposed and no changed
+    file claims otherwise; `PROJECT_STATE.md`/`CONTEXT_INDEX.md`/`ROADMAP.md` agree ADR-0004 is
+    Accepted; `DECISIONS_LOG.md`'s diff purely additive; "Next Authorized Action" never pre-authorizing
+    B/C/D, Step 03B, or `mihver-brain` work) confirmed clean — independently re-verified by Claude
+    against the same source text.
 
-`npm test`: 32/32 (unaffected — no contract/schema/runtime file touched). `git diff --check`: clean.
-`git diff main --stat` / `git diff main --`: exactly the six allowed files (`ROADMAP.md`,
+`npm test`: 32/32. `git diff --check`: clean. `git diff main --stat` / `git diff main --`: exactly
+the seven allowed files (`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
 `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`). No `M0_SCOPE.md`, ADR, contract, schema, or
-`mihver-brain` file touched. `ADR-0004`'s (and `ADR-0003`'s) `## Status` fields are unchanged. No
-future task (`ADR-0004` Acceptance, Dependencies B/C/D, Step 03B) silently authorized anywhere in
-this change.
+`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `ROADMAP.md`). `docs/foundation/M0_SCOPE.md`,
+`docs/contracts/MEMORY_CONTEXT.md`, `docs/contracts/INTENT_SPEC.md`,
+`docs/contracts/REQUIREMENT_SPEC.md`, `schemas/**`, `tests/**`, `scripts/**`, and
+`../mihver-brain/**` are unchanged. `ADR-0003`'s own `## Status` field is unchanged (**Proposed**).
+Dependencies B, C, and D remain structurally disabled everywhere they are mentioned. No
+`MemoryContext` runtime, schema, or Brain adapter is claimed to exist. No future task (Dependencies
+B/C/D, Step 03B) silently authorized anywhere in this change.
 
-**Final recommendation: `CLEAN`.** The one confirmed finding was independently verified and fixed;
-the remaining eight checks were independently confirmed clean, not merely trusted from the
-reviewer's report.
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** Reviewer A independently confirmed the
+Acceptance Gate is factually satisfied; Reviewer B's one blocking finding was a last-file-updated
+ordering artifact, resolved by this same edit, and its one non-blocking note was independently
+reconsidered and found to be explicitly authorized by this task's own prompt, not overreach.
 
 ## Required Changes
 
-None remaining — the one confirmed finding (the "four future dependencies" stale phrase in
-`ROADMAP.md`) is fixed by this same edit.
+None remaining — Reviewer B's blocking finding (this file's own not-yet-updated state, at review
+time) is fixed by this same edit; its non-blocking note required no code change, per the
+justification above.
 
 ## Fixes Applied
 
-See "Latest Review" above. Applied to `ROADMAP.md` only: the "## 10.7 Dependency gates" intro
-sentence, reworded to no longer call Dependency A "future" now that it is recorded as complete two
-subsections later in the same document. `PROJECT_STATE.md`, `DECISIONS_LOG.md`, and
-`CONTEXT_INDEX.md` were confirmed clean and required no further change.
+See "Latest Review" above. No content fix was required to any of the seven changed files beyond
+completing `.project/REVIEW_STATE.md` itself (this file), which was the literal subject of Reviewer
+B's blocking finding.
 
 ## Pending Human Gate
 
-Push to the existing `docs/master-roadmap` branch and update PR #18's body per this task's explicit
-instruction; do not open a new PR, do not merge. Human review of PR #18 is the next gate; it
-authorizes only this navigational/state-reconciliation content — not `ADR-0004` Acceptance, not
-Dependencies B/C/D, not Step 03B, and not any `mihver-brain` work.
+Commit, push, and open one PR against `mihvernetwork/mihver:main`, title `docs: accept ADR-0004
+memory context authority boundary`, per this task's explicit instruction. Not merged by this task.
+Human review of that PR is the next gate; it authorizes only this Status transition — not
+dependencies B/C/D, not Step 03B, and not any `mihver-brain` or runtime memory-integration work.
 
 ## History
+
+- 2026-08-22 — `MASTER-ROADMAP-POST-DEPENDENCY-A-INTEGRITY` (PR #18, merged): durable
+  navigation/state reconciliation after `ADR-0004` Dependency A (PR #17, squash commit
+  `9416e857b549bea07d4ce06a5c365524fdf1d51a`) merged to `main` while `docs/master-roadmap` was
+  already open. No architecture redesign, no `M0_SCOPE.md` change, no ADR Status change, no
+  Dependency B/C/D or Step 03B work, no `mihver-brain` change. Updated `ROADMAP.md`
+  (last-verified-`main` pointer, Phase 7 → DONE with a new `## 10.9` section, Phase 8 →
+  NEXT/not-authorized, capability-map and near-term-order updates, removal of the dangling
+  external-report filename reference), `.project/PROJECT_STATE.md` (new Dependency A checkpoint,
+  corrected stale "not started"/"no stage declares it" language), `.project/DECISIONS_LOG.md` (one
+  new fact-only entry, append-only), and `.project/CONTEXT_INDEX.md` (corrected `ADR-0002` row to
+  Accepted; added missing topic rows). One lightweight read-only Codex reviewer (Context Authority /
+  Handoff Integrity), per a 9-point checklist, found one confirmed defect (a stale "four future
+  dependencies" phrase in `ROADMAP.md`), fixed; eight other checks confirmed clean. `npm test`:
+  32/32. Verdict: `CLEAN`. PR #18 subsequently merged to `main` (squash commit
+  `823ff9f41f6e7b89814c2246df6ea9db41f7e97c`, verified via `gh pr view 18`) — that merge event is
+  recorded in `.project/DECISIONS_LOG.md`'s prior entries, not here. Moved here from "Latest Review"
+  now that those sections describe `ADR-0004-ACCEPTANCE` instead, per this file's branch/task
+  scoping — this is the first entry on a new branch, since `MASTER-ROADMAP-POST-DEPENDENCY-A-
+  INTEGRITY`'s own round continued the pre-existing `docs/master-roadmap` branch rather than
+  starting a new one. — branch `docs/master-roadmap`
 
 - 2026-08-22 — `M0-FOUNDATION-MEMORY-BOUNDARY-A` (PR #17, merged): implemented `ADR-0004`'s
   dependency A only (`RunContext`, the `MemoryContext` Producer's own contract, and Research
