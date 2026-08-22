@@ -1,0 +1,46 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-research-planning-6",
+    "run_id": "run-2026-08-23-006",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior reporting-cadence notes for this project",
+    "retrieval_time": "2026-08-23T09:25:00Z",
+    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-decision-ambiguous-1",
+        "source": {
+          "brain_memory_id": "brain-cadence-01",
+          "brain_type": "decision",
+          "title": "Reporting cadence note",
+          "scope": "support-inbox",
+          "brain_status": "active",
+          "brain_created_at": "2026-01-15T00:00:00Z",
+          "brain_updated_at": "2026-01-15T00:00:00Z",
+          "brain_confidence": "medium",
+          "supersedes": null,
+          "superseded_by": null,
+          "provenance": { "source": "manual", "author": "claude" }
+        },
+        "content": "Weekly reporting was decided for this project.",
+        "classification": {
+          "is_historical_user_statement": true,
+          "historical_user_category": "B",
+          "historical_citation": null,
+          "classification_basis": "record reads as either a user preference or an internal process decision, with no inspectable citation to an originating UserIdea turn either way",
+          "classification_method": "heuristic",
+          "classification_ambiguity": "could plausibly be a user-stated preference or a MIHVER process decision; resolved toward the lower-authority reading (historical user statement, Category B) per the Classification Fail-Closed Rule, never toward more authority",
+          "influence_tier": "DISCOVERY_ATTENTION"
+        },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "38 days since brain_updated_at, under the 180-day staleness threshold" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

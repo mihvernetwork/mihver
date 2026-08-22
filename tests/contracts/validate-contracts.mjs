@@ -164,19 +164,103 @@ function validateIntentSpec(document) {
   }
 }
 
+function validateMemoryContextClassification(label, classification) {
+  if (classification.is_historical_user_statement) {
+    if (classification.historical_user_category === null) {
+      fail(`${label} is a historical user statement and must carry historical_user_category "A" or "B"`);
+    }
+  } else if (classification.historical_user_category !== null || classification.historical_citation !== null) {
+    fail(`${label} is not a historical user statement and must not carry historical_user_category or historical_citation`);
+  }
+  if (classification.historical_user_category === "A" && classification.historical_citation === null) {
+    fail(`${label} is Category A and must carry historical_citation`);
+  }
+  if (classification.historical_user_category === "B" && classification.historical_citation !== null) {
+    fail(`${label} is Category B and must not carry historical_citation`);
+  }
+  if (classification.classification_method === "deterministic" && classification.classification_ambiguity !== null) {
+    fail(`${label} has classification_method "deterministic" and must not carry classification_ambiguity`);
+  }
+}
+
+function validateMemoryContext(document) {
+  const outcomeCount = document.admitted_entries.length + document.excluded_entries.length;
+  if (document.retrieval_outcome === "retrieval_unavailable" && outcomeCount !== 0) {
+    fail("a retrieval_unavailable MemoryContext must carry zero admitted or excluded entries");
+  }
+  if (document.retrieval_outcome === "admitted" && document.admitted_entries.length < 1) {
+    fail("an admitted MemoryContext must carry at least one admitted entry");
+  }
+  if (document.retrieval_outcome === "successfully_empty" && document.admitted_entries.length !== 0) {
+    fail("a successfully_empty MemoryContext must carry zero admitted entries");
+  }
+
+  const allEntryIds = [
+    ...document.admitted_entries.map((entry) => entry.entry_id),
+    ...document.excluded_entries.map((entry) => entry.entry_id)
+  ];
+  unique(allEntryIds, "entry_id values across admitted_entries and excluded_entries");
+  unique(document.admitted_entries.map((entry) => entry.source.brain_memory_id), "brain_memory_id values across admitted_entries");
+
+  const runContext = document.run_context;
+  for (const entry of document.admitted_entries) {
+    const scope = entry.source.scope;
+    if (runContext.status === "absent" && scope !== "global") {
+      fail(`admitted entry ${entry.entry_id} scope must be "global" when run_context is explicitly absent`);
+    }
+    if (runContext.status === "present" && scope !== "global" && scope !== runContext.project_slug) {
+      fail(`admitted entry ${entry.entry_id} scope must be "global" or match run_context.project_slug`);
+    }
+
+    if (entry.source.brain_status === "superseded") {
+      fail(`admitted entry ${entry.entry_id} must not carry brain_status "superseded" -- a superseded record is never admitted as though it were still live`);
+    }
+    if (entry.source.superseded_by !== null) {
+      fail(`admitted entry ${entry.entry_id} carries a non-null superseded_by and must not be admitted -- being linked as superseded by another record means it is not the current live version`);
+    }
+
+    const classification = entry.classification;
+    validateMemoryContextClassification(`admitted entry ${entry.entry_id}`, classification);
+
+    const tier = classification.influence_tier;
+    const isReclassifiedHistorical = classification.is_historical_user_statement;
+    if (["lesson", "playbook"].includes(entry.source.brain_type) && !isReclassifiedHistorical && tier !== "PROCESS_ONLY") {
+      fail(`admitted entry ${entry.entry_id} has brain_type "${entry.source.brain_type}" and is not reclassified as a historical user statement, so it must carry influence_tier "PROCESS_ONLY" -- lesson/playbook is PROCESS_ONLY-always only when content inspection does not redirect it to the Historical User Provenance Gate`);
+    }
+    if (isReclassifiedHistorical && tier === "DECISION_OPTION") {
+      fail(`admitted entry ${entry.entry_id} is a historical user statement and must not carry influence_tier "DECISION_OPTION"`);
+    }
+    if (tier === "SEMANTIC_PREMISE" && !(isReclassifiedHistorical && classification.historical_user_category === "A")) {
+      fail(`admitted entry ${entry.entry_id} carries influence_tier "SEMANTIC_PREMISE" but is not a Category A historical user statement -- only a Category A entry may reach SEMANTIC_PREMISE directly`);
+    }
+    if (classification.classification_method === "heuristic" && classification.classification_ambiguity !== null && ["DECISION_OPTION", "SEMANTIC_PREMISE"].includes(tier)) {
+      fail(`admitted entry ${entry.entry_id} has an ambiguous heuristic classification and must not carry influence_tier "${tier}" -- ambiguity must resolve toward less authority, never more`);
+    }
+  }
+
+  for (const entry of document.excluded_entries) {
+    if (entry.classification !== null) {
+      validateMemoryContextClassification(`excluded entry ${entry.entry_id}`, entry.classification);
+    }
+  }
+}
+
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 const userSchema = await json("schemas/m0/user-idea.schema.json");
 const intentSchema = await json("schemas/m0/intent-spec.schema.json");
+const memoryContextSchema = await json("schemas/m0/memory-context.schema.json");
 const validateSchema = ajv.compile({
   $schema: "https://json-schema.org/draft/2020-12/schema",
   type: "object"
 });
 assert.equal(validateSchema(userSchema), true, "UserIdea schema must itself be valid JSON Schema");
 assert.equal(validateSchema(intentSchema), true, "IntentSpec schema must itself be valid JSON Schema");
+assert.equal(validateSchema(memoryContextSchema), true, "MemoryContext schema must itself be valid JSON Schema");
 const validators = {
   "user-idea": { schema: ajv.compile(userSchema), semantic: validateUserIdea },
-  "intent-spec": { schema: ajv.compile(intentSchema), semantic: validateIntentSpec }
+  "intent-spec": { schema: ajv.compile(intentSchema), semantic: validateIntentSpec },
+  "memory-context": { schema: ajv.compile(memoryContextSchema), semantic: validateMemoryContext }
 };
 
 async function fixtureFiles(directory) {

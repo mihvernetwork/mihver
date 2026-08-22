@@ -1,0 +1,46 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-research-planning-1",
+    "run_id": "run-2026-08-23-001",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior message-queue decoupling patterns for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-pattern-mq-1",
+        "source": {
+          "brain_memory_id": "brain-4250a08b",
+          "brain_type": "pattern",
+          "title": "Message queue used for decoupling in a prior project",
+          "scope": "global",
+          "brain_status": "active",
+          "brain_created_at": "2026-01-10T00:00:00Z",
+          "brain_updated_at": "2026-01-10T00:00:00Z",
+          "brain_confidence": "high",
+          "supersedes": null,
+          "superseded_by": null,
+          "provenance": { "source": "manual", "author": "claude" }
+        },
+        "content": "A prior architecture used a message queue for decoupling, and it worked well for that project's concurrency profile.",
+        "classification": {
+          "is_historical_user_statement": false,
+          "historical_user_category": null,
+          "historical_citation": null,
+          "classification_basis": "brain_type pattern; body describes a prior architecture outcome, not a user statement",
+          "classification_method": "heuristic",
+          "classification_ambiguity": null,
+          "influence_tier": "DISCOVERY_ATTENTION"
+        },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "44 days since brain_updated_at, under the 180-day staleness threshold" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-research-planning-8",
+    "run_id": "run-2026-08-23-008",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior notes possibly relevant to this project",
+    "retrieval_time": "2026-08-23T09:35:00Z",
+    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "retrieval_outcome": "successfully_empty",
+    "admitted_entries": [],
+    "excluded_entries": [
+      {
+        "entry_id": "excluded-unclassifiable-1",
+        "source": {
+          "brain_memory_id": "brain-vague-01",
+          "brain_type": "reference",
+          "title": "Ambiguous note",
+          "scope": "support-inbox",
+          "brain_status": "active",
+          "brain_created_at": "2026-01-25T00:00:00Z",
+          "brain_updated_at": "2026-01-25T00:00:00Z",
+          "brain_confidence": "medium",
+          "supersedes": null,
+          "superseded_by": null,
+          "provenance": { "source": "manual", "author": "claude" }
+        },
+        "content": "note to self: check this later",
+        "exclusion_reason": "classification attempted but not defensible even at DISCOVERY_ATTENTION -- content gives no basis to determine what technology, category, or statement this refers to; per the Classification Fail-Closed Rule, an entry that cannot clear even the lowest content-bearing tier is excluded entirely rather than admitted under a best-guess classification",
+        "classification": {
+          "is_historical_user_statement": false,
+          "historical_user_category": null,
+          "historical_citation": null,
+          "classification_basis": "body content is too vague to determine subject matter or classify at any tier",
+          "classification_method": "heuristic",
+          "classification_ambiguity": "no defensible reading of what this note refers to; could be almost anything"
+        },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "29 days since brain_updated_at, under the 180-day staleness threshold" }
+      }
+    ]
+  }
+}

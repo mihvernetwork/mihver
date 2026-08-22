@@ -1,0 +1,46 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-research-planning-5",
+    "run_id": "run-2026-08-23-005",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior deployment-target constraints for this project",
+    "retrieval_time": "2026-08-23T09:20:00Z",
+    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-reference-onprem-1",
+        "source": {
+          "brain_memory_id": "brain-onprem-01",
+          "brain_type": "reference",
+          "title": "Deployment constraint note",
+          "scope": "support-inbox",
+          "brain_status": "active",
+          "brain_created_at": "2026-01-05T00:00:00Z",
+          "brain_updated_at": "2026-01-05T00:00:00Z",
+          "brain_confidence": "high",
+          "supersedes": null,
+          "superseded_by": null,
+          "provenance": { "source": "manual", "author": "claude" }
+        },
+        "content": "User said (UserIdea v2, turn 7): 'our team will only accept an on-prem deployment option, never a managed cloud service.'",
+        "classification": {
+          "is_historical_user_statement": true,
+          "historical_user_category": "A",
+          "historical_citation": { "idea_id": "idea-support-inbox", "user_idea_version": 2, "turn_id": "turn-7", "quote": "our team will only accept an on-prem deployment option" },
+          "classification_basis": "stored brain_type is reference, but body content inspection reveals a historical user statement with an inspectable, resolvable citation to UserIdea v2 turn 7 -- the gate applies by content, never by stored type",
+          "classification_method": "heuristic",
+          "classification_ambiguity": null,
+          "influence_tier": "DISCOVERY_ATTENTION"
+        },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "48 days since brain_updated_at, under the 180-day staleness threshold" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

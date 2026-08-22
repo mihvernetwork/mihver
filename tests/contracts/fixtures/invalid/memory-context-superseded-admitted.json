@@ -1,0 +1,27 @@
+{
+  "contract": "memory-context",
+  "expected_error": "must not carry brain_status \"superseded\"",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-invalid-superseded",
+    "run_id": "run-invalid-009",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "research_planning",
+    "retrieval_purpose": "research-question-discovery",
+    "retrieval_query": "prior budget notes for this project",
+    "retrieval_time": "2026-08-23T09:00:00Z",
+    "upstream_artifact_binding": null,
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-superseded-bad",
+        "source": { "brain_memory_id": "brain-budget-old", "brain_type": "decision", "title": "Old budget ceiling", "scope": "support-inbox", "brain_status": "superseded", "brain_created_at": "2026-01-01T00:00:00Z", "brain_updated_at": "2026-01-01T00:00:00Z", "brain_confidence": "medium", "supersedes": null, "superseded_by": "brain-budget-new", "provenance": { "source": "manual", "author": "claude" } },
+        "content": "User wants a $100/month budget ceiling.",
+        "classification": { "is_historical_user_statement": true, "historical_user_category": "A", "historical_citation": { "idea_id": "idea-support-inbox", "user_idea_version": 1, "turn_id": "turn-3", "quote": "$100/month budget ceiling" }, "classification_basis": "superseded record, retained here only to demonstrate the forbidden admission", "classification_method": "deterministic", "classification_ambiguity": null, "influence_tier": "DISCOVERY_ATTENTION" },
+        "freshness": { "freshness_flag": "stale_by_age", "freshness_basis": "230 days since brain_updated_at, over the 180-day staleness threshold" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}
