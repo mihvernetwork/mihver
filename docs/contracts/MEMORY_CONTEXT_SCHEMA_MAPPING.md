@@ -8,15 +8,18 @@ Status: M0 machine-readable mapping for the Accepted `MemoryContext` semantic co
 
 **This document does not itself authorize any new `MemoryContext` consumer, and does not implement
 Brain retrieval or runtime integration.** `docs/foundation/M0_SCOPE.md` is the sole authority for
-which stage may consume `MemoryContext`, and, as of `main` today, authorizes exactly two: **Research
-Planning** (`DISCOVERY_ATTENTION` tier only) and **Intent Parsing** (`DISCOVERY_ATTENTION` and
-`SEMANTIC_PREMISE`, per `ADR-0004` dependency B — implemented) — see "Schema Representability vs.
-Pipeline Authorization" below. Current dependency status: **B — implemented** (`INTENT_SPEC.md`/
-`intent-spec.schema.json` already cite the `(memory_context_id, entry_id)` pair this document
-defines — see "Stable identity for cross-artifact reference" below); **C — retired as redundant,
-not implemented** (`REQUIREMENT_SPEC.md`'s R-23); **D — not implemented, not authorized**
-(Requirement Derivation remains an unauthorized `MemoryContext` consumer). No `MemoryContext`
-runtime, Brain adapter, or executable retrieval path exists as of this document, for any consumer.
+which stage may consume `MemoryContext`, and, as of `main` today, authorizes exactly three:
+**Research Planning** (`DISCOVERY_ATTENTION` tier only); **Intent Parsing** (`DISCOVERY_ATTENTION`
+and `SEMANTIC_PREMISE`, per `ADR-0004` dependency B — implemented); and **Requirement Derivation**
+(`DECISION_OPTION` tier only, per `ADR-0004` dependency D and `REQUIREMENT_SPEC.md`'s R-24 —
+implemented) — see "Schema Representability vs. Pipeline Authorization" below. Current dependency
+status: **B — implemented** (`INTENT_SPEC.md`/`intent-spec.schema.json` already cite the
+`(memory_context_id, entry_id)` pair this document defines — see "Stable identity for cross-artifact
+reference" below); **C — retired as redundant, not implemented** (`REQUIREMENT_SPEC.md`'s R-23);
+**D — implemented** (`REQUIREMENT_SPEC.md`'s R-24 cites the same pair as a memory-informed rationale
+for an R-19-eligible working default — see "Stable identity for cross-artifact reference" below). No
+`MemoryContext` runtime, Brain adapter, or executable retrieval path exists as of this document, for
+any consumer — dependency implementation is a semantic/foundation authorization, not a runtime.
 
 ## Validation boundary
 
@@ -57,18 +60,22 @@ defines:
 A structurally valid `MemoryContext` document is not, by itself, evidence that any pipeline stage is
 currently authorized to consume it. `docs/foundation/M0_SCOPE.md`'s "Cross-Cutting: MemoryContext
 Consumption Remains Otherwise Disabled" section is the sole authority for which stage may consume
-`MemoryContext` at all, and it authorizes exactly two today: **Research Planning**, restricted to the
-`DISCOVERY_ATTENTION` tier, and **Intent Parsing**, at `DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE`
-(dependency B, implemented). This schema deliberately represents all four Influence Taxonomy tiers
+`MemoryContext` at all, and it authorizes exactly three today: **Research Planning**, restricted to
+the `DISCOVERY_ATTENTION` tier; **Intent Parsing**, at `DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE`
+(dependency B, implemented); and **Requirement Derivation**, restricted to the `DECISION_OPTION` tier
+only, for an already-established R-19-eligible working default (dependency D, implemented —
+`REQUIREMENT_SPEC.md`'s R-24). This schema deliberately represents all four Influence Taxonomy tiers
 (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`DECISION_OPTION`/`SEMANTIC_PREMISE`) and an open
 `consuming_stage` identifier — not a closed enum naming only the currently-authorized stages — so
-that a future, separately-authorized `M0_SCOPE.md` amendment adding another consuming stage (e.g.
-Requirement Derivation, for dependency D) never requires redesigning `MemoryContext`'s own artifact
-shape (Principle 12, Evolvability). Dependency C's own direct-premise path (a `MemoryContext` entry
-cited as a Requirement-Level Inference premise) has since been retired, not implemented —
-`REQUIREMENT_SPEC.md`'s R-23. Requirement Derivation remains unauthorized to consume `MemoryContext`
-at all, for dependency D or any other purpose; no `MemoryContext` runtime, Brain adapter, or
-executable retrieval path exists for any consumer as of this document.
+that a future, separately-authorized `M0_SCOPE.md` amendment adding a further consuming stage never
+requires redesigning `MemoryContext`'s own artifact shape (Principle 12, Evolvability); this
+representability was exercised, not merely anticipated, when dependency D landed without requiring
+any change to this schema. Dependency C's own direct-premise path (a `MemoryContext` entry cited as a
+Requirement-Level Inference premise) has since been retired, not implemented —
+`REQUIREMENT_SPEC.md`'s R-23. Requirement Derivation's own `DECISION_OPTION` authorization grants no
+path to that retired premise standing, or to `SEMANTIC_PREMISE` for any purpose; no `MemoryContext`
+runtime, Brain adapter, or executable retrieval path exists for any consumer as of this document —
+dependency D is a semantic/foundation authorization, not a runtime.
 
 ## Stable identity for cross-artifact reference (Dependencies B/C/D)
 
@@ -88,10 +95,15 @@ boundary; it does not itself define the citing side.** Current status by depende
   pair would have supported at Requirement Derivation was re-derived after dependency B landed, found
   structurally incoherent, and retired rather than implemented — `REQUIREMENT_SPEC.md`'s R-23. No
   `REQUIREMENT_SPEC.md` field citing this pair for that purpose exists or is pending.
-- **Dependency D — not implemented, not authorized.** A future, separate, explicitly
-  human-authorized `REQUIREMENT_SPEC.md` amendment could cite this same pair as a memory-informed
-  rationale for an R-19-eligible default; no such field exists yet, and Requirement Derivation is not
-  authorized to consume `MemoryContext` at all in the meantime.
+- **Dependency D — implemented.** `docs/foundation/M0_SCOPE.md` and `docs/contracts/
+  REQUIREMENT_SPEC.md` (R-24, "Memory-Informed R-19 Working Defaults") were separately, explicitly
+  amended to let Requirement Derivation consume `MemoryContext` at exactly the `DECISION_OPTION`
+  tier and cite this same `(memory_context_id, entry_id)` pair as an additional memory-informed
+  rationale for an R-19-eligible working default — never as a Requirement-Level Inference premise
+  (R-23 unaffected), never as `brain_memory_id` alone, and never as a direct mutable Brain reference.
+  This document remains implementation-independent, per its own stated deferral pattern: no
+  `RequirementSpec` JSON field name is fixed here or by `REQUIREMENT_SPEC.md` itself, and no
+  `RequirementSpec` schema exists yet — see "No RequirementSpec Machine Schema Yet" below.
 
 **Canonical Brain-memory identity is additionally partitioned, not merely entry-identity.** The
 audit model is: one Producer invocation retrieves one canonical Brain record into exactly one
@@ -103,6 +115,18 @@ excluded under another. Nothing in `MEMORY_CONTEXT.md` contemplates one canonica
 producing multiple entries, of any disposition, within a single invocation; Case 14's two
 independent `MemoryContext` productions for two different retrieval purposes are two *separate*
 artifacts, not two entries inside one.
+
+## No RequirementSpec Machine Schema Yet
+
+Dependency D's semantic authorization (`REQUIREMENT_SPEC.md`'s R-24) is deliberately
+implementation-independent, mirroring this document's own relationship to `MemoryContext`. No
+`schemas/m0/requirement-spec.schema.json` exists, no `RequirementSpec` fixture serialization exists,
+and no field name for a memory-informed-rationale citation is fixed anywhere — `RequirementSpec`'s
+own machine-readable schema (M0 Step 03B) remains deferred, unaffected by dependency D landing.
+Dependency D's own machine representability need is limited to the `MemoryContext` side of the
+citation, which this schema already provides via the `(memory_context_id, entry_id)` pair (see
+"Stable identity for cross-artifact reference" above) — nothing about implementing dependency D
+required, or now requires, a `schemas/m0/memory-context.schema.json` change.
 
 ## The Seven Independent Authority Axes, as represented
 

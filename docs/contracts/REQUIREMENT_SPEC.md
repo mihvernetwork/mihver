@@ -30,7 +30,22 @@ Per `M0_SCOPE.md`:
 
 ```text
 Requirement Derivation
-  Input:  IntentSpec
+  Primary semantic input: IntentSpec
+  Additional optional input: MemoryContext
+                          — authorized for exactly one purpose (ADR-0004 dependency D):
+                          DECISION_OPTION, to optionally inform a working-default value
+                          for a surviving Unknown Requirement Derivation has already,
+                          independently established as R-19-eligible. Bound to the
+                          specific consumed IntentSpec version containing that surviving
+                          Unknown — never to RequirementSpec, which is this stage's own
+                          output, not the artifact the underlying R-19 decision
+                          originates from (M0_SCOPE.md's "Stage: Requirement
+                          Derivation"). MemoryContext plays no role in reaching the
+                          R-19-eligibility determination itself (Gate 1) — it may only
+                          inform the value once Gate 1 is already settled, and its own
+                          source must separately clear Gate 2 (MEMORY_CONTEXT.md's "No
+                          Assumed-Origin Path for Memory"). See "Memory-Informed R-19
+                          Working Defaults" and R-24 below for the full discipline.
   Output: RequirementSpec
   Allowed to decide:     Functional requirements, non-functional requirements (latency, cost,
                           compliance, team skill, scale), constraints, and success criteria derived
@@ -39,8 +54,14 @@ Requirement Derivation
                           candidates will be produced; what the user meant.
 ```
 
-This document does not restate or relitigate this boundary; it specifies what "derived from the
-accepted `IntentSpec`" defensibly means in practice.
+`IntentSpec` remains Requirement Derivation's sole *primary* semantic input, unchanged by
+`MemoryContext`'s narrow addition — every Requirement still ultimately traces to the consumed
+`IntentSpec`, per "Provenance: Requirement → IntentSpec → UserIdea" below. `MemoryContext` is
+optional additional context for exactly the one purpose above; it grants no new authority to decide
+technology, architecture, or intent, and does not alter any of this section's existing
+"Not allowed to decide" boundary. This document does not restate or relitigate this boundary; it
+specifies what "derived from the accepted `IntentSpec`" defensibly means in practice, and, separately,
+what the `MemoryContext` addition does and does not authorize.
 
 ## Input Eligibility
 
@@ -162,6 +183,9 @@ Concretely, a Requirement's provenance must record:
   exactly as `INTENT_SPEC.md` requires an Inferred Claim to state its premises and reasoning kind.
   This is a second, independent layer of provenance on top of whatever `IntentSpec` already recorded
   — it is never merged into or presented as though it were part of `IntentSpec`'s own provenance.
+  Where a filled default was memory-informed (R-24), this layer additionally, explicitly names the
+  cited `MemoryContext` entry as a memory-informed rationale — additional provenance alongside, never
+  a replacement for, the ordinary `claim_id`/`open_item_id` chain into the consumed `IntentSpec`.
 
 This chain is what lets a `RequirementSpec` item, in turn, be traced by a later
 `ArchitectureCandidate` or `ArchitectureDecision` all the way back to the original `UserIdea`, per
@@ -334,7 +358,7 @@ direct `MemoryContext` premise at this mechanism as a future dependency ("depend
 `ADR-0004`'s dependency B was implemented (`INTENT_SPEC.md`'s "Memory-Derived Inference Premises"),
 that direct path was re-derived against this section's own text and R-22's strength model, found
 structurally incoherent, and retired rather than implemented — see `ADR-0004`'s "Post-Acceptance
-Dependency B/C Disposition" for the full reasoning. Two independent reasons, either sufficient alone:
+Dependency B/C/D Disposition" for the full reasoning. Two independent reasons, either sufficient alone:
 
 - **No source of normative strength.** R-22's strength model has exactly one source: "the Requirement
   or Claim it derives from." A `MemoryContext` entry is not a Claim and not a Requirement and carries
@@ -372,11 +396,98 @@ independently-produced Evidence/`TechnologyCandidateSet` artifact can. A cached 
 therefore no more eligible as a Requirement-Level Inference premise than a historical user statement
 is, for a different, independent reason.
 
-This does not authorize Requirement Derivation to consume `MemoryContext` at all — `M0_SCOPE.md`'s
-"Stage: Requirement Derivation" declares only `IntentSpec` as its input, and this section does not
-change that. It exists solely to make explicit, and permanently close, the direct-premise path
-`ADR-0004`'s dependency C once named, so that path is never silently reopened by treating "the memory
-can be cited too" as a plausible reading of R-10.
+This section does not, by itself, authorize Requirement Derivation to consume `MemoryContext` for
+*this* purpose (a Requirement-Level Inference premise) — that path remains permanently closed, per
+R-23, regardless of any other `MemoryContext` authorization Requirement Derivation separately holds.
+It exists to make explicit, and permanently close, the direct-premise path `ADR-0004`'s dependency C
+once named, so that path is never silently reopened by treating "the memory can be cited too" as a
+plausible reading of R-10 — including after dependency D, below, separately authorizes Requirement
+Derivation to consume `MemoryContext` for a wholly different purpose. A memory-informed rationale
+under R-24 is never a premise under R-10, and citing a `MemoryContext` entry as one never makes it
+the other.
+
+### Memory-Informed R-19 Working Defaults
+
+`ADR-0004`'s dependency D authorizes a second, narrower, and structurally distinct `MemoryContext`
+use at Requirement Derivation — not a Requirement-Level Inference premise (the section immediately
+above), and not a new source of normative authority, but a **candidate value** for a decision
+Requirement Derivation already, independently owns: whether and how to fill an R-19-eligible
+surviving Unknown (`M0_SCOPE.md`'s "Stage: Requirement Derivation," `MEMORY_CONTEXT.md`'s
+`DECISION_OPTION` influence tier). This is Requirement Derivation's own, already-existing default-
+filling mechanism (R-09, conditioned on R-19) — dependency D neither creates that mechanism nor
+expands what it may fill; it only lets a specific, already-classified `MemoryContext` entry inform
+which value Requirement Derivation chooses.
+
+**Ordering is a hard invariant, not a convenience.** R-19 eligibility must be established entirely
+independently of memory, before any `MemoryContext` retrieval for this purpose is even meaningful:
+
+```text
+accepted IntentSpec
+    ↓
+existing surviving Unknown
+    ↓
+R-19 eligibility verdict (memory plays no role)
+    ↓
+only if eligible: optional MemoryContext retrieval for this specific decision
+    ↓
+an admitted DECISION_OPTION entry may propose a candidate value
+    ↓
+Requirement Derivation independently adopts / modifies / rejects / ignores
+    ↓
+RequirementSpec
+```
+
+A `MemoryContext` entry may never be used to *establish* that an Unknown is R-19-eligible, or to
+manufacture a new Unknown where the consumed `IntentSpec` records none — both would let memory
+availability silently expand Requirement Derivation's own authority, exactly the failure ordering
+this invariant forecloses. R-19's own test (whether a materially different value would change what
+the Requirement asserts) is unchanged and is applied first, entirely on the strength of the consumed
+`IntentSpec` alone.
+
+**Source eligibility is a second, independent gate — Gate 2, per `MEMORY_CONTEXT.md`'s "No
+Assumed-Origin Path for Memory."** Even once an Unknown clears R-19 (Gate 1), the candidate
+`MemoryContext` entry must independently clear its own source-eligibility test: only a non-historical
+entry (`is_historical_user_statement: false` — typically classified as a prior architecture outcome,
+technical pattern, incident, reference, or process/project decision, never by Brain type alone) may
+carry `DECISION_OPTION` for this purpose. An entry classified as a historical user statement —
+Category A or Category B, without distinction — is categorically ineligible, regardless of how
+narrowly technical its proposed value would otherwise read; this is `MEMORY_CONTEXT.md`'s own,
+already-settled policy (M-21, the deterministic validator), unaffected and unweakened by this
+amendment. Historical-user semantic content that legitimately bears on a Requirement has its own,
+separate, already-disciplined route — via an accepted Inferred Claim through Intent Parsing's
+dependency B — never a second, direct channel through Requirement Derivation.
+
+**A raw historical statement is never reclassified to obtain eligibility.** If a user, in a past run,
+suggested a value ("let's use 3 retries"), the `MemoryContext` entry recording that statement remains
+permanently `DECISION_OPTION`-ineligible, regardless of whether the value was later adopted. A
+*separate*, independently-provenanced Brain record — describing what the project actually
+implemented or adopted, with its own distinct classification and provenance, not a restatement of the
+user's own words — may be a legitimate, non-historical `DECISION_OPTION` candidate on its own terms;
+it is never the same record relabeled (`MEMORY_CONTEXT.md`'s Cases 25/26).
+
+**Adoption is never automatic.** A `DECISION_OPTION` entry supplies **zero independent authority**.
+Requirement Derivation must independently judge the proposed value defensible under its own R-09/R-19
+authority before adopting it — never merely because the memory suggested it, never merely because the
+entry carries high Brain confidence, and never merely because multiple admitted entries happen to
+agree: there is no vote, no majority rule, no repetition bonus, and no "most memories wins" or
+"latest memory wins" mechanism (`MEMORY_CONTEXT.md`'s M-07, extended). Requirement Derivation retains
+full authority to adopt the suggestion as-is, modify it, reject it in favor of a different
+independently-chosen value, or leave the Unknown unresolved and carry it forward — exactly as it may
+when no memory was ever consulted. `MemoryContext` absence, an empty retrieval, a
+`retrieval_unavailable` outcome, or the absence of any usable `DECISION_OPTION` candidate must never
+block this stage; Requirement Derivation proceeds exactly as it would with no memory system at all.
+
+**Independent rationale is required, not optional.** Where Requirement Derivation adopts a
+memory-informed value, its own stated rationale under R-09 must justify the value defensibly under
+R-19 on its own terms — never "because memory said so." The memory may explain *why the candidate was
+considered*; it can never supply *why it is correct*. In particular, if the rationale depends on an
+external factual proposition ("3 retries is optimal," "framework X supports Y," "this is industry
+standard," "license Z permits this"), the `MemoryContext` entry cannot establish that fact — memory is
+never Evidence (`MEMORY_CONTEXT.md`'s "Memory and Evidence Boundary"), and a working default adopted
+this way remains a provisional operational choice, never an evidence-backed optimum.
+
+See R-24 for the resulting invariant, and "Provenance: Requirement → IntentSpec → UserIdea" above and
+R-09 for how a memory-informed fill's provenance is recorded.
 
 ## Force → Requirement Strength Mapping
 
@@ -496,7 +607,10 @@ this is the single most load-bearing distinction in this contract, directly exte
   provenance must mark the value as **Requirement-Derivation-introduced** (per R-09, which is
   conditioned on R-19 — provenance marking never by itself makes an R-19-forbidden Unknown fillable),
   distinct from anything the user or Intent Parsing asserted, with its own stated rationale — never
-  presented as though it traces to a User-Provided Claim. Requirement Derivation may instead choose
+  presented as though it traces to a User-Provided Claim. This choice of value may optionally be
+  informed by a `MemoryContext` entry, once Requirement Derivation has independently reached this
+  same eligibility conclusion — see "Memory-Informed R-19 Working Defaults" and R-24 below; memory
+  plays no role in reaching the eligibility conclusion itself. Requirement Derivation may instead choose
   **not** to fill a permitted-to-fill gap and carry the Unknown forward unresolved into
   `RequirementSpec` (as an explicit open item attached to whichever candidate Requirements depend on
   it) — both choices are valid for a genuinely technical/operational parameter; silently doing neither
@@ -793,7 +907,11 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
 - **R-09** *Subject to R-19's eligibility test* — provenance marking never by itself makes an
   R-19-forbidden Unknown fillable — Requirement Derivation may fill an eligible surviving Unknown
   with a working default only when doing so is marked as Requirement-Derivation-introduced, with its
-  own stated rationale, distinct from any `IntentSpec`-recorded provenance.
+  own stated rationale, distinct from any `IntentSpec`-recorded provenance. *Subject to R-24* — where
+  a `MemoryContext` entry informed the choice of value, the stated rationale additionally, explicitly
+  cites that entry, by its stable `(memory_context_id, entry_id)` identity, as a distinctly-labeled
+  **memory-informed rationale** — never presented as though it traces to an `IntentSpec` Claim, User-
+  Provided standing, or the memory's own authority.
 - **R-10** A Requirement-Derivation-level inference states its premise (the accepted Claim or
   Requirement it derives from) and reasoning, and is labeled as a Requirement Derivation inference,
   never folded into or presented as an `IntentSpec` Inference. Its strength and provisional standing
@@ -941,6 +1059,22 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
   Parsing); Requirement Derivation then draws on that accepted Claim under its own ordinary R-03/R-10
   authority, never on the `MemoryContext` entry a second time. Technical memory
   (`pattern`/`incident`/`reference`) remains excluded independently, because memory is never Evidence.
+- **R-24** A `MemoryContext` entry classified `DECISION_OPTION` may inform only a working-default
+  choice Requirement Derivation has already, independently established as R-19-eligible — never the
+  eligibility determination itself, and never a newly-manufactured Unknown the consumed `IntentSpec`
+  does not itself record. The entry must be non-historical (`is_historical_user_statement: false`);
+  an entry classified as a historical user statement, Category A or Category B, is categorically
+  ineligible for this use, without exception. The entry supplies **zero independent authority**: the
+  final value remains Requirement-Derivation-introduced (R-09) and independently justified under
+  Requirement Derivation's own R-09/R-19 authority alone — never "because memory said so," never by
+  Brain confidence, repetition, or vote across multiple candidate entries. Where adopted, the entry is
+  cited only as an additional, distinctly-labeled memory-informed rationale, by its stable
+  `(memory_context_id, entry_id)` identity — never as a Requirement-Level Inference premise (R-23
+  remains fully intact and unaffected), never as Evidence, and never as a substitute for the
+  Requirement's own ordinary provenance to the consumed `IntentSpec` version and the surviving
+  `open_item_id`/basis it fills. `MemoryContext` absence, an empty retrieval, or the lack of any
+  usable candidate never blocks Requirement Derivation, which retains full authority to choose its
+  own independently-defensible value or leave the Unknown unresolved.
 
 ## Examples
 
@@ -967,6 +1101,15 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
 - Inferred Claim carrying **obligation** force at moderate confidence (contrast the previous example)
   → still a **MUST**-level Requirement, marked Inference-derived and provisional, moderate confidence
   recorded in provenance — moderate confidence does not downgrade it to SHOULD (see Case 7 in
+  [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md)).
+- An already-settled Requirement ("the system SHALL retry a failed background job automatically")
+  carries a surviving, R-19-eligible Unknown (exact retry count/backoff strategy). Requirement
+  Derivation independently confirms eligibility, then retrieves a `MemoryContext` for that specific
+  purpose; a non-historical `pattern`-type entry proposes "3 retries, exponential backoff." Requirement
+  Derivation independently judges the value defensible under R-19 and adopts it → Requirement marked
+  Requirement-Derivation-introduced (R-09), with an independent rationale plus an explicit
+  memory-informed-rationale citation of the entry's `(memory_context_id, entry_id)` (R-24) — never
+  presented as though the memory authorized the choice (see Case 23 in
   [REQUIREMENT_CASES](../examples/REQUIREMENT_CASES.md)).
 
 ## Anti-Examples
@@ -1004,3 +1147,11 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
   path. (Violates R-23.) Equally a violation: deriving that Requirement's strength from the memory
   entry's own Brain confidence or the historical statement's own force, rather than from an accepted
   Claim's force. (Violates R-22/R-23 together.)
+- Adopting a memory-suggested R-19 default value merely because the entry proposed it, without
+  independently judging it defensible under R-19 — or citing the entry's own Brain confidence, or
+  agreement across multiple admitted entries, as though either supplied authority the memory does not
+  have. (Violates R-24.) Equally a violation: using a `MemoryContext` retrieval to conclude an Unknown
+  is R-19-eligible, or to manufacture a new Unknown the consumed `IntentSpec` never recorded. (Violates
+  R-19/R-24 together — see "Memory-Informed R-19 Working Defaults.") Also a violation: a historical
+  Category A or B entry carrying `DECISION_OPTION`, or a memory-informed rationale presented as though
+  it were a Requirement-Level Inference premise. (Violates R-24, and R-23 respectively.)
