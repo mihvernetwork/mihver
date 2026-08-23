@@ -15,80 +15,135 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: DEPENDENCY-D-FINAL-CROSSREF-HYGIENE
-Branch: `m0/dependency-d-r19-memory-decision-option`
-PR: `mihvernetwork/mihver#27` — existing open PR, continued, not a new PR, not merged by this task
+Task: POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION
+Branch: `chore/post-dependency-d-reconcile`
+PR: to be opened against `mihvernetwork/mihver:main` (title "chore: reconcile state after Dependency
+D") — not yet created as of this entry
 
-A single-purpose cross-reference hygiene pass on top of PR #27's already-implemented, **approved**
-`ADR-0004` Dependency D. Does not reopen Dependency D semantics. Fixed the one named residual (a
-line-wrapped stale reference to the ADR's pre-rename section title in
-`docs/examples/MEMORY_CONTEXT_CASES.md`), then swept every file this PR has touched for the same
-stale phrase and fixed four further genuine live cross-references the sweep found.
+Durable-state/navigation reconciliation only, after PR #26 (`DECISION_OPTION` historical-source gate
+closure, squash commit `a16491d41d93f4edac9378b6184de071aa681f32`) and PR #27 (`ADR-0004` Dependency
+D implementation, squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`) both merged to `main`.
+No semantic redesign; Dependency D not reopened; PR #26's source-gate policy not reopened;
+`RequirementSpec` Step 03B not begun; no contract/ADR/schema/validator/fixture/runtime/`mihver-brain`
+file touched.
 
-**Named residual.** `docs/examples/MEMORY_CONTEXT_CASES.md` line ~67: `see ADR-0004's
-"Post-Acceptance Dependency B/C\nDisposition"` (line-wrapped) — corrected to "...B/C/D Disposition".
+**Live reality verified before any edit.** `main` HEAD confirmed `bb70a9e`, clean working tree,
+`npm test` 85/85. PR #26: `state: MERGED`, `mergeCommit.oid` matching exactly. PR #27:
+`state: MERGED`, `mergeCommit.oid` matching current `main` HEAD exactly. `PROJECT_STATE.md`'s
+"Latest checkpoint"/"Next action" (per `npm run context`) confirmed stale before editing — this
+reconciliation's premise.
 
-**Sweep result.** A whitespace-tolerant sweep (line-joined text, not plain `grep -n`, to catch
-line-wrapped instances) of every file `git diff main --stat` reports as changed on this branch found
-four further genuine, live, stale cross-references — each individually read in context before
-editing to confirm it was a live pointer, not a historical quote of the pre-rename name:
-`docs/contracts/MEMORY_CONTEXT.md` (two instances, ~lines 12 and 484), `docs/contracts/
-REQUIREMENT_SPEC.md` (one, ~line 360, line-wrapped), `docs/examples/REQUIREMENT_CASES.md` (one,
-~line 769), `docs/foundation/M0_SCOPE.md` (one, ~line 364). All five now read "Post-Acceptance
-Dependency B/C/D Disposition"; every diff hunk touches only the section-name string itself.
+**`PROJECT_STATE.md`:** added the PR #26 checkpoint (categorical historical-user Category A/B
+`DECISION_OPTION` ineligibility; Gate 1/Gate 2 model; source-gate/D orthogonality; no-laundering;
+validator preserved; 85/85; D itself not implemented by PR #26) and the PR #27 checkpoint (Dependency
+D DONE; Requirement Derivation third `MemoryContext` consumer, `DECISION_OPTION` only; canonical
+Gate-1/Gate-2 ordering; zero independent authority; R-09 + independent rationale + memory-informed
+rationale citing `(memory_context_id, entry_id)`, new invariant R-24; R-19/R-23 unchanged; C remains
+retired; `IntentSpec`-version binding; no schema/Brain adapter; 85/85). Fixed five stale
+historical-checkpoint forward pointers (Dependency A ×2, Acceptance, Dependency B, Dependency C) using
+the established "at the time of this checkpoint... has since..." pattern — no history rewritten, only
+qualified and forward-pointed. Rewrote "Next Authorized Action": Dependency D = DONE; still opens
+"None automatically" (`REVIEW_PROTOCOL.md` item 9); records `RequirementSpec` Step 03B as the logical
+next M0 task family, conceptual scope only, **not authorized by this entry**. "Open Items": `ADR-0003`
+Status preserved **Proposed**, unchanged — recorded only that D's closure removes the reason to delay
+`RequirementSpec` machine representation on memory-provenance grounds, an observation, not
+authorization; acceptance remains a later explicit decision under `ADR-0003`'s own criteria.
 
-**Legitimately-preserved instances.** Three further "B/C Disposition" (no /D) occurrences —
-`.project/CURRENT_TASK.md` (one) and this file (two, from the prior closure task's own text) — were
-individually read and confirmed to be historical quotes describing the rename itself (e.g. "renamed
-'Post-Acceptance Dependency B/C Disposition' → '...B/C/D Disposition'"), not live cross-references;
-correctly left unchanged, since editing them would falsify the historical record of what the old
-name was.
+**`DECISIONS_LOG.md`:** appended two fact-only entries (PR #26, PR #27), each independently verified
+via `gh pr view`/`git log` before writing; no existing entry edited; no entry for this reconciliation
+task's own future merge.
 
-**Final re-sweep: zero remaining live/current references to the pre-rename heading anywhere in the
-PR's changed files.**
+**`ROADMAP.md`:** added `10.12` (historical-source gate — DONE, PR #26) and `10.13` (Dependency D —
+DONE, PR #27), following the existing `10.9`/`10.10`/`10.11` pattern. Fixed section 10's stale
+"D remains disabled/future" framing (10.1, 10.7, 10.8) and 10.11's stale "Requirement Derivation
+remains not authorized"/"Dependency D is not retired... unimplemented and unauthorized" claims, plus
+a stale "Post-Acceptance Dependency B/C Disposition" cross-reference missing `/D` — historical framing
+preserved throughout, forward pointers added. Phase 9 header/body/`### D` subsection rewritten for
+DONE status; added a `### DECISION_OPTION historical-source gate — DONE (PR #26)` subsection. Section
+21 (capability map): fixture count `83/83` → `85/85` with full lineage; fixed every stale
+forward-pointer/cross-reference; added PR #26/PR #27 bullets with the full current capability
+snapshot. Section 22 (near-term order): inserted the historical-source-gate step, renumbered
+Dependency D to "DONE (PR #27)", renumbered every subsequent item by +1, reworded Step 03B's entry to
+"NEXT, not authorized" with a sequencing-observation-not-authorization framing. Final
+whitespace-tolerant sweep: zero remaining stale "D remains"/pre-rename cross-reference instances;
+remaining "not authorized" occurrences independently confirmed either correctly historical or
+intentionally current (Step 03B).
 
-## Allowed Scope
+**`.project/CONTEXT_INDEX.md`:** read only, left unchanged — every required topic
+(`REQUIREMENT_SPEC`, `REQUIREMENT_CASES`, `ADR-0003`, `ADR-0004`, `MEMORY_CONTEXT`,
+`MEMORY_CONTEXT_SCHEMA_MAPPING`, `M0_SCOPE`, `ROADMAP`) already discoverable; no navigation gap found.
 
-`docs/examples/MEMORY_CONTEXT_CASES.md` (the named residual), plus — discovered necessary by this
-task's own required sweep, not pre-declared — `docs/contracts/MEMORY_CONTEXT.md`,
-`docs/contracts/REQUIREMENT_SPEC.md`, `docs/examples/REQUIREMENT_CASES.md`,
-`docs/foundation/M0_SCOPE.md` (cross-reference string only), plus this file and
-`.project/CURRENT_TASK.md`. Not modified: R-09/R-19/R-21/R-23/R-24 invariant text; `M0_SCOPE.md`'s
-stage/authorization semantics; ADR-0004's own semantics; any case content beyond the exact
-stale-phrase occurrences; `schemas/**`, `tests/**`, `scripts/**`, `package*.json`, `mihver-brain/**`,
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`, `ROADMAP.md`.
+### Review — one fresh lightweight read-only Codex reviewer
+
+**POST-DEPENDENCY-D STATE CONSISTENCY**, 15-point checklist against `git diff main --stat`/
+`git diff main --`: PR #26/#27 merge facts (2), both `PROJECT_STATE.md` checkpoints present (3),
+Dependency D DONE not NEXT (4), Dependency C RETIRED not DONE (5), historical source gate recorded
+distinctly from D (6), Requirement Derivation third consumer/`DECISION_OPTION`-only (7), R-24
+provenance summary accuracy (8), memory non-Evidence (9), Step 03B NEXT-not-authorized (10),
+`ADR-0003` remains Proposed (11), `ROADMAP.md` capability map current (12), 85/85 current total (13),
+`DECISIONS_LOG.md` append-only (14), diff scope limited to the five allowed files (15).
+
+**14/15 PASS.** One confirmed finding: `ROADMAP.md`'s Dependency A checkpoint (10.9) still stated, in
+two places, present-tense-readable "Dependencies B/C/D remain structurally disabled" (in its own
+bullet list of what PR #17 established) and "Requirement Derivation is still not a `MemoryContext`
+consumer; Dependencies C and D remain unimplemented" (Dependency B checkpoint's own "Did not do"
+paragraph, 10.10) — both missed by the initial edit pass despite the equivalent sentences elsewhere
+in the same file already being fixed. Independently re-verified by direct read before fixing (not
+merely trusted from the reviewer's PASS/FAIL framing); both now read "at the time of this
+checkpoint... has since..." with forward pointers to 10.10/10.11/10.13, matching the pattern already
+used throughout the rest of the document. A follow-up whitespace-tolerant grep sweep for the same two
+literal phrases ("remain unimplemented", "remain structurally disabled") across the whole file
+confirmed zero remaining instances after the fix.
 
 ## Required Changes
 
-None — this task's own required sweep is what surfaced the four additional fixes; no external
-reviewer was dispatched (single-purpose, mechanical, whitespace-tolerant-grep-verifiable string fix,
-not a semantic re-review).
+None remaining — the one confirmed finding (two unqualified present-tense-readable D-pending
+sentences in `ROADMAP.md`'s 10.9/10.10) is fixed.
 
 ## Fixes Applied
 
-- `docs/examples/MEMORY_CONTEXT_CASES.md`: the named line-wrapped residual, fixed.
-- `docs/contracts/MEMORY_CONTEXT.md` (×2), `docs/contracts/REQUIREMENT_SPEC.md`,
-  `docs/examples/REQUIREMENT_CASES.md`, `docs/foundation/M0_SCOPE.md`: four further live
-  cross-references this task's own sweep found, each individually confirmed live (not historical)
-  before fixing.
-- `.project/CURRENT_TASK.md` and this file's own remaining "B/C Disposition" instances individually
-  confirmed to be historical quotes of the pre-rename name (describing the earlier rename itself),
-  correctly left unchanged.
+- `ROADMAP.md` 10.9 (Dependency A checkpoint): "Dependencies B/C/D remain structurally disabled"
+  qualified to "at the time of this checkpoint... remained... structurally disabled," with a forward
+  pointer to 10.10/10.11/10.13.
+- `ROADMAP.md` 10.10 (Dependency B checkpoint, "Did not do" paragraph): requalified to "at the time of
+  this checkpoint," with a forward pointer to 10.11/10.13 and a preserved "no Brain adapter/runtime
+  exists even now" current-state fact.
+- All other durable-state edits (`PROJECT_STATE.md`'s two new checkpoints and five forward-pointer
+  fixes, `DECISIONS_LOG.md`'s two appended entries, `ROADMAP.md`'s 10.12/10.13/Phase 9/Section
+  21/Section 22 changes) confirmed clean by the reviewer round, independently spot-checked.
 
-**Verification:** `git diff HEAD^ --` shows every hunk across all five content files touches only the
-section-name string; `git diff HEAD^ --stat` shows exactly the six changed files. `npm test`: 85/85.
-`git diff --check`: clean. A final whitespace-tolerant sweep of every PR-changed file confirms zero
-remaining live "Dependency B/C Disposition" (without /D) references anywhere.
+**Verification after fix:** `npm test`: 85/85. `git diff --check`: clean. A whitespace-tolerant sweep
+for "remain unimplemented"/"remain structurally disabled" across `ROADMAP.md` returns zero matches.
 
 **Final recommendation: `READY_FOR_HUMAN_REVIEW`.**
 
 ## Pending Human Gate
 
-Commit and push to the existing branch `m0/dependency-d-r19-memory-decision-option`, existing PR #27.
-Do not open a new PR. Not merged by this task. Human review of PR #27 (now including this hygiene
-round) is the next gate.
+Commit, push, and open exactly one PR against `mihvernetwork/mihver:main` (title "chore: reconcile
+state after Dependency D"), per this task's explicit instruction. Not merged by this task. Human
+review of that PR is the next gate; it authorizes only this durable-state/navigation reconciliation —
+no semantic redesign, no `RequirementSpec` Step 03B, no `ADR-0003` acceptance, no Brain/runtime work.
 
 ## History
+
+- 2026-08-23 — `DEPENDENCY-D-FINAL-CROSSREF-HYGIENE` (PR #27, merged, squash commit
+  `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`): a single-purpose cross-reference hygiene pass on top of
+  PR #27's already-implemented, approved `ADR-0004` Dependency D. Does not reopen Dependency D
+  semantics. Fixed the one named residual (a line-wrapped stale reference to the ADR's pre-rename
+  section title in `docs/examples/MEMORY_CONTEXT_CASES.md`), then swept every file this PR had touched
+  for the same stale phrase and fixed four further genuine live cross-references the sweep found
+  (`docs/contracts/MEMORY_CONTEXT.md` ×2, `docs/contracts/REQUIREMENT_SPEC.md`,
+  `docs/examples/REQUIREMENT_CASES.md`, `docs/foundation/M0_SCOPE.md`) — all pure string corrections,
+  no semantic content changed. Three further "B/C Disposition" (no /D) occurrences in
+  `.project/CURRENT_TASK.md`/this file were individually confirmed to be historical quotes of the
+  pre-rename name and correctly left unchanged. `npm test`: 85/85. Verdict: `READY_FOR_HUMAN_REVIEW`.
+  PR #27 subsequently merged to `main` (squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`,
+  verified via `gh pr view 27`) — that merge event, together with PR #26's, is recorded in
+  `.project/DECISIONS_LOG.md` by the present task. Moved here from "Latest Review" now that those
+  sections describe `POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION` instead, per this file's
+  branch/task scoping — this is the first entry on a new branch, since this task's own round is
+  self-contained on `chore/post-dependency-d-reconcile`. — branch
+  `m0/dependency-d-r19-memory-decision-option`
 
 - 2026-08-23 — `DEPENDENCY-D-FOUNDATION-AND-CORPUS-CLOSURE` (PR #27, opened, not yet merged): a narrow
   closure pass on top of PR #27's already-implemented, approved `ADR-0004` Dependency D — Gate 1/Gate
