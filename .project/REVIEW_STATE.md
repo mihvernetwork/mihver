@@ -15,116 +15,83 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION
+Task: POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE
 Branch: `chore/post-dependency-d-reconcile`
-PR: to be opened against `mihvernetwork/mihver:main` (title "chore: reconcile state after Dependency
-D") — not yet created as of this entry
+PR: `mihvernetwork/mihver#28` ("chore: reconcile state after Dependency D") — existing open PR,
+continued, not a new PR, not merged by this task
 
-Durable-state/navigation reconciliation only, after PR #26 (`DECISION_OPTION` historical-source gate
-closure, squash commit `a16491d41d93f4edac9378b6184de071aa681f32`) and PR #27 (`ADR-0004` Dependency
-D implementation, squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`) both merged to `main`.
-No semantic redesign; Dependency D not reopened; PR #26's source-gate policy not reopened;
-`RequirementSpec` Step 03B not begun; no contract/ADR/schema/validator/fixture/runtime/`mihver-brain`
-file touched.
+A tiny factual-hygiene closure on top of PR #28's already-approved durable-state reconciliation. No
+state/roadmap decision reopened. Fixed exactly one factual defect family in
+`.project/DECISIONS_LOG.md`'s PR #26 entry: a false claim that this branch's own HEAD-at-start
+matched PR #26's merge commit (`a16491d41d93f4edac9378b6184de071aa681f32`) — it actually matched the
+later PR #27 merge commit (`bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`), since the reconciliation
+covered both PRs together and this branch's own `main` base was taken after PR #27, not PR #26.
+Also made the "validator behavior unchanged" claim in that same entry precise: the deterministic
+source-gate decision logic was unchanged; only surrounding diagnostic error-message wording was
+clarified/extended by PR #26 — not every byte/message in the file. PR #27's own entry was
+independently re-verified correct (task-start HEAD genuinely equals PR #27's own merge SHA) and left
+untouched. No pre-existing `DECISIONS_LOG.md` entry above the PR #26 hunk touched; no third entry
+added; no entry recorded for this reconciliation PR's own future merge.
 
-**Live reality verified before any edit.** `main` HEAD confirmed `bb70a9e`, clean working tree,
-`npm test` 85/85. PR #26: `state: MERGED`, `mergeCommit.oid` matching exactly. PR #27:
-`state: MERGED`, `mergeCommit.oid` matching current `main` HEAD exactly. `PROJECT_STATE.md`'s
-"Latest checkpoint"/"Next action" (per `npm run context`) confirmed stale before editing — this
-reconciliation's premise.
-
-**`PROJECT_STATE.md`:** added the PR #26 checkpoint (categorical historical-user Category A/B
-`DECISION_OPTION` ineligibility; Gate 1/Gate 2 model; source-gate/D orthogonality; no-laundering;
-validator preserved; 85/85; D itself not implemented by PR #26) and the PR #27 checkpoint (Dependency
-D DONE; Requirement Derivation third `MemoryContext` consumer, `DECISION_OPTION` only; canonical
-Gate-1/Gate-2 ordering; zero independent authority; R-09 + independent rationale + memory-informed
-rationale citing `(memory_context_id, entry_id)`, new invariant R-24; R-19/R-23 unchanged; C remains
-retired; `IntentSpec`-version binding; no schema/Brain adapter; 85/85). Fixed five stale
-historical-checkpoint forward pointers (Dependency A ×2, Acceptance, Dependency B, Dependency C) using
-the established "at the time of this checkpoint... has since..." pattern — no history rewritten, only
-qualified and forward-pointed. Rewrote "Next Authorized Action": Dependency D = DONE; still opens
-"None automatically" (`REVIEW_PROTOCOL.md` item 9); records `RequirementSpec` Step 03B as the logical
-next M0 task family, conceptual scope only, **not authorized by this entry**. "Open Items": `ADR-0003`
-Status preserved **Proposed**, unchanged — recorded only that D's closure removes the reason to delay
-`RequirementSpec` machine representation on memory-provenance grounds, an observation, not
-authorization; acceptance remains a later explicit decision under `ADR-0003`'s own criteria.
-
-**`DECISIONS_LOG.md`:** appended two fact-only entries (PR #26, PR #27), each independently verified
-via `gh pr view`/`git log` before writing; no existing entry edited; no entry for this reconciliation
-task's own future merge.
-
-**`ROADMAP.md`:** added `10.12` (historical-source gate — DONE, PR #26) and `10.13` (Dependency D —
-DONE, PR #27), following the existing `10.9`/`10.10`/`10.11` pattern. Fixed section 10's stale
-"D remains disabled/future" framing (10.1, 10.7, 10.8) and 10.11's stale "Requirement Derivation
-remains not authorized"/"Dependency D is not retired... unimplemented and unauthorized" claims, plus
-a stale "Post-Acceptance Dependency B/C Disposition" cross-reference missing `/D` — historical framing
-preserved throughout, forward pointers added. Phase 9 header/body/`### D` subsection rewritten for
-DONE status; added a `### DECISION_OPTION historical-source gate — DONE (PR #26)` subsection. Section
-21 (capability map): fixture count `83/83` → `85/85` with full lineage; fixed every stale
-forward-pointer/cross-reference; added PR #26/PR #27 bullets with the full current capability
-snapshot. Section 22 (near-term order): inserted the historical-source-gate step, renumbered
-Dependency D to "DONE (PR #27)", renumbered every subsequent item by +1, reworded Step 03B's entry to
-"NEXT, not authorized" with a sequencing-observation-not-authorization framing. Final
-whitespace-tolerant sweep: zero remaining stale "D remains"/pre-rename cross-reference instances;
-remaining "not authorized" occurrences independently confirmed either correctly historical or
-intentionally current (Step 03B).
-
-**`.project/CONTEXT_INDEX.md`:** read only, left unchanged — every required topic
-(`REQUIREMENT_SPEC`, `REQUIREMENT_CASES`, `ADR-0003`, `ADR-0004`, `MEMORY_CONTEXT`,
-`MEMORY_CONTEXT_SCHEMA_MAPPING`, `M0_SCOPE`, `ROADMAP`) already discoverable; no navigation gap found.
-
-### Review — one fresh lightweight read-only Codex reviewer
-
-**POST-DEPENDENCY-D STATE CONSISTENCY**, 15-point checklist against `git diff main --stat`/
-`git diff main --`: PR #26/#27 merge facts (2), both `PROJECT_STATE.md` checkpoints present (3),
-Dependency D DONE not NEXT (4), Dependency C RETIRED not DONE (5), historical source gate recorded
-distinctly from D (6), Requirement Derivation third consumer/`DECISION_OPTION`-only (7), R-24
-provenance summary accuracy (8), memory non-Evidence (9), Step 03B NEXT-not-authorized (10),
-`ADR-0003` remains Proposed (11), `ROADMAP.md` capability map current (12), 85/85 current total (13),
-`DECISIONS_LOG.md` append-only (14), diff scope limited to the five allowed files (15).
-
-**14/15 PASS.** One confirmed finding: `ROADMAP.md`'s Dependency A checkpoint (10.9) still stated, in
-two places, present-tense-readable "Dependencies B/C/D remain structurally disabled" (in its own
-bullet list of what PR #17 established) and "Requirement Derivation is still not a `MemoryContext`
-consumer; Dependencies C and D remain unimplemented" (Dependency B checkpoint's own "Did not do"
-paragraph, 10.10) — both missed by the initial edit pass despite the equivalent sentences elsewhere
-in the same file already being fixed. Independently re-verified by direct read before fixing (not
-merely trusted from the reviewer's PASS/FAIL framing); both now read "at the time of this
-checkpoint... has since..." with forward pointers to 10.10/10.11/10.13, matching the pattern already
-used throughout the rest of the document. A follow-up whitespace-tolerant grep sweep for the same two
-literal phrases ("remain unimplemented", "remain structurally disabled") across the whole file
-confirmed zero remaining instances after the fix.
+**Verification:** `git diff .project/DECISIONS_LOG.md` shows exactly one hunk, scoped to the PR #26
+entry's text, independently confirmed by direct diff inspection (not merely asserted). `npm test`:
+85/85. `git diff --check`: clean. `git diff HEAD^ --stat`: `.project/DECISIONS_LOG.md`,
+`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` only.
 
 ## Required Changes
 
-None remaining — the one confirmed finding (two unqualified present-tense-readable D-pending
-sentences in `ROADMAP.md`'s 10.9/10.10) is fixed.
+None — this was a self-contained, Claude-identified factual correction per explicit human
+instruction; no external reviewer dispatched for a single-paragraph factual-wording fix.
 
 ## Fixes Applied
 
-- `ROADMAP.md` 10.9 (Dependency A checkpoint): "Dependencies B/C/D remain structurally disabled"
-  qualified to "at the time of this checkpoint... remained... structurally disabled," with a forward
-  pointer to 10.10/10.11/10.13.
-- `ROADMAP.md` 10.10 (Dependency B checkpoint, "Did not do" paragraph): requalified to "at the time of
-  this checkpoint," with a forward pointer to 10.11/10.13 and a preserved "no Brain adapter/runtime
-  exists even now" current-state fact.
-- All other durable-state edits (`PROJECT_STATE.md`'s two new checkpoints and five forward-pointer
-  fixes, `DECISIONS_LOG.md`'s two appended entries, `ROADMAP.md`'s 10.12/10.13/Phase 9/Section
-  21/Section 22 changes) confirmed clean by the reviewer round, independently spot-checked.
-
-**Verification after fix:** `npm test`: 85/85. `git diff --check`: clean. A whitespace-tolerant sweep
-for "remain unimplemented"/"remain structurally disabled" across `ROADMAP.md` returns zero matches.
+- `.project/DECISIONS_LOG.md`'s PR #26 entry: corrected the false HEAD-at-start claim (now correctly
+  attributes task-start HEAD to PR #27's merge commit, with an explanatory note); made the validator
+  claim precise (decision logic unchanged; diagnostic wording clarified/extended).
 
 **Final recommendation: `READY_FOR_HUMAN_REVIEW`.**
 
 ## Pending Human Gate
 
-Commit, push, and open exactly one PR against `mihvernetwork/mihver:main` (title "chore: reconcile
-state after Dependency D"), per this task's explicit instruction. Not merged by this task. Human
-review of that PR is the next gate; it authorizes only this durable-state/navigation reconciliation —
-no semantic redesign, no `RequirementSpec` Step 03B, no `ADR-0003` acceptance, no Brain/runtime work.
+Commit and push to the existing branch `chore/post-dependency-d-reconcile`, existing PR #28. Do not
+open a new PR. Not merged by this task. Human review of PR #28 (now including this fact-closure
+round) is the next gate.
 
 ## History
+
+- 2026-08-23 — `POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION` (PR #28, opened, not yet merged):
+  durable-state/navigation reconciliation only, after PR #26 (`DECISION_OPTION` historical-source
+  gate closure, squash commit `a16491d41d93f4edac9378b6184de071aa681f32`) and PR #27 (`ADR-0004`
+  Dependency D implementation, squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`) both merged
+  to `main`. No semantic redesign; Dependency D not reopened; PR #26's source-gate policy not
+  reopened; `RequirementSpec` Step 03B not begun; no contract/ADR/schema/validator/fixture/runtime/
+  `mihver-brain` file touched. Live reality verified before any edit (`main` HEAD `bb70a9e`, clean
+  tree, `npm test` 85/85, both PRs confirmed MERGED via `gh pr view`). `PROJECT_STATE.md`: added
+  durable checkpoints for both PR #26 (categorical historical-user Category A/B `DECISION_OPTION`
+  ineligibility; Gate 1/Gate 2 model) and PR #27 (Dependency D DONE; Requirement Derivation third
+  `MemoryContext` consumer, `DECISION_OPTION` only; zero independent authority; new invariant R-24);
+  fixed five stale historical-checkpoint forward pointers using the established "at the time of this
+  checkpoint... has since..." pattern; rewrote "Next Authorized Action" (Dependency D = DONE;
+  `RequirementSpec` Step 03B recorded as logical next, not authorized) and "Open Items" (`ADR-0003`
+  preserved Proposed). `DECISIONS_LOG.md`: appended two fact-only entries (PR #26, PR #27), no
+  existing entry edited. `ROADMAP.md`: added `10.12`/`10.13`, fixed section 10's stale D-pending
+  framing, Phase 9 rewritten for DONE status, Section 21 capability map updated to 85/85 with full
+  current snapshot, Section 22 near-term order renumbered with Step 03B as NEXT-not-authorized.
+  `.project/CONTEXT_INDEX.md` read only, left unchanged — no navigation gap found. One fresh
+  lightweight read-only Codex reviewer (POST-DEPENDENCY-D STATE CONSISTENCY, 15-point checklist):
+  14/15 PASS, one confirmed finding (two unqualified present-tense-readable D-pending sentences in
+  `ROADMAP.md`'s 10.9/10.10, missed by the initial pass despite equivalent sentences elsewhere
+  already fixed), independently re-verified and fixed; a follow-up whitespace-tolerant sweep
+  confirmed zero remaining instances. `npm test`: 85/85. Verdict: `READY_FOR_HUMAN_REVIEW`. PR #28
+  opened (title "chore: reconcile state after Dependency D") — not merged. A follow-up task,
+  `POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE`, subsequently fixed one factual defect family in
+  `DECISIONS_LOG.md`'s PR #26 entry an explicit human instruction identified (a false HEAD-at-start
+  claim; imprecise validator wording), on the same branch/PR, before any human merge decision. Moved
+  here from "Latest Review" now that those sections describe
+  `POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE` instead, per this file's branch/task scoping — both
+  entries share branch `chore/post-dependency-d-reconcile` and PR #28, since the fact-closure round
+  was a continuation on the same open PR, not a new branch. — branch
+  `chore/post-dependency-d-reconcile`
 
 - 2026-08-23 — `DEPENDENCY-D-FINAL-CROSSREF-HYGIENE` (PR #27, merged, squash commit
   `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`): a single-purpose cross-reference hygiene pass on top of

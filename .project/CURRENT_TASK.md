@@ -5,16 +5,25 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION
+POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE
 
 ## Objective
 
-Durable-state/navigation reconciliation only, after PR #26 (`DECISION_OPTION` historical-source gate
-closure, squash commit `a16491d41d93f4edac9378b6184de071aa681f32`) and PR #27 (`ADR-0004` Dependency
-D implementation, squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`) both merged to `main`.
-Does not redesign Dependency D. Does not reopen PR #26's source-gate policy. Does not begin
-`RequirementSpec` Step 03B. Does not modify semantic contracts, ADRs, schemas, validators, fixtures,
-runtime, or `mihver-brain`.
+A tiny factual-hygiene closure on top of PR #28's already-approved durable-state reconciliation.
+Does not reopen any state/roadmap decisions. Fixed exactly one factual defect family in
+`.project/DECISIONS_LOG.md`'s PR #26 entry: it falsely claimed this reconciliation task's own
+HEAD-at-start matched PR #26's merge commit (`a16491d41d93f4edac9378b6184de071aa681f32`) — task-start
+HEAD was actually the later PR #27 merge commit (`bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`), since
+the reconciliation covered both PRs together. Also made the validator-behavior claim in that same
+entry precise: the deterministic source-gate *decision logic* was unchanged; only surrounding
+diagnostic error-message wording was clarified/extended by PR #26 — not every byte/message.
+PR #27's own entry was independently re-verified and left untouched, since its task-start-HEAD claim
+is genuinely correct (task-start HEAD *was* PR #27's merge commit).
+
+Prior objective, for reference (this closure did not redo or reopen it): durable-state/navigation
+reconciliation only, after PR #26 and PR #27 both merged to `main`. Did not redesign Dependency D.
+Did not reopen PR #26's source-gate policy. Did not begin `RequirementSpec` Step 03B. Did not modify
+semantic contracts, ADRs, schemas, validators, fixtures, runtime, or `mihver-brain`.
 
 ## Branch / Base
 
@@ -27,6 +36,17 @@ before any edit.
 ## Status
 
 **Complete, pending human review.**
+
+**This closure round (`POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE`):** fixed exactly one factual
+defect family in `.project/DECISIONS_LOG.md`'s PR #26 entry — a false claim that this branch's own
+HEAD-at-start matched PR #26's merge commit (it actually matched PR #27's, the later of the two PRs
+this reconciliation covered together), plus imprecise "validator behavior unchanged" wording made
+precise (decision logic unchanged; diagnostic message wording clarified/extended). PR #27's own entry
+independently re-verified correct and left untouched. No other file touched; no state/roadmap
+decision reopened. `npm test`: 85/85 before and after.
+
+**The remainder of this section (below) describes the prior, already-approved reconciliation round
+this closure sits on top of — preserved as-is, not redone:**
 
 **Live reality verified before any edit (Section 0).** `git status` clean on `main`; `git log`
 confirmed `bb70a9e` at HEAD; `npm run context` confirmed no active task; `npm test` 85/85. PR #26:
@@ -103,36 +123,33 @@ metadata loop).
 `ADR-0003`, `ADR-0004`, `MEMORY_CONTEXT`, `MEMORY_CONTEXT_SCHEMA_MAPPING`, `M0_SCOPE`, `ROADMAP` all
 already discoverable; no navigation gap found; no PR/task-history navigation added.
 
-## Allowed Scope
+## Allowed Scope (this closure round)
 
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CURRENT_TASK.md`,
-`.project/REVIEW_STATE.md`, `ROADMAP.md`.
+`.project/DECISIONS_LOG.md` (the one factual-defect family, PR #26 entry only), plus
+`.project/CURRENT_TASK.md`/`.project/REVIEW_STATE.md` to record the closure itself.
 
-Not modified: `.project/CONTEXT_INDEX.md` (no navigation gap found), `docs/**`, `schemas/**`,
-`tests/**`, `scripts/**`, `package*.json`, `mihver-brain/**`. `docs/foundation/M0_SCOPE.md`,
-`docs/contracts/REQUIREMENT_SPEC.md`, `docs/contracts/MEMORY_CONTEXT.md`,
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` were read only, to verify current truth —
-not edited.
+Not modified by this closure round: `.project/PROJECT_STATE.md`, `ROADMAP.md`, any pre-existing
+`DECISIONS_LOG.md` entry above the PR #26 hunk, the PR #27 entry, `docs/**`, `schemas/**`,
+`tests/**`, `scripts/**`, `package*.json`, `mihver-brain/**`. No third `DECISIONS_LOG.md` entry
+added; no entry recorded for this reconciliation PR's own future merge. (See the prior-round scope
+statement above for what the round this closure sits on top of touched — not reopened here.)
 
-## Required Context
+## Required Context (this closure round)
 
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CURRENT_TASK.md`,
-`.project/REVIEW_STATE.md`, `.project/CONTEXT_INDEX.md`, `ROADMAP.md` — all re-read fresh, in full,
-before any edit. `docs/foundation/M0_SCOPE.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
-`docs/contracts/MEMORY_CONTEXT.md`, `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` read
-(not edited) to verify current truth before writing durable-state summaries of them.
+`.project/DECISIONS_LOG.md` (the PR #26 and PR #27 entries specifically) — re-read fresh before any
+edit.
 
 ## Validation
 
 - `npm test`: 85/85, unchanged — no schema/test/fixture file touched.
 - `git diff --check`: clean.
-- `git diff main --stat`: exactly the five allowed content files.
-- Confirmed zero diff for `docs/**`, `schemas/**`, `tests/**`, `scripts/**`, `package*.json`,
-  `mihver-brain/**`.
+- `git diff HEAD^ --stat`: `.project/DECISIONS_LOG.md`, `.project/CURRENT_TASK.md`,
+  `.project/REVIEW_STATE.md` only.
+- `git diff HEAD^ --`: exactly one hunk in `.project/DECISIONS_LOG.md`, scoped to the PR #26 entry's
+  text; zero change to any pre-existing entry or to the PR #27 entry.
 
 ## Next Gate
 
-Commit, push, and open one PR against `mihvernetwork/mihver:main`, title "chore: reconcile state
-after Dependency D". Do not merge. Human review of that PR is the next gate; it authorizes only this
-durable-state/navigation reconciliation — no semantic redesign, no `RequirementSpec` Step 03B, no
-`ADR-0003` acceptance, no Brain/runtime work.
+Commit and push to the existing branch `chore/post-dependency-d-reconcile`, existing PR #28. Do not
+open a new PR. Do not merge. Human review of PR #28 (now including this fact-closure round) is the
+next gate.
