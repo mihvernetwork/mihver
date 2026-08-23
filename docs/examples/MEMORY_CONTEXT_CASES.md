@@ -6,13 +6,14 @@ A worked-example corpus for [MEMORY_CONTEXT](../contracts/MEMORY_CONTEXT.md) and
 [REQUIREMENT_SPEC](../contracts/REQUIREMENT_SPEC.md). Each case assumes a `MemoryContext` has
 already been produced by the dedicated retrieval boundary `ADR-0004` designs — **not** a stage
 querying Brain directly, which is never legitimate under this model (M-15). **Current status:**
-Intent Parsing and Research Planning are the two stages currently authorized to consume
-`MemoryContext` (see "Stage Consumption Authorization" in `MEMORY_CONTEXT.md`) — Intent Parsing at
-`DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE`, Research Planning at `DISCOVERY_ATTENTION` only. Every
-other stage named below, including Requirement Derivation, remains unauthorized; a case naming an
-unauthorized stage describes what *would* be correct only once that stage's own separate
-`M0_SCOPE.md` amendment is authorized, and is written now so any future such amendment has a tested
-semantic target to implement against.
+Intent Parsing, Research Planning, and Requirement Derivation are the three stages currently
+authorized to consume `MemoryContext` (see "Stage Consumption Authorization" in `MEMORY_CONTEXT.md`)
+— Intent Parsing at `DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE`, Research Planning at
+`DISCOVERY_ATTENTION` only, Requirement Derivation at `DECISION_OPTION` only (dependency D, for an
+already-established R-19-eligible working default — see Case 24 below and R-24). Every other stage
+named below remains unauthorized; a case naming an unauthorized stage describes what *would* be
+correct only once that stage's own separate `M0_SCOPE.md` amendment is authorized, and is written now
+so any future such amendment has a tested semantic target to implement against.
 
 Brain memory types referenced below (`project`, `decision`, `lesson`, `incident`, `pattern`,
 `playbook`, `reference`, `inbox`) are the actual eight types `../mihver-brain` supports, verified
@@ -42,28 +43,31 @@ Where a case's outcome does not depend on the distinction (the memory is exclude
 premise regardless of category), this is stated explicitly rather than left ambiguous.
 
 **Read every "Allowed use" and "Expected stage behavior" line below naming a stage other than Intent
-Parsing or Research Planning as implicitly prefixed by "once that specific stage is separately
-authorized to consume `MemoryContext` (not yet performed)."** This applies to Research + Evidence
-Collection, Technology Candidate Identification, Architecture Synthesis, Requirement Derivation, and
+Parsing, Research Planning, or Requirement Derivation as implicitly prefixed by "once that specific
+stage is separately authorized to consume `MemoryContext` (not yet performed)."** This applies to
+Research + Evidence Collection, Technology Candidate Identification, Architecture Synthesis, and
 Evaluation alike — with no exceptions and no case-by-case re-statement needed; each such stage's own
 authorization is **dependency A** in `ADR-0004`'s "Acceptance Gate" (the core `M0_SCOPE.md`
 amendment: `RunContext`, the producer's own contract, and that stage's declared input), performed
-separately per stage — already completed for Intent Parsing and Research Planning, not yet performed
-for any other stage. Two further, narrower paths require a separate, additional amendment on top of
-a stage's own dependency A, and are read as further conditioned on it wherever a case describes
-them: citing a `MemoryContext` entry as the premise of an Inferred Claim requires **dependency B**
-(`INTENT_SPEC.md`) — **implemented**, for Intent Parsing; a memory-informed R-19 default's
-"memory-informed rationale" citation requires **dependency D** (`REQUIREMENT_SPEC.md`) — not yet
-performed. **Dependency C** (citing a `MemoryContext` entry directly as a Requirement-Level
-Inference's premise) was re-derived after dependency B landed and found redundant/incoherent against
-`REQUIREMENT_SPEC.md`'s own R-10/R-22 semantics — it is **retired**, not a pending future capability;
-no case below should be read as describing a future direct Requirement-level `MemoryContext`
-premise. Where a case shows historical-user memory legitimately affecting a Requirement, the correct
-path is `MemoryContext` → Intent Parsing (dependency B) → a current-run Inferred Claim → Requirement
-Derivation consuming that Claim under its own existing, unmodified authority (R-03/R-10/R-22/R-23) —
-see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s R-23 for
-the precise mapping. No case in this corpus authorizes any consumption today for a stage not
-already separately authorized on `main`.
+separately per stage — already completed for Intent Parsing, Research Planning, and Requirement
+Derivation, not yet performed for any other stage. Two further, narrower paths require a separate,
+additional amendment on top of a stage's own dependency A, and are read as further conditioned on it
+wherever a case describes them: citing a `MemoryContext` entry as the premise of an Inferred Claim
+requires **dependency B** (`INTENT_SPEC.md`) — **implemented**, for Intent Parsing; a memory-informed
+R-19 default's "memory-informed rationale" citation requires **dependency D**
+(`REQUIREMENT_SPEC.md`'s R-24) — **implemented**, for Requirement Derivation, restricted to exactly
+the `DECISION_OPTION` tier (see Case 24). **Dependency C** (citing a `MemoryContext` entry directly as
+a Requirement-Level Inference's premise) was re-derived after dependency B landed and found
+redundant/incoherent against `REQUIREMENT_SPEC.md`'s own R-10/R-22 semantics — it is **retired**, not
+a pending future capability; no case below should be read as describing a future direct
+Requirement-level `MemoryContext` premise, and Requirement Derivation's own dependency-D
+authorization grants no path to it either. Where a case shows historical-user memory legitimately
+affecting a Requirement, the correct path is `MemoryContext` → Intent Parsing (dependency B) → a
+current-run Inferred Claim → Requirement Derivation consuming that Claim under its own existing,
+unmodified authority (R-03/R-10/R-22/R-23) — see `ADR-0004`'s "Post-Acceptance Dependency B/C
+Disposition" and `REQUIREMENT_SPEC.md`'s R-23 for the precise mapping. No case in this corpus
+authorizes any consumption today for a stage, or influence tier, not already separately authorized on
+`main`.
 
 ---
 
@@ -991,9 +995,9 @@ is a technical/measurement memory, not a historical user statement — the Histo
 Gate (Category A/B) is not the relevant test here at all; the relevant question is whether this memory
 may inform an R-19-eligible default, per "No Assumed-Origin Path for Memory."
 
-**Current-run input:** Current `RequirementSpec` (hypothetically, if Requirement Derivation were
-authorized to consume `MemoryContext`) contains an already-settled Requirement: "the system SHALL
-retry a failed background job automatically." A surviving Unknown remains: exactly how many attempts,
+**Current-run input:** Requirement Derivation's own in-progress `RequirementSpec` already contains an
+already-settled Requirement: "the system SHALL retry a failed background job automatically." A
+surviving Unknown remains: exactly how many attempts,
 and what backoff strategy, should be used. Per R-19's own test (`REQUIREMENT_SPEC.md`): this Unknown
 selects an internal implementation/measurement detail *within* the already-settled Requirement — it
 does not add, remove, or narrow the Requirement's own asserted actor, target, capability, output,
@@ -1004,12 +1008,11 @@ settled; only the retry count/backoff shape remains open) — so it is R-19-elig
 `DISCOVERY_ATTENTION` and not `SEMANTIC_PREMISE`: the memory proposes "3 retries, exponential backoff"
 as a candidate value for a decision Requirement Derivation already, independently owns (whether and
 how to fill this R-19-eligible Unknown) — it supplies **zero independent authority** for that choice.
-This entire path requires **both** dependency A (Requirement Derivation's own `M0_SCOPE.md`
-authorization to consume `MemoryContext` at all) **and** dependency D (the narrower, separate
-`REQUIREMENT_SPEC.md` R-19 provenance/citation amendment that lets the resulting Requirement's
-rationale cite the `MemoryContext` entry as a memory-informed rationale at all — see `ADR-0004`'s
-"Acceptance Gate"); until dependency D lands, this specific citation mechanism is structurally
-disabled even if dependency A alone were already in place. Requirement Derivation may adopt the
+This entire path requires **both** dependency A (the core `M0_SCOPE.md` `MemoryContext` Producer
+boundary) **and** dependency D (Requirement Derivation's own `M0_SCOPE.md` authorization to consume
+`MemoryContext` at the `DECISION_OPTION` tier, plus `REQUIREMENT_SPEC.md`'s R-24, which lets the
+resulting Requirement's rationale cite the `MemoryContext` entry as a memory-informed rationale) —
+both are now implemented (`ADR-0004`'s "Acceptance Gate"). Requirement Derivation may adopt the
 suggested value, but only after independently judging it a defensible measurement/implementation
 choice under its own R-19 authority (e.g. "3 retries with exponential backoff is a common, reasonable
 strategy for this class of transient failure, and does not change what the Requirement itself
@@ -1046,10 +1049,10 @@ chosen value under R-19's own test; (c) an explicit citation of the `MemoryConte
 memory-informed rationale — three separate facts, never collapsed into "informed by memory" alone,
 per M-21.
 
-**Expected stage behavior:** Requirement Derivation (once separately authorized) retains full
-authority to adopt, modify, or reject the suggested value, or to leave the Unknown unresolved and
-carry it forward instead — the memory's presence never obligates a particular outcome, and never
-narrows what Requirement Derivation was already permitted to decide under R-19.
+**Expected stage behavior:** Requirement Derivation retains full authority to adopt, modify, or
+reject the suggested value, or to leave the Unknown unresolved and carry it forward instead — the
+memory's presence never obligates a particular outcome, and never narrows what Requirement Derivation
+was already permitted to decide under R-19.
 
 ---
 

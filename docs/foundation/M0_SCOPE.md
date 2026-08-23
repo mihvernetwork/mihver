@@ -185,10 +185,11 @@ as anything other than an optional, additional input whose absence degrades grac
 This boundary is a declared, cross-cutting compiler boundary, not undeclared stage-internal state:
 `RunContext` and MIHVER Brain are never named in any stage's declared `Input:` list, in this
 document or any future one — a stage's only possible path to memory content is a `MemoryContext`
-its own `Input:` list explicitly declares (currently, Research Planning and Intent Parsing each
-declare one — see below; Requirement Derivation does not, and its own `MemoryContext` consumer
-authorization remains a separate, not-yet-authorized future task, distinct from and not implied by
-either existing consumer's own authorization). No stage may query Brain directly, and no stage may
+its own `Input:` list explicitly declares (currently, Research Planning, Intent Parsing, and
+Requirement Derivation each declare one — see below; every other stage does not, and its own
+`MemoryContext` consumer authorization would remain a separate, not-yet-authorized future task,
+distinct from and not implied by any existing consumer's own authorization). No stage may query
+Brain directly, and no stage may
 treat a `MemoryContext` it was not explicitly authorized to consume as an implicit input. This
 preserves Principle 3 (Structured Artifacts Between Stages, [PRINCIPLES](./PRINCIPLES.md)) exactly
 as already stated — applied to a boundary that did not exist when that principle, or this document,
@@ -232,10 +233,41 @@ was first written.
 ### Stage: Requirement Derivation
 
 - **Purpose:** Turn intent into concrete technical and operational requirements.
-- **Input:** `IntentSpec`
+- **Input:** `IntentSpec`, plus an optional `MemoryContext` — produced specifically for Requirement
+  Derivation by the MemoryContext Producer boundary above, bound to the current `RunContext` (or its
+  explicit absence), this stage's own retrieval purpose, and the specific `IntentSpec` version
+  containing the surviving Unknown the retrieval purpose depends on — never `RequirementSpec`, which
+  is this stage's own output, not the artifact the underlying R-19 decision originates from. The
+  retrieval purpose itself, and the `IntentSpec` binding it depends on, exist only *after*
+  Requirement Derivation has already, independently determined — without consulting `MemoryContext`
+  at all — that a specific surviving Unknown is R-19-eligible (`REQUIREMENT_SPEC.md`'s R-19); a
+  `MemoryContext` retrieved for this purpose may never be used to decide, or to help decide, that
+  eligibility question itself. `MemoryContext` absence, an empty retrieval, a
+  `retrieval_unavailable` outcome, or the absence of any usable candidate entry must never block
+  Requirement Derivation — it proceeds exactly as it would with no memory system at all, choosing its
+  own defensible working default or leaving the Unknown unresolved. `IntentSpec` remains Requirement
+  Derivation's sole primary semantic input, unchanged by this amendment.
 - **Output:** `RequirementSpec`
-- **Allowed to decide:** Functional requirements, non-functional requirements (latency, cost, compliance, team skill, scale), constraints, and success criteria derived from the accepted `IntentSpec`.
-- **Not allowed to decide:** Which technologies satisfy those requirements; how many architecture candidates will be produced; what the user meant — that is `IntentSpec`'s output, taken as given.
+- **Allowed to decide:** Functional requirements, non-functional requirements (latency, cost,
+  compliance, team skill, scale), constraints, and success criteria derived from the accepted
+  `IntentSpec`. Where an admitted `MemoryContext` entry is used at all, it is authorized only at
+  exactly the one tier `REQUIREMENT_SPEC.md`'s R-24 now defines, and no other: **`DECISION_OPTION`**
+  — a non-historical entry (`is_historical_user_statement: false`, per `MEMORY_CONTEXT.md`'s Historical
+  User Provenance Gate) may propose a candidate value for an R-19-eligible working default Requirement
+  Derivation already, independently owns the authority to fill. The entry supplies **zero independent
+  authority**: Requirement Derivation must be able to adopt, modify, reject, or ignore the suggestion,
+  or leave the Unknown unresolved, entirely under its own pre-existing R-09/R-19 authority. An entry
+  classified as a historical user statement — Category A or Category B, without distinction — is
+  categorically ineligible for this use, per `MEMORY_CONTEXT.md`'s "No Assumed-Origin Path for
+  Memory" and the deterministic validator's own unchanged source-gate check; such content's only
+  routes to a current-run artifact remain Intent Parsing's own (Dependency B's premise path, or a
+  clarification question), never a second, direct channel through Requirement Derivation.
+- **Not allowed to decide:** Which technologies satisfy those requirements; how many architecture
+  candidates will be produced; what the user meant — that is `IntentSpec`'s output, taken as given.
+  A `MemoryContext` entry is never treated as `Evidence`, never cited as a Requirement-Level
+  Inference premise (`REQUIREMENT_SPEC.md`'s R-23, unaffected by this amendment), never used to
+  determine whether a surviving Unknown is R-19-eligible in the first place, and never causes
+  Requirement Derivation to query MIHVER Brain directly.
 
 ### Stage: Research Planning
 
@@ -315,10 +347,10 @@ was first written.
 
 ### Cross-Cutting: MemoryContext Consumption Remains Otherwise Disabled
 
-Research Planning and Intent Parsing (above) are the only two stages in this document whose
-declared `Input:` list includes `MemoryContext`. Requirement Derivation, Research + Evidence
-Collection, Technology Candidate Identification, Architecture Synthesis, Evaluation and Decision,
-and Specification Generation each keep exactly the `Input:` list already stated for them above,
+Research Planning, Intent Parsing, and Requirement Derivation (above) are the only three stages in
+this document whose declared `Input:` list includes `MemoryContext`. Research + Evidence Collection,
+Technology Candidate Identification, Architecture Synthesis, Evaluation and Decision, and
+Specification Generation each keep exactly the `Input:` list already stated for them above,
 unchanged — none of them may consume `MemoryContext`, or query MIHVER Brain in any form, until
 this document is separately amended again to declare it for that specific stage.
 
@@ -329,12 +361,21 @@ a current-run Inferred Claim in `IntentSpec`, per `INTENT_SPEC.md`'s own Inferen
 that path (`ADR-0004`'s originally-named dependency C) was re-derived after dependency B landed,
 found structurally incoherent against `REQUIREMENT_SPEC.md`'s own R-10/R-22/R-23, and **retired
 rather than implemented**; no `REQUIREMENT_SPEC.md` amendment for it is pending or intended (see
-`ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s R-23). A
-memory-informed R-19 default remains gated behind its own separate, narrower, still-pending
-`REQUIREMENT_SPEC.md` amendment (`ADR-0004`'s dependency D), unaffected by dependency C's retirement.
-This document does not amend `REQUIREMENT_SPEC.md` (that document's own R-23 makes the retired path
-explicit, on its own authority); Requirement Derivation remains unauthorized to consume
-`MemoryContext` at all — its `Input:` list above stays `IntentSpec` only.
+`ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s R-23).
+
+**Dependency D — implemented.** This document, together with `REQUIREMENT_SPEC.md`'s new invariant
+R-24 (`REQUIREMENT_SPEC.md`'s "Memory-Informed R-19 Working Defaults"), now additionally authorizes
+Requirement Derivation as a `MemoryContext` consumer, restricted to exactly the `DECISION_OPTION`
+tier for a decision Requirement Derivation has already, independently established as R-19-eligible —
+see "Stage: Requirement Derivation" above for the exact binding and authority limits. This is a
+genuinely separate, narrower capability from dependency C's retired direct-premise path: dependency D
+never treats a `MemoryContext` entry as a Claim, a Requirement-Level Inference premise (R-23
+remains fully intact and unaffected), or Evidence, and supplies the entry zero independent
+normative authority. Current `MemoryContext` consumers, after this amendment, are exactly three:
+Intent Parsing (`DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE`), Research Planning
+(`DISCOVERY_ATTENTION`), and Requirement Derivation (`DECISION_OPTION` only, for this one purpose).
+No other stage may consume `MemoryContext`, or query MIHVER Brain in any form, until separately
+amended again.
 
 ### Cross-Cutting: Stage Failure and Revision
 

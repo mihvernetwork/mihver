@@ -818,10 +818,11 @@ itself, directly, as the premise of a Requirement-Level Inference ("the system S
 message queue," premise = the entry's `(memory_context_id, entry_id)`, not the Inferred Claim).
 
 **Defensible RequirementSpec result:** None — this is not a defensible construction. Requirement
-Derivation has no declared `MemoryContext` input at all (`M0_SCOPE.md`'s "Stage: Requirement
-Derivation"), and even setting authorization aside, R-23 forecloses it directly: a Requirement-Level
-Inference's premise is only an accepted `IntentSpec` Claim or an already-derived Requirement, never a
-`MemoryContext` entry.
+Derivation's `MemoryContext` input (`M0_SCOPE.md`'s "Stage: Requirement Derivation," per Dependency D)
+is restricted to exactly the `DECISION_OPTION` tier for an already-established R-19-eligible working
+default — it carries no authorization for this `SEMANTIC_PREMISE`-shaped use at all, and even setting
+that scope limit aside, R-23 forecloses it directly: a Requirement-Level Inference's premise is only
+an accepted `IntentSpec` Claim or an already-derived Requirement, never a `MemoryContext` entry.
 
 **Prohibited transformations:** Citing `(memory_context_id, entry_id)` directly as a
 Requirement-Level Inference's premise; assigning this Requirement's strength from the memory entry's
@@ -928,8 +929,11 @@ at all — Intent Parsing has not (in this version) cited this memory entry as a
 premise.
 
 **Defensible RequirementSpec result:** Requirement Derivation has nothing to compile here — there is
-no accepted Claim or Requirement in the consumed `IntentSpec` bearing on auto-deletion, and it has no
-authority to reach into `MemoryContext` itself (it has none) to manufacture one. If this historical
+no accepted Claim or Requirement in the consumed `IntentSpec` bearing on auto-deletion, and its own
+`MemoryContext` input (Dependency D) has no authority to manufacture one: that input is restricted to
+proposing a candidate *value* for a decision Requirement Derivation already, independently owns as
+R-19-eligible — it supplies no path to creating a Requirement, an Unknown, or a Claim where the
+consumed `IntentSpec` records none. If this historical
 prohibition is to affect the current run's Requirements at all, it must first become a current-run
 Inferred Claim through Intent Parsing's own dependency-B path — with its own required independent
 force-reasoning, per M-20 and `INTENT_SPEC.md`'s "Memory-Derived Inference Premises" (the historical
@@ -953,3 +957,388 @@ directly.
 **Eligibility:** Not applicable — this `RequirementSpec` version, on this input, is Complete with
 respect to auto-deletion simply because nothing in the consumed `IntentSpec` raises it; there is no
 gap to mark Partial, because there is no Claim, Open Item, or Requirement candidate here at all.
+
+---
+
+## Dependency D: Memory-Informed R-19 Working Defaults
+
+`ADR-0004`'s dependency D authorizes Requirement Derivation as a `MemoryContext` consumer, restricted
+to exactly the `DECISION_OPTION` tier for a decision it has already, independently established as
+R-19-eligible — see `REQUIREMENT_SPEC.md`'s "Memory-Informed R-19 Working Defaults" and R-24. Two
+gates apply, both independently required: **Gate 1** (R-19 content eligibility — is this Unknown the
+kind Requirement Derivation may fill at all) and **Gate 2** (`MemoryContext` source eligibility — is
+this specific entry an eligible `DECISION_OPTION` source, per `MEMORY_CONTEXT.md`'s "No
+Assumed-Origin Path for Memory"). The thirteen cases below exercise both gates and the boundaries
+around them. Every case shares the same base unless stated otherwise: an already-settled Requirement,
+"the system SHALL retry a failed background job automatically" (obligation, User-Provided), with a
+surviving Unknown for the exact retry count and backoff strategy.
+
+## 23. Valid R-19-eligible Unknown, non-historical `DECISION_OPTION` suggestion, adopted
+
+**Source IntentSpec semantics:** As stated above — the retry-obligation Requirement is already
+settled; the retry-count/backoff-strategy Unknown is R-19-eligible (an internal implementation
+detail; no materially different value changes what the Requirement asserts).
+
+**Memory input:** `pattern`-type record, project-scoped, `is_historical_user_statement: false` — "a
+prior requirement in this project used exponential backoff with a maximum of 3 retry attempts for
+background job failures, and this worked well" (Brain confidence: medium).
+
+**Defensible RequirementSpec result:** Requirement Derivation independently confirms R-19 eligibility
+first, entirely from the consumed `IntentSpec` — before retrieving or considering any memory. Only
+then does it retrieve a `MemoryContext` for this specific decision; the entry clears Gate 2
+(non-historical) and proposes "3 retries, exponential backoff." Requirement Derivation independently
+judges the value a defensible measurement/implementation choice under its own R-19 authority (not
+merely because the memory proposed it) and adopts it.
+
+**Prohibited transformations:** Treating the memory's suggestion as itself sufficient justification
+("the memory said so"); using the memory's Brain confidence as part of the justification; retrieving
+`MemoryContext` before, or as part of, deciding R-19 eligibility.
+
+**Provenance expectations:** The Requirement's provenance shows, distinctly: (a) marked
+Requirement-Derivation-introduced (R-09); (b) an independent rationale justifying the value under
+R-19 on its own terms (e.g. "3 retries with exponential backoff is a common, reasonable strategy for
+this class of transient failure, and does not change what the Requirement asserts"); (c) an explicit
+memory-informed-rationale citation of the entry's `(memory_context_id, entry_id)` (R-24) — three
+distinct facts, never collapsed into "informed by memory" alone. The Requirement's ordinary
+provenance to the consumed `IntentSpec` version and the surviving `open_item_id` is unchanged and
+undiminished by the memory citation, which is additional, never a replacement.
+
+**Eligibility:** Complete — the retry-obligation Requirement was already Complete; filling the
+retry-count/backoff Unknown with a defensible value does not change that, per R-21's ordinary rules.
+
+---
+
+## 24. Same eligible Unknown, memory suggestion rejected, different value chosen
+
+**Memory input:** The same entry as Case 23.
+
+**Defensible RequirementSpec result:** Requirement Derivation retrieves the same candidate but judges
+it not the most defensible choice for this project (e.g. its own independent reasoning favors a
+shorter backoff ceiling for latency-sensitive jobs) and instead adopts "2 retries, linear backoff" —
+a value it independently selected, not suggested by the retrieved entry.
+
+**Prohibited transformations:** Treating rejection of the memory's suggestion as requiring
+justification beyond Requirement Derivation's own ordinary R-19 rationale; silently blending the two
+values (e.g. "3 retries, linear backoff") without an independent basis for the mixed result.
+
+**Provenance expectations:** Marked Requirement-Derivation-introduced (R-09) with an independent
+rationale for the *chosen* value. No memory-informed-rationale citation is recorded, since the
+adopted value did not come from the memory — the retrieved entry may optionally be noted as
+"considered, not adopted" in Requirement Derivation's own working record, but this is not a
+provenance requirement this contract imposes.
+
+**Eligibility:** Complete, on the same basis as Case 23 — which specific defensible value was chosen
+does not affect Completeness.
+
+---
+
+## 25. Same eligible Unknown, memory unavailable/empty, Requirement Derivation still functions
+
+**Memory input:** None — `MemoryContext` production returns `retrieval_unavailable` (Brain
+unreachable), or `successfully_empty` (no candidate found), or excludes every retrieved candidate.
+
+**Defensible RequirementSpec result:** Requirement Derivation proceeds exactly as it would with no
+memory system at all: it either chooses its own independently-defensible value (e.g. "3 retries,
+exponential backoff," reasoned from first principles rather than memory) or leaves the Unknown
+unresolved and carries it forward as an explicit open item.
+
+**Prohibited transformations:** Treating memory unavailability as blocking this Requirement, this
+`RequirementSpec` version, or Requirement Derivation generally; treating memory availability as a
+precondition for exercising R-19 authority at all.
+
+**Provenance expectations:** If filled: Requirement-Derivation-introduced (R-09) with an independent
+rationale, no memory-informed-rationale citation (none exists to cite). If carried forward: an
+explicit open item, exactly as "LOW/MEDIUM Open Items and Conflicts That Survive Into This Stage"
+already describes for any unfilled R-19-eligible Unknown.
+
+**Eligibility:** Complete if filled with a faithful, R-21-satisfying value; Partial (testability-
+blocked on this one Unknown) if carried forward unfilled and no INDETERMINATE-routing procedure can
+be written — ordinary R-21 rules, unaffected by memory's absence either way.
+
+---
+
+## 26. Memory attempts to make an R-19-forbidden Unknown fillable — forbidden
+
+**Source IntentSpec semantics:** Instead of a retry-count detail, the surviving Unknown is "should
+failed background jobs be retried automatically at all, or surfaced to a human for manual handling?"
+— a want-level question about whether the capability exists, which R-19 excludes regardless of what
+any memory proposes.
+
+**Memory input:** A non-historical `pattern`-type entry, `is_historical_user_statement: false`,
+proposing "automatic retry, no human review" as a candidate value, with high Brain confidence.
+
+**Defensible RequirementSpec result:** The Unknown fails Gate 1 before any question of memory
+eligibility is reached — R-19's own test excludes it (a materially different answer would add or
+remove a capability the Requirement asserts). No `MemoryContext` retrieval for this purpose is even
+meaningful, since there is no R-19-eligible decision for one to inform.
+
+**Prohibited transformations:** Retrieving or citing the memory to argue the Unknown is "really"
+technical because a confident memory happens to answer it; treating a memory's willingness to propose
+a value as evidence the underlying question must be R-19-eligible.
+
+**Provenance expectations:** Not applicable — no Requirement may be compiled from this Unknown at
+all; it remains carried forward exactly as an Ambiguity or Conflict would.
+
+**Eligibility:** This area of `RequirementSpec` is Partial — the want-level question remains an
+explicit, unresolved open item, resolvable only by a new Intent Parsing pass.
+
+---
+
+## 27. Memory attempts to fill an intent-level/scope-changing value — forbidden
+
+**Source IntentSpec semantics:** A different surviving Unknown: whether retry failures should be
+reported to "the requesting user" or "the operations team" — a user-facing actor question R-19
+excludes.
+
+**Memory input:** A non-historical entry proposing "report to the operations team," confidently
+stated.
+
+**Defensible RequirementSpec result:** Same disposition as Case 26 — the actor question fails Gate 1
+regardless of memory content or confidence; no `DECISION_OPTION` use is available for it.
+
+**Prohibited transformations:** Using the memory-informed-rationale mechanism to settle who the
+target actor is, on the reasoning that "the memory has an opinion and R-19 permits some defaults."
+
+**Provenance expectations:** Not applicable, for the same reason as Case 26.
+
+**Eligibility:** Partial for this area, for the same reason as Case 26.
+
+---
+
+## 28. Memory presented as Evidence for an external fact — forbidden
+
+**Memory input:** A `reference`-type entry, `is_historical_user_statement: false`, "exponential
+backoff with 3 retries is the industry-standard pattern for this class of transient failure" (Brain
+confidence: high).
+
+**Defensible RequirementSpec result:** The entry may still be a legitimate `DECISION_OPTION` candidate
+proposing the *value* "3 retries, exponential backoff" (Case 23's shape) — but Requirement Derivation
+may not treat the entry's own assertion ("industry-standard") as an established fact its rationale
+relies on. The independent rationale must stand on Requirement Derivation's own reasoning about *this*
+Requirement (does the value change what the Requirement asserts, is it a defensible measurement
+choice) — never on the memory's claim about external industry practice, which memory cannot establish
+(`MEMORY_CONTEXT.md`'s "Memory and Evidence Boundary" — memory is never Evidence).
+
+**Prohibited transformations:** Stating the rationale as "adopted because this is the industry-
+standard pattern, per the cited memory"; treating the memory's own confident phrasing as though it
+satisfied Principle 5's evidence-sourcing requirements.
+
+**Provenance expectations:** If adopted on an independently-defensible basis (as in Case 23), the
+memory-informed-rationale citation is legitimate; a rationale that instead rests on the memory's own
+factual claim is not, regardless of whether the same value happens to be adopted.
+
+**Eligibility:** Complete if legitimately adopted per Case 23's discipline; the illegitimate-rationale
+version described above is a contract violation, not a distinct Eligibility outcome.
+
+---
+
+## 29. Multiple `DECISION_OPTION` memories disagree — no vote, no repetition, no confidence authority
+
+**Memory input:** Three non-historical entries admitted for the same retrieval: a `pattern` entry
+proposing "3 retries, exponential backoff" (medium confidence); an `incident` entry proposing "5
+retries, fixed delay" (high confidence); a `decision`-type process record proposing "3 retries, linear
+backoff" (low confidence).
+
+**Defensible RequirementSpec result:** Requirement Derivation does not count entries, weight them by
+Brain confidence, or treat the two entries that happen to agree on "3 retries" as thereby more
+authoritative. It independently evaluates the candidate space and picks a value it can defensibly
+justify under its own R-19 authority — which may match one entry, blend features only where each
+element is itself independently justified (never merely "two entries agree on this part"), or match
+none of them.
+
+**Prohibited transformations:** "Two of three entries suggest 3 retries, so adopt 3 retries"; "the
+`incident` entry has the highest Brain confidence, so its value wins"; treating the number of
+agreeing entries as itself part of the rationale.
+
+**Provenance expectations:** If the adopted value happens to match one or more entries, only the
+entries Requirement Derivation actually relied on for its own reasoning are cited as memory-informed
+rationale — never all three merely because all three were retrieved.
+
+**Eligibility:** Complete, on the same basis as Case 23 — disagreement among candidates does not
+itself create a testability gap; it is resolved by Requirement Derivation's own R-19 judgment.
+
+---
+
+## 30. Suggested value conflicts with an accepted IntentSpec constraint — rejected
+
+**Source IntentSpec semantics:** The accepted `IntentSpec` additionally contains a User-Provided
+Claim: "retries must complete within 5 seconds total" (obligation), already compiled into a separate
+Requirement.
+
+**Memory input:** A non-historical entry proposing "10 retries, exponential backoff starting at 2
+seconds" — a value that, combined with the existing 5-second ceiling, cannot be satisfied (10
+exponentially-spaced retries starting at 2 seconds necessarily exceed 5 seconds total).
+
+**Defensible RequirementSpec result:** Requirement Derivation does not adopt the suggested value — its
+own independent judgment under R-19 must already account for every other accepted, current-run
+constraint; a value that cannot coexist with an accepted Requirement is not a defensible choice,
+regardless of the memory's proposal. Requirement Derivation instead selects a value consistent with
+the 5-second ceiling (e.g. "3 retries, exponential backoff starting at 500ms") or leaves the Unknown
+unresolved.
+
+**Prohibited transformations:** Adopting the conflicting value and silently leaving the 5-second
+Requirement unreconciled; treating the memory's suggestion as creating a `MemoryContext`-vs-`IntentSpec`
+Conflict for Intent Parsing to resolve — the memory was never elevated to Claim status, so
+`IntentSpec`'s Conflict machinery does not apply here at all (`MEMORY_CONTEXT.md`'s "Current Input
+Must Win").
+
+**Provenance expectations:** If a different, consistent value is adopted instead, its rationale
+explicitly notes consistency with the 5-second Requirement; no memory-informed-rationale citation
+appears for the rejected, conflicting value.
+
+**Eligibility:** Complete once a consistent value is adopted or the Unknown is carried forward — the
+existing 5-second Requirement's own Completeness is unaffected either way.
+
+---
+
+## 31. Memory attempted as a Requirement-Level Inference premise — forbidden under R-23
+
+**Memory input:** The same non-historical `pattern` entry as Case 23, now considered not for
+`DECISION_OPTION` but as the stated premise of a Requirement-Level Inference: "the system SHOULD use
+exponential backoff generally, per this MemoryContext entry."
+
+**Defensible RequirementSpec result:** None — R-23 forecloses this directly, unchanged by Dependency
+D: a Requirement-Level Inference's premise is only an accepted `IntentSpec` Claim or an already-
+derived Requirement, never a `MemoryContext` entry, "regardless of the entry's own classification or
+category." Dependency D's `DECISION_OPTION` authorization does not create, expand, or reopen any path
+to R-10/R-23 premise standing — a memory-informed rationale under R-24 is never a premise under R-10,
+and the two must never be conflated.
+
+**Prohibited transformations:** Citing the entry's `(memory_context_id, entry_id)` as a
+Requirement-Level Inference premise on the reasoning that "Requirement Derivation is now authorized
+to consume `MemoryContext`, so citing it here should also be fine" — the DECISION_OPTION authorization
+is scoped to exactly one use (R-24); it grants no general license to cite `MemoryContext` anywhere
+else in Requirement Derivation's reasoning.
+
+**Provenance expectations:** Not applicable — this construction is out of bounds before any
+provenance question is reached, exactly as Case 19 already establishes for the same attempt absent
+Dependency D.
+
+**Eligibility:** Not applicable — not a valid Requirement-Level Inference under R-10/R-23.
+
+---
+
+## 32. Memory contains a useful value for a detail that is not an actual surviving Unknown — do not
+manufacture an Open Item
+
+**Source IntentSpec semantics:** The accepted `IntentSpec` contains only the retry-obligation Claim;
+no Open Item or Unknown about retry count or backoff strategy is recorded anywhere in it — the detail
+is simply never raised.
+
+**Memory input:** The same non-historical entry as Case 23, proposing "3 retries, exponential
+backoff."
+
+**Defensible RequirementSpec result:** Requirement Derivation compiles the retry-obligation
+Requirement alone; it does not invent a retry-count/backoff Unknown merely because a retrieved memory
+happens to have an opinion about the value. Retry count and backoff strategy simply remain
+unspecified and unconstrained by this `RequirementSpec` version — their absence from the stated
+`IntentSpec` does not manufacture a new Open Item, whether or not memory happens to contain a useful
+value for it (this extends Case 21's already-established rule to the Dependency-D case specifically:
+a *useful* memory value is no more license to manufacture scope than a merely *available* one was).
+
+**Prohibited transformations:** "The memory has a good value for this, so it must be an Unknown worth
+recording"; retrieving `MemoryContext` for a "decision" that does not actually exist as a surviving
+`IntentSpec` gap.
+
+**Provenance expectations:** No `MemoryContext` citation appears anywhere, since no legitimate
+retrieval purpose exists for a decision Requirement Derivation was never presented with.
+
+**Eligibility:** Complete — exactly Case 21's own conclusion, unaffected by Dependency D's existence.
+
+---
+
+## 33. Historical Category A/B entry proposes an otherwise R-19-shaped value — rejected at Gate 2
+
+**Memory input, Category A:** `decision`-type record, project-scoped, inspectably citing the exact
+past `UserIdea` turn — "User said (`UserIdea` v1, turn 3): 'let's use 3 retries with exponential
+backoff for failed background jobs.'"
+
+**Memory input, Category B:** The same content, with no inspectable, resolvable citation to an
+originating turn.
+
+**Defensible RequirementSpec result:** Neither entry may carry `influence_tier: DECISION_OPTION`, even
+though the proposed value is byte-identical to Case 23's non-historical `pattern` entry and the
+Unknown clears Gate 1 identically. Gate 2 fails categorically for both, because
+`is_historical_user_statement` is `true` — the entry's classified *source*, not its content,
+disqualifies it (`MEMORY_CONTEXT.md`'s R-24-cross-referenced source gate; `MEMORY_CONTEXT_CASES.md`'s
+Case 25 works through this same contrast on the `MemoryContext` side).
+
+**If historical semantics genuinely matter here, the correct routes are:** for the Category A entry,
+Intent Parsing may cite it as the premise of a current-run Inferred Claim (Dependency B), which
+Requirement Derivation then compiles from under its own unmodified R-03/R-10/R-22 authority — an
+entirely different path than `DECISION_OPTION`. For either category, it may instead shape a
+current-run clarification question. Neither route touches Dependency D's `DECISION_OPTION` mechanism
+at all.
+
+**Prohibited transformations:** Admitting either entry at `DECISION_OPTION` because its content reads
+as narrowly technical; reclassifying `is_historical_user_statement` to `false` for either entry to
+escape Gate 2; treating the Category A entry's stronger citation as grounds for treating it as *more*
+`DECISION_OPTION`-eligible than the Category B entry — Gate 2 excludes both identically.
+
+**Provenance expectations:** No Requirement provenance may cite either entry as a memory-informed
+rationale for a `DECISION_OPTION`-filled default, under any circumstance.
+
+**Eligibility:** Unaffected — Requirement Derivation proceeds exactly as in Case 25 (memory
+unavailable/ineligible), choosing its own value or carrying the Unknown forward.
+
+---
+
+## 34. A separately-provenanced accepted technical outcome proposes the same value — potentially
+valid at Gate 2
+
+**Historical memory (Gate-2-ineligible, for contrast):** The same Category A entry as Case 33.
+
+**A separate, later Brain record:** After the project shipped with that configuration, a distinct
+`decision`-type record, project-scoped, with its own independent provenance and no citation back to
+the original `UserIdea` turn: "The accepted implementation for background job retries uses a maximum
+of 3 attempts with exponential backoff; this has been the project's adopted operational default since
+v1 and remains unchanged." Content inspection classifies this record `is_historical_user_statement:
+false` — it describes what the project did and adopted, not what the user said.
+
+**Defensible RequirementSpec result:** This second record clears Gate 2 on its own, independent
+classification and provenance — it is a genuinely separate artifact from the original historical
+statement, not the same statement relabeled. Subject to every ordinary Dependency D discipline (Gate
+1 already established independently, zero independent authority, Requirement Derivation's own
+judgment, explicit rationale), it may legitimately inform the adopted value exactly as Case 23's
+`pattern` entry does.
+
+**Prohibited transformations:** Treating the original historical entry as though it had been
+"promoted" into this second record merely because they describe the same underlying value; citing the
+*original* entry's identity as the memory-informed rationale on the theory that "it's the same fact."
+Each retains its own, permanently separate classification (`MEMORY_CONTEXT_CASES.md`'s Case 26 works
+through the identical distinction on the `MemoryContext` side).
+
+**Provenance expectations:** If adopted, the memory-informed-rationale citation names the *second*
+record's `(memory_context_id, entry_id)` — never the first, historical-user-statement record's
+identity, even informationally alongside it.
+
+**Eligibility:** Complete, on the same basis as Case 23.
+
+---
+
+## 35. R-19 fill affects Complete/Partial status only through existing R-21 semantics — never because
+memory was present
+
+**Source IntentSpec semantics:** As in Case 23 — the retry-obligation Requirement is already Complete
+on its own (R-21: "retry automatically" is testable independent of any specific count).
+
+**Defensible RequirementSpec result:** Whether or not `MemoryContext` retrieval happens, whether or
+not a candidate is found, and whether or not a candidate is adopted, the retry-obligation
+Requirement's own Complete status is unaffected — R-21's test depends only on the Requirement's own
+recorded content and satisfaction procedure, never on whether memory was consulted. Filling the
+retry-count/backoff Unknown (Case 23) does not make the *retry-obligation* Requirement "more
+Complete" than it already was; leaving it unfilled (Case 25) does not make it Partial, since the
+detail was never required for the retry-obligation Requirement's own testability in the first place.
+
+**Prohibited transformations:** Treating a memory-informed fill as evidence of higher confidence or
+completeness than an equivalent, independently-chosen fill with no memory involved; treating memory's
+mere presence or absence as itself a Completeness signal.
+
+**Provenance expectations:** Identical in kind whether or not memory was involved — R-09-marked,
+independently rationalized, with a memory-informed-rationale citation present only when genuinely
+applicable (Case 23) and absent otherwise (Case 24/25) — Completeness provenance never varies by this
+fact.
+
+**Eligibility:** Complete throughout, in every variant of this case family that does not itself
+introduce a separate testability gap (e.g. Case 26/27's want-level Unknowns, which are Partial for
+reasons entirely unrelated to memory's presence).
