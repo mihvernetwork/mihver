@@ -186,3 +186,22 @@ Entries above this line are unmodified, per this log's append-only policy.
   exists — confirmed by direct read, not assumed. No prior entry in this log recorded an approval
   decision for this merge; this entry records only the independently-verified merge fact, not a
   reconstructed human quote.
+- 2026-08-23 — `M0-DEPENDENCY-C-DISPOSITION` (PR #24, plus one same-branch/PR follow-up commit from
+  `DEPENDENCY-C-DISPOSITION-SEMANTIC-CLOSURE` sharpening retirement-proof wording and fixing an
+  invented Case 21 Unknown) merged to `main`: verified via
+  `gh pr view 24 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-23T07:15:36Z`) and `git log`/`git status` on `main` (`HEAD` at
+  this task's start matched the reported merge commit exactly) — squash commit
+  `54ef91c181134487a50cb7b7c3d3ebeb66716b78`. `ADR-0004` Dependency C was retired, not implemented:
+  its originally planned direct path, `MemoryContext → Requirement-Level Inference premise`, was
+  re-derived before any implementation and found redundant given Dependency B, confirmed by direct
+  read of the merged files at this commit. `docs/contracts/REQUIREMENT_SPEC.md`'s invariant R-23 now
+  explicitly forbids a `MemoryContext` entry, directly, as a Requirement-Level Inference premise.
+  Requirement Derivation's declared `Input:` remains `IntentSpec` only. Dependency B remains the
+  canonical, sole path by which historical-user `MemoryContext` content reaches `SEMANTIC_PREMISE`
+  standing. Dependency D remains pending and unaffected — a separate, narrower,
+  zero-independent-authority `DECISION_OPTION` path, not designed or implemented by this merge.
+  Contract suite at this commit: **83/83**, confirmed by running `npm test` directly against `main`.
+  No schema, runtime, or `mihver-brain` change accompanied this merge — confirmed by direct read, not
+  assumed. No prior entry in this log recorded an approval decision for this merge; this entry
+  records only the independently-verified merge fact, not a reconstructed human quote.
