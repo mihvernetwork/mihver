@@ -5,116 +5,114 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-DEPENDENCY-C-DISPOSITION-SEMANTIC-CLOSURE
+DEPENDENCY-C-POST-MERGE-RECONCILIATION
 
 ## Objective
 
-A narrow closure pass on top of `M0-DEPENDENCY-C-DISPOSITION` (already pushed as PR #24, open, not
-merged), fixing two findings an external review of that PR raised — without reopening the retirement
-decision, without implementing Dependency D, and without touching schema/runtime/Brain. The
-retirement conclusion (direct `MemoryContext → Requirement-Level Inference premise` is retired, not
-implemented; the canonical path for historical-user memory to affect a Requirement remains
-`MemoryContext → Intent Parsing (Dependency B) → current-run Inferred Claim → Requirement Derivation
-(existing R-03/R-10/R-22)`) is unchanged by this task. Fixed: (1) three passages whose retirement
-*reasoning* overstated itself in a way that could be misread as "intent-shaped premises are
-categorically forbidden" — reworded to make explicit that an accepted `IntentSpec` Claim (itself
-intent-derived) remains a fully valid premise, and that the real boundary is raw/historical/unaccepted
-`MemoryContext` content specifically, not intent-derived content as such; also scoped `MEMORY_CONTEXT.md`'s
-absolute "no third way" language to `SEMANTIC_PREMISE`/premise standing so Dependency D's separate,
-still-pending path is not foreclosed; (2) `REQUIREMENT_CASES.md` Case 21, which had invented an
-unsupported "carried-forward Unknown" not present in its own stated `IntentSpec` input. Dependency D
-remains unaffected, unimplemented, and out of scope.
+Durable-state/navigation reconciliation only, after PR #24 (`M0-DEPENDENCY-C-DISPOSITION` plus its
+`DEPENDENCY-C-DISPOSITION-SEMANTIC-CLOSURE` follow-up) merged to `main` and `ADR-0004` Dependency C
+was formally retired as `REDUNDANT_AFTER_B`. This task performs no semantic redesign: it does not
+reopen Dependency C's semantics, does not implement Dependency D, and does not modify any contract,
+ADR, schema, validator, or runtime file. It synchronizes `.project/PROJECT_STATE.md`,
+`.project/DECISIONS_LOG.md`, and `ROADMAP.md` with the now-merged reality — recording the Dependency
+C retirement checkpoint, replacing stale "C is the logical next task family" language with the
+correct "C is retired; D is the logical next memory-semantics family, not authorized" framing, and
+fixing every roadmap location that still described C as NEXT/PLANNED/a future amendment.
 
 ## Branch / Base
 
-Branch: `m0/dependency-c-disposition` (continuation — same branch/PR as `M0-DEPENDENCY-C-DISPOSITION`,
-no new branch created).
-Base: `main` at `e0a040928112bf87a9353450c6f5116320f4078a`, unchanged from that task. PR #24 confirmed
-open against `mihvernetwork/mihver:main` via `gh pr view 24` before any edit.
+Branch: `chore/dependency-c-post-merge-reconcile` (new branch, created from `main`).
+Base: `main` at `54ef91c181134487a50cb7b7c3d3ebeb66716b78` — verified via `git status`/`git log`
+(HEAD matched exactly before branching) and `gh pr view 24` (`state: MERGED`,
+`mergeCommit.oid: 54ef91c181134487a50cb7b7c3d3ebeb66716b78`, matching exactly).
 
 ## Status
 
 **Complete, pending human review.**
 
-Delegated the bounded edit to a Codex write-capable worker, scoped to exactly the four files named in
-Allowed Scope below (Codex explicitly instructed not to touch `.project/CURRENT_TASK.md` /
-`REVIEW_STATE.md`, `M0_SCOPE.md`, `MEMORY_CONTEXT_CASES.md`, or any schema/test/runtime file). Claude
-independently reviewed the resulting diff line-by-line (not merely the worker's self-report) before
-accepting it, confirmed via `git status --short` that only the four allowed files changed, and ran
-`npm test`/`git diff --check`/`git diff main --stat` directly.
+Verified live reality before any edit: `git status` (clean, on `main`), `git log --oneline
+--decorate -15` (HEAD `54ef91c`), `npm run context` (confirms `main`, clean, no active task for this
+branch), `npm test` (83/83), and `gh pr view 24` (`MERGED`, merge commit matches the given base
+exactly). Read `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`,
+`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `ROADMAP.md` in full, plus
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/contracts/MEMORY_CONTEXT.md`, `docs/foundation/M0_SCOPE.md` for the authoritative current
+wording this reconciliation summarizes but does not restate.
 
-- **Finding 1 fixed** — reworded reason (2) of the Dependency C retirement in
-  `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, the "never about intent" bullet in
-  `docs/contracts/REQUIREMENT_SPEC.md`'s "`MemoryContext` Is Not a Requirement-Level Inference
-  Premise" subsection, and the "There is no third way, and none is coming" paragraph in
-  `docs/contracts/MEMORY_CONTEXT.md`'s Historical User Memory Rule section — each now distinguishes
-  raw/historical/unaccepted `MemoryContext` content (disqualified) from an accepted `IntentSpec` Claim
-  (a fully valid R-10 premise, per Case 18, regardless of its own intent-derived origin). The
-  `MEMORY_CONTEXT.md` paragraph additionally now scopes its absolute language explicitly to
-  `SEMANTIC_PREMISE`/Requirement-Level-Inference-premise standing, so Dependency D's separate
-  `DECISION_OPTION` path is not read as foreclosed. R-10, R-22, and R-23 themselves are
-  byte-unchanged — only surrounding prose reasoning was reworded.
-- **Finding 2 fixed** — `docs/examples/REQUIREMENT_CASES.md` Case 21's Eligibility paragraph no
-  longer claims an unsupported "carried-forward Unknown"; it now states the retry-count/backoff
-  detail simply remains unspecified/unconstrained by this `RequirementSpec` version, that its mere
-  absence from the stated input manufactures no new Open Item, with a contrast sentence noting
-  R-19/R-21 would govern an actual surviving Unknown if the input had contained one. The
-  retry-obligation Requirement's own Complete status is unchanged.
-- **Targeted sweep** — every "only"/"exclusively"/"no third way"/"never"/"intent-shaped" instance in
-  the newly-added C-disposition wording across all four files individually checked against three
-  tests (prohibits D? disqualifies accepted Claims as premises? collapses raw memory with an accepted
-  Claim?); the case-family intro paragraph in `REQUIREMENT_CASES.md` was additionally tightened
-  during the sweep for the same reason as Finding 1; every other matched instance confirmed already
-  correctly scoped.
-- One fresh independent read-only Codex reviewer (C-Retirement/D-Separation Closure, 9-point
-  checklist) found **no findings** — independently re-verified by Claude against primary text, not
-  trusted at face value; full detail in `REVIEW_STATE.md`'s "Latest Review."
+Per `AGENT_POLICY.md`'s documentation/architecture-milestone default (Codex workers read-only,
+Claude sole file author/editor for this class of durable-state bookkeeping), Claude wrote every edit
+directly; Codex was used only as the one read-only reviewer specified below.
 
-**Prior task's own detail** (`M0-DEPENDENCY-C-DISPOSITION`: the STOP-verdict re-verification, the
-per-file disposition edits across `ADR-0004`, `REQUIREMENT_SPEC.md`, `M0_SCOPE.md`,
-`MEMORY_CONTEXT.md`, `MEMORY_CONTEXT_CASES.md`, `REQUIREMENT_CASES.md`, and that task's own
-reviewer-driven fixes) is preserved in full in `REVIEW_STATE.md`'s History — not restated here, since
-this closure task changed none of that reasoning's conclusions, only sharpened wording in four of
-those files as described above.
+- **`PROJECT_STATE.md`**: added a new durable checkpoint, "`ADR-0004` Dependency C — Retired After
+  Re-Derivation" (PR #24, squash commit `54ef91c181134487a50cb7b7c3d3ebeb66716b78`), recording that C
+  was not implemented, its direct path was re-derived and retired as `REDUNDANT_AFTER_B` (full proof
+  left in the owning contracts, not reproduced), the canonical Dependency-B path, Requirement
+  Derivation's continued non-authorization, and Dependency D's continued separate/unimplemented
+  status. Rewrote "Next Authorized Action" to remove the stale "Dependency C is the logical next task
+  family" framing and its conceptual-scope bullets, replacing them with D's conceptual scope
+  (R-19-eligible Unknown + Requirement Derivation's own fill authority + `DECISION_OPTION` +
+  provenance-recorded rationale; zero independent authority; never `SEMANTIC_PREMISE`/User-Provided/
+  Requirement-Level-Inference-premise/Evidence/an automatic default) — explicitly not authorized by
+  this entry, exact schema fields not designed here.
+- **`DECISIONS_LOG.md`**: appended one fact-only entry for PR #24's merge (verified via `gh pr view
+  24` and `git log`/`git status` on `main`), recording only verified facts — merge SHA, C retired not
+  implemented, R-23 now forbids direct `MemoryContext` Requirement-Level-Inference premise use,
+  Requirement Derivation `Input:` remains `IntentSpec` only, B remains the canonical historical-user
+  `SEMANTIC_PREMISE` path, D remains pending/separate, 83/83, no schema/runtime/Brain work. No entry
+  added for this reconciliation task's own future merge (no recursive metadata loop). No existing
+  entry edited or removed.
+- **`ROADMAP.md`**: added a **RETIRED** status-legend definition; added new subsection "10.11
+  Dependency C — RETIRED (PR #24)" (mirroring the 10.9/10.10 DONE-checkpoint style, full reasoning
+  left in the owning contracts) and cross-referenced it from 10.7's dependency-gate list and the
+  Dependency C gate definition; retitled Phase 9 to "B DONE, C RETIRED, D NEXT (not authorized)" and
+  updated its body/sequencing-correction paragraph accordingly; rewrote the "### C" subsection to
+  RETIRED (pointing to 10.11, not restating the proof) and relabeled "### D" from PLANNED to NEXT;
+  fixed the Phase 9 Exit line (C is retired/not applicable, not "not yet met"); updated Section 22's
+  near-term order — item 5 (C, RETIRED/REDUNDANT_AFTER_B), item 6 (D, NEXT not authorized), item 7
+  (RequirementSpec Step 03B, retitled "after D semantic closure," preserving the reason machine
+  provenance should be designed once D's semantics are settled); added a Dependency C retirement
+  bullet plus a compact capability-map line to Section 21 ("Current capability map"). C is never
+  labeled DONE anywhere (DONE = implemented; RETIRED = deliberately not implemented after
+  re-derivation — the legend now states this distinction explicitly).
+- **`.project/CONTEXT_INDEX.md`**: read only, left unchanged — `ADR-0004`, `REQUIREMENT_SPEC.md`,
+  `MEMORY_CONTEXT.md`, `M0_SCOPE.md`, and `ROADMAP.md` are all already indexed; no navigation gap
+  found.
+- One fresh lightweight read-only Codex reviewer (Post-Dependency-C State Consistency, 12-point
+  checklist) — see `REVIEW_STATE.md`'s "Latest Review" for findings and disposition; independently
+  re-verified by Claude against primary text, not trusted at face value.
 
 ## Allowed Scope
 
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
-`docs/contracts/MEMORY_CONTEXT.md`, `docs/examples/REQUIREMENT_CASES.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`.
+`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CURRENT_TASK.md`,
+`.project/REVIEW_STATE.md`, `ROADMAP.md`. `.project/CONTEXT_INDEX.md` only if an actual navigation
+gap were discovered (none was — left unchanged).
 
-Forbidden and confirmed untouched: `docs/foundation/M0_SCOPE.md`,
-`docs/examples/MEMORY_CONTEXT_CASES.md`, `docs/contracts/INTENT_SPEC.md`,
-`docs/examples/INTENT_CASES.md`, `docs/contracts/USER_IDEA.md`, `schemas/**`, `tests/**`,
-`scripts/**`, `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, `.project/PROJECT_STATE.md`,
-`.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`, `ROADMAP.md`, `../mihver-brain/**`. No
-machine schema. No runtime. No implementation of Dependency D.
+Forbidden and confirmed untouched: `docs/**`, `schemas/**`, `tests/**`, `scripts/**`,
+`package*.json`, `../mihver-brain/**`. No semantic changes to any contract, ADR, schema, validator,
+or runtime.
 
 ## Required Context
 
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s "Post-Acceptance Dependency B/C
-Disposition" section, `docs/contracts/REQUIREMENT_SPEC.md`'s "`MemoryContext` Is Not a
-Requirement-Level Inference Premise" subsection and R-10/R-22/R-23, `docs/contracts/MEMORY_CONTEXT.md`'s
-"There is no third way" paragraph and "No Assumed-Origin Path for Memory"/`DECISION_OPTION` material,
-`docs/examples/REQUIREMENT_CASES.md`'s Dependency C Disposition case family (Cases 18–22) — all
-re-read fresh, in full, before any edit, plus `gh pr view 24` to confirm PR state before editing.
+`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`,
+`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `ROADMAP.md`,
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/contracts/MEMORY_CONTEXT.md`, `docs/foundation/M0_SCOPE.md` — all re-read fresh, in full,
+before any edit, plus live `git`/`gh` truth (`git status`, `git log`, `npm run context`, `npm test`,
+`gh pr view 24`).
 
 ## Validation
 
-- `npm test`: 83/83 (unaffected — no schema/test file touched; independently re-run by Claude).
+- `npm test`: 83/83 (unaffected — no schema/test file touched).
 - `git diff --check`: clean.
-- `git status --short`: exactly the four allowed content files modified — confirmed directly by
-  Claude, not only from the implementing worker's self-report.
-- One fresh independent read-only Codex reviewer (C-Retirement/D-Separation Closure, 9-point
-  checklist) — see `REVIEW_STATE.md`'s "Latest Review" for findings and disposition; 9/9 PASS,
-  independently spot-checked by Claude against primary text.
-- Confirmed: retirement conclusion unchanged; R-10/R-22/R-23 byte-unchanged; accepted `IntentSpec`
-  Claims remain valid Requirement-Level Inference premises everywhere; Dependency D's own material
-  (`DECISION_OPTION` sections, Case 24) confirmed untouched and byte-identical; no schema/runtime/
-  Brain work.
+- `git diff main --stat`: exactly `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`,
+  `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `ROADMAP.md`.
+- Zero diff confirmed for `docs/**`, `schemas/**`, `tests/**`, `scripts/**`, `../mihver-brain/**`.
+- One fresh lightweight read-only Codex reviewer (Post-Dependency-C State Consistency) — see
+  `REVIEW_STATE.md`'s "Latest Review" for findings and disposition.
 
 ## Next Gate
 
-Commit and push this closure to existing PR #24. Do not open a new PR. Do not merge. Human review of
-PR #24 remains the next gate; it authorizes only this disposition-recording documentation change plus
-this narrow wording closure — no new capability, no Dependency D work, no schema/runtime work.
+Commit and push; open exactly one PR against `mihvernetwork/mihver:main` (title "chore: reconcile
+state after Dependency C retirement"). Do not merge. Human review of that PR is the next gate; it
+authorizes only this durable-state/navigation reconciliation — no Dependency D work, no schema/
+runtime/Brain work, no semantic redesign.

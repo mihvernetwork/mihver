@@ -148,7 +148,32 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
     (`REQUIREMENT_SPEC.md` R-19 memory-informed-rationale provenance) remain unimplemented; no
     MIHVER Brain adapter or retrieval runtime exists. Full detail in `INTENT_SPEC.md`'s
     "Memory-Derived Inference Premises" section and `docs/contracts/MEMORY_CONTEXT.md`'s "Stage
-    Consumption Authorization" section.
+    Consumption Authorization" section. **Dependency C has since been retired, not implemented —
+    see the "`ADR-0004` Dependency C" checkpoint immediately below.**
+- **`ADR-0004` Dependency C — Retired After Re-Derivation.** A separate task
+  (`M0-DEPENDENCY-C-REQUIREMENT-MEMORY-PREMISE`), performing the mandatory pre-implementation
+  re-derivation Dependency C required, found its originally planned direct path —
+  `MemoryContext → Requirement-Level Inference premise` — structurally incoherent against
+  `REQUIREMENT_SPEC.md`'s own R-10/R-22 semantics, and stopped without implementing anything
+  (verdict `DEPENDENCY_C_REDUNDANT_AFTER_B`). A follow-up task, `M0-DEPENDENCY-C-DISPOSITION`, plus
+  its own narrow wording-closure round (`DEPENDENCY-C-DISPOSITION-SEMANTIC-CLOSURE`), formally
+  recorded that retirement across the owning contracts. Merged via PR #24, squash commit
+  `54ef91c181134487a50cb7b7c3d3ebeb66716b78`. **Dependency C was not implemented** — no new
+  `MemoryContext` consumer, no new normative-strength source, no schema/runtime change. The full
+  reasoning is authoritative in `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s
+  "Post-Acceptance Dependency B/C Disposition" section, `docs/contracts/REQUIREMENT_SPEC.md`'s
+  invariant R-23, and `docs/contracts/MEMORY_CONTEXT.md`'s "There is no third way, and none is
+  coming" paragraph — not reproduced here.
+  - **The canonical path for historical-user memory to affect a Requirement**: Category A
+    historical-user `MemoryContext` → Intent Parsing / Dependency B → accepted current-run Inferred
+    Claim → Requirement Derivation → existing R-03/R-10/R-22 authority. No second, direct citation
+    of the underlying memory at the Requirement level is needed or authorized.
+  - **Requirement Derivation remains not authorized** to consume `MemoryContext` for
+    `SEMANTIC_PREMISE` use — its `M0_SCOPE.md` `Input:` list remains `IntentSpec` only.
+  - **Dependency D is not retired.** It remains a separate, later, narrower path of its own —
+    `MemoryContext → DECISION_OPTION → an R-19-eligible working default → memory-informed
+    rationale` — unimplemented and unauthorized. No MIHVER Brain adapter or runtime exists.
+  - Contract suite at merged head: **83/83**.
 
 ## Open Items
 
@@ -162,27 +187,26 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
 
 None automatically. Per `REVIEW_PROTOCOL.md` item 9, completing a task is not authorization to
 start the next one. In particular: moving `ADR-0003` to Accepted, beginning M0 Step 03B, starting
-`ADR-0004`'s dependencies C or D, and performing any `mihver-brain` or runtime memory-integration
-work are all **not** authorized by any checkpoint recorded above — each requires its own separate,
-explicit human task instruction, given later. **Dependency B is now complete** (see the
-"`ADR-0004` Dependency B" checkpoint above) — its completion is not, by itself, authorization to
-start Dependency C.
+`ADR-0004`'s dependency D, and performing any `mihver-brain` or runtime memory-integration work are
+all **not** authorized by any checkpoint recorded above — each requires its own separate, explicit
+human task instruction, given later. **Dependency C is now retired** (see the "`ADR-0004`
+Dependency C — Retired After Re-Derivation" checkpoint above) — its retirement does not, by itself,
+authorize Dependency D.
 
-**Dependency C is the logical next task family**, now that Dependency B has landed — but it is
-**not authorized by this entry**. Its expected conceptual scope, recorded here for future reference
-only, not designed or implemented by this reconciliation:
+**Dependency D is the logical next memory-semantics task family**, now that C's disposition is
+recorded — but it is **not authorized by this entry**. Conceptual scope only, recorded here for
+future reference, not designed or implemented by this reconciliation:
 
-- Requirement Derivation must first receive its own, separate `M0_SCOPE.md` authorization to
-  consume `MemoryContext` at all — Dependency B's authorization of Intent Parsing does not extend to
-  Requirement Derivation; each stage's `MemoryContext` consumption is authorized individually.
-- `REQUIREMENT_SPEC.md`'s R-10/R-22 provenance model would then need to recognize a qualified
-  `MemoryContext` entry as a Requirement-Level Inference premise, mirroring the discipline
-  `INTENT_SPEC.md`'s own Inference Policy amendment already established for Dependency B — without
-  becoming a fourth Requirement premise origin, `IntentSpec`-provenance laundering, User-Provided
-  Requirement authority, or a substitute for `Evidence`; a memory entry must never become a
-  Requirement by itself.
-- Dependency D (`REQUIREMENT_SPEC.md` R-19 memory-informed `DECISION_OPTION` rationale) remains a
-  separate, later, narrower task of its own — not designed here.
+- Requirement Derivation must first receive its own, separate, explicit `M0_SCOPE.md` authorization
+  to consume `MemoryContext` at all for this use — neither Dependency B's authorization of Intent
+  Parsing nor Dependency C's retirement extends any such authorization to Requirement Derivation.
+- D is: an R-19-eligible surviving Unknown, where Requirement Derivation already independently owns
+  the fill decision, plus a `MemoryContext` `DECISION_OPTION` that may propose or inform a value,
+  plus a `RequirementSpec` provenance record of the memory-informed rationale. Memory supplies
+  **zero independent authority** for the chosen value either way.
+- D must never become `SEMANTIC_PREMISE` standing, User-Provided authority, a Requirement-Level
+  Inference premise, or Evidence — and must never become an automatic default.
+- Exact `RequirementSpec` field design is not performed here.
 
 This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out
