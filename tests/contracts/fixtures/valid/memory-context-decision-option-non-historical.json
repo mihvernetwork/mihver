@@ -1,0 +1,48 @@
+{
+  "contract": "memory-context",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "memory_context",
+    "memory_context_id": "mc-requirement-derivation-1",
+    "run_id": "run-2026-08-23-010",
+    "run_context": { "status": "present", "project_slug": "support-inbox" },
+    "consuming_stage": "requirement_derivation",
+    "retrieval_purpose": "r19-eligible-default-candidate",
+    "retrieval_query": "prior retry/backoff outcomes for this project",
+    "retrieval_time": "2026-08-23T09:30:00Z",
+    "upstream_artifact_binding": { "artifact_type": "intent_spec", "artifact_id": "intent-support-inbox-v1", "version": 1 },
+    "retrieval_outcome": "admitted",
+    "admitted_entries": [
+      {
+        "entry_id": "entry-pattern-retry-1",
+        "source": {
+          "brain_memory_id": "brain-retry-pattern-01",
+          "brain_type": "pattern",
+          "title": "Prior retry/backoff outcome",
+          "scope": "support-inbox",
+          "brain_status": "active",
+          "brain_created_at": "2026-07-12T00:00:00Z",
+          "brain_updated_at": "2026-07-12T00:00:00Z",
+          "brain_confidence": "medium",
+          "supersedes": null,
+          "superseded_by": null,
+          "provenance": { "source": "manual", "author": "claude" }
+        },
+        "content": "A prior requirement in this project used exponential backoff with a maximum of 3 retry attempts for background job failures, and this worked well.",
+        "admission_reason": "scope matches run_context.project_slug; brain_status active with no superseded_by link; content classified as a non-historical prior architecture outcome, not a user statement -- eligible to inform an R-19 working default at DECISION_OPTION, subject to Requirement Derivation's own separate, still-pending M0_SCOPE.md authorization to consume MemoryContext for this purpose (this fixture proves representability only, not stage authorization)",
+        "classification": {
+          "semantic_authority_class": "prior_architecture_outcome",
+          "is_historical_user_statement": false,
+          "historical_user_category": null,
+          "historical_citation": null,
+          "classification_basis": "brain_type pattern; body describes a prior technical/measurement outcome (retry count and backoff strategy), not a user statement -- Gate 2 (MemoryContext source eligibility) is clear precisely because is_historical_user_statement is false",
+          "classification_method": "heuristic",
+          "classification_ambiguity": null,
+          "influence_tier": "DECISION_OPTION"
+        },
+        "freshness": { "freshness_flag": "fresh", "freshness_basis": "42 days since brain_updated_at, under the 180-day staleness threshold" }
+      }
+    ],
+    "excluded_entries": []
+  }
+}

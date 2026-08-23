@@ -1050,3 +1050,110 @@ per M-21.
 authority to adopt, modify, or reject the suggested value, or to leave the Unknown unresolved and
 carry it forward instead — the memory's presence never obligates a particular outcome, and never
 narrows what Requirement Derivation was already permitted to decide under R-19.
+
+---
+
+## 25. The same R-19-eligible Unknown, but the candidate value comes from a historical user
+statement — `DECISION_OPTION` is forbidden regardless of category or content
+
+**Memory input, Category A:** `decision`-type record, project-scoped, inspectably citing the exact
+past `UserIdea` turn it traces to — "User said (`UserIdea` v1, turn 3): 'let's use 3 retries with
+exponential backoff for failed background jobs.'" (Brain confidence: medium).
+
+**Memory input, Category B:** the same content, but with no inspectable, resolvable citation to an
+originating turn — "User previously indicated a preference for 3 retries with exponential backoff for
+background job failures," with no traceable linkage.
+
+**Current-run input:** identical to Case 24 — an already-settled Requirement ("the system SHALL retry
+a failed background job automatically") with a surviving, R-19-eligible Unknown (exact retry count and
+backoff strategy). **Gate 1 (R-19 content eligibility) passes identically to Case 24** — the Unknown
+itself is exactly as fillable here as it was there; nothing about R-19's own test changed.
+
+**Forbidden use, both categories:** Neither entry may carry `influence_tier: DECISION_OPTION`, even
+though the *numeric value proposed* ("3 retries, exponential backoff") is byte-identical to Case 24's
+`pattern`-type entry and would, on content alone, read as exactly the kind of narrow technical/
+measurement detail R-19 permits filling. **Gate 2 (`MemoryContext` source eligibility) fails
+categorically for both**, because `is_historical_user_statement` is `true` — the entry's classified
+source, not its content, is what disqualifies it here. This is not a confidence or reliability
+judgment about either statement (the Category A entry is, if anything, more directly and reliably
+attributable to the user than Case 24's `pattern` record is to any specific author) — it is that
+historical-user semantic content has its own, separately disciplined routes (Category A → Intent
+Parsing's `SEMANTIC_PREMISE` path per Dependency B; either category → a current-run clarification
+question), and Requirement Derivation obtaining a second, independent channel for the same class of
+content via `DECISION_OPTION` would let Dependency D become a backdoor around Dependency B's own gate.
+
+**If historical semantics genuinely matter here, the correct routes are:** for the Category A entry,
+Intent Parsing (already authorized, Dependency B) may cite it directly as the premise of a current-run
+Inferred Claim — e.g. "the system SHOULD retry failed background jobs with a similar strategy to a
+prior run's," an ordinary Inferred Claim Requirement Derivation would then compile from under its own
+unmodified R-03/R-10/R-22 authority, exactly as Case 18's `REQUIREMENT_CASES.md` pattern works. For
+either category, it may instead shape a current-run clarification question ("a prior project used 3
+retries with exponential backoff for this kind of failure; does a similar approach work here?") whose
+*current* answer, if given, becomes an ordinary User-Provided Claim. Neither route touches
+`DECISION_OPTION` at all — both terminate before Requirement Derivation ever sees the memory directly.
+
+**Forbidden transformation:** (a) admitting either entry at `DECISION_OPTION` on the reasoning that its
+content is narrowly technical and therefore "should" be eligible, treating R-19's content test as
+though it were the only gate; (b) reclassifying `is_historical_user_statement` to `false` for either
+entry merely to make it DECISION_OPTION-eligible — content inspection already correctly identified
+both as historical user statements, and relabeling them to escape Gate 2 is exactly the kind of
+classification-fail-open move the Classification Fail-Closed Rule forbids; (c) treating the Category A
+entry's stronger, resolvable citation as a reason it should be *more* eligible for `DECISION_OPTION`
+than the Category B entry — Gate 2 excludes both identically; citation strength affects only Category
+A's own `SEMANTIC_PREMISE` eligibility elsewhere, never `DECISION_OPTION` eligibility anywhere.
+
+**Clarification required?** No new clarification is forced by this case alone — whether a
+clarification question is warranted follows the ordinary Historical User Memory Rule analysis
+(LOW/MEDIUM Decision Impact may reduce repeated clarification; HIGH/CRITICAL never closes on memory
+alone), unrelated to this case's own point about `DECISION_OPTION` ineligibility.
+
+**Expected provenance behavior:** No Requirement provenance may ever cite either entry as a
+memory-informed rationale for a `DECISION_OPTION`-filled default. If the Category A entry instead
+informed an Inferred Claim at Intent Parsing (the legitimate route above), *that* Claim's own
+provenance, not any Requirement's, carries the citation — exactly Case 18's shape, not this case's.
+
+---
+
+## 26. A separately-recorded, accepted technical outcome remains D-eligible even when a user's
+suggestion first prompted it — no provenance laundering
+
+**Historical memory (not D-eligible, for contrast):** the same Category A entry as Case 25 — "User
+said (`UserIdea` v1, turn 3): 'let's use 3 retries with exponential backoff for failed background
+jobs.'" This entry's own classification, `is_historical_user_statement: true`, never changes; it
+remains permanently ineligible for `DECISION_OPTION`, exactly as Case 25 establishes.
+
+**A separate, later Brain record:** after the project actually shipped with that configuration, a
+distinct `decision`-type (or `pattern`-type) record, project-scoped, with its own independent
+provenance and no citation back to the original `UserIdea` turn, is written: "The accepted
+implementation for background job retries uses a maximum of 3 attempts with exponential backoff; this
+has been the project's adopted operational default since v1 and remains unchanged." (Brain confidence:
+high, `provenance.author`: a project process record, not a restatement of the user's own words.)
+
+**Why this second record is D-eligible where the first is not:** content inspection of this record
+classifies it as a **prior project/process decision or outcome**, not a historical user statement —
+`is_historical_user_statement: false`. It describes what the *project* did and adopted, not what the
+*user* said; its own provenance traces to the implementation/process record, never to a `UserIdea`
+turn. This is a genuinely separate artifact with its own independent classification, not the original
+statement wearing a new label. Gate 2 (`MemoryContext` source eligibility) is therefore clear for this
+record on its own terms, and — Gate 1 (R-19 content eligibility) being identical to Case 24/25 — it
+may be admitted at `DECISION_OPTION`, subject to every ordinary D discipline: zero independent
+authority, Requirement Derivation's own independent R-19 judgment, and an explicit memory-informed-
+rationale citation if adopted.
+
+**Forbidden transformation — the laundering move this case exists to name:** production (or any
+downstream reasoning) treating the *original* historical-user-statement entry as though it had been
+"promoted" or "converted" into the second, eligible record merely because they describe the same
+underlying value — e.g. citing the original entry's `entry_id` as the `DECISION_OPTION` rationale on
+the theory that "it's the same fact, just recorded twice." It is not the same fact for this purpose:
+the second record's eligibility comes entirely from its own independent classification and provenance,
+never inherited from, or unlocked by, the first. Each retains its own, permanently separate
+classification; the first is never reclassified, relabeled, or silently treated as equivalent to the
+second merely because they agree in content.
+
+**Clarification required?** No — this case does not introduce a new Decision Impact question; it
+distinguishes two already-classified records from each other.
+
+**Expected provenance behavior:** If Requirement Derivation adopts the second record's suggested
+value, the Requirement's provenance cites *that* record's `(memory_context_id, entry_id)` as the
+memory-informed rationale — never the first, historical-user-statement record's identity, even
+informationally alongside it.

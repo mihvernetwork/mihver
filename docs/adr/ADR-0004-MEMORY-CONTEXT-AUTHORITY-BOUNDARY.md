@@ -131,7 +131,13 @@ that produced it.
   separate, narrower, later task of its own, exactly as "Acceptance Gate" below already describes.
   Dependency D does not require treating a `MemoryContext` entry as a Claim, a Requirement-Level
   Inference premise, or Evidence — it was never the same capability as the retired dependency C path,
-  and retiring C does not retire, weaken, or pre-authorize D.
+  and retiring C does not retire, weaken, or pre-authorize D. **Clarification, not a new capability
+  (task `M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE`):** dependency D's `DECISION_OPTION`
+  source gate categorically excludes any `MemoryContext` entry classified as a historical user
+  statement, Category A or B — such content's only routes to a current-run artifact remain the ones
+  dependency B already disciplines (a cited Inferred Claim premise, or a clarification question);
+  Requirement Derivation must never obtain a second, independent historical-user channel through D.
+  Full reasoning in `MEMORY_CONTEXT.md`'s "No Assumed-Origin Path for Memory."
 
 MIHVER Brain (`../mihver-brain`, a sibling repository — see "Brain Architecture Summary" below) is
 a durable, file-based, deterministic second-brain: engineering lessons, decisions, and project
