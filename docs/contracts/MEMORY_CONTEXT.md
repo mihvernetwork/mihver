@@ -9,7 +9,7 @@ R-19 working default) are all now implemented, per `M0_SCOPE.md`'s, `INTENT_SPEC
 `REQUIREMENT_SPEC.md`'s own amendments. **Dependency C — citing a `MemoryContext` entry directly as a
 Requirement-Level Inference premise — has been retired, not implemented**: re-derived after
 Dependency B landed, it was found structurally incoherent against `REQUIREMENT_SPEC.md`'s own
-R-10/R-22 (see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s
+R-10/R-22 (see `ADR-0004`'s "Post-Acceptance Dependency B/C/D Disposition" and `REQUIREMENT_SPEC.md`'s
 R-23). Historical-user semantic content that legitimately affects a Requirement reaches Requirement
 Derivation only by first becoming a current-run Inferred Claim through Dependency B — never by a
 second, direct `MemoryContext` citation at the Requirement level, and never through Dependency D's
@@ -481,7 +481,7 @@ was re-derived against `REQUIREMENT_SPEC.md`'s actual R-10/R-22 text, found stru
 class ever eligible for `SEMANTIC_PREMISE` — remains raw, historical, unaccepted intent-shaped
 content until Intent Parsing turns it into an accepted current-run Claim; Requirement Derivation
 may reason from that Claim but may not interpret the entry directly), and **retired rather than
-implemented** — see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and
+implemented** — see `ADR-0004`'s "Post-Acceptance Dependency B/C/D Disposition" and
 `REQUIREMENT_SPEC.md`'s R-23. Historical-user semantic content that legitimately serves as a
 Requirement-Level Inference premise reaches Requirement Derivation exclusively by first becoming a
 current-run Inferred Claim through the first way above; Requirement Derivation then draws on that

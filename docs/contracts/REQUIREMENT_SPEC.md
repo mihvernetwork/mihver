@@ -358,7 +358,7 @@ direct `MemoryContext` premise at this mechanism as a future dependency ("depend
 `ADR-0004`'s dependency B was implemented (`INTENT_SPEC.md`'s "Memory-Derived Inference Premises"),
 that direct path was re-derived against this section's own text and R-22's strength model, found
 structurally incoherent, and retired rather than implemented — see `ADR-0004`'s "Post-Acceptance
-Dependency B/C Disposition" for the full reasoning. Two independent reasons, either sufficient alone:
+Dependency B/C/D Disposition" for the full reasoning. Two independent reasons, either sufficient alone:
 
 - **No source of normative strength.** R-22's strength model has exactly one source: "the Requirement
   or Claim it derives from." A `MemoryContext` entry is not a Claim and not a Requirement and carries

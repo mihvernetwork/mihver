@@ -766,7 +766,7 @@ defect to trigger Failed, however little normative content the input happened to
 Requirement-Level Inference's premise — as future work. After `ADR-0004`'s dependency B was
 implemented (`INTENT_SPEC.md`'s "Memory-Derived Inference Premises"), that direct path was
 re-derived against this document's own R-10/R-22 text and found structurally incoherent, then
-retired rather than implemented — see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and
+retired rather than implemented — see `ADR-0004`'s "Post-Acceptance Dependency B/C/D Disposition" and
 R-23. The five cases below demonstrate the resulting disposition: for Requirement-Level-Inference-
 premise standing, historical-user memory reaches Requirement Derivation exclusively through an
 already-accepted `IntentSpec` Claim; a `MemoryContext` entry is never itself such a premise, whether

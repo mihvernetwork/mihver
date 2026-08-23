@@ -15,151 +15,117 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: DEPENDENCY-D-FOUNDATION-AND-CORPUS-CLOSURE
+Task: DEPENDENCY-D-FINAL-CROSSREF-HYGIENE
 Branch: `m0/dependency-d-r19-memory-decision-option`
-PR: `mihvernetwork/mihver#27` ("M0: implement Dependency D memory-informed R-19 defaults") — existing
-open PR, continued, not a new PR, not merged by this task
+PR: `mihvernetwork/mihver#27` — existing open PR, continued, not a new PR, not merged by this task
 
-A narrow closure pass on top of PR #27's already-implemented, **approved** `ADR-0004` Dependency D:
-Gate 1 → Gate 2 ordering, R-19, R-24, the historical A/B `DECISION_OPTION` prohibition, the
-zero-independent-authority rule, C's retirement, and the Evidence boundary were explicitly not
-reopened. This closure fixed only authoritative-document synchronization and three worked-case
-residuals.
+A single-purpose cross-reference hygiene pass on top of PR #27's already-implemented, **approved**
+`ADR-0004` Dependency D. Does not reopen Dependency D semantics. Fixed the one named residual (a
+line-wrapped stale reference to the ADR's pre-rename section title in
+`docs/examples/MEMORY_CONTEXT_CASES.md`), then swept every file this PR has touched for the same
+stale phrase and fixed four further genuine live cross-references the sweep found.
 
-**1. `ADR-0004` foundation blocker.** `ADR-0004` still contained several current-state statements
-equivalent to "Dependency D — still pending/structurally disabled/future work," contradicting D as
-already implemented on this same branch. Performed narrow post-Acceptance synchronization: preserved
-all historical-at-the-time reasoning; only qualified historical passages and added/updated
-current-state forward pointers. Fixed: the "Post-Acceptance Dependency B/C Disposition" section
-(renamed to "...B/C/D Disposition"; its Dependency C bullet's closing sentence re-scoped to
-"at the time of C's retirement"; its Dependency D bullet fully replaced with an "implemented" bullet
-documenting `M0_SCOPE.md`/`REQUIREMENT_SPEC.md`'s amendment, PR #27, the zero-independent-authority
-statement, R-23-unaffected statement, the narrow-purpose-only statement, the preserved
-historical-source-gate clarification, and the no-runtime/Brain-adapter statement); the Phase 1
-Authority Map's stale "every other stage, including Requirement Derivation, remains as this Phase
-originally found it" claim; the Foundation Impact Analysis's "each consuming stage's own `Input:`
-list amendment" item and its "Memory-informed R-19 default provenance" item (both given
-now-completed forward pointers, historical framing preserved); the Phase 8 boundary table's stale
-"Allowed once Research Planning is separately authorized... (not yet performed)" row (Research
-Planning was in fact authorized at Acceptance, under dependency A — fixed with historical framing
-plus a forward pointer); the Acceptance Gate's and Decision section's current-state D wording
-("still pending" → "now implemented"); the Future Work section's closing statement. Also fixed, via a
-targeted `sed` bulk replace plus one line-wrapped instance a fresh reviewer caught (see Reviewer A
-below), all remaining stale cross-references to the pre-rename section title. ADR Status remains
-literally `Accepted`, untouched.
+**Named residual.** `docs/examples/MEMORY_CONTEXT_CASES.md` line ~67: `see ADR-0004's
+"Post-Acceptance Dependency B/C\nDisposition"` (line-wrapped) — corrected to "...B/C/D Disposition".
 
-**2. `REQUIREMENT_SPEC.md` Stage-Boundary sync.** The "Stage Boundary (frozen, restated for context)"
-section's `Requirement Derivation` restatement was stale against `M0_SCOPE.md`. Rewrote it to state:
-`IntentSpec` as the sole primary semantic input; `MemoryContext` as an additional optional input,
-authorized for exactly one purpose (dependency D) — `DECISION_OPTION`, to optionally inform a working
-default for a surviving Unknown already, independently established as R-19-eligible; explicitly bound
-to the consumed `IntentSpec` version, never to `RequirementSpec` (this stage's own output); no role in
-reaching R-19-eligibility itself (Gate 1); its own source must separately clear Gate 2. Added a
-prose paragraph confirming `IntentSpec` remains the sole primary input and that `MemoryContext` alters
-none of the existing "Not allowed to decide" boundary. R-09/R-19/R-21/R-22/R-23/R-24's own defining
-invariant text confirmed untouched by direct diff-hunk-location inspection (only two hunks in this
-file this round, both inside the Stage Boundary section).
+**Sweep result.** A whitespace-tolerant sweep (line-joined text, not plain `grep -n`, to catch
+line-wrapped instances) of every file `git diff main --stat` reports as changed on this branch found
+four further genuine, live, stale cross-references — each individually read in context before
+editing to confirm it was a live pointer, not a historical quote of the pre-rename name:
+`docs/contracts/MEMORY_CONTEXT.md` (two instances, ~lines 12 and 484), `docs/contracts/
+REQUIREMENT_SPEC.md` (one, ~line 360, line-wrapped), `docs/examples/REQUIREMENT_CASES.md` (one,
+~line 769), `docs/foundation/M0_SCOPE.md` (one, ~line 364). All five now read "Post-Acceptance
+Dependency B/C/D Disposition"; every diff hunk touches only the section-name string itself.
 
-**3. Case 26 internal contradiction.** `REQUIREMENT_CASES.md` Case 26 used the shared base's settled
-"the system SHALL retry a failed background job automatically" Requirement while treating "should
-failed background jobs be retried automatically at all" as the surviving Unknown — those cannot
-coexist. Replaced with a case that explicitly overrides the shared base: an accepted `IntentSpec`
-User-Provided Claim compiled into the settled Requirement "the system MUST handle a failed background
-job," with the surviving Unknown "should handling include automatic retry, or does it require
-surfacing to a human?" — a want-level capability question R-19 excludes regardless of what memory
-proposes. Outcome (Gate 1 failure, Partial) unchanged; Case 27's "same disposition" cross-reference
-confirmed still valid.
+**Legitimately-preserved instances.** Three further "B/C Disposition" (no /D) occurrences —
+`.project/CURRENT_TASK.md` (one) and this file (two, from the prior closure task's own text) — were
+individually read and confirmed to be historical quotes describing the rename itself (e.g. "renamed
+'Post-Acceptance Dependency B/C Disposition' → '...B/C/D Disposition'"), not live cross-references;
+correctly left unchanged, since editing them would falsify the historical record of what the old
+name was.
 
-**4. Case 25/Case 35 R-21 consistency.** The shared retry-obligation Requirement is testable
-independent of the exact retry count/backoff strategy, so leaving that detail unfilled does not itself
-make the Requirement Partial. Rewrote Case 25's Eligibility paragraph: filling the Unknown applies
-ordinary R-21 (Complete, as Case 23 shows); leaving it unfilled also leaves the retry-obligation
-Requirement Complete, because its own satisfaction procedure never depended on the missing detail
-(Case 21's original conclusion) — explicitly not a general rule that any unfilled R-19-eligible
-Unknown is automatically Complete; Partial applies only where some Requirement's own procedure
-materially depends on the unresolved value and no valid R-21 procedure can be supplied. Case 35
-independently re-read and confirmed already consistent with this principle — left unchanged. R-21
-itself confirmed unchanged.
+**Final re-sweep: zero remaining live/current references to the pre-rename heading anywhere in the
+PR's changed files.**
 
-**5. Independent-rationale example hygiene.** Case 23 (`REQUIREMENT_CASES.md`) and Case 24
-(`MEMORY_CONTEXT_CASES.md`) used rationale language equivalent to "3 retries with exponential backoff
-is a common, reasonable strategy," making an unstated "common practice" claim an external fact inside
-the very example meant to demonstrate memory-is-not-Evidence. Replaced in both with a rationale
-grounded in the choice's own bounded operational properties alone (a finite retry count bounds
-attempts; exponential spacing avoids immediate-succession retries; both remain internal execution
-details that do not add, remove, or narrow the retry obligation's own actor, target, scope, condition,
-or normative force) — explicitly never claiming industry-standard/optimal/best-practice status. A
-stray markdown line-break artifact introduced by the `MEMORY_CONTEXT_CASES.md` edit was found and
-fixed on direct re-read.
+## Allowed Scope
 
-Allowed scope for this closure task: `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
+`docs/examples/MEMORY_CONTEXT_CASES.md` (the named residual), plus — discovered necessary by this
+task's own required sweep, not pre-declared — `docs/contracts/MEMORY_CONTEXT.md`,
 `docs/contracts/REQUIREMENT_SPEC.md`, `docs/examples/REQUIREMENT_CASES.md`,
-`docs/examples/MEMORY_CONTEXT_CASES.md`, plus this file and `.project/CURRENT_TASK.md`. No other file
-touched — `M0_SCOPE.md`, `INTENT_SPEC.md`, `INTENT_CASES.md`, `USER_IDEA.md`, `schemas/**`, `tests/**`,
-`scripts/**`, `package*.json`, `mihver-brain/**` all confirmed untouched (no forbidden owning artifact
-required a change; no STOP condition arose).
-
-### Review — two fresh independent read-only Codex reviewers, targeted to this closure's own diff
-
-- **Reviewer A — Foundation/Current-State Consistency (8-point checklist).** First pass: **6/8 PASS**,
-  2 findings. Confirmed real, both fixed: (1) one line-wrapped stale cross-reference to the pre-rename
-  section title ("Post-Acceptance Dependency B/C\nDisposition," split across a line break, missed by
-  the earlier single-line `sed` bulk replace) at what were then lines 798–799 — fixed to
-  "...B/C/D Disposition." (2) A prompt-scope false positive (point 8(e), asking to confirm `git diff
-  main` touches no R-09/R-19/R-21/R-23/R-24 invariant text) — `git diff main` necessarily includes the
-  full branch-vs-`main` diff, including the earlier, already-reviewed `M0-DEPENDENCY-D-R19-MEMORY-
-  DECISION-OPTION` task's own R-09/R-24 additions; independently re-verified via `git diff` (working
-  tree only, this round's uncommitted changes) that this closure round's own edits touch only two hunks
-  in `REQUIREMENT_SPEC.md`, both inside the Stage Boundary section — no invariant-defining line touched
-  by this round. Not a real defect; no further fix needed.
-- **Reviewer B — R-21/Corpus/Evidence (8-point checklist).** **7/8 PASS**, 1 finding, which was the
-  same category of prompt-scope false positive as Reviewer A's point 8(e) (asking to confirm the diff
-  touches nothing beyond Cases 23–26) — `git diff main` includes the whole branch's case family
-  (Cases 19, 22, 23–35 from the earlier D-implementation task); independently re-verified via `git diff`
-  (working tree only) that this round's own edits touch exactly two hunks in `REQUIREMENT_CASES.md`
-  (Case 23's rationale; Cases 25/26 together) and one hunk in `MEMORY_CONTEXT_CASES.md` (Case 24's
-  rationale). Not a real defect; no further fix needed.
-
-**One genuine finding (Reviewer A's stale line-wrapped cross-reference), fixed and re-verified via a
-follow-up whitespace-tolerant grep sweep (0 remaining instances of the old section title, in any line
-wrapping).** The two remaining findings were prompt-scope false positives, independently confirmed as
-such via direct `git diff` (not `git diff main`) hunk-location inspection — not merely accepted from
-reviewer framing.
-
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.**
+`docs/foundation/M0_SCOPE.md` (cross-reference string only), plus this file and
+`.project/CURRENT_TASK.md`. Not modified: R-09/R-19/R-21/R-23/R-24 invariant text; `M0_SCOPE.md`'s
+stage/authorization semantics; ADR-0004's own semantics; any case content beyond the exact
+stale-phrase occurrences; `schemas/**`, `tests/**`, `scripts/**`, `package*.json`, `mihver-brain/**`,
+`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`, `ROADMAP.md`.
 
 ## Required Changes
 
-None remaining — the one confirmed finding (stale line-wrapped cross-reference) is fixed.
+None — this task's own required sweep is what surfaced the four additional fixes; no external
+reviewer was dispatched (single-purpose, mechanical, whitespace-tolerant-grep-verifiable string fix,
+not a semantic re-review).
 
 ## Fixes Applied
 
-- `ADR-0004`: renamed "Post-Acceptance Dependency B/C Disposition" → "...B/C/D Disposition"
-  (including 3 single-line cross-references via `sed`, plus 1 line-wrapped instance found by Reviewer
-  A and fixed directly); rewrote the Dependency C bullet's closing sentence and the Dependency D bullet
-  in that section; fixed the Phase 1 Authority Map's stale stage-list claim; added forward pointers to
-  the Foundation Impact Analysis's two Dependency-D-relevant items and the Phase 8 boundary table's
-  Research Planning row; updated the Acceptance Gate, Decision, and Future Work sections' current-state
-  D wording. ADR Status left untouched (`Accepted`).
-- `REQUIREMENT_SPEC.md`: rewrote the Stage Boundary section's Requirement Derivation restatement
-  (`MemoryContext` as additional optional input, IntentSpec-bound, Gate 1/Gate 2 cross-reference) and
-  added one prose paragraph. R-09/R-19/R-21/R-22/R-23/R-24 confirmed untouched.
-- `REQUIREMENT_CASES.md`: fixed Case 26's internal contradiction (scenario now explicitly overrides
-  the shared base); rewrote Case 25's Eligibility paragraph for R-21 consistency; fixed Case 23's
-  rationale example. Case 27's cross-reference and Case 35 independently re-verified still valid,
-  left unchanged.
-- `MEMORY_CONTEXT_CASES.md`: fixed Case 24's rationale example (same pattern as Case 23); fixed one
-  stray markdown line-break artifact introduced by that same edit.
+- `docs/examples/MEMORY_CONTEXT_CASES.md`: the named line-wrapped residual, fixed.
+- `docs/contracts/MEMORY_CONTEXT.md` (×2), `docs/contracts/REQUIREMENT_SPEC.md`,
+  `docs/examples/REQUIREMENT_CASES.md`, `docs/foundation/M0_SCOPE.md`: four further live
+  cross-references this task's own sweep found, each individually confirmed live (not historical)
+  before fixing.
+- `.project/CURRENT_TASK.md` and this file's own remaining "B/C Disposition" instances individually
+  confirmed to be historical quotes of the pre-rename name (describing the earlier rename itself),
+  correctly left unchanged.
+
+**Verification:** `git diff HEAD^ --` shows every hunk across all five content files touches only the
+section-name string; `git diff HEAD^ --stat` shows exactly the six changed files. `npm test`: 85/85.
+`git diff --check`: clean. A final whitespace-tolerant sweep of every PR-changed file confirms zero
+remaining live "Dependency B/C Disposition" (without /D) references anywhere.
+
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.**
 
 ## Pending Human Gate
 
 Commit and push to the existing branch `m0/dependency-d-r19-memory-decision-option`, existing PR #27.
-Do not open a new PR. Not merged by this task. Human review of PR #27 (now including this closure
-round) is the next gate; it authorizes the Dependency D semantic/foundation implementation together
-with this synchronization/corpus-hygiene closure — no `RequirementSpec` schema, no Brain/runtime work,
-no durable-state reconciliation (still deferred to a later combined task).
+Do not open a new PR. Not merged by this task. Human review of PR #27 (now including this hygiene
+round) is the next gate.
 
 ## History
+
+- 2026-08-23 — `DEPENDENCY-D-FOUNDATION-AND-CORPUS-CLOSURE` (PR #27, opened, not yet merged): a narrow
+  closure pass on top of PR #27's already-implemented, approved `ADR-0004` Dependency D — Gate 1/Gate
+  2 ordering, R-19, R-24, the historical A/B `DECISION_OPTION` prohibition, the
+  zero-independent-authority rule, C's retirement, and the Evidence boundary explicitly not reopened.
+  Fixed authoritative-document synchronization and three worked-case residuals: (1) `ADR-0004` still
+  contained several current-state "Dependency D — pending/disabled/future work" statements
+  contradicting D as implemented — performed narrow post-Acceptance synchronization, preserving all
+  historical-at-the-time reasoning, only qualifying historical passages and adding/updating
+  current-state forward pointers (the "Post-Acceptance Dependency B/C Disposition" section renamed to
+  "...B/C/D Disposition"; the Dependency C/D bullets, Phase 1 Authority Map, Foundation Impact
+  Analysis, Phase 8 boundary table, Acceptance Gate, Decision, and Future Work sections all
+  synchronized; ADR Status left `Accepted`). (2) `REQUIREMENT_SPEC.md`'s Stage Boundary section's
+  Requirement Derivation restatement rewritten for `MemoryContext` as an additional optional
+  `DECISION_OPTION`-only input, `IntentSpec`-bound; R-09/R-19/R-21/R-22/R-23/R-24 confirmed
+  byte-unchanged. (3) Case 26's internal contradiction (a settled retry-obligation Requirement
+  coexisting with a surviving "retry at all?" Unknown) fixed by replacing the scenario with one that
+  explicitly overrides the shared base. (4) Case 25/35 R-21 consistency fixed — an unfilled
+  retry-count/backoff detail does not make the independently-testable retry-obligation Requirement
+  Partial; explicitly scoped as not a general rule. (5) Case 23/`MEMORY_CONTEXT_CASES.md` Case 24's
+  rationale examples regrounded in the choice's own bounded operational properties, dropping an
+  unevidenced "common practice" claim. Two fresh independent read-only Codex reviewers, targeted to
+  this closure's own diff: Reviewer A (Foundation/Current-State Consistency, 8-point): 6/8 PASS first
+  pass, 1 genuine finding (a line-wrapped stale cross-reference to the pre-rename ADR section title,
+  fixed) plus 1 prompt-scope false positive (`git diff main` necessarily includes the whole branch's
+  prior, already-approved changes; independently re-verified via working-tree `git diff` that this
+  round's own edits touch no invariant text). Reviewer B (R-21/Corpus/Evidence, 8-point): 7/8 PASS,
+  1 finding, same false-positive category, independently re-verified not real. `npm test`: 85/85.
+  Verdict: `READY_FOR_HUMAN_REVIEW`. A follow-up task, `DEPENDENCY-D-FINAL-CROSSREF-HYGIENE`,
+  subsequently found (via its own required whitespace-tolerant sweep) that the just-fixed rename had
+  one further line-wrapped residual in `MEMORY_CONTEXT_CASES.md` this task's own fix missed, plus four
+  more live cross-references in other PR-changed files never swept by this task, and fixed all five,
+  on the same branch/PR, before any human merge decision. Moved here from "Latest Review" now that
+  those sections describe `DEPENDENCY-D-FINAL-CROSSREF-HYGIENE` instead, per this file's branch/task
+  scoping — both entries share branch `m0/dependency-d-r19-memory-decision-option` and PR #27, since
+  the hygiene round was a continuation on the same open PR, not a new branch. — branch
+  `m0/dependency-d-r19-memory-decision-option`
 
 - 2026-08-23 — `M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION` (PR #27, opened, not yet merged):
   implemented `ADR-0004` Dependency D: Requirement Derivation became the third authorized

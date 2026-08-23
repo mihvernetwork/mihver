@@ -64,7 +64,7 @@ Requirement-level `MemoryContext` premise, and Requirement Derivation's own depe
 authorization grants no path to it either. Where a case shows historical-user memory legitimately
 affecting a Requirement, the correct path is `MemoryContext` → Intent Parsing (dependency B) → a
 current-run Inferred Claim → Requirement Derivation consuming that Claim under its own existing,
-unmodified authority (R-03/R-10/R-22/R-23) — see `ADR-0004`'s "Post-Acceptance Dependency B/C
+unmodified authority (R-03/R-10/R-22/R-23) — see `ADR-0004`'s "Post-Acceptance Dependency B/C/D
 Disposition" and `REQUIREMENT_SPEC.md`'s R-23 for the precise mapping. No case in this corpus
 authorizes any consumption today for a stage, or influence tier, not already separately authorized on
 `main`.

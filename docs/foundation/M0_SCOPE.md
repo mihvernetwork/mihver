@@ -361,7 +361,7 @@ a current-run Inferred Claim in `IntentSpec`, per `INTENT_SPEC.md`'s own Inferen
 that path (`ADR-0004`'s originally-named dependency C) was re-derived after dependency B landed,
 found structurally incoherent against `REQUIREMENT_SPEC.md`'s own R-10/R-22/R-23, and **retired
 rather than implemented**; no `REQUIREMENT_SPEC.md` amendment for it is pending or intended (see
-`ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s R-23).
+`ADR-0004`'s "Post-Acceptance Dependency B/C/D Disposition" and `REQUIREMENT_SPEC.md`'s R-23).
 
 **Dependency D — implemented.** This document, together with `REQUIREMENT_SPEC.md`'s new invariant
 R-24 (`REQUIREMENT_SPEC.md`'s "Memory-Informed R-19 Working Defaults"), now additionally authorizes
