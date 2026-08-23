@@ -1014,10 +1014,12 @@ boundary) **and** dependency D (Requirement Derivation's own `M0_SCOPE.md` autho
 resulting Requirement's rationale cite the `MemoryContext` entry as a memory-informed rationale) —
 both are now implemented (`ADR-0004`'s "Acceptance Gate"). Requirement Derivation may adopt the
 suggested value, but only after independently judging it a defensible measurement/implementation
-choice under its own R-19 authority (e.g. "3 retries with exponential backoff is a common, reasonable
-strategy for this class of transient failure, and does not change what the Requirement itself
-asserts") — never merely because the memory said so. If adopted, the resulting Requirement's
-provenance is marked **Requirement-Derivation-introduced** (R-09) with an explicit stated rationale
+choice under its own R-19 authority, grounded in the choice's own bounded operational properties
+alone — never an unevidenced external claim like "industry-standard" or "optimal" (e.g. "a finite
+retry count bounds the number of repeated attempts, and exponential spacing between attempts avoids
+issuing them in immediate succession; both remain internal execution details that do not change what
+the Requirement itself asserts") — never merely because the memory said so. If adopted, the resulting
+Requirement's provenance is marked **Requirement-Derivation-introduced** (R-09) with an explicit stated rationale
 that itself cites the `MemoryContext` entry as a **memory-informed rationale**, labeled distinctly,
 never presented as `IntentSpec`-traced or User-Provided.
 

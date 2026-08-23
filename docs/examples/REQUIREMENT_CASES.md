@@ -996,8 +996,11 @@ merely because the memory proposed it) and adopts it.
 
 **Provenance expectations:** The Requirement's provenance shows, distinctly: (a) marked
 Requirement-Derivation-introduced (R-09); (b) an independent rationale justifying the value under
-R-19 on its own terms (e.g. "3 retries with exponential backoff is a common, reasonable strategy for
-this class of transient failure, and does not change what the Requirement asserts"); (c) an explicit
+R-19 on its own bounded operational properties alone — never an unevidenced external claim like
+"industry-standard" or "optimal" (e.g. "a finite retry count bounds the number of repeated attempts,
+and exponential spacing between attempts avoids issuing them in immediate succession; both remain
+internal execution details that do not add, remove, or narrow the retry obligation's own actor,
+target, scope, condition, or normative force"); (c) an explicit
 memory-informed-rationale citation of the entry's `(memory_context_id, entry_id)` (R-24) — three
 distinct facts, never collapsed into "informed by memory" alone. The Requirement's ordinary
 provenance to the consumed `IntentSpec` version and the surviving `open_item_id` is unchanged and
@@ -1051,18 +1054,36 @@ rationale, no memory-informed-rationale citation (none exists to cite). If carri
 explicit open item, exactly as "LOW/MEDIUM Open Items and Conflicts That Survive Into This Stage"
 already describes for any unfilled R-19-eligible Unknown.
 
-**Eligibility:** Complete if filled with a faithful, R-21-satisfying value; Partial (testability-
-blocked on this one Unknown) if carried forward unfilled and no INDETERMINATE-routing procedure can
-be written — ordinary R-21 rules, unaffected by memory's absence either way.
+**Eligibility:** Complete either way, in this specific base. If Requirement Derivation fills the
+Unknown, ordinary R-21 applies exactly as Case 23 shows (Complete — the value does not change what
+the retry-obligation Requirement asserts). If it instead leaves the Unknown unresolved, the
+retry-obligation Requirement *itself* still remains Complete, because "retry automatically" is
+testable independent of any specific count or backoff strategy — its own recorded satisfaction
+procedure never depended on that detail (exactly Case 21's original conclusion, unaffected by memory's
+absence). The retry-count/backoff detail simply remains an explicit, legitimately-unfilled open item;
+its absence manufactures no new `RequirementSpec` Open Item and blocks nothing. **This is not the
+general rule that any unfilled R-19-eligible Unknown is automatically Complete** — an R-19-eligible
+Unknown makes its affected area Partial in the different, genuinely testability-blocked case where
+some Requirement's own faithful satisfaction procedure materially depends on the unresolved value and
+no valid R-21 procedure (not even one with an INDETERMINATE branch) can be supplied without it; this
+base's retry-obligation Requirement simply does not depend on the detail at all, so that case does not
+arise here (see Case 35 for the general principle stated explicitly).
 
 ---
 
 ## 26. Memory attempts to make an R-19-forbidden Unknown fillable — forbidden
 
-**Source IntentSpec semantics:** Instead of a retry-count detail, the surviving Unknown is "should
-failed background jobs be retried automatically at all, or surfaced to a human for manual handling?"
-— a want-level question about whether the capability exists, which R-19 excludes regardless of what
-any memory proposes.
+**Source IntentSpec semantics — overrides the shared base above.** This case does not use the shared
+retry-obligation Requirement; that Requirement already settles that automatic retry happens, so an
+Unknown about whether automatic retry happens at all could never coexist with it. Instead, the
+accepted `IntentSpec` here contains only a narrower User-Provided Claim, compiled into the settled
+Requirement "the system MUST handle a failed background job" (obligation) — handling's own existence
+is settled, but *how* it is handled is not yet specified at all. The surviving Unknown is: "should
+handling a failed background job include automatic retry, or does handling instead require surfacing
+it to a human for manual intervention?" — a want-level question about which capability the system
+has (automatic self-recovery vs. human-in-the-loop), which R-19 excludes regardless of what any
+memory proposes: a materially different answer would add or remove a capability the Requirement
+itself would need to assert, not merely select an implementation detail within one already settled.
 
 **Memory input:** A non-historical `pattern`-type entry, `is_historical_user_statement: false`,
 proposing "automatic retry, no human review" as a candidate value, with high Brain confidence.

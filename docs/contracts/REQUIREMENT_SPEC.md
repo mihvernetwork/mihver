@@ -30,7 +30,22 @@ Per `M0_SCOPE.md`:
 
 ```text
 Requirement Derivation
-  Input:  IntentSpec
+  Primary semantic input: IntentSpec
+  Additional optional input: MemoryContext
+                          — authorized for exactly one purpose (ADR-0004 dependency D):
+                          DECISION_OPTION, to optionally inform a working-default value
+                          for a surviving Unknown Requirement Derivation has already,
+                          independently established as R-19-eligible. Bound to the
+                          specific consumed IntentSpec version containing that surviving
+                          Unknown — never to RequirementSpec, which is this stage's own
+                          output, not the artifact the underlying R-19 decision
+                          originates from (M0_SCOPE.md's "Stage: Requirement
+                          Derivation"). MemoryContext plays no role in reaching the
+                          R-19-eligibility determination itself (Gate 1) — it may only
+                          inform the value once Gate 1 is already settled, and its own
+                          source must separately clear Gate 2 (MEMORY_CONTEXT.md's "No
+                          Assumed-Origin Path for Memory"). See "Memory-Informed R-19
+                          Working Defaults" and R-24 below for the full discipline.
   Output: RequirementSpec
   Allowed to decide:     Functional requirements, non-functional requirements (latency, cost,
                           compliance, team skill, scale), constraints, and success criteria derived
@@ -39,8 +54,14 @@ Requirement Derivation
                           candidates will be produced; what the user meant.
 ```
 
-This document does not restate or relitigate this boundary; it specifies what "derived from the
-accepted `IntentSpec`" defensibly means in practice.
+`IntentSpec` remains Requirement Derivation's sole *primary* semantic input, unchanged by
+`MemoryContext`'s narrow addition — every Requirement still ultimately traces to the consumed
+`IntentSpec`, per "Provenance: Requirement → IntentSpec → UserIdea" below. `MemoryContext` is
+optional additional context for exactly the one purpose above; it grants no new authority to decide
+technology, architecture, or intent, and does not alter any of this section's existing
+"Not allowed to decide" boundary. This document does not restate or relitigate this boundary; it
+specifies what "derived from the accepted `IntentSpec`" defensibly means in practice, and, separately,
+what the `MemoryContext` addition does and does not authorize.
 
 ## Input Eligibility
 

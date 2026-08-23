@@ -5,152 +5,106 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION
+DEPENDENCY-D-FOUNDATION-AND-CORPUS-CLOSURE
 
 ## Objective
 
-Implement `ADR-0004` Dependency D as one bounded Requirement Derivation semantic/foundation slice:
-Requirement Derivation becomes the third authorized `MemoryContext` consumer, restricted to exactly
-the `DECISION_OPTION` influence tier, to optionally inform a working-default value for a surviving
-`IntentSpec` Unknown it has already, independently established as R-19-eligible. Memory supplies
-zero independent authority — the final value remains Requirement-Derivation-introduced (R-09), with
-its own independent rationale, plus an additional, distinctly-labeled memory-informed-rationale
-citation (new invariant R-24) via the stable `(memory_context_id, entry_id)` identity. This is not
-`SEMANTIC_PREMISE`, not a Requirement-Level Inference premise (R-23 unaffected, C remains retired),
-not Evidence, not User-Provided provenance, and not an automatic default. Does not implement a
-`RequirementSpec` machine schema (Step 03B remains deferred).
+A narrow closure pass, continuing PR #27, on top of `ADR-0004` Dependency D's already-**approved**
+implementation (task `M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION`, same branch). Does not redesign
+Gate 1 → Gate 2 ordering, R-19, R-24, the historical A/B `DECISION_OPTION` prohibition, the
+zero-independent-authority rule, C's retirement, or the Evidence boundary. Fixes only
+authoritative-document synchronization (`ADR-0004` still contained several current-state
+"Dependency D — pending/disabled/future work" statements contradicting D as implemented;
+`REQUIREMENT_SPEC.md`'s Stage Boundary restatement was stale against `M0_SCOPE.md`) and three
+worked-case residuals (Case 26's internal contradiction; Case 25/35's R-21 consistency; Case
+23/`MEMORY_CONTEXT_CASES.md` Case 24's rationale-example hygiene).
 
 ## Branch / Base
 
-Branch: `m0/dependency-d-r19-memory-decision-option` (new branch, created from `main`).
-Base: `main` at `a16491d41d93f4edac9378b6184de071aa681f32` — verified via `git status`/`git log`
-(HEAD matched exactly before branching), `npm run context`, `npm test` (85/85), and `gh pr view 26`
-(`state: MERGED`, `mergeCommit.oid` matching exactly) before any edit.
+Branch: `m0/dependency-d-r19-memory-decision-option` (existing, continued — not a new branch).
+PR: `mihvernetwork/mihver#27` (existing, open, continued — not a new PR, not merged).
 
 ## Status
 
 **Complete, pending human review.**
 
-**Prerequisite verified before any edit (Section 1).** The PR #26 historical-source-gate policy is
-confirmed intact and internally consistent on current `main`: `tests/contracts/validate-contracts.mjs`
-line 337's `isReclassifiedHistorical && tier === "DECISION_OPTION"` check exists; both the Category A
-and Category B invalid fixtures exist
-(`memory-context-decision-option-on-historical-statement-category-a.json`/`-category-b.json`); the
-valid non-historical `DECISION_OPTION` fixture exists (`memory-context-decision-option-non-
-historical.json`). Verdict: prerequisite satisfied, not `PR26_PREREQUISITE_NOT_SATISFIED`.
+**Fixes applied:**
 
-**Pre-implementation D coherence re-confirmed (Section 2).** All eight propositions (A–H) independently
-re-verified true against current `REQUIREMENT_SPEC.md`/`MEMORY_CONTEXT.md` text: R-19 already gives
-Requirement Derivation content-only fill authority, independent of memory; R-09 already requires
-Requirement-Derivation-introduced marking with rationale; memory neither creates nor removes R-19
-eligibility; `DECISION_OPTION` proposes a value only within an already-owned decision, remains
-optional, and Requirement Derivation retains full adopt/modify/reject/ignore/leave-unresolved
-authority; memory never becomes Requirement authority, `SEMANTIC_PREMISE`, a Requirement-Level
-Inference premise, Evidence, or current user intent. Verdict: `DEPENDENCY_D_COHERENT`. Proceeded.
+1. **`ADR-0004` foundation blocker.** Performed narrow post-Acceptance synchronization: preserved all
+   historical-at-the-time reasoning; only qualified historical passages and added/updated current-state
+   forward pointers. Fixed: the "Post-Acceptance Dependency B/C Disposition" section (renamed to
+   "...B/C/D Disposition," including a Reviewer-A-caught line-wrapped cross-reference the initial `sed`
+   bulk replace missed); the Dependency C bullet's closing sentence re-scoped to "at the time of C's
+   retirement"; the Dependency D bullet fully replaced with an "implemented" bullet; the Phase 1
+   Authority Map's stale stage-list claim; the Foundation Impact Analysis's two Dependency-D-relevant
+   items (given now-completed forward pointers); the Phase 8 boundary table's stale Research Planning
+   row; the Acceptance Gate/Decision/Future Work sections' current-state D wording. ADR Status left
+   untouched (`Accepted`).
+2. **`REQUIREMENT_SPEC.md` Stage-Boundary sync.** Rewrote the "Stage Boundary (frozen, restated for
+   context)" section's Requirement Derivation restatement: `IntentSpec` sole primary input;
+   `MemoryContext` additional optional input restricted to `DECISION_OPTION`, bound to the consumed
+   `IntentSpec` version (never `RequirementSpec`); no role in Gate 1; source must clear Gate 2. R-09/
+   R-19/R-21/R-22/R-23/R-24 confirmed byte-unchanged (only two hunks this round, both inside Stage
+   Boundary).
+3. **Case 26 internal contradiction** (`REQUIREMENT_CASES.md`): replaced the scenario with one that
+   explicitly overrides the shared base — settled Requirement "the system MUST handle a failed
+   background job"; surviving Unknown "should handling include automatic retry, or require human
+   intervention?" — a capability-level question R-19 excludes regardless of memory. Outcome unchanged
+   (Gate 1 failure, Partial); Case 27's cross-reference confirmed still valid.
+4. **Case 25/Case 35 R-21 consistency** (`REQUIREMENT_CASES.md`): rewrote Case 25's Eligibility
+   paragraph — filling the Unknown applies ordinary R-21 (Complete); leaving it unfilled also leaves the
+   retry-obligation Requirement Complete, since its own procedure never depended on the missing detail —
+   explicitly scoped as not a general "any unfilled Unknown is Complete" rule. Case 35 independently
+   re-read, already consistent, left unchanged. R-21 itself unchanged.
+5. **Rationale example hygiene** (Case 23 in `REQUIREMENT_CASES.md`; Case 24 in
+   `MEMORY_CONTEXT_CASES.md`): replaced "common, reasonable strategy" language with a rationale grounded
+   in the choice's own bounded operational properties alone — never claiming industry-standard/optimal/
+   best-practice status.
 
-**Implementation (Sections 4–22):**
+**Review: two fresh independent read-only Codex reviewers, targeted to this closure's own diff.**
+Reviewer A (Foundation/Current-State Consistency, 8-point checklist): 6/8 PASS first pass, 2 findings —
+1 genuine (the line-wrapped cross-reference above, fixed), 1 a prompt-scope false positive
+(`git diff main` necessarily includes the whole branch's prior, already-approved R-09/R-24 additions;
+independently re-verified via `git diff` — working tree only — that this round's own edits touch none
+of that invariant text). Reviewer B (R-21/Corpus/Evidence, 8-point checklist): 7/8 PASS, 1 finding, same
+category of prompt-scope false positive (independently re-verified this round's own diff touches only
+Cases 23/25/26 and `MEMORY_CONTEXT_CASES.md` Case 24). Final recommendation: `READY_FOR_HUMAN_REVIEW`.
 
-- **`M0_SCOPE.md`**: amended "Stage: Requirement Derivation"'s `Input:` to add optional
-  `MemoryContext`, restricted to `DECISION_OPTION` for an already-R-19-established decision, bound to
-  the consumed `IntentSpec` version (never `RequirementSpec`, which is this stage's own output).
-  Rewrote "Cross-Cutting: MemoryContext Consumption Remains Otherwise Disabled" to record Dependency D
-  implemented and the resulting three-consumer map (Intent Parsing, Research Planning, Requirement
-  Derivation). Fixed one directly-encountered stale "Requirement Derivation does not [declare a
-  MemoryContext input]" sentence in "Principle 3 Compliance." The MemoryContext Producer Boundary
-  section itself is unchanged — its existing generic "an explicit, already-computed verdict may be
-  mechanically applied; a bare artifact reference is not one" language already covers this use without
-  needing stage-specific edits.
-- **`REQUIREMENT_SPEC.md`**: added "Memory-Informed R-19 Working Defaults" subsection (the Gate 1/Gate
-  2 model, the hard ordering invariant, the frozen historical-source-gate cross-reference, the
-  no-provenance-laundering rule, "adoption is never automatic," independent-rationale requirement, the
-  Evidence boundary); extended R-09's provenance requirement with the memory-informed-rationale
-  citation (content unchanged otherwise); added new invariant **R-24**; added one Example and one
-  Anti-Example entry; added a short cross-reference in "Provenance: Requirement → IntentSpec →
-  UserIdea" and in "LOW/MEDIUM Open Items..." R-19-fillable paragraph. R-10, R-19, R-22, R-23 confirmed
-  byte-unchanged (independently re-verified via `git diff`, not merely asserted).
-- **`REQUIREMENT_CASES.md`**: added a "Dependency D: Memory-Informed R-19 Working Defaults" case
-  family, Cases 23–35 (13 cases, matching this task's required A–M coverage exactly: valid adoption;
-  rejection with a different value chosen; memory unavailable/empty; R-19-forbidden Unknown rejected;
-  intent-level/scope-changing value rejected; memory-as-Evidence rejected; multiple disagreeing
-  memories with no vote/repetition/confidence authority; conflicting-constraint rejection; R-23
-  premise-attempt rejection; invented-Unknown rejection; historical Category A/B rejected at Gate 2; a
-  separately-provenanced technical outcome potentially Gate-2-eligible; Complete/Partial driven only by
-  R-21). Also fixed two directly-encountered stale claims in Cases 19 and 22 ("Requirement Derivation
-  has no declared `MemoryContext` input at all" / "it has none") — both now false given this task's own
-  M0_SCOPE.md amendment; corrected to describe the narrow `DECISION_OPTION`-only scope instead.
-- **`MEMORY_CONTEXT.md`**: updated the top-of-file status block and "Stage Consumption Authorization"
-  to record Dependency D implemented and three current consumers; resolved the "if Requirement
-  Derivation is *separately* authorized" conditional (now factual); fixed the "not decided in the
-  abstract here" Foundation-Impact-Analysis sentence and two residual "once separately authorized"/
-  "once authorized" phrases (LOW/MEDIUM Decision Impact section, Influence Taxonomy reclassification
-  table) directly encountered while reading this file for the task. The historical A/B categorical
-  `DECISION_OPTION` prohibition, Gate 1/Gate 2 model, and no-laundering distinction (Cases 25/26,
-  unchanged) are confirmed intact and unweakened.
-- **`MEMORY_CONTEXT_SCHEMA_MAPPING.md`**: updated the opening status paragraph, "Schema
-  Representability vs. Pipeline Authorization," and "Stable identity for cross-artifact reference" to
-  record Dependency D implemented and its citation of the existing `(memory_context_id, entry_id)`
-  pair; added a short "No RequirementSpec Machine Schema Yet" section making explicit that Step 03B
-  remains deferred and this task required no `schemas/m0/memory-context.schema.json` change (confirmed
-  — none was made). M-01–M-21 semantics unchanged beyond the prior, already-approved source-gate
-  clarification.
-- **`MEMORY_CONTEXT_CASES.md`**: synchronized Case 24's authorization/status language now that D is
-  implemented (removed "hypothetically, if... were authorized," "until dependency D lands... is
-  structurally disabled," and "once separately authorized" — all now factual); updated the corpus
-  intro's "current status" paragraph and its dependency-status framing paragraph to reflect three
-  authorized consumers and Dependency D implemented. No substantive semantic change to Case 24 or any
-  other case; Cases 25/26 (the historical-source-gate/no-laundering cases from PR #26) confirmed
-  untouched and byte-identical.
-- **Machine code**: `schemas/m0/memory-context.schema.json` untouched (confirmed via `git diff` —
-  empty); `tests/contracts/validate-contracts.mjs`'s source-gate check untouched, byte-identical in
-  behavior; no new fixtures; no `RequirementSpec` schema/validator/fixtures created; no Step 03B work.
-- Four fresh independent read-only Codex reviewers (Reviewer A — R-09 × R-19 Authority; Reviewer B —
-  `DECISION_OPTION` × Provenance; Reviewer C — Source Gate × C Retirement × Evidence; Reviewer D —
-  Stage × Lifecycle × Corpus): **A: 7/7 PASS. B: 7/7 PASS. C: 7/7 PASS. D: 7/7 PASS. Zero findings
-  across all 28 checks.** Independently spot-checked by Claude regardless (not merely trusted): R-23's
-  invariant text confirmed byte-unchanged by direct diff inspection (no hunk touches it); the
-  MemoryContext Producer Boundary section confirmed untouched by direct diff-hunk-location inspection
-  (no hunk falls within that section's line range).
+(This task's implementation is the five fixes listed above. For the prior, still-approved
+Dependency D implementation itself — `M0_SCOPE.md`, `MEMORY_CONTEXT.md`,
+`MEMORY_CONTEXT_SCHEMA_MAPPING.md` changes, the 13-case family, and the original four-reviewer
+round — see `.project/REVIEW_STATE.md`'s History entry for
+`M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION`.)
 
 ## Allowed Scope
 
-`docs/foundation/M0_SCOPE.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
-`docs/examples/REQUIREMENT_CASES.md`, `docs/contracts/MEMORY_CONTEXT.md`,
-`docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`, `docs/examples/MEMORY_CONTEXT_CASES.md`,
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/examples/REQUIREMENT_CASES.md`, `docs/examples/MEMORY_CONTEXT_CASES.md`,
 `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`.
 
-Forbidden and confirmed untouched: `docs/contracts/INTENT_SPEC.md`, `docs/examples/INTENT_CASES.md`,
-`docs/contracts/USER_IDEA.md`, `schemas/**`, `tests/**`,
-`docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`,
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `.project/PROJECT_STATE.md`,
-`.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`, `ROADMAP.md`, `scripts/**`, `package*.json`,
-`../mihver-brain/**`. No state reconciliation performed in this task, per explicit instruction — PR
-#26's checkpoint and this task's own will be recorded together in a single later reconciliation.
+Forbidden and confirmed untouched: `docs/foundation/M0_SCOPE.md`, `docs/contracts/INTENT_SPEC.md`,
+`docs/examples/INTENT_CASES.md`, `docs/contracts/USER_IDEA.md`, `schemas/**`, `tests/**`, `scripts/**`,
+`package*.json`, `mihver-brain/**`, `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`,
+`.project/CONTEXT_INDEX.md`, `ROADMAP.md`. No forbidden owning artifact required a change; no STOP
+condition arose.
 
 ## Required Context
 
-`docs/foundation/M0_SCOPE.md`, `docs/foundation/PRINCIPLES.md`,
-`docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`,
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/INTENT_SPEC.md`,
-`docs/contracts/REQUIREMENT_SPEC.md`, `docs/contracts/MEMORY_CONTEXT.md`,
-`docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`, `docs/examples/REQUIREMENT_CASES.md`,
-`docs/examples/MEMORY_CONTEXT_CASES.md`, `schemas/m0/memory-context.schema.json`,
-`tests/contracts/validate-contracts.mjs`, `.project/PROJECT_STATE.md`, `ROADMAP.md` — all re-read
-fresh, in full or via targeted grep against fresh reads, before any edit.
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/examples/REQUIREMENT_CASES.md`, `docs/examples/MEMORY_CONTEXT_CASES.md`,
+`docs/foundation/M0_SCOPE.md` (read-only, for cross-check) — all re-read fresh before any edit.
 
 ## Validation
 
-- `npm test`: 85/85, unchanged from base — no schema/test/fixture file touched.
-- `git diff --check`: clean.
-- `git diff main --stat`: exactly the six allowed content files.
-- Confirmed: Dependency C remains RETIRED (R-23 byte-unchanged); Dependency D only (no
-  `DISCOVERY_ATTENTION`/`SEMANTIC_PREMISE`/`PROCESS_ONLY` granted to Requirement Derivation); R-10/
-  R-22/R-23 intact; no `RequirementSpec` schema; no `RequirementSpec` validator; no Brain/runtime work;
-  no durable-state/`ROADMAP.md` change.
+- `npm test`: 85/85, unchanged — no schema/test/fixture file touched.
+- `git diff --check`: clean (one CRLF-on-touch warning only, not an error).
+- `git status --short`: exactly the four allowed content files modified, plus this file and
+  `REVIEW_STATE.md`.
+- Confirmed: Dependency D remains the only newly-implemented capability this branch adds; ADR-0004
+  Status remains `Accepted`; no Step03B/schema/runtime/durable-state/`ROADMAP.md` change.
 
 ## Next Gate
 
-Commit, push, and open one PR against `mihvernetwork/mihver:main`, title "M0: implement Dependency D
-memory-informed R-19 defaults". Do not merge. Human review of that PR is the next gate; it authorizes
-only this Dependency D semantic/foundation implementation — no `RequirementSpec` schema, no Brain/
-runtime work, no durable-state reconciliation (deferred to a later combined task per explicit
-instruction).
+Commit and push to the existing branch `m0/dependency-d-r19-memory-decision-option`, existing PR #27.
+Do not open a new PR. Do not merge. Human review of PR #27 (now including this closure round) is the
+next gate.
