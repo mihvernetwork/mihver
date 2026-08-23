@@ -15,94 +15,158 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: DEPENDENCY-C-POST-MERGE-RECONCILIATION
-Branch: `chore/dependency-c-post-merge-reconcile`
-PR: to be opened against `mihvernetwork/mihver:main` (title "chore: reconcile state after Dependency
-C retirement") — not yet created as of this entry
+Task: M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE
+Branch: `m0/decision-option-historical-source-gate`
+PR: to be opened against `mihvernetwork/mihver:main` (title "M0: close DECISION_OPTION
+historical-source gate") — not yet created as of this entry
 
-Durable-state/navigation reconciliation only, after PR #24 (`M0-DEPENDENCY-C-DISPOSITION` plus its
-`DEPENDENCY-C-DISPOSITION-SEMANTIC-CLOSURE` follow-up) merged to `main` (squash commit
-`54ef91c181134487a50cb7b7c3d3ebeb66716b78`, verified via `gh pr view 24`: `state: MERGED`,
-`mergeCommit.oid` matching the given base exactly) and `ADR-0004` Dependency C was formally retired
-as `REDUNDANT_AFTER_B`. No semantic redesign: Dependency C's semantics were not reopened, Dependency
-D was not implemented, and no contract/ADR/schema/validator/runtime file was touched — confirmed via
-`git diff main --stat` (exactly `.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `ROADMAP.md`) and `npm test` (83/83,
-unaffected).
+Resolves, by explicit human decision, an internal `MemoryContext` contradiction a prior task
+(`M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION`) found and stopped on: `MEMORY_CONTEXT.md`'s own "No
+Assumed-Origin Path for Memory" section permitted a historical-user-statement entry to supply a
+`DECISION_OPTION` value "in principle," while the Influence Taxonomy Reclassification table, the
+schema mapping, and the deterministic validator all categorically forbade it — an unresolved
+self-contradiction, not a doc-vs-machine mismatch. **Human decision: adopt the categorical bar for
+both Category A and Category B; the validator's existing behavior was correct and stays unchanged.**
+Dependency D itself remains unimplemented — Requirement Derivation is still not authorized to consume
+`MemoryContext`, no `RequirementSpec` schema exists, no R-24 invariant was added.
 
-Added a durable `PROJECT_STATE.md` checkpoint recording Dependency C's retirement (not implemented;
-retired as `REDUNDANT_AFTER_B`; canonical Dependency-B path unchanged; Requirement Derivation still
-not authorized; Dependency D unaffected, separate, unimplemented); rewrote "Next Authorized Action"
-to remove the stale "Dependency C is the logical next task family" framing, replacing it with D's
-conceptual scope, explicitly not authorized by this entry. Appended one fact-only `DECISIONS_LOG.md`
-entry for PR #24's merge (no existing entry edited or removed). Updated `ROADMAP.md`: added a
-**RETIRED** status-legend definition; added subsection 10.11 (Dependency C — RETIRED, PR #24,
-mirroring the 10.9/10.10 DONE-checkpoint style, full proof left in the owning contracts); retitled
-Phase 9 to "B DONE, C RETIRED, D NEXT (not authorized)"; rewrote the "### C" subsection to RETIRED
-and relabeled "### D" from PLANNED to NEXT; fixed Phase 9's Exit line; updated Section 22's
-near-term-order items 5–7; added a Dependency C retirement bullet plus a compact capability-map line
-to Section 21. `.project/CONTEXT_INDEX.md` read only, left unchanged (no navigation gap — `ADR-0004`,
-`REQUIREMENT_SPEC.md`, `MEMORY_CONTEXT.md`, `M0_SCOPE.md`, `ROADMAP.md` already indexed).
+**Policy recorded, not merely patched.** Two independent, both-required gates: **Gate 1 (R-19
+content eligibility)** — does Requirement Derivation already own this fill decision, entirely
+independent of memory; **Gate 2 (`MemoryContext` source eligibility)** — is this specific entry an
+eligible `DECISION_OPTION` source. A historical-user-statement entry (Category A or B) categorically
+fails Gate 2 — not because it is presumptively false, but because historical-user semantic content
+already has its own disciplined routes owned entirely by Intent Parsing (Dependency B's Category-A
+premise path; either category's clarification-question path). Letting Requirement Derivation obtain a
+second, independent channel for the same content via `DECISION_OPTION` would let Dependency D become
+a backdoor around Dependency B. The "Seven Independent Authority Axes" section gained a closing
+paragraph making explicit that axis independence never implies universal cross-tier eligibility — two
+axes may jointly, independently gate one use, each un-derived from the other.
 
-### Review — one fresh lightweight read-only Codex reviewer
+**Fixed the contradiction at its source.** `docs/contracts/MEMORY_CONTEXT.md`'s "No Assumed-Origin
+Path for Memory" section: replaced the "may supply this... in principle" sentence with the categorical
+Gate 2 rule; added a "verified project outcome is not the same artifact" paragraph foreclosing
+provenance laundering (never reclassify the raw historical entry itself to obtain eligibility — only a
+genuinely separate, independently-provenanced record may be D-eligible). Invariant M-21 gained a
+one-sentence cross-reference noting it states Gate 1 only. `docs/adr/ADR-0004-MEMORY-CONTEXT-
+AUTHORITY-BOUNDARY.md`'s existing "Dependency D — unaffected, still pending" bullet gained one narrow
+clarifying sentence, explicitly framed as clarification, not new capability; `## Status` untouched,
+remains **Accepted**. `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`'s M-21 row rewritten to
+document the Gate 2 validator check as a deliberate, independently-enforced rule (the prior "already
+counted under M-11's row" claim was itself inaccurate — M-11's row never actually named this check);
+M-11's row gained the mirror-image cross-reference; three narrowly-encountered stale "once dependency
+B exists" phrases (M-03/M-08/M-20 rows) corrected to reflect B's actual implemented status; fixture-
+coverage prose updated. `tests/contracts/validate-contracts.mjs`'s `isReclassifiedHistorical && tier
+=== "DECISION_OPTION"` check is byte-unchanged in behavior — only its error message was extended
+(preserving the exact substring every fixture's `expected_error` already matched) to name Gate 2
+explicitly. Fixtures: added one Category A invalid fixture (previously only Category B existed);
+renamed the Category B one for clarity; added one valid non-historical `DECISION_OPTION` fixture
+proving `MemoryContext` representability only, not stage authorization. Fixture total 83 → 85.
+`docs/examples/MEMORY_CONTEXT_CASES.md`: added Case 25 (the identical Case-24 numeric value proposed
+instead by Category A and Category B historical statements — both forbidden, contrasted with the
+correct B/clarification routes) and Case 26 (a separately-recorded accepted technical outcome remains
+D-eligible even when a user's suggestion first prompted it, with an explicit no-laundering
+requirement). Case 24 confirmed byte-unchanged.
 
-Post-Dependency-C State Consistency, against the 12-point checklist this task specified. **9 PASS, 3
-confirmed findings, all fixed.**
+### Review — three fresh independent read-only Codex reviewers
 
-- Points 1, 2, 3, 5, 6, 8, 10, 11, 12 — **PASS**, no findings.
-- Points 4, 7, 9 — **FAIL/FINDING, all three traced to the same root cause and independently
-  re-verified as real**: `ROADMAP.md`'s section 10.8 ("ADR-0004 acceptance gate") still stated, in
-  present tense, "Dependencies B/C/D remain independently disabled until their own amendments land"
-  and "Dependencies B/C/D were not, and are not, prerequisites for this Acceptance; they remain
-  independently disabled" — both left over from the section's original pre-Dependency-B/C text with
-  no historical qualifier, directly contradicting Dependency B's implemented status and Dependency
-  C's retirement recorded elsewhere in the very same file (10.10/10.11, Phase 9, Section 21).
-  Independently re-verified by direct re-read of `ROADMAP.md` lines 670–676: real. Fixed with the
-  same historical-qualifier-plus-forward-pointer treatment this document already uses elsewhere
-  ("at the time... B has since landed and C has since been retired — see 10.10/10.11").
-- A follow-up targeted sweep (Claude's own, prompted by the reviewer's finding pattern) grepped the
-  whole file for every remaining `B/C/D`-combined reference and found two further residual instances
-  of the same staleness the reviewer did not flag: Phase 8's "did not wait for B/C/D, which remain
-  structurally disabled" bullet, and Phase 10's "Brain read-side adapter/runtime" precondition list
-  ("only after dependencies B/C/D... are stable"), which incorrectly listed the now-retired,
-  not-applicable C as a live precondition. Both fixed with the same treatment. One further
-  borderline passage (10.1's "does not imply dependencies B/C/D are enabled") was tightened for the
-  same reason, though it was a general logical statement rather than a stale current-state claim.
+- **Reviewer A — Source Axis × `DECISION_OPTION`.** 4/4 checks **PASS, no findings**: Category A and
+  B both categorically barred, with the prior "in principle" escape hatch confirmed fully gone
+  document-wide; the independent-axis explanation confirmed internally coherent (does not imply
+  universal cross-tier eligibility); R-19 eligibility confirmed never treated as sufficient for
+  source eligibility anywhere in the edited text; Brain `type` confirmed still a weak prior only,
+  unweakened by this change.
+- **Reviewer B — Boundary / No Intent Bypass.** 5/5 checks **PASS, no findings**: historical-user
+  content confirmed to remain entirely Intent-Parsing-owned everywhere touched; no passage lets
+  Dependency D bypass Dependency B, directly or indirectly; Category B confirmed still restricted to
+  `DISCOVERY_ATTENTION` only; Case 26's no-laundering distinction confirmed genuinely coherent (an
+  immediate restated-quote record would fail on both missing shipped/adopted-outcome provenance and
+  on still being classified historical by content inspection — no exploitable loophole found);
+  `ADR-0004`'s Status confirmed untouched (**Accepted**) and the new bullet confirmed framed as
+  clarification, not a new decision.
+- **Reviewer C — Machine / Corpus Consistency.** 6/7 checks **PASS**; **1 confirmed finding**: `npm
+  test` re-run independently (85/85); change scope re-confirmed via `git diff main --stat`/`git
+  status --short` (exactly the allowed files); validator's `isReclassifiedHistorical && tier ===
+  "DECISION_OPTION"` check confirmed unchanged in logic, message-only diff; all three new/renamed
+  fixtures confirmed to do exactly what their filenames/expected_error claim; Case 24 confirmed
+  byte-unchanged, Cases 25/26 confirmed mutually consistent; no `RequirementSpec` schema, no
+  `schemas/m0/*.json` change, no `M0_SCOPE.md` change found anywhere in the diff. **Finding:** the
+  schema mapping's M-21 row said "cross-referenced from M-11's row below," but M-11's row is
+  physically *above* M-21's in the table (line 118 vs. 128) — independently re-verified by direct
+  line-number comparison, confirmed real, fixed to "above."
 
-Independently re-verified by Claude throughout, not merely trusted: re-read each flagged passage
-directly in `ROADMAP.md` before editing, confirmed the contradiction, and re-ran the file-wide grep
-after fixing to confirm no further instance of the same pattern survived.
+Independently re-verified by Claude, not merely trusted: cross-checked each reviewer's quoted
+file:line citations against the actual current text before accepting any PASS verdict; the one
+confirmed finding was re-read directly before the one-word fix was applied; `npm test` re-run after
+the fix (85/85, unaffected).
 
-`npm test`: 83/83 (unaffected — no schema/test file touched, re-run by Claude after the post-review
-fixes, not only before them). `git diff --check`: clean. `git diff main --stat`: exactly
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CURRENT_TASK.md`,
-`.project/REVIEW_STATE.md`, `ROADMAP.md` — confirmed directly, not only from the reviewer's
-self-report. No `docs/**`, `schemas/**`, `tests/**`, `scripts/**`, or `../mihver-brain/**` file
-touched.
-
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** All three reviewer findings independently
-re-verified and fixed; a follow-up targeted sweep, prompted by the same finding pattern, found and
-fixed two further residual instances the reviewer's own checklist didn't specifically probe; the
-remaining nine checklist points independently re-confirmed clean.
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** The one confirmed finding (a table
+cross-reference direction) was independently re-verified and fixed; the remaining sixteen checks
+across all three reviewers were independently re-confirmed clean, not merely trusted from the
+reviewers' own reports.
 
 ## Required Changes
 
-None remaining — every confirmed finding above is fixed by this same round.
+None remaining — the one confirmed finding above is fixed by this same round.
 
 ## Fixes Applied
 
-See "Latest Review" above: `ROADMAP.md` section 10.8's two present-tense "Dependencies B/C/D...
-disabled" sentences (historically qualified, forward-pointed to 10.10/10.11); Phase 8's "did not
-wait for B/C/D" bullet and Phase 10's Brain-adapter precondition list (same treatment, found by
-Claude's own follow-up sweep); 10.1's general "does not imply... enabled" sentence (tightened for
-the same reason).
+See "Latest Review" above: `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`'s M-21 row, "M-11's row
+below" corrected to "M-11's row above" (Reviewer C's finding, independently re-verified).
 
 ## Pending Human Gate
 
-Commit and push; open exactly one PR against `mihvernetwork/mihver:main` (title "chore: reconcile
-state after Dependency C retirement"), per this task's explicit instruction. Not merged by this task.
-Human review of that PR is the next gate; it authorizes only this durable-state/navigation
-reconciliation — no Dependency D work, no schema/runtime/Brain work, no semantic redesign.
+Commit and push; open exactly one PR against `mihvernetwork/mihver:main` (title "M0: close
+DECISION_OPTION historical-source gate"), per this task's explicit instruction. Not merged by this
+task. Human review of that PR is the next gate; it authorizes only this contradiction-closure/policy-
+recording change — no Dependency D implementation, no schema/runtime/Brain work.
+
+## History
+
+- 2026-08-23 — `M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION` (no branch pushed, no PR, no edits made):
+  a mandatory pre-implementation re-derivation, required before any Dependency D implementation,
+  independently re-verified all eight authority-model propositions (A–H) true against the owning
+  contracts — Dependency D's core mechanism (R-19-eligible Unknown + Requirement Derivation's own
+  fill authority + `DECISION_OPTION` + memory-informed rationale, zero independent authority) was
+  found coherent. But a mandatory second gate — whether a historical-user-statement `MemoryContext`
+  entry may ever be `DECISION_OPTION`-eligible — surfaced a genuine internal contradiction within
+  `MEMORY_CONTEXT.md` itself: its own "No Assumed-Origin Path for Memory" section permitted this "in
+  principle," while its own Influence Taxonomy Reclassification table, the schema mapping's M-21 row,
+  and the deterministic validator (verified directly, line 337–339) all categorically forbade it —
+  with `MEMORY_CONTEXT_CASES.md`'s Case 24 confirmed to deliberately not exercise the question either
+  way. Independently re-derived from R-19's own text (`REQUIREMENT_SPEC.md`, confirmed to contain no
+  source-based test at all, only content) and M0_SCOPE.md's "Seven Independent Authority Axes"
+  principle: the re-derivation favored the narrower/content-gated reading, but this was flagged as a
+  genuine policy choice requiring human sign-off, not something to resolve unilaterally. Verdict:
+  `MEMORY_CONTEXT_MACHINE_CONTRACT_GAP`. Per the task's own explicit instruction for this stop
+  condition, no file was edited, no branch was pushed, and no PR was opened — the locally-created
+  branch `m0/dependency-d-r19-memory-decision-option` was left with zero commits. This finding
+  directly motivated the present task, `M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE`, in which
+  the human decided the categorical reading (opposite of this task's own tentative lean) — recorded
+  here for lineage completeness only; this entry was never itself a "Latest Review" (the task stopped
+  before reaching that stage). Moved here from "Latest Review" now that those sections describe
+  `M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE` instead. — branch
+  `m0/dependency-d-r19-memory-decision-option` (local only, never pushed)
+
+- 2026-08-23 — `DEPENDENCY-C-POST-MERGE-RECONCILIATION` (PR #25, merged, squash commit
+  `b4fdd70db4887c011853b0090796bdab6ed3f570`): durable-state/navigation reconciliation only, after PR
+  #24 (`M0-DEPENDENCY-C-DISPOSITION` plus its `DEPENDENCY-C-DISPOSITION-SEMANTIC-CLOSURE` follow-up)
+  merged to `main` (squash commit `54ef91c181134487a50cb7b7c3d3ebeb66716b78`) and `ADR-0004`
+  Dependency C was formally retired as `REDUNDANT_AFTER_B`. No semantic redesign; no contract/ADR/
+  schema/validator/runtime file touched. Added a durable `PROJECT_STATE.md` checkpoint recording
+  Dependency C's retirement; rewrote "Next Authorized Action" from stale "C is next" framing to D's
+  conceptual scope, explicitly not authorized; appended one fact-only `DECISIONS_LOG.md` entry;
+  updated `ROADMAP.md` (RETIRED status-legend definition, subsection 10.11, Phase 9 retitle, Section
+  22 near-term-order, Section 21 capability map). One fresh lightweight read-only Codex reviewer
+  (Post-Dependency-C State Consistency, 12-point checklist): 9 PASS, 3 confirmed findings (all traced
+  to one stale `ROADMAP.md` root cause), all fixed; a follow-up targeted sweep (Claude's own) found
+  and fixed two further residual instances of the same pattern. `npm test`: 83/83. Verdict:
+  `READY_FOR_HUMAN_REVIEW`. PR #25 subsequently merged to `main` (squash commit
+  `b4fdd70db4887c011853b0090796bdab6ed3f570`, verified via `gh pr view 25`) — that merge event is
+  recorded in `.project/DECISIONS_LOG.md`. Moved here from "Latest Review" now that those sections
+  describe `M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION` (a STOP, immediately above) and then
+  `M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE` instead — this is the first entry on a new
+  branch, since this task's own round was self-contained on
+  `chore/dependency-c-post-merge-reconcile`. — branch `chore/dependency-c-post-merge-reconcile`
 
 ## History
 

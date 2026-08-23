@@ -349,6 +349,22 @@ confidence collapse):
    "Influence Taxonomy" below), assigned at production, never left to the consuming stage's own
    discretion.
 
+**Independence does not mean universal eligibility.** "None of the following substitutes for, caps, or
+is derived from another" means no axis's value may be *inferred from*, *overridden by*, or *collapsed
+into* another axis's value — e.g. Brain's own `confidence` (axis 6) must never be read as settling
+axis 3's classification, and axis 1's retrieval relevance must never settle anything at all. It does
+**not** mean every value on one axis must be compatible with every value on every other axis, or that
+a single axis's own value is always sufficient by itself to authorize a use. Two or more axes may each
+independently gate the very same use, with both required: `DECISION_OPTION` eligibility (axis 7) is
+exactly this case — it requires *both* that the consuming stage already, independently owns the
+decision under its own pre-existing authority (R-19, entirely outside this document's own axes) *and*
+that the entry's classified semantic authority class (axis 3, specifically whether content inspection
+reveals a historical user statement) is not one this document categorically excludes from that tier
+(see "No Assumed-Origin Path for Memory" below). Neither gate is derived from, substituted by, or
+capped by the other — R-19's verdict does not decide axis 3's classification, and axis 3's
+classification does not decide R-19's verdict — so requiring both to independently pass is not an
+axis collapse; it is two independently-reasoned gates that happen to govern the same use.
+
 ## Classification Fail-Closed Rule
 
 Assigning a semantic authority class (axis 3) or an Influence Taxonomy tier (axis 7) is not always a
@@ -511,14 +527,56 @@ decision Requirement Derivation already, independently owns. Requirement Derivat
 justify the final value entirely under its own R-09/R-19 authority, without treating the memory's
 suggestion as though it required or authorized that choice; it retains full authority to modify,
 reject, or ignore the suggested value, or to leave the Unknown unresolved and carry it forward instead.
-An entry of either Historical User Provenance Gate category may supply this kind of technical/
-measurement suggestion in principle, but in practice a genuine historical *user statement* almost never
-qualifies here at all: **R-19 categorically excludes any value that would add, remove, or narrow a
-user-facing actor, target, capability, output, condition, permission, prohibition, obligation, or
-preference** — exactly the content a historical user statement typically carries — so a memory
-proposing an R-19-eligible technical/measurement value is typically a `pattern`, `incident`,
-`reference`, or process-`decision` entry, not a historical-user-statement Category A/B entry (Case 24
-works through both the eligible and the excluded case explicitly). Nothing about R-19 default-filling
+**Two independent gates, both required, neither substituting for the other.** Filling an R-19-eligible
+Unknown with a memory-informed value requires clearing two separate questions, each independently
+necessary: **Gate 1 (R-19 eligibility)** — is this surviving Unknown the kind of internal
+implementation/measurement detail Requirement Derivation already, independently owns the authority to
+fill at all, per R-19's own test (`REQUIREMENT_SPEC.md`)? Gate 1 answers only "does Requirement
+Derivation already own this fill decision" — it says nothing about which memory classes may inform
+that decision once owned. **Gate 2 (MemoryContext source eligibility)** — is this specific
+`MemoryContext` entry itself an eligible source for `DECISION_OPTION` use at all? Gate 2 answers only
+"may this entry's classified source inform a decision the stage already owns" — it says nothing about
+whether the stage owns the decision in the first place. Passing Gate 1 never excuses Gate 2, and
+passing Gate 2 never excuses Gate 1.
+
+**A `MemoryContext` entry classified as a historical user statement — Category A or Category B,
+without distinction — categorically fails Gate 2 and is never eligible for `DECISION_OPTION`,
+regardless of how narrowly technical or measurement-shaped its proposed value might otherwise read.**
+This is not because a historical user statement is presumptively false, unreliable, or low-confidence
+— it is because historical-user semantic content belongs entirely to Intent Parsing's own epistemic
+authority boundary: the Historical User Provenance Gate, the Historical User Memory Rule, and
+Dependency B's Category-A-only `SEMANTIC_PREMISE` path already define the complete, disciplined set of
+routes by which such content may reach a current-run artifact (Category A → a cited premise of a
+current-run Inferred Claim, consumed downstream by Requirement Derivation under its own ordinary
+R-03/R-10/R-22 authority; Category A or B → shaping a clarification question, whose *current* answer,
+if given, becomes an ordinary User-Provided Claim). Letting Requirement Derivation obtain a second,
+independent channel for the same class of content via `DECISION_OPTION` would let Dependency D quietly
+become a backdoor around Dependency B's own, more disciplined gate — exactly the kind of second-direct-
+channel duplication `REQUIREMENT_SPEC.md`'s R-23 already forecloses for the retired Dependency C, one
+layer over. A memory proposing an R-19-eligible technical/measurement value must therefore be a
+non-historical entry whose content inspection classifies it as something other than a historical user
+statement — typically `pattern`, `incident`, `reference`, or a process-`decision` entry, but never
+limited to those specific Brain types by name, since eligibility turns on the entry's classified
+content (`is_historical_user_statement: false`), never on its stored Brain type. Case 24 works through
+the eligible case; Case 25 works through why an otherwise-identical historical-user-statement entry is
+excluded regardless of content.
+
+**A verified project outcome is not the same artifact as the historical statement that first prompted
+it.** If a user, in a past run, said something like "let's use 3 retries," the raw historical-user-
+statement `MemoryContext` entry recording that statement is never `DECISION_OPTION`-eligible, under
+either category, regardless of how the value was later adopted. If the project later actually
+implemented that value and a *separate* Brain record — a `pattern`/`incident`/`decision`-type entry
+describing the accepted implementation or project outcome, with its own independent provenance —
+durably records that outcome (e.g. "the accepted implementation used a maximum of 3 retries, and this
+remained the project's adopted operational default"), that separate record is a distinct, non-historical
+project/process-decision or prior-architecture-outcome memory, gated on its own classified content, not
+on the fact that a user's suggestion originally motivated it. It may be considered for `DECISION_OPTION`
+on its own terms, subject to the ordinary gates above. Production must never reclassify, relabel, or
+launder the original raw historical-user-statement entry itself into a non-historical class merely to
+obtain `DECISION_OPTION` eligibility for it — that is exactly the classification-fail-open failure the
+Classification Fail-Closed Rule forecloses; only a genuinely separate, independently-provenanced record
+can ever supply the non-historical classification `DECISION_OPTION` requires (Case 26 works this through
+explicitly). Nothing about R-19 default-filling
 ever elevates a memory entry to `SEMANTIC_PREMISE` standing, since the default's own authority comes
 from Requirement Derivation's own R-09/R-19 mechanism, never from the memory. This provenance
 requirement is itself part of the `REQUIREMENT_SPEC.md` amendment "Foundation Impact Analysis"
@@ -1183,7 +1241,11 @@ in the frozen snapshot:**
   or established the choice. `DECISION_OPTION` never applies to an intent-level, want-shaping value —
   R-19 itself categorically excludes those regardless of what memory proposes — and it is not, by
   default, available to any other stage or decision point beyond the one named here without its own
-  equally rigorous re-derivation.
+  equally rigorous re-derivation. **This invariant states the content-eligibility gate (Gate 1, R-19)
+  only.** `MemoryContext` source eligibility (Gate 2) is a separate, independently-required gate a
+  candidate entry must also clear: an entry classified as a historical user statement, Category A or
+  B, categorically fails Gate 2 and is never `DECISION_OPTION`-eligible regardless of how this
+  invariant's own content test would otherwise resolve — see "No Assumed-Origin Path for Memory."
 
 ## Examples
 

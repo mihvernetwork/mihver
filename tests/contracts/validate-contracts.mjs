@@ -335,7 +335,7 @@ function validateMemoryContext(document) {
       fail(`admitted entry ${entry.entry_id} has brain_type "${entry.source.brain_type}" and is not reclassified as a historical user statement, so it must carry influence_tier "PROCESS_ONLY" -- lesson/playbook is PROCESS_ONLY-always only when content inspection does not redirect it to the Historical User Provenance Gate`);
     }
     if (isReclassifiedHistorical && tier === "DECISION_OPTION") {
-      fail(`admitted entry ${entry.entry_id} is a historical user statement and must not carry influence_tier "DECISION_OPTION"`);
+      fail(`admitted entry ${entry.entry_id} is a historical user statement and must not carry influence_tier "DECISION_OPTION" -- MemoryContext source eligibility (Gate 2, M-21) categorically excludes any historical-user-statement entry from DECISION_OPTION regardless of category or content, independent of R-19 content eligibility (Gate 1); see MEMORY_CONTEXT.md's "No Assumed-Origin Path for Memory"`);
     }
     if (tier === "SEMANTIC_PREMISE" && !(isReclassifiedHistorical && classification.historical_user_category === "A")) {
       fail(`admitted entry ${entry.entry_id} carries influence_tier "SEMANTIC_PREMISE" but is not a Category A historical user statement -- only a Category A entry may reach SEMANTIC_PREMISE directly`);
