@@ -17,7 +17,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,6 +32,14 @@ function read(repoRoot, relPath) {
 function headingExists(content, headingText) {
   const escaped = headingText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`^#{2,3}\\s+${escaped}\\s*$`, 'm').test(content);
+}
+
+// Collapses all runs of whitespace (including the newline introduced by ordinary Markdown line
+// wrapping) to a single space, so a quoted heading reference that happens to wrap across two
+// source lines is still recognized as the same quote. Deliberately bounded/mechanical — this does
+// not attempt any semantic Markdown parsing, just whitespace normalization.
+function normalizeWhitespace(text) {
+  return text.replace(/\s+/g, ' ');
 }
 
 // --- Check: required development files exist ---------------------------------------------
@@ -101,43 +109,125 @@ export function checkDecisionsLogEntryShape(repoRoot) {
   return { name: 'decisions-log-entry-shape', status: details.length === 0 ? 'PASS' : 'FAIL', details };
 }
 
-// --- Check: DECISIONS_LOG.md's entries region is append-only vs. the last commit ---------------
+// --- Check: DECISIONS_LOG.md's entries region is append-only vs. the task branch's base --------
 //
-// Reads the file's content at HEAD (via `git show`, read-only) and asserts the working-tree
-// content's entries region (everything after the first standalone `---` line, which separates the
-// file's own descriptive header from its actual append-only entries) still starts with that exact
-// HEAD text — i.e. entries were only ever appended to, never edited or removed. The header above
-// `---` is not covered by this check (it is prose describing the format, not a decision entry).
-// Skips cleanly outside a git repo, when the file didn't exist at HEAD, or when either version has
-// no `---` separator to anchor on.
+// Protects the entries that already existed at the task branch's *merge-base with local main* —
+// not merely the immediately preceding HEAD commit, which would incorrectly let an in-progress
+// branch "freeze" its own not-yet-merged, not-yet-reviewed entries after every commit. Reads the
+// file's content at that merge-base (via `git merge-base` + `git show`, both read-only/zero-
+// network) and compares it against the working tree, entry block by entry block (a "block" is a
+// top-level `- YYYY-MM-DD — ` bullet plus its indented continuation lines) rather than a single
+// whole-region prefix string, so that:
+//   - editing or deleting a pre-existing base entry fails (its block position disagrees), but
+//   - appending a new branch-local entry passes, and
+//   - correcting an entry that was itself introduced only on the still-unmerged branch (i.e. it has
+//     no counterpart at the merge-base) also passes — that entry was never frozen to begin with.
+// CRLF is normalized to LF before comparing so line-ending differences alone never fail the check.
+// Skips cleanly (with a diagnostic detail, not a silent pass) whenever a safe git baseline cannot
+// be established: outside a git repo, no local `main` ref, no merge-base, or the file not present
+// at the merge-base (a genuinely new file, nothing to protect yet).
 
 function entriesRegion(content) {
   const match = content.match(/\n---\n/);
   return match ? content.slice(match.index + match[0].length) : null;
 }
 
-export function checkDecisionsLogAppendOnlyVsHead(repoRoot) {
-  const current = read(repoRoot, '.project/DECISIONS_LOG.md');
-  if (current === null) return { name: 'decisions-log-append-only-vs-head', status: 'SKIP', details: ['.project/DECISIONS_LOG.md not found'] };
-  let atHead;
-  try {
-    atHead = execSync('git show HEAD:.project/DECISIONS_LOG.md', { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-  } catch {
-    return { name: 'decisions-log-append-only-vs-head', status: 'SKIP', details: ['no HEAD version of .project/DECISIONS_LOG.md (not a git repo, or file is new)'] };
-  }
-  const currentEntries = entriesRegion(current);
-  const headEntries = entriesRegion(atHead);
-  if (currentEntries === null || headEntries === null) {
-    return { name: 'decisions-log-append-only-vs-head', status: 'SKIP', details: ['could not locate a "---" entries separator in one of the two versions'] };
-  }
-  if (currentEntries.startsWith(headEntries)) {
-    return { name: 'decisions-log-append-only-vs-head', status: 'PASS', details: [] };
-  }
-  return {
-    name: 'decisions-log-append-only-vs-head',
-    status: 'FAIL',
-    details: ['.project/DECISIONS_LOG.md entries region is not a pure append onto its HEAD content — an existing entry may have been edited or removed'],
+function normalizeLineEndings(content) {
+  return content.replace(/\r\n/g, '\n');
+}
+
+// Splits an entries region into top-level bullet blocks: each block starts at a line matching
+// `/^-\s/` (a top-level bullet marker) and includes every following line up to the next top-level
+// bullet or the end of the region. Blank/lead-in lines before the first bullet are dropped — they
+// carry no entry content to protect. Trailing blank lines are trimmed from *every* block
+// individually (not just stripped once at the end of the whole region): otherwise a block's
+// trailing-blank-or-not shape would depend on whether it happens to be positionally last, or on
+// whether whatever follows it happens to be separated by a blank line — both irrelevant to the
+// entry's actual content, and both would otherwise produce a false append-only failure (e.g. a
+// pre-existing entry that a later, purely additive edit separated from a new entry with a blank
+// line for readability).
+function splitEntryBlocks(entriesText) {
+  const lines = entriesText.split('\n');
+  const blocks = [];
+  let current = null;
+  const flush = () => {
+    if (current === null) return;
+    while (current.length > 0 && current[current.length - 1] === '') current.pop();
+    blocks.push(current.join('\n'));
   };
+  for (const line of lines) {
+    if (/^-\s/.test(line)) {
+      flush();
+      current = [line];
+    } else if (current !== null) {
+      current.push(line);
+    }
+  }
+  flush();
+  return blocks;
+}
+
+function resolveMergeBaseWithMain(repoRoot) {
+  try {
+    execSync('git rev-parse --verify main', { cwd: repoRoot, stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return { ref: null, diagnostic: 'no local "main" branch ref found (git rev-parse --verify main failed) — not a git repo, or main was never fetched/created locally' };
+  }
+  try {
+    const base = execSync('git merge-base HEAD main', { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return { ref: base || null, diagnostic: base ? null : 'git merge-base HEAD main returned no commit' };
+  } catch {
+    return { ref: null, diagnostic: 'git merge-base HEAD main failed (e.g. unrelated histories, detached state)' };
+  }
+}
+
+export function checkDecisionsLogAppendOnlyVsBase(repoRoot) {
+  const name = 'decisions-log-append-only-vs-base';
+  const current = read(repoRoot, '.project/DECISIONS_LOG.md');
+  if (current === null) return { name, status: 'SKIP', details: ['.project/DECISIONS_LOG.md not found'] };
+
+  const { ref: baseRef, diagnostic } = resolveMergeBaseWithMain(repoRoot);
+  if (baseRef === null) {
+    return { name, status: 'SKIP', details: [`could not establish a zero-network git baseline (merge-base with local main): ${diagnostic}`] };
+  }
+
+  let atBase;
+  try {
+    atBase = execSync(`git show ${baseRef}:.project/DECISIONS_LOG.md`, { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return { name, status: 'SKIP', details: [`.project/DECISIONS_LOG.md does not exist at merge-base ${baseRef} — nothing to protect yet`] };
+  }
+
+  const currentEntries = entriesRegion(normalizeLineEndings(current));
+  const baseEntries = entriesRegion(normalizeLineEndings(atBase));
+  if (currentEntries === null || baseEntries === null) {
+    return { name, status: 'SKIP', details: ['could not locate a "---" entries separator in the working tree version or the merge-base version'] };
+  }
+
+  const currentBlocks = splitEntryBlocks(currentEntries);
+  const baseBlocks = splitEntryBlocks(baseEntries);
+
+  if (currentBlocks.length < baseBlocks.length) {
+    return {
+      name,
+      status: 'FAIL',
+      details: [
+        `.project/DECISIONS_LOG.md has fewer top-level entries (${currentBlocks.length}) than it did at merge-base ${baseRef} (${baseBlocks.length}) — a pre-existing entry appears to have been deleted`,
+      ],
+    };
+  }
+
+  const details = [];
+  for (let i = 0; i < baseBlocks.length; i += 1) {
+    if (currentBlocks[i] !== baseBlocks[i]) {
+      details.push(
+        `entry ${i + 1} (frozen at merge-base ${baseRef}) does not match the working tree version — a pre-existing entry appears to have been edited: ${JSON.stringify(
+          baseBlocks[i].slice(0, 60)
+        )} → ${JSON.stringify(currentBlocks[i].slice(0, 60))}`
+      );
+    }
+  }
+  return { name, status: details.length === 0 ? 'PASS' : 'FAIL', details };
 }
 
 // --- Check: registered literal heading cross-references --------------------------------------
@@ -166,13 +256,50 @@ const HEADING_REFERENCES = [
     target: 'docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md',
     heading: 'Post-Acceptance Dependency B/C/D Disposition',
   },
+  // The currently-live direct quotes of this same ADR-0004 heading elsewhere in the repository.
+  // This rename (from "...B/C Disposition" to "...B/C/D Disposition") has already gone stale once
+  // in this repository's own history (see DEPENDENCY-D-FINAL-CROSSREF-HYGIENE in
+  // .project/REVIEW_STATE.md) — several of these quotes wrap across two source lines under
+  // ordinary Markdown line wrapping, which is why the matching below is whitespace-normalized.
+  {
+    source: 'docs/foundation/M0_SCOPE.md',
+    quoted: '"Post-Acceptance Dependency B/C/D Disposition"',
+    target: 'docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md',
+    heading: 'Post-Acceptance Dependency B/C/D Disposition',
+  },
+  {
+    source: 'docs/contracts/MEMORY_CONTEXT.md',
+    quoted: '"Post-Acceptance Dependency B/C/D Disposition"',
+    target: 'docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md',
+    heading: 'Post-Acceptance Dependency B/C/D Disposition',
+  },
+  {
+    source: 'docs/contracts/REQUIREMENT_SPEC.md',
+    quoted: '"Post-Acceptance Dependency B/C/D Disposition"',
+    target: 'docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md',
+    heading: 'Post-Acceptance Dependency B/C/D Disposition',
+  },
+  {
+    source: 'docs/examples/MEMORY_CONTEXT_CASES.md',
+    quoted: '"Post-Acceptance Dependency B/C/D Disposition"',
+    target: 'docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md',
+    heading: 'Post-Acceptance Dependency B/C/D Disposition',
+  },
+  {
+    source: 'docs/examples/REQUIREMENT_CASES.md',
+    quoted: '"Post-Acceptance Dependency B/C/D Disposition"',
+    target: 'docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md',
+    heading: 'Post-Acceptance Dependency B/C/D Disposition',
+  },
 ];
 
 export function checkHeadingCrossReferences(repoRoot) {
   const details = [];
   for (const ref of HEADING_REFERENCES) {
     const sourceContent = read(repoRoot, ref.source);
-    if (sourceContent === null || !sourceContent.includes(ref.quoted)) continue; // not currently quoted; nothing to check
+    // Whitespace-normalized: tolerates the quoted heading text wrapping across two source lines
+    // under ordinary Markdown line wrapping (a newline where the original quote has a space).
+    if (sourceContent === null || !normalizeWhitespace(sourceContent).includes(normalizeWhitespace(ref.quoted))) continue; // not currently quoted; nothing to check
     const targetContent = read(repoRoot, ref.target);
     if (targetContent === null) {
       details.push(`${ref.source} quotes ${ref.quoted} pointing at ${ref.target}, which does not exist`);
@@ -273,7 +400,7 @@ export function runAllChecks(repoRoot) {
     checkRequiredFiles(repoRoot),
     checkNoActiveTaskInDurableMirrors(repoRoot),
     checkDecisionsLogEntryShape(repoRoot),
-    checkDecisionsLogAppendOnlyVsHead(repoRoot),
+    checkDecisionsLogAppendOnlyVsBase(repoRoot),
     checkHeadingCrossReferences(repoRoot),
     checkOwnerMirrorAdrStatus(repoRoot),
     checkDependencyStatusMirror(repoRoot),
@@ -299,6 +426,7 @@ function main() {
   process.exit(failed === 0 ? 0 : 1);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isMainModule = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMainModule) {
   main();
 }

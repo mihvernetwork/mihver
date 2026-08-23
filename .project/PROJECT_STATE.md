@@ -27,10 +27,22 @@ ADRs and against `ROADMAP.md`'s equivalent navigation summary.
 - ADR-0003 (Requirement Derivation Model): PROPOSED — owner: `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`
 - ADR-0004 (Memory Context Authority Boundary): ACCEPTED — owner: `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`
 
-Dependency A/B/C/D and the `DECISION_OPTION` historical-source gate — owner: `docs/foundation/M0_SCOPE.md`
-(current consumer authorizations) plus `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own
-"Post-Acceptance Dependency B/C/D Disposition" section (rationale); full checkpoint-by-checkpoint PR
-history is in "Frozen Steps / Checkpoints" below, not repeated here:
+Dependency A/B/C/D and the `DECISION_OPTION` historical-source gate — status tokens only below; these
+are several distinct facts with different semantic owners, not one umbrella-owned group:
+- Stage `MemoryContext` consumption authorization (which stage may consume `MemoryContext`, and at
+  which influence tier) — owner: `docs/foundation/M0_SCOPE.md`.
+- `MemoryContext` source/influence eligibility (which entry categories/tiers exist at all and are
+  eligible, including the historical Category A/B `DECISION_OPTION` source gate) — owner:
+  `docs/contracts/MEMORY_CONTEXT.md`.
+- Requirement Derivation Dependency D semantics (memory-informed R-19 working defaults; the
+  historical A/B `DECISION_OPTION` content exclusion as it applies to Requirement Derivation) —
+  owner: `docs/contracts/REQUIREMENT_SPEC.md` invariant R-24.
+- Dependency C's no-direct-Requirement-premise disposition (retired, not implemented) — owner:
+  `docs/contracts/REQUIREMENT_SPEC.md` invariant R-23, plus
+  `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own "Post-Acceptance Dependency B/C/D
+  Disposition" section for the retirement rationale.
+
+Full checkpoint-by-checkpoint PR history is in "Frozen Steps / Checkpoints" below, not repeated here:
 - Dependency A (Foundation Memory Boundary): DONE
 - Dependency B (Intent Memory Premise): DONE
 - Dependency C (Requirement-Level Inference premise): RETIRED

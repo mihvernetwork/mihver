@@ -5,28 +5,54 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-DEVELOPMENT-CONSISTENCY-MODEL-V2
+DEVELOPMENT-CONSISTENCY-V2-HARDENING
 
 ## Objective
 
-A bounded improvement to MIHVER's own development *operating model* — not to M0 product semantics —
-to reduce the recurring post-implementation "closure chain" pattern visible throughout
-`.project/REVIEW_STATE.md`'s history (implementation → review → semantic closure →
-foundation/current-state closure → cross-reference hygiene closure → merge → durable-state
-reconciliation → factual-log closure). Introduces, in `docs/development/AGENT_POLICY.md`: a formal
-Owner / Mirror / Historical Record document-authority model, a three-tier Primary / Conditional
-Consistency / Forbidden task file-scope model (replacing the flat Allowed/Forbidden split), and a
-one-bounded-reconciliation policy. Adds, in `docs/development/REVIEW_PROTOCOL.md`, a mandatory Final
-Consistency Sweep phase (with a proportionality rule) before a task may be reported
-`READY_FOR_HUMAN_REVIEW`. Updates `docs/development/TASK_TEMPLATE.md` to the three-tier scope shape
-plus new Owning Facts Changed / Mirrors Potentially Affected / Required Final Consistency Sweep /
-Durable-State Impact fields and a pre-implementation "which facts become stale elsewhere?" question.
-Adds a deterministic, read-only, zero-network consistency checker
-(`scripts/dev/project-consistency.mjs`, `npm run check:project-consistency`) plus its own test suite
-(`tests/dev/project-consistency.test.mjs`, `npm run test:project-consistency`). Demonstrates the
-Owner/Mirror pattern concretely by adding a "Current Capability Snapshot" section to
-`.project/PROJECT_STATE.md` and a short editing-policy note (with one compact example) to
-`ROADMAP.md`, without a wholesale rewrite of either file's existing history.
+A narrow hardening pass on top of `DEVELOPMENT-CONSISTENCY-MODEL-V2` (below, same branch/PR #29),
+closing five confirmed implementation/consistency gaps a human review of PR #29 found. Does not
+redesign Owner/Mirror/Historical, the three-tier task scope model, the Final Consistency Sweep, or the
+one-bounded-reconciliation policy — those are approved and unchanged.
+
+1. **Portability**: replaced `scripts/dev/project-consistency.mjs`'s non-portable
+   `import.meta.url === \`file://${process.argv[1]}\`` CLI-entrypoint guard with the repository's
+   already-established `pathToFileURL(process.argv[1]).href` approach (matching
+   `scripts/dev/night-runner.mjs`); added a CLI smoke test that actually executes
+   `node scripts/dev/project-consistency.mjs` as a child process and checks its exit code and summary
+   output.
+2. **Cross-reference whitespace tolerance**: the registered heading-reference check now normalizes
+   whitespace before matching a quoted heading, so a quote that wraps across two source lines under
+   ordinary Markdown line wrapping is still recognized (no semantic parsing added). Registered the
+   currently-live direct quotes of `ADR-0004`'s "Post-Acceptance Dependency B/C/D Disposition" heading
+   in `docs/foundation/M0_SCOPE.md`, `docs/contracts/MEMORY_CONTEXT.md`,
+   `docs/contracts/REQUIREMENT_SPEC.md`, `docs/examples/MEMORY_CONTEXT_CASES.md`, and
+   `docs/examples/REQUIREMENT_CASES.md` (`ROADMAP.md` was already registered) — read-only source/target
+   registrations in the checker script; the semantic documents themselves were not edited. Added a test
+   with a line-wrapped source quote and an absent target heading, which fails.
+3. **DECISIONS_LOG append-only baseline**: re-anchored the append-only check from "vs. immediately
+   preceding HEAD" to "vs. the task branch's merge-base with local `main`" (zero-network,
+   `git merge-base` + `git show`), comparing entry-by-entry rather than as a single prefix string, so
+   that editing/deleting a pre-existing base entry fails, appending a new branch-local entry passes,
+   and correcting an entry introduced only on the still-unmerged branch also passes. Normalizes
+   CRLF/LF before comparing. Skips with a diagnostic (never a silent pass) when no safe git baseline
+   can be established. Added focused tests for all of these boundaries using a real throwaway git
+   fixture repo.
+4. **PR-state drift**: PR #29 is open — fixed this file's and `.project/REVIEW_STATE.md`'s stale "not
+   yet opened" assertions. Added standing guidance in `docs/development/AGENT_POLICY.md`'s Operational
+   State Scope ("Live PR state is GitHub-owned, not mirrored") so a future task records stable facts
+   (`PR expected`, target branch, PR number once known) instead of a live open/closed/merged snapshot
+   that goes false the instant `gh pr create` runs.
+5. **PROJECT_STATE owner pointers**: split `.project/PROJECT_STATE.md`'s Current Capability Snapshot's
+   Dependency A/B/C/D bullet group, which had named one umbrella owner for several distinct facts, into
+   per-fact owner pointers: stage `MemoryContext` consumption authorization → `M0_SCOPE.md`;
+   `MemoryContext` source/influence eligibility → `MEMORY_CONTEXT.md`; Dependency D semantics / the
+   historical A/B `DECISION_OPTION` exclusion → `REQUIREMENT_SPEC.md` R-24; Dependency C's disposition
+   → `REQUIREMENT_SPEC.md` R-23 plus `ADR-0004`'s own disposition section. The status-token list itself
+   (DONE/RETIRED) is unchanged. No semantic rule copied into `PROJECT_STATE.md`.
+
+The original task this hardens (`DEVELOPMENT-CONSISTENCY-MODEL-V2`) is recorded in
+`.project/REVIEW_STATE.md`'s History — its own description, files, and reviewer detail are not
+repeated here.
 
 **Does not change**: M0 product semantics, `IntentSpec`/`RequirementSpec`/`MemoryContext` semantics,
 `ADR-0001`–`ADR-0004` decisions/statuses, schemas, contract behavior, MIHVER Brain, runtime
@@ -45,63 +71,72 @@ Base: `main` at `0f5dc581a1f550c85db68af5759b45cad2ab6a30` — verified via `git
 
 **Complete, pending human review.**
 
-Implemented as specified. Live reality verified before any edit (Section 0 of the task prompt): all
-of `git status`/`git log`/`npm run context`/`npm test` matched the expected base exactly (main HEAD
-`0f5dc58`, clean tree, 85/85). Read fresh: `CLAUDE.md`, `AGENT_POLICY.md`, `REVIEW_PROTOCOL.md`,
-`TASK_TEMPLATE.md`, `.project/PROJECT_STATE.md`, `.project/CURRENT_TASK.md`,
-`.project/REVIEW_STATE.md`, `.project/CONTEXT_INDEX.md`, `.project/DECISIONS_LOG.md`, `ROADMAP.md`,
-`scripts/dev/project-context.mjs`. Semantic contracts (`M0_SCOPE.md`, `INTENT_SPEC.md`,
-`REQUIREMENT_SPEC.md`, `MEMORY_CONTEXT.md`) were read only as ownership examples during design, per
-the task's own instruction, and were not edited.
+Read fresh before editing: `CLAUDE.md`, `AGENT_POLICY.md`, `REVIEW_PROTOCOL.md`, `TASK_TEMPLATE.md`,
+`.project/PROJECT_STATE.md`, `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`,
+`scripts/dev/project-consistency.mjs`, `tests/dev/project-consistency.test.mjs`,
+`scripts/dev/night-runner.mjs` (portability pattern source). Verified branch/PR state live:
+`git status` clean at task start, `git log`/`git merge-base` confirmed base `main` at `0f5dc58`,
+`gh pr view 29` confirmed PR #29 `OPEN`. Semantic contracts (`M0_SCOPE.md`, `MEMORY_CONTEXT.md`,
+`REQUIREMENT_SPEC.md`, `docs/examples/*_CASES.md`, `ADR-0004`) were grepped read-only to confirm the
+exact live cross-reference wording to register in the checker — none were edited.
 
-**Files changed** (all within the task's Primary/Conditional scope — none under a forbidden path):
-`docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`,
-`docs/development/TASK_TEMPLATE.md`, `scripts/dev/project-consistency.mjs` (new),
-`tests/dev/project-consistency.test.mjs` (new), `package.json` (two new npm scripts, additive only),
-`.project/PROJECT_STATE.md`, `ROADMAP.md`, `.project/CONTEXT_INDEX.md`. `CLAUDE.md` was read and
-found not to need any change (no "Allowed/Forbidden" binary-scope wording lives there to update).
-`.project/DECISIONS_LOG.md` was deliberately left untouched: its own policy is now tightened in
-`AGENT_POLICY.md`'s "Operational State Scope" section instead (the owner of that policy), rather than
-restating it in the log file's own header — consistent with the Owner/Mirror model this task
-introduces, and avoiding a self-referential edit to the very file whose entries the append-only
-policy protects.
+**Files changed this round**: `scripts/dev/project-consistency.mjs`, `tests/dev/project-consistency.test.mjs`
+(both Primary); `docs/development/AGENT_POLICY.md`, `.project/PROJECT_STATE.md`,
+`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` (Conditional Consistency, each edit
+synchronization-only — see "Allowed Scope" below for the specific reason per file).
+`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`, and `ROADMAP.md` were
+read and found not to need any change (no live PR-state assertion, no owner-pointer claim, no
+checker-registry reference in any of them). No `docs/foundation/**`, `docs/contracts/**`,
+`docs/adr/**`, `docs/examples/**`, `schemas/**`, or `tests/contracts/**` file was touched — the new
+`HEADING_REFERENCES` registry entries only *read* five semantic documents to confirm their live
+quoted text, per the task's explicit "read-only target/source registrations" instruction.
 
-**Three independent read-only Codex reviewers**, one per axis (see `REVIEW_STATE.md` for full
-detail):
-- Reviewer A (Authority / Owner-Mirror Model): 2/5 PASS initially, 3 confirmed findings — all fixed.
-- Reviewer B (Task / Review Workflow): 5/5 PASS, no findings.
-- Reviewer C (Deterministic Tooling): 6/7 PASS, 1 confirmed test-coverage finding — fixed.
+**Two independent read-only Codex reviewers**, one per axis (see `REVIEW_STATE.md`'s "Latest Review"
+for full detail):
+- Reviewer A (deterministic checker / portability): 1 confirmed blocking finding — a
+  `splitEntryBlocks` boundary bug where only the entries region's absolute-last block had its
+  trailing blank line trimmed, so a blank-line-separated append corrupted the *preceding*, frozen
+  entry's block and produced a false append-only failure. Fixed: trailing blank lines are now
+  trimmed per-block, not once at the region's end. Two regression tests added (blank-line-separated
+  append; insertion between two frozen entries). Re-verified independently by Claude by hand-tracing
+  the fixed function against both scenarios, not merely by re-running the reviewer.
+- Reviewer B (Owner-Mirror / workflow self-consistency): 2 confirmed blocking findings — this file's
+  "Next Gate" still instructed opening a PR that already existed, and this file's own record (Status/
+  Files changed/Allowed Scope/Next Gate) still described the prior, already-merged-into-history task
+  rather than this hardening round — both because those sections had not yet been rewritten for this
+  round when the reviewer ran. Fixed by this rewrite. Reviewer B independently confirmed the
+  PR-state standing-guidance wording, the owner-pointer split, and the file-scope compliance all
+  check out.
 
-All confirmed findings were independently re-verified by Claude against the actual file content
-(quoted line numbers checked directly) before being accepted, and all were fixed. See
-`REVIEW_STATE.md`'s "Latest Review" for the itemized findings and fixes.
-
-**Validation**: `npm test` — 85/85 throughout, unaffected (no contract/schema/fixture file touched).
-`npm run check:project-consistency` — all 7 deterministic checks PASS. `npm run test:project-consistency`
-— all 7 test groups PASS, including a fixture-repo proof and a real-repo `git status --porcelain`
-proof that the checker never modifies any file. `git diff --check` — clean. `git diff main --stat` —
-confirmed to touch only the files listed above; no product semantic file, ADR status, or Dependency
-A/B/C/D result changed; no `RequirementSpec` Step 03B work started.
+**Validation**: `npm test` — 85/85 (unaffected; no contract/schema/fixture file touched).
+`npm run check:project-consistency` — 7/7 checks PASS. `npm run test:project-consistency` — 17/17 test
+groups PASS (7 pre-existing plus 10 new: a CLI smoke test; a line-wrapped-quote-with-missing-target
+test; and 8 append-only-baseline fixture tests covering append, edit-fails, delete-fails,
+branch-local correction, CRLF normalization, blank-line-separated append, mid-region insertion-fails,
+and no-local-main SKIP). `git diff --check` — clean. `git diff main --stat` —
+confirmed no `docs/foundation/**`, `docs/contracts/**`, `docs/adr/**`, `docs/examples/**`,
+`schemas/**`, `tests/contracts/**`, or `../mihver-brain/**` file touched.
 
 ## Allowed Scope
 
-**Primary**: `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`,
-`docs/development/TASK_TEMPLATE.md`, `scripts/dev/project-consistency.mjs`, `package.json` (npm
-script entries only).
+**Primary**: `scripts/dev/project-consistency.mjs`, `tests/dev/project-consistency.test.mjs`.
 
-**Conditional Consistency** (touched; each edit synchronization-only, reasons recorded above and in
-individual edits): `.project/PROJECT_STATE.md` (new Current Capability Snapshot, demonstrating the
-model), `ROADMAP.md` (new editing-policy note plus two wording fixes to pre-existing sentences that
-Reviewer A found now self-contradict the new Owner/Mirror model — see `REVIEW_STATE.md`),
-`.project/CONTEXT_INDEX.md` (navigation entries for the new policy sections and script),
-`.project/CURRENT_TASK.md`/`.project/REVIEW_STATE.md` (this task's own record).
+**Conditional Consistency** (touched; each edit synchronization-only):
+- `docs/development/AGENT_POLICY.md` — added a standing-guidance paragraph to "Operational State
+  Scope" so `CURRENT_TASK.md`/`REVIEW_STATE.md` stop mirroring volatile PR open/closed/merged state,
+  addressing the confirmed PR-state-drift gap at its root rather than only this instance of it.
+- `.project/PROJECT_STATE.md` — split the Current Capability Snapshot's single umbrella owner for
+  Dependency A/B/C/D into the four fact-specific owners the task named; no status token or semantic
+  rule changed.
+- `.project/CURRENT_TASK.md` / `.project/REVIEW_STATE.md` — this round's own task/review record,
+  including fixing the stale "PR not yet opened" assertions PR #29's actual `OPEN` state made false.
 
 **Forbidden, confirmed untouched**: `docs/foundation/**`, `docs/contracts/**`, `docs/adr/**`,
-`docs/examples/**`, `schemas/**`, `tests/contracts/**`, `../mihver-brain/**`.
+`docs/examples/**`, `schemas/**`, `tests/contracts/**`, `ROADMAP.md`, `../mihver-brain/**`.
 
 ## Required Context
 
-See "Status" above for the full required-reading list, matching the task's own Section 0.
+See "Status" above for the required-reading list.
 
 ## Validation
 
@@ -109,6 +144,6 @@ See "Status" above.
 
 ## Next Gate
 
-Commit, push, and open exactly one PR against `mihvernetwork/mihver:main`
-(title: `dev: add development consistency model v2`). Do not merge. Human review of that PR is the
-next gate.
+PR expected: yes — PR #29 already exists (`https://github.com/mihvernetwork/mihver/pull/29`), target
+`main`. This round's commits are pushed to that same existing PR; no new PR is opened. Live PR
+identity/state: verify from GitHub. Do not merge. Human review of PR #29 is the next gate.

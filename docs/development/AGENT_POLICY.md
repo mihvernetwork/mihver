@@ -60,6 +60,23 @@ prompts do not need to restate it per task.
 - **`CONTEXT_INDEX.md`** — update only when an authoritative topic → file mapping actually
   changes (a file is added, renamed, or superseded) — not on every task.
 
+**Live PR state is GitHub-owned, not mirrored.** `CURRENT_TASK.md` and `REVIEW_STATE.md` must never
+record a PR's open/closed/merged state as a present-tense snapshot (e.g. "not yet opened", "still
+needs to be opened") — that phrasing goes false the moment `gh pr create` runs, which is exactly the
+kind of drift this policy exists to prevent. Prefer stable wording that doesn't need a follow-up edit
+just because GitHub's state changed underneath it:
+
+```text
+PR expected: yes
+Target: main
+Live PR identity/state: verify from GitHub
+Human review is the next gate once the PR exists.
+```
+
+Once a PR number is known, recording it (`PR #29`) is fine and useful — but record only the number,
+not a claim about its current open/closed/merged state, and do not treat that state changing later as
+grounds for a commit whose only purpose is updating the state word.
+
 ## Document Authority Model
 
 Every development-facing document — or, where one file legitimately mixes roles (e.g.
