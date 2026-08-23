@@ -12,6 +12,43 @@ records interpretation and status; `project-context.mjs` reports raw observed st
 disagree, trust the live git/gh output and update this file — do not trust this file over
 reality.
 
+## Current Capability Snapshot
+
+The one current-state summary in this file. Per [AGENT_POLICY.md](../docs/development/AGENT_POLICY.md)'s
+"Document Authority Model", this section is a compact status + pointer, not a second definition of
+any of these facts; if it ever disagrees with a fact's owning artifact, the artifact is correct and
+this section is stale. Where a fact has a document owner, that owner is named inline; the schema/
+runtime/test-count facts below are directly observable repository state (a file's existence, a test
+run's own output) rather than claims a document defines, so they have no document owner to name.
+`npm run check:project-consistency` mechanically checks a subset of this section against its owning
+ADRs and against `ROADMAP.md`'s equivalent navigation summary.
+
+- ADR-0002 (Epistemic Provenance Model): ACCEPTED — owner: `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`
+- ADR-0003 (Requirement Derivation Model): PROPOSED — owner: `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`
+- ADR-0004 (Memory Context Authority Boundary): ACCEPTED — owner: `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`
+
+Dependency A/B/C/D and the `DECISION_OPTION` historical-source gate — owner: `docs/foundation/M0_SCOPE.md`
+(current consumer authorizations) plus `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s own
+"Post-Acceptance Dependency B/C/D Disposition" section (rationale); full checkpoint-by-checkpoint PR
+history is in "Frozen Steps / Checkpoints" below, not repeated here:
+- Dependency A (Foundation Memory Boundary): DONE
+- Dependency B (Intent Memory Premise): DONE
+- Dependency C (Requirement-Level Inference premise): RETIRED
+- DECISION_OPTION historical-source gate: DONE
+- Dependency D (Memory-Informed R-19 Working Defaults): DONE
+
+MemoryContext consumers — owner: `docs/foundation/M0_SCOPE.md`:
+- Intent Parsing → `DISCOVERY_ATTENTION`, `SEMANTIC_PREMISE`
+- Research Planning → `DISCOVERY_ATTENTION`
+- Requirement Derivation → `DECISION_OPTION` only
+
+RequirementSpec machine schema: NOT IMPLEMENTED (observable: no `schemas/m0/requirement-spec.schema.json`)
+MIHVER Brain adapter / retrieval runtime: NOT IMPLEMENTED (observable: no adapter code in this repo)
+Contract suite (`npm test`): 85/85 (observable: `npm test`'s own output)
+
+Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
+checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
+
 ## Current Milestone
 
 M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` → `MihverArchitectureSpec`.

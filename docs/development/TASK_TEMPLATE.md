@@ -7,9 +7,12 @@ task's Objective/Scope into the full seven-field contract defined in
 FORBIDDEN SCOPE / EXPECTED OUTPUT / VALIDATION) for that specific worker — the human doesn't write
 that contract directly. Permanent policy lives in [CLAUDE.md](../../CLAUDE.md),
 [AGENT_POLICY.md](./AGENT_POLICY.md), and [REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md) — reference
-it, don't repeat it. A filled-in prompt using this shape should normally run **10–30 lines**; the
+it, don't repeat it. A filled-in prompt using this shape should normally run **10–40 lines**; the
 blank shape below is longer only because every section is shown, including ones a given task may
-leave blank or omit (e.g. "Codex" when no delegation is needed).
+answer tersely ("none") or omit (e.g. "Codex" when no delegation is needed). The three file-scope
+tiers, "Owning Facts Changed", and "Required Final Consistency Sweep" exist to be filled in briefly,
+not to force a long prompt — see `AGENT_POLICY.md`'s "Task File Scope Model" and
+`REVIEW_PROTOCOL.md`'s "Final Consistency Sweep" for what each is actually asking.
 
 ```markdown
 # <TASK-ID> — <TITLE>
@@ -20,9 +23,27 @@ Follow `CLAUDE.md`.
 
 <one bounded objective>
 
+## Which facts become stale elsewhere if this succeeds?
+
+<required before implementation begins — name the mirrors/navigation files that restate a fact this
+task's Primary Files own, so Conditional Consistency scope below is decided up front, not discovered
+mid-task. "None" is a valid answer for a task with no consistency surface.>
+
 ## Files / Scope
 
-<allowed scope>
+Three-tier model — see `AGENT_POLICY.md`'s "Task File Scope Model" for the full policy.
+
+**Primary Files** — modified to deliver the objective itself:
+- ...
+
+**Conditional Consistency Files** — may be touched only to fix a statement this task's Primary
+change made factually stale, or a direct cross-reference it broke; synchronization only, no
+semantic redesign; state why each one became necessary when it's actually touched:
+- ...
+
+**Forbidden Files** — outside this task's authority; a semantic-change need here means STOP and
+report the contradiction, not edit:
+- ...
 
 ## Required Context
 
@@ -34,10 +55,21 @@ derives it from `.project/CONTEXT_INDEX.md`'s entries for the topics this task t
 - ...
 - ...
 
-## Forbidden
+## Owning Facts Changed
 
-- ...
-- ...
+<which OWNER file(s)/section(s) (see AGENT_POLICY.md's Document Authority Model) does this task
+change the meaning of, if any — "none" for a pure mirror/navigation/tooling task>
+
+## Required Final Consistency Sweep
+
+<proportional to "Owning Facts Changed" above — see REVIEW_PROTOCOL.md's Final Consistency Sweep;
+"lightweight" for an isolated change, otherwise name the mirror/navigation files actually in scope>
+
+## Durable-State Impact
+
+- none
+- post-merge reconciliation required
+- task itself is state-only
 
 ## Git
 

@@ -47,9 +47,80 @@ prompts do not need to restate it per task.
   active-task or branch-specific facts here — those belong in `CURRENT_TASK.md` and go stale the
   moment that branch is merged or abandoned.
 - **`DECISIONS_LOG.md`** — append only explicit, durable human decisions. Entries are never edited
-  or removed, and this file never records task-in-progress detail.
+  or removed, and this file never records task-in-progress detail. A durable entry should normally
+  contain only what's needed later and nothing that can drift: date, task/decision identifier,
+  result, PR number, merge SHA, a concise durable decision/result, and an authoritative-artifact
+  pointer where useful — minimizing the entry's own future correction surface. Avoid recording
+  ephemeral operational facts that belong in `CURRENT_TASK.md`/`REVIEW_STATE.md` instead and would
+  only need factual correction later if copied here: exact task-start `HEAD` values, temporary
+  branch/workspace state, narrated test-command sequences, or reviewer execution mechanics already
+  captured in `REVIEW_STATE.md`'s history. Neither `CURRENT_TASK.md` nor `REVIEW_STATE.md` is itself
+  semantic authority for anything — see the Document Authority Model above — and their detailed
+  execution content should stay there rather than being copied into this log.
 - **`CONTEXT_INDEX.md`** — update only when an authoritative topic → file mapping actually
   changes (a file is added, renamed, or superseded) — not on every task.
+
+## Document Authority Model
+
+Every development-facing document — or, where one file legitimately mixes roles (e.g.
+`.project/PROJECT_STATE.md`'s current-state "Current Capability Snapshot" section versus its own
+historical "Frozen Steps / Checkpoints" bullets below it), each clearly delineated section within
+it — falls into exactly one of three roles. This model exists to stop
+a recurring pattern: an implementation lands cleanly, then a chain of follow-up "closure" tasks is
+needed because the same mutable fact was duplicated in several files, or a historical checkpoint was
+read as if it were still current. See `REVIEW_PROTOCOL.md`'s "Final Consistency Sweep" for the
+process step that checks this model held; `scripts/dev/project-consistency.mjs`
+(`npm run check:project-consistency`) mechanically checks a small, explicitly registered slice of it.
+
+**OWNER** — the file/section that defines a fact or semantic rule. Only the owner may be amended to
+change what the fact *is*. Examples: `docs/foundation/M0_SCOPE.md` (stage input/authority
+ownership), `docs/contracts/INTENT_SPEC.md` (Intent semantics), `docs/contracts/REQUIREMENT_SPEC.md`
+(Requirement semantics), `docs/contracts/MEMORY_CONTEXT.md` (MemoryContext semantics), an ADR (its
+own `## Status` and architectural rationale), a schema/validator/test (machine-representation and
+enforcement, where applicable).
+
+**MIRROR / NAVIGATION** — a file that may summarize or point to an owner, but must never
+independently redefine the same mutable fact. A mirror should prefer *status + pointer* over
+restating the whole rule. Examples: `ROADMAP.md`, `.project/PROJECT_STATE.md`,
+`.project/CONTEXT_INDEX.md`. When a mirror and its owner disagree, the owner is correct and the
+mirror is stale — that is a synchronization edit, never a reason to re-litigate the owner's content.
+
+**HISTORICAL RECORD** — a checkpoint or log entry that describes reality *at the time it was
+written*. `.project/DECISIONS_LOG.md` entries and `PROJECT_STATE.md`'s "Frozen Steps / Checkpoints"
+bullets are historical once committed: they are not rewritten merely because current reality later
+changed. Current truth belongs in a dedicated current-state section or a later checkpoint instead —
+see "Current Capability Snapshot" in `.project/PROJECT_STATE.md`. Do not chase every later change
+with an "at the time... has since..." qualifier on the historical entry either; add one only when a
+historical entry's present-tense wording would otherwise mislead a reader into thinking it still
+describes today.
+
+This model does not create a fourth kind of authority: a mirror repeating a fact and its owner
+stating the same fact are not two competing sources — the mirror is never authoritative on its own,
+even if it happens to be read first.
+
+## Task File Scope Model
+
+Task prompts (see `TASK_TEMPLATE.md`) use a three-tier file scope, replacing a flat
+Allowed/Forbidden split. This exists because a strictly binary scope repeatedly produced a second
+"closure" task immediately after a correct implementation, solely to fix a mirror the primary change
+had made factually stale but which the binary model had put out of reach.
+
+1. **PRIMARY FILES** — files the task is expected to modify to deliver its actual objective.
+2. **CONDITIONAL CONSISTENCY FILES** — files that *may* be modified, but only to fix a statement the
+   primary change made factually stale, or to repair a direct cross-reference the primary change
+   broke. Editing a conditional file requires: (a) the edit is synchronization-only — no new
+   semantic content, no redesign of what the file's owner already governs; (b) Claude states, in the
+   task's own record, *why* the file became necessary to touch; (c) review confirms the change was
+   synchronization-only, not scope creep wearing a consistency-fix label.
+3. **FORBIDDEN FILES** — genuinely outside this task's authority. If a forbidden file's content would
+   need to change for semantic reasons (not mere synchronization), the task stops and reports the
+   contradiction rather than editing it — this is the existing "frozen documents are not modified
+   without explicit authorization" rule from `CLAUDE.md`, restated here as the third tier.
+
+A Codex worker's own `ALLOWED SCOPE` (see "Task Contract" below) is drawn only from the human task's
+Primary files, plus whichever specific Conditional Consistency files Claude has already identified as
+necessary for that worker's bounded piece of work — never from Forbidden files, and never used to
+silently widen a worker's authority beyond what the human task itself granted.
 
 ## Claude Responsibilities
 
@@ -302,6 +373,18 @@ merge to main
 After an approved PR is merged into `main`, that state becomes the new frozen checkpoint. Future
 work starts from the updated `main`, on a new task branch — never by continuing to build on the
 now-merged branch as if it were still the base.
+
+### Post-Merge Reconciliation
+
+A merged checkpoint normally needs **at most one** bounded reconciliation task afterward — to sync
+mirrors/navigation and append the durable-decision record — not an open-ended chain. Do not
+recursively open a reconciliation-of-the-reconciliation merely to record that the reconciliation PR
+itself merged: once a reconciliation PR is merged, that merge needs no further state update unless it
+independently changed product or development truth (in which case that's a new, separate fact to
+record, not a loop closing over itself). This is why `REVIEW_PROTOCOL.md`'s mandatory final
+consistency sweep happens *before* a task reaches `READY_FOR_HUMAN_REVIEW` — catching a mirror gone
+stale during implementation review, rather than discovering it only after merge, is what keeps
+reconciliation to one bounded pass instead of several.
 
 ## Worker Failure Handling
 

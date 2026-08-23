@@ -32,8 +32,10 @@ that's a gap in the index, not license to guess; search deliberately, and consid
 | Machine-readable schemas | `schemas/m0/user-idea.schema.json`, `schemas/m0/intent-spec.schema.json` |
 | Deterministic contract validator + fixtures | `tests/contracts/validate-contracts.mjs`, `tests/contracts/fixtures/**` |
 | Claude/Codex execution model, Git & branch workflow | `docs/development/AGENT_POLICY.md` |
-| Task completion checklist, review outcome vocabulary | `docs/development/REVIEW_PROTOCOL.md` |
+| Document Owner/Mirror/Historical model, Task File Scope (Primary/Conditional/Forbidden) | `docs/development/AGENT_POLICY.md` ("Document Authority Model", "Task File Scope Model") |
+| Task completion checklist, review outcome vocabulary, Final Consistency Sweep | `docs/development/REVIEW_PROTOCOL.md` |
 | Human → Claude task prompt shape | `docs/development/TASK_TEMPLATE.md` |
+| Deterministic development-consistency checks | `scripts/dev/project-consistency.mjs` (`npm run check:project-consistency`) |
 | Night Runner (deterministic task orchestration) | `docs/development/NIGHT_RUNNER.md` |
 | System-wide roadmap (navigational / non-authoritative — see its own source-of-truth priority order) | `ROADMAP.md` |
 

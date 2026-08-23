@@ -30,6 +30,27 @@ When sources disagree, use this priority order:
 
 A roadmap entry marked "planned" is not authorization to start it. `REVIEW_PROTOCOL.md` and `.project/PROJECT_STATE.md` remain the gate for what is authorized next.
 
+### Editing policy
+
+This document is a **MIRROR / NAVIGATION** file, not an OWNER — see `docs/development/AGENT_POLICY.md`'s
+"Document Authority Model". A new or updated entry should state status, dependency order, its
+PR/commit checkpoint, and a pointer to the artifact that actually owns the semantic content, plus a
+short reason for its place in the ordering — not restate that artifact's full invariant model. Prefer:
+
+```text
+Dependency D — DONE
+Authority:
+  M0_SCOPE.md / Stage: Requirement Derivation
+  REQUIREMENT_SPEC.md / R-24
+Merge:
+  PR #27 / bb70a9e
+```
+
+over reproducing R-24's entire semantic model inline (see section 10.13 below for the fuller worked
+entry this repository's history actually used before this policy was written — not itself rewritten
+by this policy note). This is a standing editing rule for future entries; it does not require
+reworking the existing sections below to the compact shape.
+
 ### Status legend
 
 - **DONE** — merged, stable checkpoint on `main`.
@@ -683,7 +704,7 @@ ADR-0004 itself could become Accepted. **B has since been implemented (PR #22), 
 re-derived and retired, not implemented (PR #24), and D has since been implemented (PR #27) — see
 10.10/10.11/10.13 below.**
 
-**This condition is now satisfied and ADR-0004 is Accepted.** Dependency A merged via PR #17 (merge commit `9416e857b549bea07d4ce06a5c365524fdf1d51a`), was adversarially reviewed before that merge, and the Status transition itself was performed by a later, separate, explicitly human-authorized task (`ADR-0004-ACCEPTANCE`). `ADR-0004`'s own `## Status` field, and `.project/PROJECT_STATE.md`, are authoritative for the current Status — not restated further here to avoid this document drifting out of sync with them again. Dependencies B/C/D were not, and are not, prerequisites for this Acceptance. **At the time of this Acceptance, they remained independently disabled; B has since landed, C has since been retired, and D has since been implemented — see 10.10/10.11/10.13 and Phase 9 below for current status.**
+**This condition is now satisfied and ADR-0004 is Accepted.** Dependency A merged via PR #17 (merge commit `9416e857b549bea07d4ce06a5c365524fdf1d51a`), was adversarially reviewed before that merge, and the Status transition itself was performed by a later, separate, explicitly human-authorized task (`ADR-0004-ACCEPTANCE`). `ADR-0004`'s own `## Status` field is authoritative for the current Status; `.project/PROJECT_STATE.md`'s "Current Capability Snapshot" mirrors it — not restated further here to avoid this document drifting out of sync with them again. Dependencies B/C/D were not, and are not, prerequisites for this Acceptance. **At the time of this Acceptance, they remained independently disabled; B has since landed, C has since been retired, and D has since been implemented — see 10.10/10.11/10.13 and Phase 9 below for current status.**
 
 ## 10.9 Dependency A — DONE (PR #17)
 
@@ -1761,7 +1782,7 @@ Purpose:
 - ADR-0004 Dependency B / Intent historical-memory premise merged (PR #22, squash commit `2cee16af702804127472af0470b3ce4ef2600f88`): **Intent Parsing is now the second authorized `MemoryContext` consumer** (`docs/foundation/M0_SCOPE.md`), at exactly `DISCOVERY_ATTENTION` (Category A or B historical-user memory shaping a provenance-visible candidate clarification question) and `SEMANTIC_PREMISE` (Category A only, directly cited as a current-run Inferred Claim premise via the stable `(memory_context_id, entry_id)` reference — deterministic validation requires a mandatory companion immutable `MemoryContext`). Memory-derived Claim origin remains Inferred only; current `UserIdea` always wins; historical force is never mechanically copied into current force; HIGH/CRITICAL is never closed by memory alone. Contract suite at merged head: **83/83**. At the time of this checkpoint, Requirement Derivation remained unauthorized to consume `MemoryContext` and Dependency D remained unimplemented; no Brain adapter/runtime exists even now. **Dependency C has since been retired, not implemented, and Dependency D has since been implemented — see below.**
 - ADR-0004 Dependency C — retired, not implemented (PR #24, squash commit `54ef91c181134487a50cb7b7c3d3ebeb66716b78`): a mandatory pre-implementation re-derivation found the direct `MemoryContext → Requirement-Level Inference premise` path structurally incoherent against `REQUIREMENT_SPEC.md`'s own R-10/R-22 semantics, and it was retired rather than implemented — full reasoning in `ADR-0004`'s "Post-Acceptance Dependency B/C/D Disposition" section and `REQUIREMENT_SPEC.md`'s new invariant R-23, not reproduced here. No new `MemoryContext` consumer, no new normative-strength source, no schema/runtime change. **At the time of this checkpoint, Requirement Derivation `MemoryContext` remained NOT AUTHORIZED and Dependency D remained not implemented — both have since changed, see below.**
 - `DECISION_OPTION` historical-source gate merged (PR #26, squash commit `a16491d41d93f4edac9378b6184de071aa681f32`): settled, by explicit human decision, that a `MemoryContext` entry classified as a historical user statement (Category A or Category B) is categorically ineligible for `DECISION_OPTION` — established the two-gate model (R-19 content eligibility; `MemoryContext` source eligibility) as a prerequisite policy for Dependency D. The existing deterministic validator behavior was already correct and unchanged. Dependency D itself was not implemented by this PR. Contract suite at merged head: **85/85**.
-- ADR-0004 Dependency D / Requirement Derivation memory-informed R-19 defaults — **DONE** (PR #27, squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`): **Requirement Derivation is now the third authorized `MemoryContext` consumer** (`docs/foundation/M0_SCOPE.md`), restricted to exactly `DECISION_OPTION`, to optionally inform a working-default value for a surviving Unknown it has already, independently established as R-19-eligible (Gate 1), with the entry's own source separately clearing Gate 2 (PR #26 above). Memory supplies zero independent authority; an adopted value remains Requirement-Derivation-introduced (R-09) with an independent rationale plus an additional memory-informed-rationale citation of the stable `(memory_context_id, entry_id)` identity (new invariant **R-24**). R-19/R-23 unchanged; Dependency C remains retired, unaffected. `MemoryContext` is not Evidence; its absence/unavailability is non-blocking. **Current capability snapshot:** Intent Parsing `MemoryContext` — **AUTHORIZED** (`DISCOVERY_ATTENTION`, `SEMANTIC_PREMISE`); Research Planning `MemoryContext` — **AUTHORIZED** (`DISCOVERY_ATTENTION`); Requirement Derivation `MemoryContext` — **AUTHORIZED** (`DECISION_OPTION` only); Dependency B — **implemented**; Dependency C — **retired**; `DECISION_OPTION` historical-source gate — **done**; Dependency D — **implemented**; `RequirementSpec` schema — **not implemented**; Brain adapter/runtime — **not implemented**; contract tests — **85/85**.
+- ADR-0004 Dependency D / Requirement Derivation memory-informed R-19 defaults — **DONE** (PR #27, squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`): **Requirement Derivation is now the third authorized `MemoryContext` consumer** (`docs/foundation/M0_SCOPE.md`), restricted to exactly `DECISION_OPTION`, to optionally inform a working-default value for a surviving Unknown it has already, independently established as R-19-eligible (Gate 1), with the entry's own source separately clearing Gate 2 (PR #26 above). Memory supplies zero independent authority; an adopted value remains Requirement-Derivation-introduced (R-09) with an independent rationale plus an additional memory-informed-rationale citation of the stable `(memory_context_id, entry_id)` identity (new invariant **R-24**). R-19/R-23 unchanged; Dependency C remains retired, unaffected. `MemoryContext` is not Evidence; its absence/unavailability is non-blocking. **Capability snapshot as of this checkpoint (historical — for current status see `.project/PROJECT_STATE.md`'s "Current Capability Snapshot"):** Intent Parsing `MemoryContext` — **AUTHORIZED** (`DISCOVERY_ATTENTION`, `SEMANTIC_PREMISE`); Research Planning `MemoryContext` — **AUTHORIZED** (`DISCOVERY_ATTENTION`); Requirement Derivation `MemoryContext` — **AUTHORIZED** (`DECISION_OPTION` only); Dependency B — **implemented**; Dependency C — **retired**; `DECISION_OPTION` historical-source gate — **done**; Dependency D — **implemented**; `RequirementSpec` schema — **not implemented**; Brain adapter/runtime — **not implemented**; contract tests — **85/85**.
 
 ## Does not exist yet as an M0 product capability
 

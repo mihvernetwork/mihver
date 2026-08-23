@@ -24,13 +24,65 @@ Before declaring any MIHVER task complete, Claude must:
    confirming check rather than a full before/after comparison.
 6. **Inspect the relevant diff** — `git diff` / `git diff --stat` — when the task changed any
    file; read it, don't just note that it exists.
-7. **Run applicable deterministic validation** where practical (tests, schema checks, lint) — for
+7. **Run applicable deterministic validation** where practical (tests, schema checks, lint,
+   `npm run check:project-consistency` where the task touched a file that script covers) — for
    documentation/architecture work this may be limited to consistency review; don't skip it where
    it does apply.
-8. **Report unresolved ambiguity and risk** — a clean-looking report that hides an open question is
+8. **Run the Final Consistency Sweep** (below) before reporting the task ready for human review —
+   not merely "semantic reviewers passed."
+9. **Report unresolved ambiguity and risk** — a clean-looking report that hides an open question is
    worse than one that names it.
-9. **Stop before the next task.** Completing the current task is not authorization to begin the
-   next one.
+10. **Stop before the next task.** Completing the current task is not authorization to begin the
+    next one.
+
+## Final Consistency Sweep
+
+Semantic review checks that the change is *correct*. It does not, by itself, check that the change
+left the rest of the repository's development documents *consistent* — that is a distinct, mandatory
+final phase, not an optional nicety:
+
+```text
+implementation
+  → semantic review
+  → fixes
+  → final repository-wide consistency sweep
+  → targeted CONDITIONAL CONSISTENCY fixes (see AGENT_POLICY.md's Task File Scope Model)
+  → deterministic validation
+  → READY_FOR_HUMAN_REVIEW
+```
+
+The sweep examines, as applicable to what the task actually touched: owning documents; current-state
+mirrors (`.project/PROJECT_STATE.md`'s Current Capability Snapshot, `ROADMAP.md`); navigation files
+(`.project/CONTEXT_INDEX.md`); direct heading references that quote another file's section title;
+status tokens (`DONE` / `NEXT` / `RETIRED` / `Proposed` / `Accepted`); consumer counts / stage lists;
+old "pending" / "not authorized" / "still future" statements a completed task has now made stale;
+test-count mirrors; merge/PR references; historical-vs-current tense; case-corpus introductory status
+language; schema-mapping current-state prose.
+
+The sweep must distinguish a **historical quote** (a checkpoint or log entry correctly describing a
+past state — leave it alone) from a **live/current assertion** (a mirror or navigation statement
+claiming to describe *now* — fix it if it's wrong). Never blindly global-replace a phrase; a
+mechanical search still needs a human/Claude judgment call at each hit for exactly this reason. See
+`AGENT_POLICY.md`'s Document Authority Model for the Owner/Mirror/Historical distinction this sweep
+is checking.
+
+**Proportionality.** A tiny, isolated change (a wording fix, a single-file typo correction, a change
+with no owning-fact implications) needs only a lightweight sweep — confirm by inspection that nothing
+else references what changed; it does not need a dedicated review round or a separate report section.
+A change to a contract, ADR, foundation document, or any status/current-state field needs a
+repository-wide sweep of the files listed above that are actually relevant to what changed. Do not
+manufacture process for a change that has no consistency surface to sweep.
+
+**Verdict progression.** For a task with a non-trivial consistency surface, track:
+
+```text
+IMPLEMENTATION_COMPLETE → SEMANTIC_REVIEW_COMPLETE → CONSISTENCY_SWEEP_COMPLETE → READY_FOR_HUMAN_REVIEW
+```
+
+A task is `READY_FOR_HUMAN_REVIEW` only after the consistency sweep stage, never straight from
+`SEMANTIC_REVIEW_COMPLETE`. For a tiny task under the proportionality rule above, these stages may
+collapse into one pass — the point is that the sweep happened, not that it produced its own separate
+verdict label every time.
 
 ## When Independent Review Is Recommended or Required
 
