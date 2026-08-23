@@ -4,8 +4,14 @@ Status: part of M0 `ADR-0004` (Memory Context Authority Boundary, Status: **Acce
 ADR's own "Acceptance Gate" for exactly what Acceptance did and did not authorize). Dependency A
 (Research Planning's own `DISCOVERY_ATTENTION`-only consumption) and Dependency B (Intent Parsing's
 consumption, including the Category A `SEMANTIC_PREMISE` → Inferred Claim premise path) are both
-now implemented, per `M0_SCOPE.md`'s and `INTENT_SPEC.md`'s own amendments. Dependencies C and D
-remain not implemented.
+now implemented, per `M0_SCOPE.md`'s and `INTENT_SPEC.md`'s own amendments. **Dependency C —
+citing a `MemoryContext` entry directly as a Requirement-Level Inference premise — has been
+retired, not implemented**: re-derived after Dependency B landed, it was found structurally
+incoherent against `REQUIREMENT_SPEC.md`'s own R-10/R-22 (see `ADR-0004`'s "Post-Acceptance
+Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s R-23). Historical-user semantic content that
+legitimately affects a Requirement reaches Requirement Derivation only by first becoming a
+current-run Inferred Claim through Dependency B — never by a second, direct `MemoryContext` citation
+at the Requirement level. Dependency D remains not implemented, unaffected by C's retirement.
 
 This semantic contract remains implementation-independent — no serialization or field names are
 defined here, mirroring [REQUIREMENT_SPEC](./REQUIREMENT_SPEC.md)'s relationship to its own schema.
@@ -54,10 +60,12 @@ it. Until each such further amendment happens, separately, with explicit human a
 **every stage other than Research Planning and Intent Parsing may not consume `MemoryContext` at
 all, and no stage — Research Planning and Intent Parsing included — may ever query MIHVER Brain
 directly.** This is not a placeholder rule pending implementation; it is the hard boundary this
-whole document exists to protect. Dependencies C and D (citing a `MemoryContext` entry as a
-Requirement-Level Inference premise or a memory-informed R-19 rationale, respectively) remain
-unavailable regardless of Research Planning's or Intent Parsing's own authorization — see
-`ADR-0004`'s "Acceptance Gate" for the precise dependency boundaries.
+whole document exists to protect. Citing a `MemoryContext` entry directly as a Requirement-Level
+Inference premise (`ADR-0004`'s originally-named dependency C) is **retired**, not merely
+unavailable pending implementation — see "Historical User Memory Rule" below and `REQUIREMENT_SPEC.md`'s
+R-23. A memory-informed R-19 rationale (dependency D) remains unavailable pending its own,
+still-future amendment, regardless of Research Planning's or Intent Parsing's own authorization —
+see `ADR-0004`'s "Acceptance Gate" for the precise dependency boundaries.
 
 ## Relationship to MIHVER Brain
 
@@ -441,6 +449,23 @@ not a confidence-based restriction to be weighed case by case, it is a hard elig
 It may never, under any circumstance, be recorded, labeled, or silently treated as a User-Provided
 Claim (Invariant M-03) — the same discipline I-01/I-02 already apply to model inferences and
 assumptions, extended to this additional source.
+
+**There is no third way, and none is coming, for obtaining `SEMANTIC_PREMISE` or
+Requirement-Level-Inference-premise standing.** `ADR-0004` originally named a third possible path —
+citing a `MemoryContext` entry directly as a Requirement-Level Inference's premise at Requirement
+Derivation (dependency C) — as future work. After dependency B (above) was implemented, that path
+was re-derived against `REQUIREMENT_SPEC.md`'s actual R-10/R-22 text, found structurally incoherent
+(R-22 has no strength source but an accepted Claim/Requirement, and a Category A entry — the only
+class ever eligible for `SEMANTIC_PREMISE` — remains raw, historical, unaccepted intent-shaped
+content until Intent Parsing turns it into an accepted current-run Claim; Requirement Derivation
+may reason from that Claim but may not interpret the entry directly), and **retired rather than
+implemented** — see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and
+`REQUIREMENT_SPEC.md`'s R-23. Historical-user semantic content that legitimately serves as a
+Requirement-Level Inference premise reaches Requirement Derivation exclusively by first becoming a
+current-run Inferred Claim through the first way above; Requirement Derivation then draws on that
+accepted Claim under its own ordinary, unmodified authority. This is a permanent architectural
+disposition for premise standing, not a status update pending a future amendment — Requirement
+Derivation is not, and will not become, a direct `MemoryContext` consumer for this purpose.
 
 ### No Assumed-Origin Path for Memory
 

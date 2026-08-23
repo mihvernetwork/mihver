@@ -18,7 +18,10 @@ three confirmed findings were fixed before merge (see `.project/REVIEW_STATE.md`
 and D remain exactly as structurally disabled as before — see "Acceptance Gate" below — and are not
 prerequisites for, and are not enabled by, this Acceptance. No `MemoryContext` runtime, schema, or
 Brain adapter exists; Research Planning does not currently retrieve any actual memory; and this
-Acceptance does not change `ADR-0003`'s own Status.
+Acceptance does not change `ADR-0003`'s own Status. **This note describes state at Acceptance time
+only — see "Post-Acceptance Dependency B/C Disposition" below for what has since changed:**
+dependency B is now implemented; dependency C has been retired as redundant, not implemented;
+dependency D remains pending.
 
 ## Context
 
@@ -83,6 +86,52 @@ strengthened into a broader claim I-16 does not make. See "Historical User Prove
 "Classification Fail-Closed Rule," "Identity Boundary, Not Merely a Freshness Gate," and "Historical
 Force Is Not Current Force" in `MEMORY_CONTEXT.md`, and Case 22 in `MEMORY_CONTEXT_CASES.md`. Model C
 remains retained unchanged; none of these six findings bears on whether Model C itself is sound.
+
+## Post-Acceptance Dependency B/C Disposition
+
+**This revision, after Acceptance.** This ADR's Status is unchanged (**Accepted**, per dependency A
+alone, as decided above) — this section records what has happened *since* Acceptance to two of the
+four named dependencies, without reopening the Acceptance decision itself or rewriting the reasoning
+that produced it.
+
+- **Dependency B — implemented.** `docs/foundation/M0_SCOPE.md` and `docs/contracts/INTENT_SPEC.md`
+  were separately, explicitly amended (task `M0-DEPENDENCY-B-INTENT-MEMORY-PREMISE`, PR #22, merged)
+  to let Intent Parsing consume `MemoryContext` and let a qualified Category A historical-user entry
+  be cited directly, by the stable `(memory_context_id, entry_id)` reference, as the premise of a
+  current-run Inferred Claim — exactly the mechanism this ADR's Phase 5/11 named as required. The
+  resulting Claim's origin remains Inferred only; current `UserIdea` continues to win; historical
+  force is never mechanically copied into current force. Full detail in `INTENT_SPEC.md`'s
+  "Memory-Derived Inference Premises" section.
+- **Dependency C — retired as redundant, not implemented.** A separate task
+  (`M0-DEPENDENCY-C-REQUIREMENT-MEMORY-PREMISE`) attempted the direct path this ADR's Phase 11 named
+  — citing a `MemoryContext` entry as a Requirement-Level Inference's premise — and, before making
+  any edit, re-derived it against `REQUIREMENT_SPEC.md`'s actual R-10/R-22 text now that dependency B
+  exists to compare against. The re-derivation found the direct path structurally incoherent, for two
+  independent reasons, either one sufficient alone: (1) R-22's strength model has no source of
+  normative strength except an already-accepted Claim or Requirement — a `MemoryContext` entry
+  supplies none, and inventing one would be new normative-strength policy this ADR does not
+  authorize; (2) the only memory class ever eligible for `SEMANTIC_PREMISE` (a Category A
+  historical-user statement) is still raw, historical, unaccepted intent-shaped content until it
+  crosses Intent Parsing's current-run epistemic boundary. `REQUIREMENT_SPEC.md`'s Requirement-Level
+  Inference mechanism, and this ADR's own Phase 1 authority map, forbid Requirement Derivation from
+  performing that intent interpretation itself ("about technical implications... never about
+  intent"). Intent-derived origin is not itself disqualifying: once Intent Parsing accepts a
+  current-run Inferred Claim through dependency B, that Claim is a valid R-10 premise, and Requirement
+  Derivation consumes it under its own existing, unmodified R-03/R-10/R-22 authority. No second,
+  direct citation of the same raw historical memory adds a distinct capability. A follow-up task
+  (`M0-DEPENDENCY-C-DISPOSITION`) formally recorded this retirement across `REQUIREMENT_SPEC.md`
+  (new invariant R-23), `MEMORY_CONTEXT.md`, `M0_SCOPE.md`, and both case corpora — see
+  `REQUIREMENT_SPEC.md`'s R-23 and "Requirement-Level Inference" section for the resulting explicit
+  boundary. Requirement Derivation remains **not** authorized to consume `MemoryContext` at all — its
+  `M0_SCOPE.md` `Input:` list remains `IntentSpec` only, since retiring the direct-premise path removes
+  the only reason dependency C's own consumer authorization would have been needed in the first
+  place.
+- **Dependency D — unaffected, still pending.** Nothing about dependency C's retirement changes
+  dependency D (a memory-informed R-19 `DECISION_OPTION` default's rationale citation) — it remains a
+  separate, narrower, later task of its own, exactly as "Acceptance Gate" below already describes.
+  Dependency D does not require treating a `MemoryContext` entry as a Claim, a Requirement-Level
+  Inference premise, or Evidence — it was never the same capability as the retired dependency C path,
+  and retiring C does not retire, weaken, or pre-authorize D.
 
 MIHVER Brain (`../mihver-brain`, a sibling repository — see "Brain Architecture Summary" below) is
 a durable, file-based, deterministic second-brain: engineering lessons, decisions, and project
@@ -181,14 +230,19 @@ not from memory of earlier sessions.
    declared as its inputs... must never read another stage's undeclared internal state or an
    artifact not named as one of its inputs."
 
-**Hard constraint, following directly from item 8:** no stage in `M0_SCOPE.md`'s current table
-declares any memory or Brain artifact as an input. Therefore **no stage may silently query MIHVER
-Brain directly** — not as a convenience, not as a fallback, not "just for context." This is not a
-new rule this ADR invents; it is Principle 3 applied to a system that did not exist when
-`M0_SCOPE.md` was written. Any stage this design authorizes to consult memory requires that stage's
-`M0_SCOPE.md` input list to be explicitly amended first — a required, separate, human-authorized
-change (see "Foundation Impact Analysis" below). This ADR does not perform that amendment; it
-identifies exactly where it is needed.
+**Hard constraint, following directly from item 8:** at the time of this Phase's original analysis,
+no stage in `M0_SCOPE.md`'s then-current table declared any memory or Brain artifact as an input
+(Research Planning and Intent Parsing have since been separately amended to declare one — see
+"Post-Acceptance Dependency B/C Disposition" above; every other stage, including Requirement
+Derivation, remains as this Phase originally found it). The underlying rule this fact illustrates is
+unconditional and remains fully current: **no stage may silently query MIHVER Brain directly** — not
+as a convenience, not as a fallback, not "just for context," regardless of how many stages have since
+been individually amended. This is not a new rule this ADR invents; it is Principle 3 applied to a
+system that did not exist when `M0_SCOPE.md` was written. Any stage this design authorizes to consult
+memory requires that stage's `M0_SCOPE.md` input list to be explicitly amended first — a required,
+separate, human-authorized change (see "Foundation Impact Analysis" below), performed individually
+for Research Planning and Intent Parsing since this Phase was originally written, not yet performed
+for any other stage.
 
 ## Phase 2 — Memory Threat Model
 
@@ -663,15 +717,20 @@ No frozen document is modified in this task. Required future changes, classified
   Inference's premise at all** — only the clarification-question path (Phase 5's second option,
   which requires no `INTENT_SPEC.md` change) is available in the meantime.
 - **`REQUIREMENT_SPEC.md` — `SEMANTIC_AMENDMENT_REQUIRED`, two distinct dependencies, not one:**
-  1. **Requirement-Level Inference mechanism** (corrected on independent review, for the identical
-     reason as the `INTENT_SPEC.md` item above — an earlier draft classified this `NO_CHANGE`, which
-     did not hold up once the parallel case was checked). R-10/R-22 define a Requirement-Derivation-
-     level inference's premise as "the accepted Claim or Requirement it derives from" — not an
-     external `MemoryContext` entry. The same broadening problem recurs one stage later: citing a
-     memory entry as such a premise requires `REQUIREMENT_SPEC.md` to recognize a new premise kind,
-     not merely the `M0_SCOPE.md` input-declaration amendment already identified above. Until both
-     amendments exist, Requirement Derivation may not cite a `MemoryContext` entry as a
-     Requirement-Level Inference's premise either.
+  1. **Requirement-Level Inference mechanism — retired, not amended (recorded post-Acceptance; the
+     text below is preserved as the historical reasoning at the time this dependency was named, not
+     current guidance).** Originally corrected on independent review, for the identical reason as the
+     `INTENT_SPEC.md` item above — an earlier draft classified this `NO_CHANGE`, which did not hold
+     up once the parallel case was checked: R-10/R-22 define a Requirement-Derivation-level
+     inference's premise as "the accepted Claim or Requirement it derives from" — not an external
+     `MemoryContext` entry, and the same broadening problem recurs one stage later. At that time this
+     was expected to require a `REQUIREMENT_SPEC.md` amendment recognizing a new premise kind
+     (dependency C). **After dependency B was implemented, a dedicated task re-derived this dependency
+     against R-10/R-22's actual text and found the direct path structurally incoherent, not merely
+     unamended — see "Post-Acceptance Dependency B/C Disposition" above and `REQUIREMENT_SPEC.md`'s
+     R-23. No `REQUIREMENT_SPEC.md` amendment recognizing `MemoryContext` as a Requirement-Level
+     Inference premise is needed or intended; Requirement Derivation may not, and will not, cite a
+     `MemoryContext` entry as such a premise.**
   2. **Memory-informed R-19 default provenance** (added this remediation round — an earlier draft of
      this ADR permitted a memory-derived value to inform an R-19-eligible working default at
      Requirement Derivation, per "No Assumed-Origin Path for Memory" in `MEMORY_CONTEXT.md`, but did
@@ -704,14 +763,18 @@ Four distinct amendment dependencies are named above, and they do not all gate t
 and `DISCOVERY_ATTENTION` use by any given stage — requires only that stage's `M0_SCOPE.md` amendment
 (dependency A: `RunContext` + the producer's own documented contract + that stage's declared
 `Input:` entry). **Citing a historical-memory entry as an Inferred Claim's premise** additionally
-requires the separate `INTENT_SPEC.md` amendment (dependency B). **Citing a memory entry as a
-Requirement-Level Inference's premise** additionally requires the separate `REQUIREMENT_SPEC.md`
-Requirement-Level-Inference amendment (dependency C). **A memory-informed R-19 default**
+required the separate `INTENT_SPEC.md` amendment (dependency B) — **now implemented** (PR #22); see
+"Post-Acceptance Dependency B/C Disposition" above. **Citing a memory entry directly as a
+Requirement-Level Inference's premise** would have additionally required a separate
+`REQUIREMENT_SPEC.md` Requirement-Level-Inference amendment (dependency C) — **this path has since
+been retired as redundant/incoherent, not implemented**; see "Post-Acceptance Dependency B/C
+Disposition" above and `REQUIREMENT_SPEC.md`'s R-23. **A memory-informed R-19 default**
 (`DECISION_OPTION` influence) additionally requires the separate, narrower `REQUIREMENT_SPEC.md`
-provenance amendment (dependency D). Dependencies B, C, and D are each independently required only
-for the specific, narrower semantic path they gate — none of them is a precondition for dependency A,
-and dependency A is not a precondition for any specific one of B/C/D beyond the general one of "that
-stage must already be authorized to consume `MemoryContext` at all" before it can go further.
+provenance amendment (dependency D) — **still pending, unaffected by C's retirement**. Dependencies
+B, C, and D were each independently required only for the specific, narrower semantic path they
+gate — none of them was a precondition for dependency A, and dependency A was not a precondition for
+any specific one of B/C/D beyond the general one of "that stage must already be authorized to
+consume `MemoryContext` at all" before it could go further.
 
 **This ADR becomes eligible for Accepted status once dependency A alone — the core `M0_SCOPE.md`
 integration boundary (`RunContext`, the producer's own contract, and at least one consuming stage's
@@ -721,11 +784,14 @@ held to and satisfied (Status: Accepted), and the same kind of condition `ADR-00
 proposed for its own eventual Acceptance (Status, as of this writing: still Proposed — it is a
 parallel precedent for the *shape* of the condition, not a completed example of this ADR's own
 criterion being met).** It does **not** require dependencies B, C, and D to all be complete first.
-Reaching `SEMANTIC_PREMISE` via the historical-user-memory path (dependency B/C) and reaching
-`DECISION_OPTION` via a memory-informed R-19 default (dependency D) remain **explicitly, structurally
-disabled** — not merely "future work," but unavailable by construction, exactly as they are today —
-until their own respective amendments are separately, explicitly human-authorized and completed, each
-its own future task, independent of this ADR's own Status.
+**As of the post-Acceptance disposition above: dependency B is implemented — reaching
+`SEMANTIC_PREMISE` via a current-run Inferred Claim at Intent Parsing is now available, exactly as
+bounded there. Dependency C's own direct-premise path at Requirement Derivation has been retired,
+not implemented — it remains unavailable, but by retirement rather than by pending amendment.**
+Reaching `DECISION_OPTION` via a memory-informed R-19 default (dependency D) remains **explicitly,
+structurally disabled** — not merely "future work," but unavailable by construction — until its own
+amendment is separately, explicitly human-authorized and completed, its own future task, independent
+of this ADR's own Status.
 
 **Why this option, not requiring every amendment first:** (1) it mirrors `ADR-0001`'s own IR-per-stage
 pattern, where a bounded artifact's core definition is accepted independently of every future consumer
@@ -748,11 +814,15 @@ Adopt **Model C**: a typed, immutable `MemoryContext` artifact, produced by a de
 boundary from MIHVER Brain, carrying an explicit authority classification per entry (Phase 4),
 consumable by a stage only once that stage's `M0_SCOPE.md` input list is separately amended to
 declare it (dependency A) — and, for any use that would cite a `MemoryContext` entry as the premise
-of an Inferred Claim (dependency B) or a Requirement-Level Inference (dependency C), or would inform
-a memory-informed R-19 default (dependency D), only once the corresponding `INTENT_SPEC.md` and/or
+of an Inferred Claim (dependency B, **now implemented**) or would inform a memory-informed R-19
+default (dependency D, still pending), only once the corresponding `INTENT_SPEC.md` and/or
 `REQUIREMENT_SPEC.md` amendment is *also* separately completed (Phase 11 / "Acceptance Gate" — each a
 distinct, additional requirement from the `M0_SCOPE.md` input-declaration amendment, not subsumed by
-it, and not a precondition for this ADR's own Acceptance). `MemoryContext` is never a `Claim`, never
+it, and not a precondition for this ADR's own Acceptance). The originally-named dependency C (citing
+a `MemoryContext` entry directly as a Requirement-Level Inference's premise) has since been retired
+as redundant/incoherent, not implemented — see "Post-Acceptance Dependency B/C Disposition" above;
+the historical-user-memory path this ADR designs terminates at Intent Parsing (dependency B) before
+reaching Requirement Derivation. `MemoryContext` is never a `Claim`, never a `Requirement`, never
 `Evidence`, never merged into `UserIdea`, and never queried directly by any stage. Full semantic
 detail is in [MEMORY_CONTEXT](../contracts/MEMORY_CONTEXT.md); worked adversarial cases are in
 [MEMORY_CONTEXT_CASES](../examples/MEMORY_CONTEXT_CASES.md).
@@ -777,10 +847,12 @@ detail is in [MEMORY_CONTEXT](../contracts/MEMORY_CONTEXT.md); worked adversaria
 
 ## Consequences
 
-- No stage may consume `MemoryContext` until `M0_SCOPE.md` is amended for that specific stage; this
-  ADR's Status stays Proposed until dependency A (see "Acceptance Gate") is separately, explicitly
-  human-authorized, completed, and adversarially reviewed — not until every possible consuming stage
-  is amended, only the core boundary plus at least one.
+- No stage may consume `MemoryContext` until `M0_SCOPE.md` is amended for that specific stage; at the
+  time this ADR was written, its Status would stay Proposed until dependency A (see "Acceptance
+  Gate") was separately, explicitly human-authorized, completed, and adversarially reviewed — not
+  until every possible consuming stage was amended, only the core boundary plus at least one. **That
+  condition has since been met — this ADR's Status is Accepted (see the "Status" section's own
+  note).**
 - Every future memory-consuming stage must additionally state, in its own future contract work,
   which authority classes it is permitted to use for which of the four Influence Taxonomy tiers
   (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`DECISION_OPTION`/`SEMANTIC_PREMISE`, Phase 7) —
@@ -875,8 +947,15 @@ specific to this design, not merely because Model C was suggested by the task.
   this does not require dependencies B/C/D (the `INTENT_SPEC.md` amendment, the
   `REQUIREMENT_SPEC.md` Requirement-Level-Inference amendment, or the `REQUIREMENT_SPEC.md` R-19
   provenance amendment) to be complete first; those remain their own, separate, later tasks, each
-  gating only the specific narrower semantic path it names, never this ADR's own Acceptance.
-- As separate, later, explicitly human-authorized tasks, whenever undertaken: the `INTENT_SPEC.md`
-  amendment (dependency B), the `REQUIREMENT_SPEC.md` Requirement-Level-Inference amendment
-  (dependency C), and the `REQUIREMENT_SPEC.md` R-19 provenance amendment (dependency D) — each
-  enabling exactly the one narrower semantic path it names, per "Acceptance Gate" above.
+  gating only the specific narrower semantic path it names, never this ADR's own Acceptance. **This
+  item is historical: Status Acceptance itself is complete — see the "Status" section's own note.**
+- **This item is historical, preserved for context, superseded by "Post-Acceptance Dependency B/C
+  Disposition" above.** As separate, later, explicitly human-authorized tasks, whenever undertaken:
+  the `INTENT_SPEC.md` amendment (dependency B) and the `REQUIREMENT_SPEC.md` Requirement-Level-
+  Inference amendment (dependency C) were each named here as future work. **Dependency B has since
+  been implemented (PR #22). Dependency C, on re-derivation after B landed, was found redundant/
+  incoherent and retired rather than implemented — no `REQUIREMENT_SPEC.md` amendment for a direct
+  Requirement-Level Inference premise is future work any longer.** The `REQUIREMENT_SPEC.md` R-19
+  provenance amendment (dependency D) remains the one genuinely still-future item from this list,
+  unaffected by B's implementation or C's retirement, enabling exactly the narrower R-19
+  `DECISION_OPTION` path "Acceptance Gate" above names.
