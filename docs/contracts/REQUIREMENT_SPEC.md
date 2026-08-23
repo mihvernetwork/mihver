@@ -347,13 +347,14 @@ Dependency B/C Disposition" for the full reasoning. Two independent reasons, eit
 - **Requirement-Level Inference is never about intent.** The only `MemoryContext` entry class that can
   ever reach `SEMANTIC_PREMISE` standing at all is a **Category A historical-user statement**
   (`MEMORY_CONTEXT.md`'s Historical User Provenance Gate and Influence Taxonomy) — by definition, a
-  record of what the user said or wanted in a past run. That is exactly the kind of content this
-  section's own operational test already excludes: a Requirement-Level Inference may draw conclusions
-  only "about the technical or operational implications of an already-accepted Claim or Requirement,
-  never about what the user meant, which remains frozen to Intent Parsing." A `MemoryContext` entry
-  cannot be a legitimate premise here for the same reason a fresh, un-vetted user statement couldn't
-  be: both are intent-shaped content Requirement Derivation has no authority to incorporate directly,
-  regardless of how it arrived.
+  raw historical record of what the user said or wanted in a past run, not current-run accepted
+  semantics. This section's operational test excludes Requirement Derivation from interpreting that
+  content directly: a Requirement-Level Inference may draw conclusions only "about the technical or
+  operational implications of an already-accepted Claim or Requirement, never about what the user
+  meant, which remains frozen to Intent Parsing." The disqualifier is the entry's raw, historical,
+  unaccepted status at this boundary — not the mere fact that its content is intent-shaped or
+  intent-derived. Once Intent Parsing turns such content into an accepted current-run Inferred Claim
+  through dependency B, that Claim is a valid R-10 premise; the `MemoryContext` entry itself is not.
 
 **The legitimate path for historical-user memory to affect a Requirement already exists, unchanged:**
 a qualified Category A `MemoryContext` entry becomes a current-run Inferred Claim at Intent Parsing

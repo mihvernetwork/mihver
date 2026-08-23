@@ -450,20 +450,22 @@ It may never, under any circumstance, be recorded, labeled, or silently treated 
 Claim (Invariant M-03) — the same discipline I-01/I-02 already apply to model inferences and
 assumptions, extended to this additional source.
 
-**There is no third way, and none is coming.** `ADR-0004` originally named a third possible path —
+**There is no third way, and none is coming, for obtaining `SEMANTIC_PREMISE` or
+Requirement-Level-Inference-premise standing.** `ADR-0004` originally named a third possible path —
 citing a `MemoryContext` entry directly as a Requirement-Level Inference's premise at Requirement
 Derivation (dependency C) — as future work. After dependency B (above) was implemented, that path
 was re-derived against `REQUIREMENT_SPEC.md`'s actual R-10/R-22 text, found structurally incoherent
 (R-22 has no strength source but an accepted Claim/Requirement, and a Category A entry — the only
-class ever eligible for `SEMANTIC_PREMISE` — is inherently intent-shaped content the
-Requirement-Level Inference mechanism categorically excludes), and **retired rather than
+class ever eligible for `SEMANTIC_PREMISE` — remains raw, historical, unaccepted intent-shaped
+content until Intent Parsing turns it into an accepted current-run Claim; Requirement Derivation
+may reason from that Claim but may not interpret the entry directly), and **retired rather than
 implemented** — see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and
-`REQUIREMENT_SPEC.md`'s R-23. Historical-user semantic content that legitimately bears on a
-Requirement reaches Requirement Derivation exclusively by first becoming a current-run Inferred
-Claim through the first way above; Requirement Derivation then draws on that accepted Claim under
-its own ordinary, unmodified authority. This is a permanent architectural disposition, not a status
-update pending a future amendment — Requirement Derivation is not, and will not become, a direct
-`MemoryContext` consumer for this purpose.
+`REQUIREMENT_SPEC.md`'s R-23. Historical-user semantic content that legitimately serves as a
+Requirement-Level Inference premise reaches Requirement Derivation exclusively by first becoming a
+current-run Inferred Claim through the first way above; Requirement Derivation then draws on that
+accepted Claim under its own ordinary, unmodified authority. This is a permanent architectural
+disposition for premise standing, not a status update pending a future amendment — Requirement
+Derivation is not, and will not become, a direct `MemoryContext` consumer for this purpose.
 
 ### No Assumed-Origin Path for Memory
 

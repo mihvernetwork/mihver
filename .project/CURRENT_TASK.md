@@ -5,151 +5,116 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-M0-DEPENDENCY-C-DISPOSITION
+DEPENDENCY-C-DISPOSITION-SEMANTIC-CLOSURE
 
 ## Objective
 
-Formally resolve `ADR-0004` Dependency C after a prior task's mandatory pre-implementation
-re-derivation concluded `DEPENDENCY_C_REDUNDANT_AFTER_B` and stopped without implementing anything.
-This task does not implement Dependency C — it reconciles the Accepted memory architecture with that
-finding: the direct path `MemoryContext → Requirement-Level Inference premise` is retired, not
-implemented; the canonical path for historical-user memory to affect a Requirement is
+A narrow closure pass on top of `M0-DEPENDENCY-C-DISPOSITION` (already pushed as PR #24, open, not
+merged), fixing two findings an external review of that PR raised — without reopening the retirement
+decision, without implementing Dependency D, and without touching schema/runtime/Brain. The
+retirement conclusion (direct `MemoryContext → Requirement-Level Inference premise` is retired, not
+implemented; the canonical path for historical-user memory to affect a Requirement remains
 `MemoryContext → Intent Parsing (Dependency B) → current-run Inferred Claim → Requirement Derivation
-(existing R-03/R-10/R-22)`. Dependency D is unaffected and not implemented here.
+(existing R-03/R-10/R-22)`) is unchanged by this task. Fixed: (1) three passages whose retirement
+*reasoning* overstated itself in a way that could be misread as "intent-shaped premises are
+categorically forbidden" — reworded to make explicit that an accepted `IntentSpec` Claim (itself
+intent-derived) remains a fully valid premise, and that the real boundary is raw/historical/unaccepted
+`MemoryContext` content specifically, not intent-derived content as such; also scoped `MEMORY_CONTEXT.md`'s
+absolute "no third way" language to `SEMANTIC_PREMISE`/premise standing so Dependency D's separate,
+still-pending path is not foreclosed; (2) `REQUIREMENT_CASES.md` Case 21, which had invented an
+unsupported "carried-forward Unknown" not present in its own stated `IntentSpec` input. Dependency D
+remains unaffected, unimplemented, and out of scope.
 
 ## Branch / Base
 
-Branch: `m0/dependency-c-disposition`
-Base: `main` at `e0a040928112bf87a9353450c6f5116320f4078a` (verified via `git status`/`git log`/
-`npm run context`/`gh pr view 23` before branching — matches PR #23's merge commit exactly; verified
-no remote branch or PR exists for the abandoned `m0/dependency-c-requirement-memory-premise`
-implementation attempt, which was never pushed).
+Branch: `m0/dependency-c-disposition` (continuation — same branch/PR as `M0-DEPENDENCY-C-DISPOSITION`,
+no new branch created).
+Base: `main` at `e0a040928112bf87a9353450c6f5116320f4078a`, unchanged from that task. PR #24 confirmed
+open against `mihvernetwork/mihver:main` via `gh pr view 24` before any edit.
 
 ## Status
 
 **Complete, pending human review.**
 
-Re-verified the prior STOP verdict before any edit, per this task's own instruction (Section 1):
-independently re-confirmed all nine propositions (A–I) against the owning contracts — R-22's sole
-strength source is an accepted Claim/Requirement; `MemoryContext` supplies no normative strength of
-its own; historical force is not current force (M-20); non-historical `pattern`/`incident`/
-`reference` memory never reaches `SEMANTIC_PREMISE`; Category A historical-user memory is
-inherently intent-shaped content; Requirement-Level Inference may only draw technical/operational
-implications from already-accepted current-run semantics, never intent; Dependency B already
-provides the legitimate current-run-Inferred-Claim path; Requirement Derivation already consumes
-that Claim under its own existing authority; a second, direct citation of the same memory would be
-either redundant or an unauthorized interpretive resolution — all confirmed true. Verdict:
-`DEPENDENCY_C_RETIRED_AS_REDUNDANT`. Proceeded with the disposition recording below.
+Delegated the bounded edit to a Codex write-capable worker, scoped to exactly the four files named in
+Allowed Scope below (Codex explicitly instructed not to touch `.project/CURRENT_TASK.md` /
+`REVIEW_STATE.md`, `M0_SCOPE.md`, `MEMORY_CONTEXT_CASES.md`, or any schema/test/runtime file). Claude
+independently reviewed the resulting diff line-by-line (not merely the worker's self-report) before
+accepting it, confirmed via `git status --short` that only the four allowed files changed, and ran
+`npm test`/`git diff --check`/`git diff main --stat` directly.
 
-- **`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`**: added a new, clearly-labeled
-  "Post-Acceptance Dependency B/C Disposition" section recording B as implemented and C as retired
-  (with the two independent reasons: no strength source; Requirement-Level Inference categorically
-  excludes intent-shaped content); added a forward-pointer to the original Acceptance note; updated
-  "Acceptance Gate," "Decision," Phase 11's `REQUIREMENT_SPEC.md` item, and "Future Work" to qualify
-  — not delete — their original B/C framing as historical-at-the-time reasoning, each now pointing to
-  the new disposition section; ADR's own Status remains **Accepted**, unchanged, per this task's
-  explicit instruction not to reopen Acceptance.
-- **`docs/contracts/REQUIREMENT_SPEC.md`**: added a new "`MemoryContext` Is Not a Requirement-Level
-  Inference Premise" subsection immediately after the existing "Requirement-Level Inference"
-  content, making the pre-existing boundary explicit without altering it; added invariant **R-23**
-  (a Requirement-Level Inference's premise is only an accepted `IntentSpec` Claim or already-derived
-  Requirement, never a `MemoryContext` entry; historical-user content must first pass through
-  Dependency B; technical memory remains excluded because memory is never Evidence); added two
-  Anti-Examples. R-10 and R-22 themselves are byte-unchanged. No `derivation_confidence` added, no
-  force→strength behavior altered, no schema fields designed.
-- **`docs/foundation/M0_SCOPE.md`**: fixed the stale Principle 3 Compliance sentence (previously
-  present-tense "currently, only Research Planning declares one," now naming both current consumers
-  and Requirement Derivation's continued non-authorization); updated "Cross-Cutting: MemoryContext
-  Consumption Remains Otherwise Disabled" to state Dependency C was retired (not "gated behind a
-  pending amendment"), while Dependency D remains genuinely pending. Requirement Derivation's own
-  `Input:` list is untouched — still `IntentSpec` only; Intent Parsing's and Research Planning's own
-  stage-specific authority (`Input:`/`Allowed to decide`/`Not allowed to decide`) is untouched.
-- **`docs/contracts/MEMORY_CONTEXT.md`**: updated the top-of-file status line and "Stage Consumption
-  Authorization" section's Dependency-C phrasing from "unavailable" (implying pending) to
-  "retired"; added a "There is no third way, and none is coming" paragraph to the "Historical User
-  Memory Rule" section stating the retirement explicitly and permanently. Dependency D's own
-  material ("No Assumed-Origin Path for Memory" section) is untouched.
-- **`docs/examples/MEMORY_CONTEXT_CASES.md`**: swept the intro (previously "no stage is currently
-  authorized... see 'Stage Consumption Is Not Yet Authorized'" — both stale) to state current
-  reality (Intent Parsing and Research Planning authorized; every other stage not); corrected the
-  "dependency C" framing in the same intro paragraph from a pending future path to retired; fixed
-  three residual "(once authorized)" phrases on Intent Parsing (Cases 1, 4, 22) and two "pending
-  dependency B" phrases (Cases 16, 19) now that Dependency B is implemented. Case 24 (the Dependency
-  D worked example) is untouched, confirmed byte-identical.
-- **`docs/examples/REQUIREMENT_CASES.md`**: added a "Dependency C Disposition" case family, Cases
-  18–22, exactly as specified — (18) a Category A memory already producing a Dependency-B Inferred
-  Claim, consumed normally; (19) an attempted direct `MemoryContext` premise, forbidden; (20) the
-  same memory cited both via the accepted Claim and as a proposed second direct citation, testing
-  double-counting discipline; (21) `pattern` technical memory forbidden from direct use, memory is
-  not Evidence; (22) a historical obligation existing only in memory, no direct MUST manufacture.
+- **Finding 1 fixed** — reworded reason (2) of the Dependency C retirement in
+  `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, the "never about intent" bullet in
+  `docs/contracts/REQUIREMENT_SPEC.md`'s "`MemoryContext` Is Not a Requirement-Level Inference
+  Premise" subsection, and the "There is no third way, and none is coming" paragraph in
+  `docs/contracts/MEMORY_CONTEXT.md`'s Historical User Memory Rule section — each now distinguishes
+  raw/historical/unaccepted `MemoryContext` content (disqualified) from an accepted `IntentSpec` Claim
+  (a fully valid R-10 premise, per Case 18, regardless of its own intent-derived origin). The
+  `MEMORY_CONTEXT.md` paragraph additionally now scopes its absolute language explicitly to
+  `SEMANTIC_PREMISE`/Requirement-Level-Inference-premise standing, so Dependency D's separate
+  `DECISION_OPTION` path is not read as foreclosed. R-10, R-22, and R-23 themselves are
+  byte-unchanged — only surrounding prose reasoning was reworded.
+- **Finding 2 fixed** — `docs/examples/REQUIREMENT_CASES.md` Case 21's Eligibility paragraph no
+  longer claims an unsupported "carried-forward Unknown"; it now states the retry-count/backoff
+  detail simply remains unspecified/unconstrained by this `RequirementSpec` version, that its mere
+  absence from the stated input manufactures no new Open Item, with a contrast sentence noting
+  R-19/R-21 would govern an actual surviving Unknown if the input had contained one. The
+  retry-obligation Requirement's own Complete status is unchanged.
+- **Targeted sweep** — every "only"/"exclusively"/"no third way"/"never"/"intent-shaped" instance in
+  the newly-added C-disposition wording across all four files individually checked against three
+  tests (prohibits D? disqualifies accepted Claims as premises? collapses raw memory with an accepted
+  Claim?); the case-family intro paragraph in `REQUIREMENT_CASES.md` was additionally tightened
+  during the sweep for the same reason as Finding 1; every other matched instance confirmed already
+  correctly scoped.
+- One fresh independent read-only Codex reviewer (C-Retirement/D-Separation Closure, 9-point
+  checklist) found **no findings** — independently re-verified by Claude against primary text, not
+  trusted at face value; full detail in `REVIEW_STATE.md`'s "Latest Review."
 
-**Reviewer-driven fixes applied** (all independently re-verified before acceptance, per this task's
-own instruction):
-
-- Case 20's illustrative Requirement-Level Inference ("prefer synchronous over asynchronous
-  dispatch") did not actually hold under every materially plausible reading of "avoid a message
-  queue" (asynchronous dispatch is possible without a queue) — independently re-verified against
-  the operational test in `REQUIREMENT_SPEC.md`'s "Requirement-Level Inference" section, confirmed
-  real, fixed by replacing it with a tightly-entailed specialization (no dedicated message-broker
-  service).
-- Case 21's Eligibility claimed the overall area was "Partial per R-21" without justifying why the
-  already-derived retry-obligation Requirement's own satisfaction procedure was blocked by the
-  unfilled retry-count detail — independently re-verified against R-21's own text (an obligation to
-  "retry automatically" is testable independent of count), confirmed the claim was unjustified as
-  written, fixed to state the retry-obligation Requirement remains Complete while the retry-count
-  detail is a separate, legitimately-unfilled, carried-forward Unknown.
-- Case 21 also referenced Dependency D's R-19/R-09 mechanism as an alternative path, violating this
-  task's explicit C/D separation requirement (Section 9) — independently re-verified against that
-  requirement, confirmed real, removed; Case 21 now ends solely on the R-23/memory-is-not-Evidence
-  result.
-- Two stale present-tense claims in `ADR-0004` ("no stage in `M0_SCOPE.md`'s current table declares
-  any memory... input," and "this ADR's Status stays Proposed until dependency A...") were left over
-  from the document's own original, pre-Acceptance Phase 1/Consequences text with no historical
-  qualifier — independently re-verified against current `main` (both false as literal present-tense
-  claims: two stages now declare `MemoryContext` inputs; Status is Accepted), confirmed real, fixed
-  with "at the time of..." qualifiers and forward pointers, consistent with this document's own
-  established revision-note convention.
-- Three residual "(once authorized)" phrases on Intent Parsing in `MEMORY_CONTEXT_CASES.md` (Cases
-  1, 4, 22) were missed by the initial intro-paragraph sweep — independently re-verified via a
-  corpus-wide grep, confirmed real (Intent Parsing is now authorized), fixed.
+**Prior task's own detail** (`M0-DEPENDENCY-C-DISPOSITION`: the STOP-verdict re-verification, the
+per-file disposition edits across `ADR-0004`, `REQUIREMENT_SPEC.md`, `M0_SCOPE.md`,
+`MEMORY_CONTEXT.md`, `MEMORY_CONTEXT_CASES.md`, `REQUIREMENT_CASES.md`, and that task's own
+reviewer-driven fixes) is preserved in full in `REVIEW_STATE.md`'s History — not restated here, since
+this closure task changed none of that reasoning's conclusions, only sharpened wording in four of
+those files as described above.
 
 ## Allowed Scope
 
-`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/foundation/M0_SCOPE.md`,
-`docs/contracts/REQUIREMENT_SPEC.md`, `docs/contracts/MEMORY_CONTEXT.md`,
-`docs/examples/REQUIREMENT_CASES.md`, `docs/examples/MEMORY_CONTEXT_CASES.md`,
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`, `docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/contracts/MEMORY_CONTEXT.md`, `docs/examples/REQUIREMENT_CASES.md`,
 `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`.
 
-Forbidden and confirmed untouched: `docs/contracts/INTENT_SPEC.md`, `docs/examples/INTENT_CASES.md`,
-`docs/contracts/USER_IDEA.md`, `schemas/**`, `tests/**`, `scripts/**`,
-`docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, `.project/PROJECT_STATE.md`,
+Forbidden and confirmed untouched: `docs/foundation/M0_SCOPE.md`,
+`docs/examples/MEMORY_CONTEXT_CASES.md`, `docs/contracts/INTENT_SPEC.md`,
+`docs/examples/INTENT_CASES.md`, `docs/contracts/USER_IDEA.md`, `schemas/**`, `tests/**`,
+`scripts/**`, `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, `.project/PROJECT_STATE.md`,
 `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`, `ROADMAP.md`, `../mihver-brain/**`. No
-machine schema. No runtime.
+machine schema. No runtime. No implementation of Dependency D.
 
 ## Required Context
 
-`docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`, `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-
-BOUNDARY.md`, `docs/foundation/M0_SCOPE.md`, `docs/contracts/INTENT_SPEC.md`,
-`docs/contracts/REQUIREMENT_SPEC.md`, `docs/contracts/MEMORY_CONTEXT.md`,
-`docs/examples/INTENT_CASES.md`, `docs/examples/REQUIREMENT_CASES.md`,
-`docs/examples/MEMORY_CONTEXT_CASES.md`, `ROADMAP.md`, `.project/PROJECT_STATE.md` — all re-read
-fresh in full (or via targeted grep confirmed against fresh line-range reads) before any edit.
+`docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`'s "Post-Acceptance Dependency B/C
+Disposition" section, `docs/contracts/REQUIREMENT_SPEC.md`'s "`MemoryContext` Is Not a
+Requirement-Level Inference Premise" subsection and R-10/R-22/R-23, `docs/contracts/MEMORY_CONTEXT.md`'s
+"There is no third way" paragraph and "No Assumed-Origin Path for Memory"/`DECISION_OPTION` material,
+`docs/examples/REQUIREMENT_CASES.md`'s Dependency C Disposition case family (Cases 18–22) — all
+re-read fresh, in full, before any edit, plus `gh pr view 24` to confirm PR state before editing.
 
 ## Validation
 
-- `npm test`: 83/83 (unaffected — no schema/test file touched).
+- `npm test`: 83/83 (unaffected — no schema/test file touched; independently re-run by Claude).
 - `git diff --check`: clean.
-- `git diff main --stat`: exactly the allowed files.
-- Three fresh independent read-only Codex reviewers (R-10/R-22/Redundancy Proof; Memory Authority/
-  Stage Boundary; C/D Separation/Cross-Document Consistency) — see `REVIEW_STATE.md`'s "Latest
-  Review" for findings and disposition.
-- Confirmed: Requirement Derivation's `Input:` remains `IntentSpec` only; current `MemoryContext`
-  consumers remain exactly Intent Parsing and Research Planning; Dependency D remains unimplemented
-  and its own material byte-unchanged; no Brain/runtime work.
+- `git status --short`: exactly the four allowed content files modified — confirmed directly by
+  Claude, not only from the implementing worker's self-report.
+- One fresh independent read-only Codex reviewer (C-Retirement/D-Separation Closure, 9-point
+  checklist) — see `REVIEW_STATE.md`'s "Latest Review" for findings and disposition; 9/9 PASS,
+  independently spot-checked by Claude against primary text.
+- Confirmed: retirement conclusion unchanged; R-10/R-22/R-23 byte-unchanged; accepted `IntentSpec`
+  Claims remain valid Requirement-Level Inference premises everywhere; Dependency D's own material
+  (`DECISION_OPTION` sections, Case 24) confirmed untouched and byte-identical; no schema/runtime/
+  Brain work.
 
 ## Next Gate
 
-Commit, push, and open one PR against `mihvernetwork/mihver:main`, title "docs: retire redundant
-Dependency C after Dependency B". Do not merge. Human review of that PR is the next gate; it
-authorizes only this disposition-recording documentation change — no new capability, no Dependency D
-work, no schema/runtime work.
+Commit and push this closure to existing PR #24. Do not open a new PR. Do not merge. Human review of
+PR #24 remains the next gate; it authorizes only this disposition-recording documentation change plus
+this narrow wording closure — no new capability, no Dependency D work, no schema/runtime work.

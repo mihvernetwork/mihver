@@ -767,9 +767,10 @@ Requirement-Level Inference's premise — as future work. After `ADR-0004`'s dep
 implemented (`INTENT_SPEC.md`'s "Memory-Derived Inference Premises"), that direct path was
 re-derived against this document's own R-10/R-22 text and found structurally incoherent, then
 retired rather than implemented — see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and
-R-23. The five cases below demonstrate the resulting disposition: historical-user memory reaches
-Requirement Derivation exclusively through an already-accepted `IntentSpec` Claim; a `MemoryContext`
-entry is never itself a Requirement-Level Inference premise, whether alone or alongside one.
+R-23. The five cases below demonstrate the resulting disposition: for Requirement-Level-Inference-
+premise standing, historical-user memory reaches Requirement Derivation exclusively through an
+already-accepted `IntentSpec` Claim; a `MemoryContext` entry is never itself such a premise, whether
+alone or alongside one.
 
 ## 18. Category A historical memory reaches Requirement Derivation via Dependency B
 
@@ -907,10 +908,12 @@ was ever legitimately available.
 **Eligibility:** The retry-obligation Requirement itself remains Complete — "retry automatically" is
 testable independent of any specific count, per R-21, so its absence does not block this
 Requirement's own satisfaction procedure. The retry-count/backoff-strategy detail is not itself
-derived as a Requirement at all; it remains an explicit, unfilled, carried-forward Unknown —
-Requirement Derivation may legitimately decline to fill an R-19-eligible gap from an illegitimate
-source rather than fabricate a value, per "LOW/MEDIUM Open Items and Conflicts That Survive Into
-This Stage."
+derived as a Requirement at all; retry count and backoff strategy simply remain unspecified and
+unconstrained by this `RequirementSpec` version. Their mere absence from the stated `IntentSpec`
+input does not manufacture a new `RequirementSpec` Open Item. If the consumed `IntentSpec` had
+explicitly contained a surviving LOW/MEDIUM Unknown about retry count or backoff strategy, ordinary
+R-19/R-21 rules would govern that existing Unknown; this case's stated input contains none, so
+nothing is carried forward here.
 
 ---
 

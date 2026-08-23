@@ -111,14 +111,14 @@ that produced it.
   normative strength except an already-accepted Claim or Requirement — a `MemoryContext` entry
   supplies none, and inventing one would be new normative-strength policy this ADR does not
   authorize; (2) the only memory class ever eligible for `SEMANTIC_PREMISE` (a Category A
-  historical-user statement) is, by definition, intent-shaped content — exactly what
-  `REQUIREMENT_SPEC.md`'s Requirement-Level Inference mechanism, and this ADR's own Phase 1 authority
-  map, already categorically forbid Requirement Derivation from inferring ("about technical
-  implications... never about intent"). Every semantically legitimate use of a Category A historical
-  statement is already fully mediated through dependency B: the memory becomes a current-run Inferred
-  Claim at Intent Parsing, and Requirement Derivation consumes that Claim under its own existing,
-  unmodified R-03/R-10/R-22 authority — no second, direct citation of the same historical memory adds
-  a distinct capability. A follow-up task
+  historical-user statement) is still raw, historical, unaccepted intent-shaped content until it
+  crosses Intent Parsing's current-run epistemic boundary. `REQUIREMENT_SPEC.md`'s Requirement-Level
+  Inference mechanism, and this ADR's own Phase 1 authority map, forbid Requirement Derivation from
+  performing that intent interpretation itself ("about technical implications... never about
+  intent"). Intent-derived origin is not itself disqualifying: once Intent Parsing accepts a
+  current-run Inferred Claim through dependency B, that Claim is a valid R-10 premise, and Requirement
+  Derivation consumes it under its own existing, unmodified R-03/R-10/R-22 authority. No second,
+  direct citation of the same raw historical memory adds a distinct capability. A follow-up task
   (`M0-DEPENDENCY-C-DISPOSITION`) formally recorded this retirement across `REQUIREMENT_SPEC.md`
   (new invariant R-23), `MEMORY_CONTEXT.md`, `M0_SCOPE.md`, and both case corpora — see
   `REQUIREMENT_SPEC.md`'s R-23 and "Requirement-Level Inference" section for the resulting explicit
