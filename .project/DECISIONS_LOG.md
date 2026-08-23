@@ -205,3 +205,42 @@ Entries above this line are unmodified, per this log's append-only policy.
   No schema, runtime, or `mihver-brain` change accompanied this merge — confirmed by direct read, not
   assumed. No prior entry in this log recorded an approval decision for this merge; this entry
   records only the independently-verified merge fact, not a reconstructed human quote.
+- 2026-08-23 — `M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE` / `DECISION-OPTION-SOURCE-GATE-
+  CLOSURE` (PR #26) merged to `main`: verified via
+  `gh pr view 26 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-23T08:49:07Z`) and `git log` confirming that squash commit's
+  presence in `main`'s ancestry — squash commit `a16491d41d93f4edac9378b6184de071aa681f32`. (This
+  reconciliation task's own HEAD at start was the later PR #27 merge commit
+  `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`, not PR #26's — see the PR #27 entry below; PR #26's own
+  merge fact was independently re-verified via `gh pr view`, not from a HEAD-at-start match.) Settled,
+  by explicit human decision, a prerequisite policy question for `ADR-0004` Dependency D: a
+  `MemoryContext` entry classified as a historical user statement — Category A or Category B — is
+  categorically ineligible for `DECISION_OPTION`. Established two independent, both-required gates:
+  R-19 content eligibility (Gate 1) and `MemoryContext` source eligibility (Gate 2). The existing
+  deterministic source-gate decision logic (`tests/contracts/validate-contracts.mjs`) was already
+  correct and remained unchanged; this PR only clarified/extended the surrounding diagnostic error-
+  message wording around that rule, confirmed by direct read of the merged files at this commit — not
+  every byte or message in the file was left untouched, only the decision logic itself. Contract
+  suite at this commit: **85/85**,
+  confirmed by running `npm test` directly against `main`. Dependency D itself remained
+  unimplemented at this checkpoint — confirmed by direct read, not assumed. No `mihver-brain` or
+  runtime integration accompanied this merge. No prior entry in this log recorded an approval
+  decision for this merge; this entry records only the independently-verified merge fact, not a
+  reconstructed human quote.
+- 2026-08-23 — `M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION` / `DEPENDENCY-D-FOUNDATION-AND-CORPUS-
+  CLOSURE` / `DEPENDENCY-D-FINAL-CROSSREF-HYGIENE` (PR #27) merged to `main`: verified via
+  `gh pr view 27 --repo mihvernetwork/mihver --json state,mergedAt,mergeCommit,title`
+  (`state: MERGED`, `mergedAt: 2026-08-23T10:26:17Z`) and `git log`/`git status` on `main` (`HEAD` at
+  this task's start matched the reported merge commit exactly) — squash commit
+  `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`. `ADR-0004` Dependency D was implemented: Requirement
+  Derivation became the third authorized `MemoryContext` consumer (`docs/foundation/M0_SCOPE.md`),
+  restricted to exactly `DECISION_OPTION`, confirmed by direct read of the merged files at this
+  commit. New invariant **R-24** (`docs/contracts/REQUIREMENT_SPEC.md`) requires an adopted value to
+  carry a distinct memory-informed-rationale citation of the stable `(memory_context_id, entry_id)`
+  identity, in addition to its own independent rationale; R-19 unchanged; Dependency C's retirement
+  and R-23 remain intact, unaffected; the historical A/B `DECISION_OPTION` source gate (PR #26
+  above) remains categorical and unweakened. `MemoryContext` is not, and does not become, Evidence.
+  No `RequirementSpec` schema or runtime change accompanied this merge — confirmed by direct read,
+  not assumed. Contract suite at this commit: **85/85**, confirmed by running `npm test` directly
+  against `main`. No prior entry in this log recorded an approval decision for this merge; this
+  entry records only the independently-verified merge fact, not a reconstructed human quote.

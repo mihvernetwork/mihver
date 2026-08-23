@@ -15,80 +15,102 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: DEPENDENCY-D-FINAL-CROSSREF-HYGIENE
-Branch: `m0/dependency-d-r19-memory-decision-option`
-PR: `mihvernetwork/mihver#27` — existing open PR, continued, not a new PR, not merged by this task
+Task: POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE
+Branch: `chore/post-dependency-d-reconcile`
+PR: `mihvernetwork/mihver#28` ("chore: reconcile state after Dependency D") — existing open PR,
+continued, not a new PR, not merged by this task
 
-A single-purpose cross-reference hygiene pass on top of PR #27's already-implemented, **approved**
-`ADR-0004` Dependency D. Does not reopen Dependency D semantics. Fixed the one named residual (a
-line-wrapped stale reference to the ADR's pre-rename section title in
-`docs/examples/MEMORY_CONTEXT_CASES.md`), then swept every file this PR has touched for the same
-stale phrase and fixed four further genuine live cross-references the sweep found.
+A tiny factual-hygiene closure on top of PR #28's already-approved durable-state reconciliation. No
+state/roadmap decision reopened. Fixed exactly one factual defect family in
+`.project/DECISIONS_LOG.md`'s PR #26 entry: a false claim that this branch's own HEAD-at-start
+matched PR #26's merge commit (`a16491d41d93f4edac9378b6184de071aa681f32`) — it actually matched the
+later PR #27 merge commit (`bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`), since the reconciliation
+covered both PRs together and this branch's own `main` base was taken after PR #27, not PR #26.
+Also made the "validator behavior unchanged" claim in that same entry precise: the deterministic
+source-gate decision logic was unchanged; only surrounding diagnostic error-message wording was
+clarified/extended by PR #26 — not every byte/message in the file. PR #27's own entry was
+independently re-verified correct (task-start HEAD genuinely equals PR #27's own merge SHA) and left
+untouched. No pre-existing `DECISIONS_LOG.md` entry above the PR #26 hunk touched; no third entry
+added; no entry recorded for this reconciliation PR's own future merge.
 
-**Named residual.** `docs/examples/MEMORY_CONTEXT_CASES.md` line ~67: `see ADR-0004's
-"Post-Acceptance Dependency B/C\nDisposition"` (line-wrapped) — corrected to "...B/C/D Disposition".
-
-**Sweep result.** A whitespace-tolerant sweep (line-joined text, not plain `grep -n`, to catch
-line-wrapped instances) of every file `git diff main --stat` reports as changed on this branch found
-four further genuine, live, stale cross-references — each individually read in context before
-editing to confirm it was a live pointer, not a historical quote of the pre-rename name:
-`docs/contracts/MEMORY_CONTEXT.md` (two instances, ~lines 12 and 484), `docs/contracts/
-REQUIREMENT_SPEC.md` (one, ~line 360, line-wrapped), `docs/examples/REQUIREMENT_CASES.md` (one,
-~line 769), `docs/foundation/M0_SCOPE.md` (one, ~line 364). All five now read "Post-Acceptance
-Dependency B/C/D Disposition"; every diff hunk touches only the section-name string itself.
-
-**Legitimately-preserved instances.** Three further "B/C Disposition" (no /D) occurrences —
-`.project/CURRENT_TASK.md` (one) and this file (two, from the prior closure task's own text) — were
-individually read and confirmed to be historical quotes describing the rename itself (e.g. "renamed
-'Post-Acceptance Dependency B/C Disposition' → '...B/C/D Disposition'"), not live cross-references;
-correctly left unchanged, since editing them would falsify the historical record of what the old
-name was.
-
-**Final re-sweep: zero remaining live/current references to the pre-rename heading anywhere in the
-PR's changed files.**
-
-## Allowed Scope
-
-`docs/examples/MEMORY_CONTEXT_CASES.md` (the named residual), plus — discovered necessary by this
-task's own required sweep, not pre-declared — `docs/contracts/MEMORY_CONTEXT.md`,
-`docs/contracts/REQUIREMENT_SPEC.md`, `docs/examples/REQUIREMENT_CASES.md`,
-`docs/foundation/M0_SCOPE.md` (cross-reference string only), plus this file and
-`.project/CURRENT_TASK.md`. Not modified: R-09/R-19/R-21/R-23/R-24 invariant text; `M0_SCOPE.md`'s
-stage/authorization semantics; ADR-0004's own semantics; any case content beyond the exact
-stale-phrase occurrences; `schemas/**`, `tests/**`, `scripts/**`, `package*.json`, `mihver-brain/**`,
-`.project/PROJECT_STATE.md`, `.project/DECISIONS_LOG.md`, `.project/CONTEXT_INDEX.md`, `ROADMAP.md`.
+**Verification:** `git diff .project/DECISIONS_LOG.md` shows exactly one hunk, scoped to the PR #26
+entry's text, independently confirmed by direct diff inspection (not merely asserted). `npm test`:
+85/85. `git diff --check`: clean. `git diff HEAD^ --stat`: `.project/DECISIONS_LOG.md`,
+`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` only.
 
 ## Required Changes
 
-None — this task's own required sweep is what surfaced the four additional fixes; no external
-reviewer was dispatched (single-purpose, mechanical, whitespace-tolerant-grep-verifiable string fix,
-not a semantic re-review).
+None — this was a self-contained, Claude-identified factual correction per explicit human
+instruction; no external reviewer dispatched for a single-paragraph factual-wording fix.
 
 ## Fixes Applied
 
-- `docs/examples/MEMORY_CONTEXT_CASES.md`: the named line-wrapped residual, fixed.
-- `docs/contracts/MEMORY_CONTEXT.md` (×2), `docs/contracts/REQUIREMENT_SPEC.md`,
-  `docs/examples/REQUIREMENT_CASES.md`, `docs/foundation/M0_SCOPE.md`: four further live
-  cross-references this task's own sweep found, each individually confirmed live (not historical)
-  before fixing.
-- `.project/CURRENT_TASK.md` and this file's own remaining "B/C Disposition" instances individually
-  confirmed to be historical quotes of the pre-rename name (describing the earlier rename itself),
-  correctly left unchanged.
-
-**Verification:** `git diff HEAD^ --` shows every hunk across all five content files touches only the
-section-name string; `git diff HEAD^ --stat` shows exactly the six changed files. `npm test`: 85/85.
-`git diff --check`: clean. A final whitespace-tolerant sweep of every PR-changed file confirms zero
-remaining live "Dependency B/C Disposition" (without /D) references anywhere.
+- `.project/DECISIONS_LOG.md`'s PR #26 entry: corrected the false HEAD-at-start claim (now correctly
+  attributes task-start HEAD to PR #27's merge commit, with an explanatory note); made the validator
+  claim precise (decision logic unchanged; diagnostic wording clarified/extended).
 
 **Final recommendation: `READY_FOR_HUMAN_REVIEW`.**
 
 ## Pending Human Gate
 
-Commit and push to the existing branch `m0/dependency-d-r19-memory-decision-option`, existing PR #27.
-Do not open a new PR. Not merged by this task. Human review of PR #27 (now including this hygiene
+Commit and push to the existing branch `chore/post-dependency-d-reconcile`, existing PR #28. Do not
+open a new PR. Not merged by this task. Human review of PR #28 (now including this fact-closure
 round) is the next gate.
 
 ## History
+
+- 2026-08-23 — `POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION` (PR #28, opened, not yet merged):
+  durable-state/navigation reconciliation only, after PR #26 (`DECISION_OPTION` historical-source
+  gate closure, squash commit `a16491d41d93f4edac9378b6184de071aa681f32`) and PR #27 (`ADR-0004`
+  Dependency D implementation, squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`) both merged
+  to `main`. No semantic redesign; Dependency D not reopened; PR #26's source-gate policy not
+  reopened; `RequirementSpec` Step 03B not begun; no contract/ADR/schema/validator/fixture/runtime/
+  `mihver-brain` file touched. Live reality verified before any edit (`main` HEAD `bb70a9e`, clean
+  tree, `npm test` 85/85, both PRs confirmed MERGED via `gh pr view`). `PROJECT_STATE.md`: added
+  durable checkpoints for both PR #26 (categorical historical-user Category A/B `DECISION_OPTION`
+  ineligibility; Gate 1/Gate 2 model) and PR #27 (Dependency D DONE; Requirement Derivation third
+  `MemoryContext` consumer, `DECISION_OPTION` only; zero independent authority; new invariant R-24);
+  fixed five stale historical-checkpoint forward pointers using the established "at the time of this
+  checkpoint... has since..." pattern; rewrote "Next Authorized Action" (Dependency D = DONE;
+  `RequirementSpec` Step 03B recorded as logical next, not authorized) and "Open Items" (`ADR-0003`
+  preserved Proposed). `DECISIONS_LOG.md`: appended two fact-only entries (PR #26, PR #27), no
+  existing entry edited. `ROADMAP.md`: added `10.12`/`10.13`, fixed section 10's stale D-pending
+  framing, Phase 9 rewritten for DONE status, Section 21 capability map updated to 85/85 with full
+  current snapshot, Section 22 near-term order renumbered with Step 03B as NEXT-not-authorized.
+  `.project/CONTEXT_INDEX.md` read only, left unchanged — no navigation gap found. One fresh
+  lightweight read-only Codex reviewer (POST-DEPENDENCY-D STATE CONSISTENCY, 15-point checklist):
+  14/15 PASS, one confirmed finding (two unqualified present-tense-readable D-pending sentences in
+  `ROADMAP.md`'s 10.9/10.10, missed by the initial pass despite equivalent sentences elsewhere
+  already fixed), independently re-verified and fixed; a follow-up whitespace-tolerant sweep
+  confirmed zero remaining instances. `npm test`: 85/85. Verdict: `READY_FOR_HUMAN_REVIEW`. PR #28
+  opened (title "chore: reconcile state after Dependency D") — not merged. A follow-up task,
+  `POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE`, subsequently fixed one factual defect family in
+  `DECISIONS_LOG.md`'s PR #26 entry an explicit human instruction identified (a false HEAD-at-start
+  claim; imprecise validator wording), on the same branch/PR, before any human merge decision. Moved
+  here from "Latest Review" now that those sections describe
+  `POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE` instead, per this file's branch/task scoping — both
+  entries share branch `chore/post-dependency-d-reconcile` and PR #28, since the fact-closure round
+  was a continuation on the same open PR, not a new branch. — branch
+  `chore/post-dependency-d-reconcile`
+
+- 2026-08-23 — `DEPENDENCY-D-FINAL-CROSSREF-HYGIENE` (PR #27, merged, squash commit
+  `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`): a single-purpose cross-reference hygiene pass on top of
+  PR #27's already-implemented, approved `ADR-0004` Dependency D. Does not reopen Dependency D
+  semantics. Fixed the one named residual (a line-wrapped stale reference to the ADR's pre-rename
+  section title in `docs/examples/MEMORY_CONTEXT_CASES.md`), then swept every file this PR had touched
+  for the same stale phrase and fixed four further genuine live cross-references the sweep found
+  (`docs/contracts/MEMORY_CONTEXT.md` ×2, `docs/contracts/REQUIREMENT_SPEC.md`,
+  `docs/examples/REQUIREMENT_CASES.md`, `docs/foundation/M0_SCOPE.md`) — all pure string corrections,
+  no semantic content changed. Three further "B/C Disposition" (no /D) occurrences in
+  `.project/CURRENT_TASK.md`/this file were individually confirmed to be historical quotes of the
+  pre-rename name and correctly left unchanged. `npm test`: 85/85. Verdict: `READY_FOR_HUMAN_REVIEW`.
+  PR #27 subsequently merged to `main` (squash commit `bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`,
+  verified via `gh pr view 27`) — that merge event, together with PR #26's, is recorded in
+  `.project/DECISIONS_LOG.md` by the present task. Moved here from "Latest Review" now that those
+  sections describe `POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION` instead, per this file's
+  branch/task scoping — this is the first entry on a new branch, since this task's own round is
+  self-contained on `chore/post-dependency-d-reconcile`. — branch
+  `m0/dependency-d-r19-memory-decision-option`
 
 - 2026-08-23 — `DEPENDENCY-D-FOUNDATION-AND-CORPUS-CLOSURE` (PR #27, opened, not yet merged): a narrow
   closure pass on top of PR #27's already-implemented, approved `ADR-0004` Dependency D — Gate 1/Gate
