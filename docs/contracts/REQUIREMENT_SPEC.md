@@ -325,6 +325,58 @@ actually entail it (see "Requirement Identity and Versioning"'s re-derivation tr
 name this case). Requirement Derivation may instead record it as settled only on the same basis
 described for Inferred Claims: stating why continued reconsideration isn't warranted, not by silence.
 
+### `MemoryContext` Is Not a Requirement-Level Inference Premise
+
+A Requirement-Derivation-level inference's premise is, and remains, exactly what R-10 already
+states: **an accepted `IntentSpec` Claim, or an already-derived Requirement** — never a
+`MemoryContext` entry, directly. This is stated explicitly here because `ADR-0004` originally named a
+direct `MemoryContext` premise at this mechanism as a future dependency ("dependency C"); after
+`ADR-0004`'s dependency B was implemented (`INTENT_SPEC.md`'s "Memory-Derived Inference Premises"),
+that direct path was re-derived against this section's own text and R-22's strength model, found
+structurally incoherent, and retired rather than implemented — see `ADR-0004`'s "Post-Acceptance
+Dependency B/C Disposition" for the full reasoning. Two independent reasons, either sufficient alone:
+
+- **No source of normative strength.** R-22's strength model has exactly one source: "the Requirement
+  or Claim it derives from." A `MemoryContext` entry is not a Claim and not a Requirement and carries
+  no normative authority of its own (`MEMORY_CONTEXT.md`'s Purpose section) — there is nothing for
+  R-22 to inherit strength from. Inventing a substitute strength source (from a historical
+  statement's own force, from Brain's author-supplied confidence, or from any other property of the
+  memory record) is not a narrower reading of R-22 — it is new normative-strength policy, exactly what
+  "Historical Force Is Not Current Force" (`MEMORY_CONTEXT.md`'s M-20) already forbids one layer
+  earlier and this section extends to the Requirement layer.
+- **Requirement-Level Inference is never about intent.** The only `MemoryContext` entry class that can
+  ever reach `SEMANTIC_PREMISE` standing at all is a **Category A historical-user statement**
+  (`MEMORY_CONTEXT.md`'s Historical User Provenance Gate and Influence Taxonomy) — by definition, a
+  record of what the user said or wanted in a past run. That is exactly the kind of content this
+  section's own operational test already excludes: a Requirement-Level Inference may draw conclusions
+  only "about the technical or operational implications of an already-accepted Claim or Requirement,
+  never about what the user meant, which remains frozen to Intent Parsing." A `MemoryContext` entry
+  cannot be a legitimate premise here for the same reason a fresh, un-vetted user statement couldn't
+  be: both are intent-shaped content Requirement Derivation has no authority to incorporate directly,
+  regardless of how it arrived.
+
+**The legitimate path for historical-user memory to affect a Requirement already exists, unchanged:**
+a qualified Category A `MemoryContext` entry becomes a current-run Inferred Claim at Intent Parsing
+(`ADR-0004` dependency B), and Requirement Derivation then consumes that accepted Claim exactly as it
+already consumes any other Inferred Claim — an ordinary Requirement compiled from it (R-03), or a
+further Requirement-Level Inference drawing a technical implication from it (this section, premise =
+the Claim, strength inherited from the Claim's own force, no new policy required). No second, direct
+citation of the same historical memory at the Requirement level is needed or authorized merely because
+the underlying record can be found again — see R-23.
+
+**Non-historical technical memory (`pattern`/`incident`/`reference`) is excluded for an entirely
+separate reason: memory is never Evidence.** Such an entry never reaches `SEMANTIC_PREMISE` at all,
+"regardless of re-verification" (`MEMORY_CONTEXT.md`'s Identity Boundary) — only a wholly new,
+independently-produced Evidence/`TechnologyCandidateSet` artifact can. A cached technical record is
+therefore no more eligible as a Requirement-Level Inference premise than a historical user statement
+is, for a different, independent reason.
+
+This does not authorize Requirement Derivation to consume `MemoryContext` at all — `M0_SCOPE.md`'s
+"Stage: Requirement Derivation" declares only `IntentSpec` as its input, and this section does not
+change that. It exists solely to make explicit, and permanently close, the direct-premise path
+`ADR-0004`'s dependency C once named, so that path is never silently reopened by treating "the memory
+can be cited too" as a plausible reading of R-10.
+
 ## Force → Requirement Strength Mapping
 
 `INTENT_SPEC.md`'s force axis (obligation / prohibition / permission / preference, with strength for
@@ -881,6 +933,13 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
   under every materially plausible reading. It carries no `derivation_confidence` of its own (that
   field belongs to `IntentSpec` Inferences) and is marked provisional/reversible by default, unless
   Requirement Derivation states why continued reconsideration isn't warranted.
+- **R-23** A Requirement-Derivation-level inference's premise is only an accepted `IntentSpec` Claim
+  or an already-derived Requirement — never a `MemoryContext` entry, directly, regardless of the
+  entry's own classification or category. Historical-user semantic content that legitimately affects
+  a Requirement must first become a current-run Inferred Claim through `ADR-0004` dependency B (Intent
+  Parsing); Requirement Derivation then draws on that accepted Claim under its own ordinary R-03/R-10
+  authority, never on the `MemoryContext` entry a second time. Technical memory
+  (`pattern`/`incident`/`reference`) remains excluded independently, because memory is never Evidence.
 
 ## Examples
 
@@ -938,3 +997,9 @@ Parsing pass, per R-20). Resolving one of the two never automatically resolves o
 - Treating a user-named technology's presence as an endorsement of its technical fit for the stated
   goal, or omitting a competing named technology because Requirement Derivation judges it
   "obviously" the wrong choice. (Violates R-11.)
+- Citing a Category A `MemoryContext` entry directly as the premise of a Requirement-Level Inference
+  ("the system SHOULD use PostgreSQL, per a historical `MemoryContext` entry"), rather than via an
+  already-accepted `IntentSpec` Claim that entry produced through Intent Parsing's own dependency-B
+  path. (Violates R-23.) Equally a violation: deriving that Requirement's strength from the memory
+  entry's own Brain confidence or the historical statement's own force, rather than from an accepted
+  Claim's force. (Violates R-22/R-23 together.)

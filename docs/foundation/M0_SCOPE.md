@@ -185,11 +185,14 @@ as anything other than an optional, additional input whose absence degrades grac
 This boundary is a declared, cross-cutting compiler boundary, not undeclared stage-internal state:
 `RunContext` and MIHVER Brain are never named in any stage's declared `Input:` list, in this
 document or any future one — a stage's only possible path to memory content is a `MemoryContext`
-its own `Input:` list explicitly declares (currently, only Research Planning declares one — see
-below). No stage may query Brain directly, and no stage may treat a `MemoryContext` it was not
-explicitly authorized to consume as an implicit input. This preserves Principle 3 (Structured Artifacts Between
-Stages, [PRINCIPLES](./PRINCIPLES.md)) exactly as already stated — applied to a boundary that did
-not exist when that principle, or this document, was first written.
+its own `Input:` list explicitly declares (currently, Research Planning and Intent Parsing each
+declare one — see below; Requirement Derivation does not, and its own `MemoryContext` consumer
+authorization remains a separate, not-yet-authorized future task, distinct from and not implied by
+either existing consumer's own authorization). No stage may query Brain directly, and no stage may
+treat a `MemoryContext` it was not explicitly authorized to consume as an implicit input. This
+preserves Principle 3 (Structured Artifacts Between Stages, [PRINCIPLES](./PRINCIPLES.md)) exactly
+as already stated — applied to a boundary that did not exist when that principle, or this document,
+was first written.
 
 ### Stage: Intent Parsing
 
@@ -322,11 +325,16 @@ this document is separately amended again to declare it for that specific stage.
 This document, together with Intent Parsing's own amendment above, authorizes exactly one
 `MemoryContext`-premise path: citing a qualified Category A `MemoryContext` entry as the premise of
 a current-run Inferred Claim in `IntentSpec`, per `INTENT_SPEC.md`'s own Inference Policy amendment
-(`ADR-0004`'s dependency B). It does **not** authorize a Requirement-Level Inference premise or a
-memory-informed R-19 default — each of those remains gated behind its own separate, narrower
-amendment to `REQUIREMENT_SPEC.md` (`ADR-0004`'s dependencies C and D respectively), neither
-performed nor pre-authorized here. `REQUIREMENT_SPEC.md` is unchanged by this document, and
-Requirement Derivation remains unauthorized to consume `MemoryContext` at all.
+(`ADR-0004`'s dependency B). It does **not** authorize a direct Requirement-Level Inference premise —
+that path (`ADR-0004`'s originally-named dependency C) was re-derived after dependency B landed,
+found structurally incoherent against `REQUIREMENT_SPEC.md`'s own R-10/R-22/R-23, and **retired
+rather than implemented**; no `REQUIREMENT_SPEC.md` amendment for it is pending or intended (see
+`ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s R-23). A
+memory-informed R-19 default remains gated behind its own separate, narrower, still-pending
+`REQUIREMENT_SPEC.md` amendment (`ADR-0004`'s dependency D), unaffected by dependency C's retirement.
+This document does not amend `REQUIREMENT_SPEC.md` (that document's own R-23 makes the retired path
+explicit, on its own authority); Requirement Derivation remains unauthorized to consume
+`MemoryContext` at all — its `Input:` list above stays `IntentSpec` only.
 
 ### Cross-Cutting: Stage Failure and Revision
 

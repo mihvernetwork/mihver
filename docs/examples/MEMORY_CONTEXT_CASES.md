@@ -5,11 +5,14 @@ A worked-example corpus for [MEMORY_CONTEXT](../contracts/MEMORY_CONTEXT.md) and
 [REQUIREMENT_CASES](./REQUIREMENT_CASES.md) plays for
 [REQUIREMENT_SPEC](../contracts/REQUIREMENT_SPEC.md). Each case assumes a `MemoryContext` has
 already been produced by the dedicated retrieval boundary `ADR-0004` designs — **not** a stage
-querying Brain directly, which is never legitimate under this model (M-15). No stage is currently
-authorized to consume `MemoryContext` at all (see "Stage Consumption Is Not Yet Authorized" in
-`MEMORY_CONTEXT.md`); these cases describe what *would* be correct once a specific stage's
-`M0_SCOPE.md` input list is amended to declare it, and are written now so that amendment has a
-tested semantic target to implement against.
+querying Brain directly, which is never legitimate under this model (M-15). **Current status:**
+Intent Parsing and Research Planning are the two stages currently authorized to consume
+`MemoryContext` (see "Stage Consumption Authorization" in `MEMORY_CONTEXT.md`) — Intent Parsing at
+`DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE`, Research Planning at `DISCOVERY_ATTENTION` only. Every
+other stage named below, including Requirement Derivation, remains unauthorized; a case naming an
+unauthorized stage describes what *would* be correct only once that stage's own separate
+`M0_SCOPE.md` amendment is authorized, and is written now so any future such amendment has a tested
+semantic target to implement against.
 
 Brain memory types referenced below (`project`, `decision`, `lesson`, `incident`, `pattern`,
 `playbook`, `reference`, `inbox`) are the actual eight types `../mihver-brain` supports, verified
@@ -38,20 +41,29 @@ clarification question, informing retrieval) under every circumstance, regardles
 Where a case's outcome does not depend on the distinction (the memory is excluded or never cited as a
 premise regardless of category), this is stated explicitly rather than left ambiguous.
 
-**Read every "Allowed use" and "Expected stage behavior" line below as implicitly prefixed by "once
-that specific stage is separately authorized to consume `MemoryContext` (not yet performed)."** This
-applies uniformly to every case and every stage named in it — Intent Parsing, Research Planning,
-Research + Evidence Collection, Technology Candidate Identification, Architecture Synthesis,
-Requirement Derivation, and Evaluation alike — with no exceptions and no case-by-case re-statement
-needed; this is **dependency A** in `ADR-0004`'s "Acceptance Gate" (the core `M0_SCOPE.md` amendment:
-`RunContext`, the producer's own contract, and that stage's declared input). Three narrower paths
-require a separate, additional amendment on top of dependency A, and are read as further conditioned
-on it wherever a case describes them: citing a `MemoryContext` entry as the premise of an Inferred
-Claim requires **dependency B** (`INTENT_SPEC.md`); citing one as a Requirement-Level Inference's
-premise requires **dependency C** (`REQUIREMENT_SPEC.md`); a memory-informed R-19 default's
-"memory-informed rationale" citation requires **dependency D** (`REQUIREMENT_SPEC.md`, narrower than
-and separate from dependency C) — see `ADR-0004`'s Phase 11/"Acceptance Gate" for the precise mapping.
-No case in this corpus authorizes any consumption today.
+**Read every "Allowed use" and "Expected stage behavior" line below naming a stage other than Intent
+Parsing or Research Planning as implicitly prefixed by "once that specific stage is separately
+authorized to consume `MemoryContext` (not yet performed)."** This applies to Research + Evidence
+Collection, Technology Candidate Identification, Architecture Synthesis, Requirement Derivation, and
+Evaluation alike — with no exceptions and no case-by-case re-statement needed; each such stage's own
+authorization is **dependency A** in `ADR-0004`'s "Acceptance Gate" (the core `M0_SCOPE.md`
+amendment: `RunContext`, the producer's own contract, and that stage's declared input), performed
+separately per stage — already completed for Intent Parsing and Research Planning, not yet performed
+for any other stage. Two further, narrower paths require a separate, additional amendment on top of
+a stage's own dependency A, and are read as further conditioned on it wherever a case describes
+them: citing a `MemoryContext` entry as the premise of an Inferred Claim requires **dependency B**
+(`INTENT_SPEC.md`) — **implemented**, for Intent Parsing; a memory-informed R-19 default's
+"memory-informed rationale" citation requires **dependency D** (`REQUIREMENT_SPEC.md`) — not yet
+performed. **Dependency C** (citing a `MemoryContext` entry directly as a Requirement-Level
+Inference's premise) was re-derived after dependency B landed and found redundant/incoherent against
+`REQUIREMENT_SPEC.md`'s own R-10/R-22 semantics — it is **retired**, not a pending future capability;
+no case below should be read as describing a future direct Requirement-level `MemoryContext`
+premise. Where a case shows historical-user memory legitimately affecting a Requirement, the correct
+path is `MemoryContext` → Intent Parsing (dependency B) → a current-run Inferred Claim → Requirement
+Derivation consuming that Claim under its own existing, unmodified authority (R-03/R-10/R-22/R-23) —
+see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and `REQUIREMENT_SPEC.md`'s R-23 for
+the precise mapping. No case in this corpus authorizes any consumption today for a stage not
+already separately authorized on `main`.
 
 ---
 
@@ -90,8 +102,8 @@ originating turn (M-18), and separately states the reasoning basis for the Claim
 would be, but the same independent-reasoning discipline still applies); the historical origin is
 never compressed into looking like a current-run statement.
 
-**Expected stage behavior:** Intent Parsing (once authorized) may use this; it never mints a
-User-Provided Claim from it directly.
+**Expected stage behavior:** Intent Parsing may use this; it never mints a User-Provided Claim from
+it directly.
 
 ---
 
@@ -203,8 +215,8 @@ confidence or promotes the Claim toward User-Provided standing. (Violates M-07, 
 must be justified independently of the *count* of corroborating memories — a stated reasoning basis
 is required regardless of how many times the same preference was previously recorded.
 
-**Expected stage behavior:** Intent Parsing (once authorized) must apply the same confidence
-discipline whether one or many historical statements are retrieved.
+**Expected stage behavior:** Intent Parsing must apply the same confidence discipline whether one or
+many historical statements are retrieved.
 
 ---
 
@@ -622,12 +634,12 @@ Decision Impact item (tunes a detail, doesn't change the shape of the solution).
 
 **Allowed use:** May defensibly reduce a repeated question — but only via the Inferred-Claim path at
 Intent Parsing ("weekly cadence, Inference-derived from a historical statement, moderate confidence,
-provisional"), pending dependency B (the separate `INTENT_SPEC.md` Inference-premise amendment, in
-addition to Intent Parsing's own dependency-A authorization — see "Historical User Memory Rule" and
-`ADR-0004`'s "Acceptance Gate") and available here only because the entry is Category A (a Category B
-entry could only shape the clarification question below, never serve as this premise), or via a
-current-run clarification question shaped by the memory — available to either category, and needing
-only dependency A. **Not** via Requirement Derivation's R-19
+provisional"), available under dependency B (the separate `INTENT_SPEC.md` Inference-premise
+amendment, implemented in addition to Intent Parsing's own dependency-A authorization — see
+"Historical User Memory Rule" and `ADR-0004`'s "Acceptance Gate") and available here only because the
+entry is Category A (a Category B entry could only shape the clarification question below, never
+serve as this premise), or via a current-run clarification question shaped by the memory — available
+to either category, and needing only dependency A. **Not** via Requirement Derivation's R-19
 default-filling mechanism: an earlier draft of this case offered "Requirement-Derivation-introduced
 default" as an equally valid alternative, which was itself a defect, corrected on independent review
 — *which cadence the user prefers* is a question about what the user wants, not a measurement or
@@ -738,8 +750,9 @@ question, which would sidestep the tension this case is designed to test, not re
 
 **Allowed use:** Both may be retrieved and cited, separately, as premises for two separate candidate
 Inferred Claims (a cost-sensitivity preference and a reliability preference) — this premise-citation
-path additionally requires dependency B (the separate `INTENT_SPEC.md` Inference-premise amendment,
-per `ADR-0004`'s "Acceptance Gate"); dependency A alone does not enable it. `MemoryContext`
+path is available under dependency B (the separate `INTENT_SPEC.md` Inference-premise amendment,
+implemented per `ADR-0004`'s "Acceptance Gate"); dependency A alone would not enable it on its own.
+`MemoryContext`
 production does not resolve which one "wins"; that is not its authority any more than `IntentSpec`'s
 own Conflict Policy authorizes Intent Parsing to silently pick a side between two genuinely
 conflicting User-Provided Claims.
@@ -912,9 +925,9 @@ provenance — the independent reasoning basis for the Claim's *own* current for
 sentence, never collapsed into "cites memory entry X" alone. An auditor must be able to tell, from the
 provenance alone, whether the current force was actually reasoned about or merely inherited.
 
-**Expected stage behavior:** Intent Parsing (once authorized) states an explicit force-derivation step
-for this Inferred Claim, exactly as it would for confidence or provisional marking; no stage compiles
-a Requirement's normative strength from this Claim without that explicit step having been recorded
+**Expected stage behavior:** Intent Parsing states an explicit force-derivation step for this
+Inferred Claim, exactly as it would for confidence or provisional marking; no stage compiles a
+Requirement's normative strength from this Claim without that explicit step having been recorded
 first.
 
 ---

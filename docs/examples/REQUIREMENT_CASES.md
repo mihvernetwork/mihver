@@ -757,3 +757,196 @@ no fabricated provenance is needed or permitted to justify it.
 structure inconsistent with `INTENT_SPEC.md`'s own invariants — not merely thin or entirely
 descriptive. This case's Claims are well-formed and exhaustively accounted for; there is no structural
 defect to trigger Failed, however little normative content the input happened to contain.)
+
+---
+
+## Dependency C Disposition: `MemoryContext` Is Not a Requirement-Level Premise
+
+`ADR-0004` originally named "dependency C" — citing a `MemoryContext` entry directly as a
+Requirement-Level Inference's premise — as future work. After `ADR-0004`'s dependency B was
+implemented (`INTENT_SPEC.md`'s "Memory-Derived Inference Premises"), that direct path was
+re-derived against this document's own R-10/R-22 text and found structurally incoherent, then
+retired rather than implemented — see `ADR-0004`'s "Post-Acceptance Dependency B/C Disposition" and
+R-23. The five cases below demonstrate the resulting disposition: historical-user memory reaches
+Requirement Derivation exclusively through an already-accepted `IntentSpec` Claim; a `MemoryContext`
+entry is never itself a Requirement-Level Inference premise, whether alone or alongside one.
+
+## 18. Category A historical memory reaches Requirement Derivation via Dependency B
+
+**Memory input:** `decision`, project-scoped, **Category A (direct)** — the record's body
+inspectably cites the specific past `UserIdea` version/turn it quotes: "`UserIdea` v1, turn 3: 'we
+decided against a message queue for v1, the team isn't familiar with one.'"
+
+**Source IntentSpec semantics:** No current-run statement about message queues. Per `ADR-0004`
+dependency B, Intent Parsing cited this Category A entry directly as the premise of a current-run
+Inferred Claim: "the system SHOULD avoid introducing a message queue for this phase" — origin
+Inferred, moderate `derivation_confidence`, provisional/reversible, premise = the `MemoryContext`
+entry, per `INTENT_SPEC.md`'s "Memory-Derived Inference Premises."
+
+**Defensible RequirementSpec result:** Requirement Derivation compiles this Inferred Claim exactly as
+it would any other Inferred Claim: "the system SHOULD avoid introducing a message queue for this
+phase" (preference → SHOULD, per "Force → Requirement Strength Mapping"), marked Inference-derived,
+provisional, with the Claim's own confidence recorded in provenance (per "Treatment of Claim
+Origin"). Requirement Derivation reads only the accepted `IntentSpec` Claim — it never re-reads the
+`MemoryContext` entry the Claim itself cites, and has no declared input through which it could.
+
+**Prohibited transformations:** Requirement Derivation re-deriving the Requirement's strength from
+the memory entry's own historical force or Brain confidence instead of the Inferred Claim's own
+force (violates R-22/R-23, and, one stage earlier, M-20); treating this Requirement as though it
+traced to a User-Provided Claim.
+
+**Provenance expectations:** The Requirement's provenance traces to the Inferred Claim in the
+consumed `IntentSpec` version, exactly as R-01 already requires — no separate `MemoryContext`
+citation appears at the Requirement level; the memory's own provenance remains entirely inside the
+cited Claim's own `IntentSpec`-level record.
+
+**Eligibility:** Complete for this Requirement (assuming no other surviving Ambiguity/Conflict blocks
+it) — an ordinary Inferred-Claim-derived Requirement; nothing about its memory origin changes its
+Completeness test.
+
+---
+
+## 19. Attempted direct `MemoryContext` citation as a Requirement-Level Inference premise — forbidden
+
+**Memory input:** The same Category A entry as Case 18, still admitted in a `MemoryContext` produced
+for Intent Parsing.
+
+**Source IntentSpec semantics:** Same as Case 18 — the memory already produced an Inferred Claim at
+Intent Parsing. Requirement Derivation additionally attempts to cite the `MemoryContext` entry
+itself, directly, as the premise of a Requirement-Level Inference ("the system SHOULD avoid a
+message queue," premise = the entry's `(memory_context_id, entry_id)`, not the Inferred Claim).
+
+**Defensible RequirementSpec result:** None — this is not a defensible construction. Requirement
+Derivation has no declared `MemoryContext` input at all (`M0_SCOPE.md`'s "Stage: Requirement
+Derivation"), and even setting authorization aside, R-23 forecloses it directly: a Requirement-Level
+Inference's premise is only an accepted `IntentSpec` Claim or an already-derived Requirement, never a
+`MemoryContext` entry.
+
+**Prohibited transformations:** Citing `(memory_context_id, entry_id)` directly as a
+Requirement-Level Inference's premise; assigning this Requirement's strength from the memory entry's
+own classification (Category A standing, Brain confidence) rather than from an accepted
+Claim/Requirement's force — R-22 has no such source to draw from at all.
+
+**Provenance expectations:** Not applicable — this construction is out of bounds before any
+provenance question is reached; the legitimate path is Case 18's, unchanged.
+
+**Eligibility:** Not applicable — not a valid Requirement-Level Inference under R-10/R-23.
+
+---
+
+## 20. Same historical statement, Dependency-B Claim plus proposed direct citation — no double-counting
+
+**Memory input:** The same Category A entry as Case 18.
+
+**Source IntentSpec semantics:** The accepted `IntentSpec` already contains the Inferred Claim from
+Case 18, citing the `MemoryContext` entry as its premise. Requirement Derivation, while deriving a
+further Requirement-Level Inference about a technical implication of that same Claim ("therefore the
+system SHOULD NOT provision a dedicated message-broker service — e.g. a managed queue, pub/sub
+topic, or broker cluster — for this phase's inter-component job dispatch," a direct specialization
+of "avoid introducing a message queue" that holds under every materially plausible reading of the
+Claim, unlike a looser technical guess such as "prefer synchronous over asynchronous dispatch" would),
+considers whether to also cite the original `MemoryContext` entry a second time, directly, "for extra
+support," alongside the Claim.
+
+**Defensible RequirementSpec result:** The Requirement-Level Inference's premise is the accepted
+Inferred Claim alone, exactly as R-10/R-23 require. The `MemoryContext` entry is not cited a second
+time at this layer — its influence on the current run is already, fully, and exclusively recorded in
+the Claim's own provenance from Case 18. Citing it again here would not add support (the new
+Requirement's strength is inherited from the Claim's own force alone, per R-22) — it would only
+duplicate provenance for no epistemic gain.
+
+**Prohibited transformations:** Adding a second, direct `MemoryContext` citation to the
+Requirement-Level Inference's provenance "since the same record is available"; treating the double
+citation as though it corroborated or strengthened the inference — Requirement-Level Inference
+strength is inherited from the Claim alone (R-22), never additive across premises, and R-18's
+no-repetition-bonus rule applies with equal force to citing the same memory twice through two
+different routes.
+
+**Provenance expectations:** One provenance chain only: Requirement → Requirement-Level Inference
+premise (the accepted Claim) → that Claim's own `IntentSpec`-level provenance (the `MemoryContext`
+entry, Category A, originating `UserIdea` turn). An auditor following this chain reaches the
+historical statement exactly once, never twice.
+
+**Eligibility:** Complete for this Requirement, on the same basis as Case 18 — the double-citation
+question affects provenance discipline only, not Completeness.
+
+---
+
+## 21. Technical memory (`pattern`/`reference`) cannot support a Requirement — memory is not Evidence
+
+**Memory input:** `pattern`-type record, project-scoped, "a prior requirement in this project used
+exponential backoff with 3 retries for background job failures, and this worked well" (medium
+confidence, active) — not a historical user statement; the Historical User Provenance Gate does not
+even apply.
+
+**Source IntentSpec semantics:** Accepted `IntentSpec` contains a User-Provided Claim: "the system
+MUST retry a failed background job automatically" (obligation). Requirement Derivation is deriving a
+Requirement-Level Inference about the retry mechanism's technical shape and considers citing the
+`pattern` memory directly as support for "the system SHALL use exponential backoff with 3 retry
+attempts."
+
+**Defensible RequirementSpec result:** The `pattern` entry can never reach `SEMANTIC_PREMISE`
+standing, "regardless of re-verification" (`MEMORY_CONTEXT.md`'s Identity Boundary) — it is excluded
+as a Requirement-Level Inference premise on this basis alone, independent of R-23's own Claim-only
+rule. Requirement Derivation compiles only the retry-obligation Requirement itself ("the system MUST
+retry a failed background job automatically") from the accepted Claim; it does not derive a separate
+"3 retries, exponential backoff" Requirement at all, since nothing with genuine current authority —
+no explicit technical Claim in the accepted `IntentSpec` — supports that specific value, and the
+`pattern` memory cannot supply one directly.
+
+**Prohibited transformations:** Compiling "the system SHALL use exponential backoff with 3 retries"
+directly from the `pattern` memory, presented as though it were established technical fact; treating
+"it worked well before" as itself sufficient justification for a current Requirement's content —
+exactly the cached-evidence-laundering failure `MEMORY_CONTEXT.md`'s Common Violations names, one
+layer up.
+
+**Provenance expectations:** The retry-obligation Requirement's provenance traces to the accepted
+Claim alone, exactly as R-01 requires; no `MemoryContext` citation appears anywhere in it, since none
+was ever legitimately available.
+
+**Eligibility:** The retry-obligation Requirement itself remains Complete — "retry automatically" is
+testable independent of any specific count, per R-21, so its absence does not block this
+Requirement's own satisfaction procedure. The retry-count/backoff-strategy detail is not itself
+derived as a Requirement at all; it remains an explicit, unfilled, carried-forward Unknown —
+Requirement Derivation may legitimately decline to fill an R-19-eligible gap from an illegitimate
+source rather than fabricate a value, per "LOW/MEDIUM Open Items and Conflicts That Survive Into
+This Stage."
+
+---
+
+## 22. Historical obligation/prohibition exists only in memory — no direct MUST/MUST NOT manufacture
+
+**Memory input:** `decision`, project-scoped, **Category A** (direct, inspectable citation to its
+originating `UserIdea` turn), "user said (`UserIdea` v1, turn 6): 'the system must never auto-delete
+a customer's data without explicit confirmation.'" — a historical prohibition.
+
+**Source IntentSpec semantics:** The current-run `IntentSpec` contains no Claim about auto-deletion
+at all — Intent Parsing has not (in this version) cited this memory entry as an Inferred Claim
+premise.
+
+**Defensible RequirementSpec result:** Requirement Derivation has nothing to compile here — there is
+no accepted Claim or Requirement in the consumed `IntentSpec` bearing on auto-deletion, and it has no
+authority to reach into `MemoryContext` itself (it has none) to manufacture one. If this historical
+prohibition is to affect the current run's Requirements at all, it must first become a current-run
+Inferred Claim through Intent Parsing's own dependency-B path — with its own required independent
+force-reasoning, per M-20 and `INTENT_SPEC.md`'s "Memory-Derived Inference Premises" (the historical
+prohibition's own force does not automatically become the new Claim's force either) — only then does
+Requirement Derivation have anything to compile from.
+
+**Prohibited transformations:** Requirement Derivation directly compiling "the system MUST NOT
+auto-delete customer data without explicit confirmation" from the memory entry, reasoning that a
+historical MUST NOT is "obviously still true" — this fabricates a Requirement from a source
+Requirement Derivation has no declared input to at all, and even setting authorization aside, would
+inherit force directly from a historical statement: exactly what M-20 forbids one layer earlier, and
+what R-22/R-23 foreclose here (there is no accepted Claim's force to inherit from in the first
+place).
+
+**Provenance expectations:** No Requirement exists yet to have provenance. If a later `IntentSpec`
+version cites this memory as an Inferred Claim premise (Category A, per dependency B), *that*
+Claim's own provenance carries the historical citation and its independently-reasoned current force
+— Requirement Derivation then compiles from that Claim exactly as in Case 18, never from the memory
+directly.
+
+**Eligibility:** Not applicable — this `RequirementSpec` version, on this input, is Complete with
+respect to auto-deletion simply because nothing in the consumed `IntentSpec` raises it; there is no
+gap to mark Partial, because there is no Claim, Open Item, or Requirement candidate here at all.
