@@ -11,7 +11,7 @@
     "retrieval_purpose": "r19-eligible-default-candidate",
     "retrieval_query": "prior retry/backoff notes for this project",
     "retrieval_time": "2026-08-23T09:30:00Z",
-    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "upstream_artifact_binding": { "artifact_type": "intent_spec", "artifact_id": "intent-support-inbox-v1", "version": 1 },
     "retrieval_outcome": "admitted",
     "admitted_entries": [
       {

@@ -5,29 +5,73 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE
+DECISION-OPTION-SOURCE-GATE-CLOSURE
 
 ## Objective
 
-Resolve, by explicit human decision, the pre-Dependency-D `MemoryContext` internal contradiction a
-prior task (`M0-DEPENDENCY-D-R19-MEMORY-DECISION-OPTION`) surfaced and stopped on
-(`MEMORY_CONTEXT_MACHINE_CONTRACT_GAP`): whether a `MemoryContext` entry classified as a historical
-user statement (Category A or B) may ever be eligible for `DECISION_OPTION` influence tier. **Human
-decision: NO, categorically, for both categories** — the already-implemented, already-tested
-deterministic validator behavior was correct and is preserved unchanged; the semantic contract's own
-prose (which previously permitted this "in principle") is corrected to match it. This task does not
-implement Dependency D itself — Requirement Derivation remains unauthorized to consume `MemoryContext`,
-no `RequirementSpec` schema exists, and no R-24 invariant is added.
+A narrow closure pass, continuing the same branch/PR (#26) as `M0-DECISION-OPTION-HISTORICAL-SOURCE-
+GATE-CLOSURE` below, fixing two residual consistency defects on top of that task's already-APPROVED,
+not-reopened policy decision (a `MemoryContext` entry classified as a historical user statement —
+Category A or B — is categorically ineligible for `DECISION_OPTION`): (1)
+`MEMORY_CONTEXT_SCHEMA_MAPPING.md`'s current-state prose was still internally stale, describing
+Research Planning as the sole authorized consumer and Dependencies B/C/D as uniformly future/disabled,
+when B is implemented and C is retired; (2) two newly-added Dependency-D-shaped `MemoryContext`
+fixtures bound their `upstream_artifact_binding` to `requirement_spec` (Requirement Derivation's own
+*output*) instead of `intent_spec` (the artifact a surviving R-19-eligible Unknown actually originates
+from). Does not implement Dependency D, does not reopen the source-gate policy.
 
 ## Branch / Base
 
-Branch: `m0/decision-option-historical-source-gate` (new branch, created from `main`).
-Base: `main` at `b4fdd70db4887c011853b0090796bdab6ed3f570` — verified via `git status`/`git log`
-(HEAD matched exactly before branching), `npm run context`, and `npm test` (83/83) before any edit.
+Branch: `m0/decision-option-historical-source-gate` (continuation — same branch/PR as
+`M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE`, no new branch created).
+Base: `main` at `b4fdd70db4887c011853b0090796bdab6ed3f570`, unchanged from that task. PR #26
+confirmed open against `mihvernetwork/mihver:main` before any edit; `npm test` 85/85 confirmed before
+any edit (branch already carried the prior round's 83→85 fixture additions).
 
 ## Status
 
 **Complete, pending human review.**
+
+**This round's fixes:**
+
+- **Mapping current-state prose fixed.** `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`'s opening
+  paragraph, "Schema representability vs. pipeline authorization," and "Stable identity for
+  cross-artifact reference" sections rewritten to state current reality: two authorized consumers
+  (Research Planning `DISCOVERY_ATTENTION`-only; Intent Parsing `DISCOVERY_ATTENTION`+
+  `SEMANTIC_PREMISE`); Dependency B **implemented** (confirmed by direct read of
+  `intent-spec.schema.json`'s `memoryPremise`/`memoryDiscoveryRef` definitions, which already cite
+  the `(memory_context_id, entry_id)` pair); Dependency C **retired as redundant, not implemented**;
+  Dependency D **not implemented, not authorized**. No M-01–M-21 semantic content changed beyond the
+  prior round's already-approved source-gate clarification.
+- **D-shaped fixture upstream binding fixed.** `tests/contracts/fixtures/valid/memory-context-
+  decision-option-non-historical.json` and `tests/contracts/fixtures/invalid/memory-context-decision-
+  option-on-historical-statement-category-a.json` (both `consuming_stage: requirement_derivation`,
+  retrieval purpose tied to an R-19-eligible default candidate) had `upstream_artifact_binding.
+  artifact_type: "requirement_spec"` — wrong, since Requirement Derivation's D-decision originates
+  from a surviving Unknown in the *consumed* `IntentSpec`, not its own output. Both corrected to
+  `artifact_type: "intent_spec"`, `artifact_id: "intent-support-inbox-v1"`, `version: 1`.
+- **Category-B fixture disposition: left unchanged, deliberately.** The pre-existing Category B
+  invalid fixture (`consuming_stage: research_planning`, `upstream_artifact_binding: null`) was
+  inspected and kept structurally independent — it demonstrates the source gate applies regardless of
+  consuming stage (an already-authorized stage), not a Dependency-D-shaped scenario; the task
+  explicitly permitted this disposition.
+- **One reviewer-found defect fixed beyond the task's own two items.** The one fresh read-only Codex
+  reviewer (below) found the valid D-shaped fixture's `freshness_basis` claimed "42 days since
+  brain_updated_at" while the actual dates (`brain_updated_at: 2026-01-12`, `retrieval_time:
+  2026-08-23`) are ~223 days apart — independently re-verified by direct date arithmetic (confirmed:
+  223 days, exceeding the fixture's own stated 180-day threshold, self-contradicting its `"fresh"`
+  flag). Fixed by correcting `brain_created_at`/`brain_updated_at` to `2026-07-12` (exactly 42 days
+  before the fixture's own `retrieval_time`), matching the stated basis text exactly.
+- One fresh independent read-only Codex reviewer (Source-Gate Final Consistency, 9-point checklist):
+  **8/9 PASS, 1 confirmed finding** (the freshness-date defect above), independently re-verified and
+  fixed.
+
+**Prior round's own detail** (`M0-DECISION-OPTION-HISTORICAL-SOURCE-GATE-CLOSURE`: the Gate 1/Gate 2
+policy recording, the contradiction fix, the no-laundering paragraph, `ADR-0004`'s clarification, the
+original M-21/M-11 mapping rewrite, the validator message extension, the original fixture additions,
+Cases 25/26, and that round's own three-reviewer pass) is preserved below and in `REVIEW_STATE.md`'s
+History — not restated, since this closure round changed none of those conclusions, only two residual
+consistency defects on top of them.
 
 Read fresh, in full, before any edit: `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`,
 `docs/contracts/MEMORY_CONTEXT.md`, `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md`,
@@ -120,15 +164,18 @@ full, before any edit.
 
 ## Validation
 
-- `npm test`: 85/85 (83 prior + 2 new MemoryContext policy fixtures; unaffected otherwise).
+- `npm test`: 85/85, unchanged from the prior round (this closure fixed two consistency defects and
+  one fixture date bug; it added no new fixtures).
 - `git diff --check`: clean.
-- `git diff main --stat`: exactly the allowed files listed above, plus the fixture add/rename.
+- `git diff main --stat`: exactly the allowed files listed above (this round's own diff limited to
+  `MEMORY_CONTEXT_SCHEMA_MAPPING.md` and the two D-shaped fixtures, plus these state files).
 - Confirmed: Requirement Derivation's `Input:` remains `IntentSpec` only (`M0_SCOPE.md` untouched);
-  Dependency D remains unimplemented; no `RequirementSpec` schema exists; no runtime/Brain work.
+  Dependency D remains unimplemented; no `RequirementSpec` schema exists; no runtime/Brain work; the
+  `isReclassifiedHistorical && tier === "DECISION_OPTION"` validator check is byte-unchanged in logic
+  from the prior round.
 
 ## Next Gate
 
-Commit, push, and open one PR against `mihvernetwork/mihver:main`, title "M0: close DECISION_OPTION
-historical-source gate". Do not merge. Human review of that PR is the next gate; it authorizes only
-this contradiction-closure/policy-recording change — no Dependency D implementation, no schema/
-runtime/Brain work.
+Commit and push this closure to existing PR #26. Do not open a new PR. Do not merge. Human review of
+PR #26 remains the next gate; it authorizes only this contradiction-closure/policy-recording change
+plus this narrow consistency closure — no Dependency D implementation, no schema/runtime/Brain work.

@@ -6,12 +6,17 @@ Status: M0 machine-readable mapping for the Accepted `MemoryContext` semantic co
 [SCHEMA_MAPPING](./SCHEMA_MAPPING.md), which is titled and scoped to Step 02B's `UserIdea`/
 `IntentSpec` mapping specifically and is not overloaded here.
 
-**This document does not authorize any new `MemoryContext` consumer, and does not implement Brain
-retrieval or runtime integration.** `docs/foundation/M0_SCOPE.md` continues to authorize exactly one
-consuming stage (Research Planning, `DISCOVERY_ATTENTION` tier only) — see "Schema Representability
-vs. Pipeline Authorization" below. `MemoryContext.md`, `ADR-0004`, `M0_SCOPE.md`, `INTENT_SPEC.md`,
-`intent-spec.schema.json`, and `REQUIREMENT_SPEC.md` are unchanged by this document and by the
-schema/validator it describes.
+**This document does not itself authorize any new `MemoryContext` consumer, and does not implement
+Brain retrieval or runtime integration.** `docs/foundation/M0_SCOPE.md` is the sole authority for
+which stage may consume `MemoryContext`, and, as of `main` today, authorizes exactly two: **Research
+Planning** (`DISCOVERY_ATTENTION` tier only) and **Intent Parsing** (`DISCOVERY_ATTENTION` and
+`SEMANTIC_PREMISE`, per `ADR-0004` dependency B — implemented) — see "Schema Representability vs.
+Pipeline Authorization" below. Current dependency status: **B — implemented** (`INTENT_SPEC.md`/
+`intent-spec.schema.json` already cite the `(memory_context_id, entry_id)` pair this document
+defines — see "Stable identity for cross-artifact reference" below); **C — retired as redundant,
+not implemented** (`REQUIREMENT_SPEC.md`'s R-23); **D — not implemented, not authorized**
+(Requirement Derivation remains an unauthorized `MemoryContext` consumer). No `MemoryContext`
+runtime, Brain adapter, or executable retrieval path exists as of this document, for any consumer.
 
 ## Validation boundary
 
@@ -52,27 +57,41 @@ defines:
 A structurally valid `MemoryContext` document is not, by itself, evidence that any pipeline stage is
 currently authorized to consume it. `docs/foundation/M0_SCOPE.md`'s "Cross-Cutting: MemoryContext
 Consumption Remains Otherwise Disabled" section is the sole authority for which stage may consume
-`MemoryContext` at all, and it authorizes exactly one today: Research Planning, restricted to the
-`DISCOVERY_ATTENTION` tier. This schema deliberately represents all four Influence Taxonomy tiers
+`MemoryContext` at all, and it authorizes exactly two today: **Research Planning**, restricted to the
+`DISCOVERY_ATTENTION` tier, and **Intent Parsing**, at `DISCOVERY_ATTENTION` and `SEMANTIC_PREMISE`
+(dependency B, implemented). This schema deliberately represents all four Influence Taxonomy tiers
 (`PROCESS_ONLY`/`DISCOVERY_ATTENTION`/`DECISION_OPTION`/`SEMANTIC_PREMISE`) and an open
-`consuming_stage` identifier — not a closed enum naming only Research Planning — so that a future,
-separately-authorized `M0_SCOPE.md` amendment adding another consuming stage (e.g. Intent Parsing or
-Requirement Derivation) never requires redesigning `MemoryContext`'s own artifact shape (Principle
-12, Evolvability). Nothing in this schema or its validator authorizes dependencies B, C, or D, moves
-any stage's authorization forward, or implies a `MemoryContext` runtime, Brain adapter, or executable
-retrieval path exists — none of those exist as of this document.
+`consuming_stage` identifier — not a closed enum naming only the currently-authorized stages — so
+that a future, separately-authorized `M0_SCOPE.md` amendment adding another consuming stage (e.g.
+Requirement Derivation, for dependency D) never requires redesigning `MemoryContext`'s own artifact
+shape (Principle 12, Evolvability). Dependency C's own direct-premise path (a `MemoryContext` entry
+cited as a Requirement-Level Inference premise) has since been retired, not implemented —
+`REQUIREMENT_SPEC.md`'s R-23. Requirement Derivation remains unauthorized to consume `MemoryContext`
+at all, for dependency D or any other purpose; no `MemoryContext` runtime, Brain adapter, or
+executable retrieval path exists for any consumer as of this document.
 
-## Stable identity for future cross-artifact reference (Dependencies B/C/D)
+## Stable identity for cross-artifact reference (Dependencies B/C/D)
 
 Every admitted entry carries an `entry_id`, unique within its `MemoryContext`, alongside that
 artifact's own `memory_context_id`. The pair `(memory_context_id, entry_id)` is the stable,
-inspectable identity a future, separately-authorized amendment to `INTENT_SPEC.md` (dependency B) or
+inspectable identity a separately-authorized amendment to `INTENT_SPEC.md` (dependency B) or
 `REQUIREMENT_SPEC.md` (dependencies C/D) could use to cite exactly one specific `MemoryContext`
 entry. **This document establishes only the `MemoryContext` side of that identity/reference
-boundary.** It does not define, and `intent-spec.schema.json`/`INTENT_SPEC.md`/`REQUIREMENT_SPEC.md`
-do not yet contain, any field or provenance shape that actually cites this pair — that citation shape
-belongs to dependencies B, C, and D respectively, each its own separate, later, explicitly
-human-authorized task.
+boundary; it does not itself define the citing side.** Current status by dependency:
+
+- **Dependency B — implemented.** `intent-spec.schema.json`'s `memoryPremise`/`memoryDiscoveryRef`
+  definitions already cite exactly this pair (`memory_context_id`, `entry_id`), consumed via
+  `IntentSpec`'s `memory_premises`/`memory_discovery_refs` arrays; `INTENT_SPEC.md`'s own text
+  documents the same citation shape. This document did not itself perform that amendment — it was a
+  separate, later, explicitly human-authorized task — but the citing side it anticipated now exists.
+- **Dependency C — retired as redundant, not implemented.** The direct-premise citation path this
+  pair would have supported at Requirement Derivation was re-derived after dependency B landed, found
+  structurally incoherent, and retired rather than implemented — `REQUIREMENT_SPEC.md`'s R-23. No
+  `REQUIREMENT_SPEC.md` field citing this pair for that purpose exists or is pending.
+- **Dependency D — not implemented, not authorized.** A future, separate, explicitly
+  human-authorized `REQUIREMENT_SPEC.md` amendment could cite this same pair as a memory-informed
+  rationale for an R-19-eligible default; no such field exists yet, and Requirement Derivation is not
+  authorized to consume `MemoryContext` at all in the meantime.
 
 **Canonical Brain-memory identity is additionally partitioned, not merely entry-identity.** The
 audit model is: one Producer invocation retrieves one canonical Brain record into exactly one

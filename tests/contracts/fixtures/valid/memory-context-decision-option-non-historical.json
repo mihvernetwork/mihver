@@ -10,7 +10,7 @@
     "retrieval_purpose": "r19-eligible-default-candidate",
     "retrieval_query": "prior retry/backoff outcomes for this project",
     "retrieval_time": "2026-08-23T09:30:00Z",
-    "upstream_artifact_binding": { "artifact_type": "requirement_spec", "artifact_id": "req-support-inbox-v1", "version": 1 },
+    "upstream_artifact_binding": { "artifact_type": "intent_spec", "artifact_id": "intent-support-inbox-v1", "version": 1 },
     "retrieval_outcome": "admitted",
     "admitted_entries": [
       {
@@ -21,8 +21,8 @@
           "title": "Prior retry/backoff outcome",
           "scope": "support-inbox",
           "brain_status": "active",
-          "brain_created_at": "2026-01-12T00:00:00Z",
-          "brain_updated_at": "2026-01-12T00:00:00Z",
+          "brain_created_at": "2026-07-12T00:00:00Z",
+          "brain_updated_at": "2026-07-12T00:00:00Z",
           "brain_confidence": "medium",
           "supersedes": null,
           "superseded_by": null,
