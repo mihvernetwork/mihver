@@ -1,0 +1,14 @@
+{
+  "contract": "requirement-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "requirement_spec", "requirement_spec_id": "rs-ar", "version": 2,
+    "created_at": "2026-08-24T00:00:00Z", "consumed_intent_spec": { "intent_spec_id": "is-1", "version": 2 }, "supersedes_requirement_spec_id": "rs-ar-v1",
+    "revision": { "trigger": "new_intent_spec_version", "affected_requirement_ids": ["r1"], "affected_open_item_ids": [], "basis": "IntentSpec is-1 was superseded to version 2; Claim c1 (the sole basis of r1) was withdrawn without replacement." }, "status": "complete",
+    "requirements": [{ "requirement_id": "r1", "clauses": [{ "clause_id": "cl1", "derivation": "direct_compilation", "statement": "The system SHALL log actions.", "strength": "MUST", "basis": [{ "claim_id": "c1" }], "origins": ["user_provided"], "testability": { "status": "complete_binary" } }], "status": "invalidated", "invalidation": { "reason": "originating claim c1 was superseded without a replacement supporting the same requirement" } }], "open_items": []
+  },
+  "companions": [
+    { "contract": "intent-spec", "document": { "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "is-1", "version": 2, "created_at": "2026-08-24T00:00:00Z", "user_idea_refs": [{ "idea_id": "idea-1", "version": 1 }], "supersedes_intent_spec_id": "is-1", "handoff": { "status": "eligible", "requirement_derivation_consumable": true }, "claims": [], "open_items": [], "conflicts": [], "clarification_decisions": [] } },
+    { "contract": "intent-spec", "document": { "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "is-1", "version": 1, "created_at": "2026-08-24T00:00:00Z", "user_idea_refs": [{ "idea_id": "idea-1", "version": 1 }], "supersedes_intent_spec_id": null, "handoff": { "status": "eligible", "requirement_derivation_consumable": true }, "claims": [{ "claim_id": "c1", "proposition": "must log actions", "origin": "user_provided", "force": { "modality": "obligation" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-1", "user_idea_version": 1, "speaker": { "kind": "submitting_user" } } }], "open_items": [], "conflicts": [], "clarification_decisions": [] } },
+    { "contract": "requirement-spec", "document": { "schema_version": "1.0.0", "artifact_type": "requirement_spec", "requirement_spec_id": "rs-ar-v1", "version": 1, "created_at": "2026-08-24T00:00:00Z", "consumed_intent_spec": { "intent_spec_id": "is-1", "version": 1 }, "supersedes_requirement_spec_id": null, "revision": null, "status": "complete", "requirements": [{ "requirement_id": "r1", "clauses": [{ "clause_id": "cl1", "derivation": "direct_compilation", "statement": "The system SHALL log actions.", "strength": "MUST", "basis": [{ "claim_id": "c1" }], "origins": ["user_provided"], "testability": { "status": "complete_binary" } }], "status": "valid", "invalidation": null }], "open_items": [] } }
+  ]
+}

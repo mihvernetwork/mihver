@@ -1,0 +1,173 @@
+{
+  "contract": "requirement-spec",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "requirement_spec",
+    "requirement_spec_id": "rs-am",
+    "version": 1,
+    "created_at": "2026-08-24T00:00:00Z",
+    "consumed_intent_spec": {
+      "intent_spec_id": "is-1",
+      "version": 1
+    },
+    "supersedes_requirement_spec_id": null,
+    "revision": null,
+    "status": "complete",
+    "requirements": [
+      {
+        "requirement_id": "r1",
+        "clauses": [
+          {
+            "clause_id": "cl1",
+            "derivation": "direct_compilation",
+            "statement": "The system SHALL retry a failed background job automatically.",
+            "strength": "MUST",
+            "basis": [
+              {
+                "claim_id": "c1"
+              }
+            ],
+            "origins": [
+              "user_provided"
+            ],
+            "testability": {
+              "status": "complete_binary"
+            },
+            "working_defaults": [
+              {
+                "source_open_item_id": "oi-retry",
+                "value": "3 retries",
+                "rationale": "x",
+                "memory_informed_rationale": {
+                  "memory_context_id": "mc-am",
+                  "entry_id": "e1"
+                }
+              }
+            ]
+          }
+        ],
+        "status": "valid",
+        "invalidation": null
+      }
+    ],
+    "open_items": []
+  },
+  "companions": [
+    {
+      "contract": "intent-spec",
+      "document": {
+        "schema_version": "1.0.0",
+        "artifact_type": "intent_spec",
+        "intent_spec_id": "is-1",
+        "version": 1,
+        "created_at": "2026-08-24T00:00:00Z",
+        "user_idea_refs": [
+          {
+            "idea_id": "idea-1",
+            "version": 1
+          }
+        ],
+        "supersedes_intent_spec_id": null,
+        "handoff": {
+          "status": "eligible",
+          "requirement_derivation_consumable": true
+        },
+        "claims": [
+          {
+            "claim_id": "c1",
+            "proposition": "retry a failed background job automatically",
+            "origin": "user_provided",
+            "force": {
+              "modality": "obligation"
+            },
+            "discourse_role": "operative",
+            "provenance": {
+              "kind": "user_statement",
+              "idea_id": "idea-1",
+              "user_idea_version": 1,
+              "speaker": {
+                "kind": "submitting_user"
+              }
+            }
+          }
+        ],
+        "open_items": [
+          {
+            "open_item_id": "oi-retry",
+            "kind": "unknown",
+            "question": "exact retry count / backoff strategy?",
+            "relevance_rationale": "Bears on requirement derivation for this idea.",
+            "decision_impact": {
+              "level": "medium",
+              "unresolved_item": "exact retry count / backoff strategy?",
+              "downstream_decision": "requirement content",
+              "level_rationale": "medium impact: deferrable past Intent Parsing."
+            }
+          }
+        ],
+        "conflicts": [],
+        "clarification_decisions": [
+          {
+            "subject_kind": "open_item",
+            "subject_id": "oi-retry",
+            "needed": false,
+            "rationale": "LOW/MEDIUM impact, deferred."
+          }
+        ]
+      }
+    },
+    {
+      "contract": "memory-context",
+      "document": {
+        "schema_version": "1.0.0",
+        "artifact_type": "memory_context",
+        "memory_context_id": "mc-am",
+        "run_id": "run-1",
+        "run_context": {
+          "status": "present",
+          "project_slug": "proj-1"
+        },
+        "consuming_stage": "requirement_derivation",
+        "retrieval_purpose": "inform requirement derivation",
+        "retrieval_query": "retry policy prior art",
+        "retrieval_time": "2026-08-24T00:00:00Z",
+        "upstream_artifact_binding": {
+          "artifact_type": "intent_spec",
+          "artifact_id": "is-1",
+          "version": 1
+        },
+        "retrieval_outcome": "successfully_empty",
+        "admitted_entries": [],
+        "excluded_entries": [
+          {
+            "entry_id": "e1",
+            "source": {
+              "brain_memory_id": "brain-e1",
+              "brain_type": "pattern",
+              "title": "title-brain-e1",
+              "scope": "other-proj",
+              "brain_status": "active",
+              "brain_created_at": "2026-01-01T00:00:00Z",
+              "brain_updated_at": "2026-01-01T00:00:00Z",
+              "brain_confidence": "medium",
+              "supersedes": null,
+              "superseded_by": null,
+              "provenance": {
+                "source": "manual",
+                "author": "brain-writer"
+              }
+            },
+            "content": "content of e1",
+            "exclusion_reason": "cross-project scope mismatch",
+            "classification": null,
+            "freshness": {
+              "freshness_flag": "fresh",
+              "freshness_basis": "updated within the retention window"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "expected_error": "is an excluded entry"
+}

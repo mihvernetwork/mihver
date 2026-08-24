@@ -1,0 +1,6 @@
+{
+  "contract": "requirement-spec",
+  "document": { "schema_version": "1.0.0", "artifact_type": "requirement_spec", "requirement_spec_id": "rs-r39", "version": 2, "created_at": "2026-08-24T00:00:00Z", "consumed_intent_spec": { "intent_spec_id": "is-r39", "version": 2 }, "supersedes_requirement_spec_id": "rs-r39-v1", "revision": { "trigger": "new_intent_spec_version", "affected_requirement_ids": [], "affected_open_item_ids": ["oi-does-not-exist"], "basis": "Reconsidered after supersession." }, "status": "complete", "requirements": [], "open_items": [] },
+  "companions": [{ "contract": "intent-spec", "document": { "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "is-r39", "version": 2, "created_at": "2026-08-24T00:00:00Z", "user_idea_refs": [{ "idea_id": "idea-r39", "version": 1 }], "supersedes_intent_spec_id": "is-r39", "handoff": { "status": "eligible", "requirement_derivation_consumable": true }, "claims": [], "open_items": [], "conflicts": [], "clarification_decisions": [] } }],
+  "expected_error": "does not resolve to an open_item_id in this RequirementSpec"
+}

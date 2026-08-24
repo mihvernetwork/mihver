@@ -15,78 +15,183 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: DEVELOPMENT-CONSISTENCY-V2-FINAL-FIX
-Branch: `chore/development-consistency-v2`
-PR: #29 — `https://github.com/mihvernetwork/mihver/pull/29`
+Task: M0-STEP-03B-REQUIREMENT-SPEC-SCHEMA
+Branch: `m0/step-03b-requirement-schema`
+PR: #30 — `https://github.com/mihvernetwork/mihver/pull/30`
 Target: main
 Live PR state: verify from GitHub.
-Human review is the current gate. Not merged by this task.
+Human review is the next gate.
 
-A narrow deterministic-correction pass on top of `DEVELOPMENT-CONSISTENCY-V2-HARDENING` (below),
-closing two final consistency defects a human review found. Did not redesign Owner/Mirror/Historical,
-the three-tier task scope model, the Final Consistency Sweep, the one-bounded-reconciliation policy,
-or any of the prior round's five fixes — all approved and unchanged.
+Implemented M0 Step 03B: the first machine-readable `RequirementSpec` representation
+(`schemas/m0/requirement-spec.schema.json`, `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`,
+`validateRequirementSpec` in `tests/contracts/validate-contracts.mjs`, 63 new fixtures), preserving
+R-01–R-24 exactly as frozen; `ADR-0003` Status remains Proposed, not accepted by this task. Full
+technical detail lives in `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md` (11 required sections
+plus an R-01–R-24 enforcement table plus adversarial coverage notes) and is not restated here; this
+entry records the review process and its outcome.
 
-1. `checkDecisionsLogAppendOnlyVsBase` now fails closed: it previously returned `SKIP` whenever the
-   required frozen baseline couldn't be established (no local `main`, no merge-base, a malformed
-   "---" entries structure in either version) — silently letting `main()`'s summary print "all
-   deterministic checks passed" while this protection was never actually evaluated. It now returns
-   `FAIL` in all three of those cases. The one case that is genuinely not a failure — the file did
-   not exist yet at the merge-base (introduced entirely on this branch, nothing frozen to protect) —
-   is detected explicitly via `git cat-file -e` and reported as an accurate `PASS`, kept distinct
-   from "the check couldn't run." The pre-existing "no local main" test was updated to expect `FAIL`;
-   two new tests were added (genuinely-new-file → `PASS`; malformed structure → `FAIL`).
-2. Removed the live PR-state mirror from this file's own "Latest Review": the previous round left
-   `PR #29 (\`OPEN\`, verified via \`gh pr view 29\`)` here, directly contradicting the "GitHub owns
-   live PR state" guidance that same round had just added to `AGENT_POLICY.md`. Replaced with the
-   stable wording that guidance prescribes (as shown above: `PR:` / `Target:` / `Live PR state:
-   verify from GitHub` / `Human review is the current gate`), and scrubbed the same "PR #29 is open"
-   phrasing from this file's Pending Human Gate section. `## History` below was left untouched — its
-   PR-state statements are already scoped to a specific past point ("as of this entry," "opened, not
-   yet merged"), which is accurate historical record-keeping, not a live mirror.
+**Two mandatory pre-implementation re-derivations**, both independently re-confirmed by multiple
+reviewers as correctly textually determined, neither requiring a `SCHEMA_DESIGN_GAP` stop:
+Failed-outcome representation (no `RequirementSpec` artifact at all — mirrors `intent-spec.schema.json`'s
+identical decision one stage earlier) and R-22 × mixed-strength Requirement premise. **R-22's resolution
+was subsequently revised by a later human-review-fixes round** (same task/branch/PR, after this entry's
+own round below): the interim clause-level-escape-valve shape this entry's Reviewer A findings describe
+(`{kind: "requirement_clause", ...}`) was reconsidered against R-10/R-22/R-23's literal text and
+removed — the RLI premise unit remains exactly a whole Requirement (single-strength-checked) or a Claim;
+a mixed-strength Requirement is not eligible, as a whole, to serve as a premise, and no clause-level
+citation is authorized. `ADR-0003`'s Status remains **Proposed**. See `REQUIREMENT_SPEC_SCHEMA_MAPPING.md`
+§8 for the current textual basis; the Reviewer A narrative below is preserved as an accurate record of
+that earlier round's own findings and is not itself rewritten.
 
-Files touched this round: `scripts/dev/project-consistency.mjs`, `tests/dev/project-consistency.test.mjs`
-(Primary); `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` (Conditional Consistency, this
-round's own task/review record). No `docs/development/AGENT_POLICY.md`, `.project/PROJECT_STATE.md`,
-`docs/foundation/**`, `docs/contracts/**`, `docs/adr/**`, `docs/examples/**`, `schemas/**`,
-`tests/contracts/**`, or `ROADMAP.md` file touched — confirmed by `git diff main --stat`.
+**Review process — a process deviation, corrected mid-task.** The task instructed four independent
+read-only **Codex** reviewers (Section 31). The first review round was dispatched as four
+general-purpose **Claude** subagents instead — a genuine error, not a substitution Claude judged
+equivalent. This was caught before those results were used, and the four required Codex reviewers
+were separately, correctly dispatched in parallel. Both sets returned substantial, heavily overlapping
+findings; the four Codex reviewers are the authoritative Section 31 deliverable, with the four Claude
+reviewers' findings used as additional cross-verification (several defects below were independently
+surfaced by both).
 
-**No new Codex reviewer round** — per this task's explicit instruction, this is a deterministic final
-consistency correction with no new substantive design surface. Both fixes were independently verified
-by Claude directly: the fail-closed code path was hand-traced against all three FAIL triggers plus the
-genuinely-new-file PASS case, and confirmed by the two new/updated tests actually failing before the
-fix and passing after; the PR-state removal was confirmed by re-reading the full "Latest Review" and
-"Pending Human Gate" sections for any remaining "OPEN"/"is open" live assertion (none remain outside
-`## History`).
+**Reviewer A — Schema representability / semantic fidelity (Codex).** 6 findings, verdict
+`R22_MIXED_STRENGTH_RESOLUTION: SHOULD_HAVE_STOPPED`, `FAILED_OUTCOME_DECISION: CORRECTLY_DETERMINED`.
+Confirmed real and fixed: mixed-origin/confidence basis wrongly rejected (a valid multi-Claim clause
+with disagreeing origins or Inferred confidence values was rejected outright, though the contract
+permits a joint testable behavior from Claims of different origins and never requires them to agree);
+`provisionalStanding.reversible` declared in the schema but never read by the validator, so an
+Inferred/Assumed/RLI clause could be recorded `provisional: true, reversible: false`; R-12/R-13
+under-enforcement traced to the same root cause as the general `revision`/`invalidation`
+required-field gap (see Reviewer D); the R-22×mixed-strength resolution's removal of R-10's literal
+whole-Requirement premise option was a real, undisclosed narrowing serious enough to warrant
+reconsidering the stop decision — **not itself grounds for a `SCHEMA_DESIGN_GAP` stop** (the
+refinement's own logic holds), but grounds to restore the whole-Requirement premise shape rather than
+replace it. The general-purpose Claude "Reviewer A" independently reached the opposite verdict
+(`DEFENSIBLE_REFINEMENT`) on the narrower question of whether the *clause-level* refinement itself was
+sound — both are correct on what they each actually assessed; Codex's finding is about the *removal*
+of the whole-Requirement path being undisclosed, not the clause-level addition being unsound. Fixed by
+restoring `{kind: "requirement", requirement_id}` as an additional premise shape (§8).
 
-**Verification (Claude):** `npm test` — 85/85. `npm run check:project-consistency` — 7/7 checks PASS.
-`npm run test:project-consistency` — 19/19 test groups PASS (17 pre-existing plus 2 new; 1 existing
-test updated from expecting `SKIP` to expecting `FAIL`). `git diff --check` — clean. `git diff main
---stat` — confirmed to touch exactly the files named above; targeted `git diff main --stat` against
-every forbidden path (`docs/foundation/`, `docs/contracts/`, `docs/adr/`, `docs/examples/`,
-`schemas/`, `tests/contracts/`, `ROADMAP.md`, `mihver-brain`) produced empty output.
+**Reviewer B — Provenance / force / cardinality (Codex).** 1 confirmed blocking finding (the same
+mixed-origin/confidence rejection Reviewer A also found, from a different angle — strong convergent
+signal). The general-purpose Claude "Reviewer B" additionally, independently found three further real
+blocking defects on this same axis, all confirmed by Claude and fixed: (1) the R-08 Conflict-participant
+guard covered only direct-compilation clause `basis`, leaving a Requirement-Level Inference free to
+premise on a Conflict-participant Claim entirely unguarded; (2) R-07 condition preservation was
+structurally unrepresentable *and* unchecked on RLI clauses (no `scope_condition` field existed on that
+shape at all); (3) a `preference` Claim with no recorded `strength` sub-field (permitted by
+`intent-spec.schema.json`, which does not require `strength` even for `preference`) silently mapped to
+`SHOULD` via `FORCE_TO_STRENGTH`'s fallback branch — an unauthorized inflation of an unresolved case,
+never disclosed. All three fixed (§7/§8/§9 of the mapping document).
 
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** Both fixes independently verified against actual
-code/file content and the full validation suite re-run after each change.
+**Reviewer C — Memory / R-19 / R-24 / cross-artifact (Codex).** 2 confirmed blocking findings: (1) a
+`requirement_derivation`-stage `MemoryContext`'s `upstream_artifact_binding` check silently no-opped
+when the binding was `null`, defeating the whole point of the check — the shipped valid fixture `aq`
+exercised exactly this gap; re-derived from `M0_SCOPE.md`'s own text that this stage's retrieval
+purpose is never version-independent, unlike Intent Parsing's, so `null` is never legitimate here (§9,
+now fixed and enforced). (2) no uniqueness on `working_defaults[].source_open_item_id` — two working
+defaults could fill the same surviving Unknown with contradictory values, undetected; the one
+uniqueness check that existed keyed on the wrong tuple (guarded harmless duplicate citations, missed
+harmful contradictory ones). Fixed with a document-wide uniqueness check (§9). The general-purpose
+Claude "Reviewer C" independently found the same two defects plus a non-blocking duplicate-companion-
+identity gap, which Reviewer D (Codex) also flagged — fixed with an identity-uniqueness check on both
+companion contracts (§4).
+
+**Reviewer D — Validator / fixtures / false claims (Codex).** 3 confirmed blocking findings, all about
+fixture coverage rather than code correctness: several validator-enforced checks (direct-compilation
+strength equality, R-07 presence, provisional-standing-by-origin, R-13 revision presence, R-14
+invalidation pairing, R-20's structural guards, the document-level `status: "partial"`-forcing rule)
+had **zero negative-fixture coverage** — each check existed and worked, but no invalid fixture proved
+it, so deleting the check would not have failed the suite. Two mapping-table misclassifications (R-14
+labeled "Schema-enforced" when the invariant it names was validator-only; R-09 labeled
+"Validator-enforced" when the mechanism it names is schema-only) were also confirmed and fixed. All
+addressed: 19 new regression fixtures (`requirement-spec-r1`–`r19-*.json`) were added, one per
+confirmed defect across all four axes, each directly exercising the specific check that was previously
+unfalsifiable or the specific bug that was fixed; the table classifications were corrected (§11 of the
+mapping document, now reading "Schema + Validator-enforced" for both R-09 and R-14, matching what each
+layer actually does after the `revision`/`invalidation` required-field fix).
+
+**Root-cause note on the `revision`/`invalidation` gap** (independently found by the general-purpose
+Claude "Reviewer A", underlying several of Reviewer D's and Reviewer A's Codex findings): the schema
+left both fields `anyOf [X, null]`-typed but never added them to their objects' own `required` list —
+a document could omit the key entirely, and the validator's `!== null` checks silently passed on
+`undefined` (`undefined !== null` is `true` in JavaScript), so a `status: "invalidated"` Requirement
+that never wrote an `invalidation` key at all satisfied the check meant to require one. Fixed by adding
+both to `required` (present, possibly `null`) — the single highest-leverage fix in this round, closing
+multiple reviewers' independent R-12/R-13/R-14 findings at their common root.
+
+**Every finding above was independently re-verified by Claude** against the actual schema/validator
+code before being accepted — not merely relayed from a reviewer's own report — by reading the exact
+lines cited, constructing the scenario by hand, and confirming both the failure (before the fix) and
+the pass (after it, via the new regression fixture) actually occur. Findings judged non-blocking by
+every reviewer that raised them (free-text smuggling limits already honestly disclosed as
+reviewer-only; a handful of documentation-precision nits; two very narrow representability edges — an
+RLI premised on a whole multi-clause same-strength Requirement cannot propagate `scope_condition` when
+its clauses' conditions might disagree, and a laundered `semantic_authority_class` vs.
+`is_historical_user_statement` mismatch that is pre-existing, out-of-scope `MemoryContext` validator
+behavior, not a Step 03B regression) were not fixed, and are recorded here rather than silently
+dropped.
+
+**Verification (Claude):** `npm test` — 148/148 at this round's own completion (85 pre-existing,
+confirmed byte-unchanged, plus 63 new); a subsequent human-review-fixes round on the same branch/PR
+brought the current total to **170/170** (22 additional regression fixtures, including the R-22
+clarification's own fixture updates). `npm run check:project-consistency` — 7/7. `npm run
+test:project-consistency` — 19/19.
+`git diff --check` — clean. `git diff main --stat` against every forbidden path (`docs/contracts/REQUIREMENT_SPEC.md`,
+`docs/examples/REQUIREMENT_CASES.md`, `docs/contracts/INTENT_SPEC.md`, `docs/contracts/MEMORY_CONTEXT.md`,
+`docs/foundation/`, `schemas/m0/user-idea.schema.json`, `schemas/m0/intent-spec.schema.json`,
+`schemas/m0/memory-context.schema.json`, `docs/adr/`) — empty, individually confirmed for each.
+
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** All reviewer-confirmed findings independently
+re-verified against actual code/schema content and fixed; the full validation suite re-run after every
+change, not merely at the end.
 
 ## Required Changes
 
-None remaining — both defects named in this round's task are fixed.
+None remaining — every confirmed blocking finding from all eight reviewers (four Codex, four
+general-purpose Claude) is fixed and regression-tested.
 
 ## Fixes Applied
 
-See "Latest Review" above for the itemized list (the fail-closed baseline fix; the live PR-state
-mirror removal).
+See "Latest Review" above for the itemized, per-reviewer list. In code/schema terms: `origins`/
+`derivation_confidences` changed from single scalars to sets; Assumed-origin provisional/reversible
+made unconditional and `reversible` actually validated; R-08's Conflict-participant guard extended to
+the RLI premise path; R-07 condition-preservation extended (new `scope_condition` field) to RLI
+clauses; `mappedStrength` no longer inflates a strength-less `preference` to SHOULD; `revision`/
+`invalidation` added to their schemas' `required` lists; a `revision` must name at least one affected
+Requirement/Open Item; `requirement_derivation`-stage `MemoryContext` `upstream_artifact_binding` is
+now mandatory, not merely checked-when-present; `working_defaults[].source_open_item_id` is unique
+document-wide; `unfillable_unknown` and `working_defaults` source IDs are validator-checked disjoint;
+an RLI premise on an invalidated Requirement/clause is rejected; a restored `{kind: "requirement"}`
+premise shape coexists with `{kind: "requirement_clause"}`; companion IntentSpec/MemoryContext
+identities are validator-checked unique. 19 new regression fixtures added.
 
 ## Pending Human Gate
 
-PR: #29
+PR: #30 — `https://github.com/mihvernetwork/mihver/pull/30`
 Target: main
 Live PR state: verify from GitHub.
-Human review is the current gate. No new PR opened; this round's commits are pushed to the same
-existing PR #29. Do not merge.
+Human review is the next gate. Do not merge.
 
 ## History
+
+- 2026-08-24 — `DEVELOPMENT-CONSISTENCY-V2-FINAL-FIX` (PR #29, merged to `main` before this entry's
+  own task branched): a narrow deterministic-correction pass on top of
+  `DEVELOPMENT-CONSISTENCY-V2-HARDENING` below, closing two final consistency defects a human review
+  found. (1) `checkDecisionsLogAppendOnlyVsBase` changed from returning `SKIP` to `FAIL` whenever the
+  required frozen baseline couldn't be established (no local `main`, no merge-base, a malformed "---"
+  entries structure) — previously letting the checker's summary print "all deterministic checks
+  passed" while that protection went unevaluated; a genuinely new file at the merge-base (nothing
+  frozen to protect) is still an accurate `PASS`, detected via `git cat-file -e`. (2) Removed a live
+  PR-state snapshot (`PR #29 (\`OPEN\`, verified via \`gh pr view 29\`)`) this file's own "Latest
+  Review" had left in place, contradicting the "GitHub owns live PR state" guidance the prior round had
+  just added to `AGENT_POLICY.md`; replaced with stable wording (`PR:`/`Target:`/`Live PR state: verify
+  from GitHub`). No new Codex reviewer round, per the task's own instruction (deterministic final
+  consistency correction, no new substantive design surface). `npm test`: 85/85 (unaffected).
+  `npm run test:project-consistency`: 19/19 (17 pre-existing plus 2 new). Verdict:
+  `READY_FOR_HUMAN_REVIEW`. PR #29 subsequently merged to `main` (confirmed by this entry's own task
+  branching from a `main` HEAD matching PR #29's own final commit). Moved here from "Latest Review" now
+  that those sections describe `M0-STEP-03B-REQUIREMENT-SPEC-SCHEMA` instead, per this file's
+  branch/task scoping — a new branch (`m0/step-03b-requirement-schema`), unrelated to
+  `chore/development-consistency-v2`. — branch `chore/development-consistency-v2`
 
 - 2026-08-24 — `DEVELOPMENT-CONSISTENCY-V2-HARDENING` (PR #29, pushed to the same branch/PR as
   `DEVELOPMENT-CONSISTENCY-MODEL-V2` below, not a new branch): a narrow hardening pass closing five

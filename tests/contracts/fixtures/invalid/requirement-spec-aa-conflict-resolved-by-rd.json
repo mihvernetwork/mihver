@@ -1,0 +1,143 @@
+{
+  "contract": "requirement-spec",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "requirement_spec",
+    "requirement_spec_id": "rs-aa",
+    "version": 1,
+    "created_at": "2026-08-24T00:00:00Z",
+    "consumed_intent_spec": {
+      "intent_spec_id": "is-1",
+      "version": 1
+    },
+    "supersedes_requirement_spec_id": null,
+    "revision": null,
+    "status": "partial",
+    "requirements": [
+      {
+        "requirement_id": "r1",
+        "clauses": [
+          {
+            "clause_id": "cl1",
+            "derivation": "direct_compilation",
+            "statement": "The system SHOULD use PostgreSQL.",
+            "strength": "SHOULD",
+            "basis": [
+              {
+                "claim_id": "c1"
+              }
+            ],
+            "origins": [
+              "user_provided"
+            ],
+            "testability": {
+              "status": "complete_binary"
+            }
+          }
+        ],
+        "status": "valid",
+        "invalidation": null
+      }
+    ],
+    "open_items": [
+      {
+        "open_item_id": "oi-cf",
+        "kind": "conflict",
+        "source_conflict_id": "cf1"
+      }
+    ]
+  },
+  "companions": [
+    {
+      "contract": "intent-spec",
+      "document": {
+        "schema_version": "1.0.0",
+        "artifact_type": "intent_spec",
+        "intent_spec_id": "is-1",
+        "version": 1,
+        "created_at": "2026-08-24T00:00:00Z",
+        "user_idea_refs": [
+          {
+            "idea_id": "idea-1",
+            "version": 1
+          }
+        ],
+        "supersedes_intent_spec_id": null,
+        "handoff": {
+          "status": "eligible",
+          "requirement_derivation_consumable": true
+        },
+        "claims": [
+          {
+            "claim_id": "c1",
+            "proposition": "use PostgreSQL",
+            "origin": "user_provided",
+            "force": {
+              "modality": "preference",
+              "strength": "strong"
+            },
+            "discourse_role": "operative",
+            "provenance": {
+              "kind": "user_statement",
+              "idea_id": "idea-1",
+              "user_idea_version": 1,
+              "speaker": {
+                "kind": "submitting_user"
+              }
+            }
+          },
+          {
+            "claim_id": "c2",
+            "proposition": "use MySQL",
+            "origin": "user_provided",
+            "force": {
+              "modality": "preference",
+              "strength": "strong"
+            },
+            "discourse_role": "operative",
+            "provenance": {
+              "kind": "user_statement",
+              "idea_id": "idea-1",
+              "user_idea_version": 1,
+              "speaker": {
+                "kind": "submitting_user"
+              }
+            }
+          }
+        ],
+        "open_items": [],
+        "conflicts": [
+          {
+            "conflict_id": "cf1",
+            "participants": [
+              {
+                "kind": "claim",
+                "claim_id": "c1"
+              },
+              {
+                "kind": "claim",
+                "claim_id": "c2"
+              }
+            ],
+            "incompatibility_rationale": "Both claims cannot jointly hold.",
+            "decision_impact": {
+              "level": "medium",
+              "unresolved_item": "which claim governs",
+              "downstream_decision": "requirement content",
+              "level_rationale": "MEDIUM: deferrable."
+            }
+          }
+        ],
+        "clarification_decisions": [
+          {
+            "subject_kind": "conflict",
+            "subject_id": "cf1",
+            "needed": false,
+            "rationale": "LOW/MEDIUM impact, deferred."
+          }
+        ]
+      }
+    }
+  ],
+  "expected_error": "is a participant in an unresolved Conflict"
+}

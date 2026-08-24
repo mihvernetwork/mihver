@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/m0/requirement-spec.schema.json",
+  "title": "MIHVER M0 RequirementSpec",
+  "description": "The compiled, typed set of requirements Requirement Derivation produces from one eligible IntentSpec version, per docs/contracts/REQUIREMENT_SPEC.md (ADR-0003, Status: Proposed). Failed compilation produces no RequirementSpec -- there is no 'failed' status value here, mirroring intent-spec.schema.json's identical 'Failed parsing produces no IntentSpec' decision (see docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md's 'Failed-outcome serialization decision'). Semantic references and cross-artifact invariants are additionally checked by the deterministic contract validator against a required companion IntentSpec, and an optional companion MemoryContext wherever an R-24 memory-informed rationale is cited.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "requirement_spec_id", "version", "created_at", "consumed_intent_spec", "supersedes_requirement_spec_id", "revision", "status", "requirements", "open_items"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "artifact_type": { "const": "requirement_spec" },
+    "requirement_spec_id": { "$ref": "#/$defs/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "consumed_intent_spec": { "$ref": "#/$defs/intentSpecRef", "description": "The exact IntentSpec version this RequirementSpec version compiles. Never RequirementSpec's own prior version -- see 'IntentSpec Supersession Effects'." },
+    "supersedes_requirement_spec_id": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+    "revision": { "anyOf": [{ "$ref": "#/$defs/revision" }, { "type": "null" }], "description": "Required non-null whenever version > 1 (validator-enforced); required null at version 1, since there is nothing to revise yet." },
+    "status": { "enum": ["complete", "partial"], "description": "R-16/R-21. Never 'failed' -- Failed means no RequirementSpec artifact exists at all, per this schema's own top-level description." },
+    "requirements": { "type": "array", "items": { "$ref": "#/$defs/requirement" }, "description": "R-17: an empty array is a valid Complete output when the consumed IntentSpec genuinely supports no formal Requirements." },
+    "open_items": { "type": "array", "items": { "$ref": "#/$defs/openItem" }, "description": "Carried-forward unresolved items this version does not, or must not, resolve -- unresolved Ambiguities/Conflicts, Unknowns that fail R-19's fillability test, R-19-eligible Unknowns left deliberately unfilled, and R-20 unresolved constraint-candidates." },
+    "excluded_claims": { "type": "array", "items": { "$ref": "#/$defs/excludedClaim" }, "description": "Document-wide, validator-checked unique by claim_id. A Claim listed here must not also be cited in any clause's basis/premise/rationale_refs, or be a Conflict participant/R-20 source -- mutually exclusive dispositions." }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$", "minLength": 1 },
+
+    "excludedClaim": {
+      "type": "object", "additionalProperties": false, "required": ["claim_id", "reason"],
+      "properties": { "claim_id": { "$ref": "#/$defs/id" }, "reason": { "type": "string", "minLength": 1 } },
+      "description": "REQUIREMENT_SPEC.md's Complete-outcome text: a Claim that carries derivable content but was explicitly excluded (descriptive, no force; redundant with an existing Requirement; etc.) rather than becoming a Requirement."
+    },
+
+    "intentSpecRef": {
+      "type": "object", "additionalProperties": false, "required": ["intent_spec_id", "version"],
+      "properties": { "intent_spec_id": { "$ref": "#/$defs/id" }, "version": { "type": "integer", "minimum": 1 } }
+    },
+
+    "memoryContextEntryRef": {
+      "type": "object", "additionalProperties": false, "required": ["memory_context_id", "entry_id"],
+      "properties": { "memory_context_id": { "$ref": "#/$defs/id" }, "entry_id": { "$ref": "#/$defs/id" } },
+      "description": "The stable (memory_context_id, entry_id) pair MEMORY_CONTEXT_SCHEMA_MAPPING.md's 'Stable identity for cross-artifact reference' establishes. Used only for an R-24 memory-informed rationale -- never as a Requirement-Level Inference premise (see requirementLevelInferencePremise's closed oneOf, which structurally forecloses this shape, R-23)."
+    },
+
+    "revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["trigger", "affected_requirement_ids", "affected_open_item_ids", "basis"],
+      "properties": {
+        "trigger": {
+          "enum": ["new_intent_spec_version", "unknown_filled", "default_withdrawn_or_replaced", "rli_unsupported", "contract_conformance_correction"],
+          "description": "One of REQUIREMENT_SPEC.md's 'Requirement Identity and Versioning' named reasons -- never an unexplained change of judgment or a stylistic rewrite."
+        },
+        "affected_requirement_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Validator-enforced: at least one of affected_requirement_ids/affected_open_item_ids must be non-empty -- a revision that affects nothing is not a revision." },
+        "affected_open_item_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "basis": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "provenanceRef": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "claim_id"], "properties": { "kind": { "const": "claim" }, "claim_id": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "open_item_id"], "properties": { "kind": { "const": "open_item" }, "open_item_id": { "$ref": "#/$defs/id" } } }
+      ],
+      "description": "R-01: a reference into the specific consumed IntentSpec version -- never into this RequirementSpec itself, and never a MemoryContext reference (memory is never ordinary provenance, R-24)."
+    },
+
+    "workingDefault": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_open_item_id", "value", "rationale"],
+      "properties": {
+        "source_open_item_id": { "$ref": "#/$defs/id", "description": "R-19/R-09: the surviving Unknown in the consumed IntentSpec this default fills. Validator-checked to resolve to an open_item of kind 'unknown' -- never 'ambiguity', and never an ID this RequirementSpec manufactures itself." },
+        "value": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1, "description": "R-09/R-19: Requirement Derivation's own independent justification that this value is a defensible internal implementation/measurement detail -- never 'because memory said so' (see memory_informed_rationale below, which is additional, never a substitute)." },
+        "memory_informed_rationale": {
+          "anyOf": [{ "$ref": "#/$defs/memoryContextEntryRef" }, { "type": "null" }],
+          "description": "R-24: present only when a MemoryContext entry informed this value. Additional to, never a replacement for, 'rationale' above -- the validator requires both when this is non-null."
+        }
+      }
+    },
+
+    "testability": {
+      "description": "R-21. This layer records the structural shape of a satisfaction procedure; it does not itself execute, prove, or validate the procedure's substantive correctness for any real candidate -- see REQUIREMENT_SPEC_SCHEMA_MAPPING.md's 'Complete/Partial representation' for exactly what is, and is not, enforced.",
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false, "required": ["status"],
+          "properties": { "status": { "const": "complete_binary" } },
+          "description": "A plain SATISFIED/NOT_SATISFIED procedure, fully determined by the clause's own recorded content -- no INDETERMINATE branch needed or offered."
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "grounding_open_item_id", "admissible_readings"],
+          "properties": {
+            "status": { "const": "complete_indeterminate" },
+            "grounding_open_item_id": { "$ref": "#/$defs/id", "description": "R-21 condition 1: the surviving Unknown routing a candidate to INDETERMINATE. Validator-checked to resolve to an open_item of kind 'unknown' in the consumed IntentSpec -- never 'ambiguity' or 'conflict', which R-21 condition 1 categorically excludes from this branch." },
+            "admissible_readings": { "type": "array", "minItems": 2, "items": { "type": "string", "minLength": 1 }, "description": "R-21 condition 2: the closed, IntentSpec-grounded reading domain. Structural presence (at least two readings) is schema-enforced; whether these readings are genuinely grounded in the IntentSpec's own recorded content -- as opposed to a domain Requirement Derivation invented after the fact -- is Not enforceable at this layer, since intent-spec.schema.json's own 'unknown' shape carries no structured candidate-reading field to check against (only 'ambiguity' does)." }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["status", "reason"],
+          "properties": { "status": { "const": "blocked" }, "reason": { "type": "string", "minLength": 1 } },
+          "description": "Testability-blocked: no faithful procedure -- not even one with an INDETERMINATE branch -- can be written from this clause's own recorded content."
+        }
+      ]
+    },
+
+    "directCompilationClause": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clause_id", "derivation", "statement", "strength", "basis", "origins", "testability"],
+      "properties": {
+        "clause_id": { "$ref": "#/$defs/id" },
+        "derivation": { "const": "direct_compilation" },
+        "statement": { "type": "string", "minLength": 1 },
+        "strength": { "enum": ["MUST", "MUST_NOT", "SHOULD", "MAY"], "description": "R-05/R-06: force -> strength, one-directional, non-inflationary. Validator-checked against the mapped strength of every basis Claim's own force in the companion IntentSpec." },
+        "basis": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["claim_id"], "properties": { "claim_id": { "$ref": "#/$defs/id" } } }, "description": "R-01: the normative basis -- one or more Claims whose own force this clause's strength is mapped from (R-02: never a force-absent descriptive Claim; the validator checks this). Deliberately claim-only, not the open_item_id generality R-01's provenance text also allows for a Requirement overall: an Open Item carries no force to map a strength from, so it can never legitimately be a clause's normative basis. A surviving Open Item's two legitimate roles are structurally elsewhere -- filling a detail within an already-settled clause (working_defaults.source_open_item_id) or grounding a clause's own INDETERMINATE testability branch (testability.grounding_open_item_id) -- never as if it were itself a strength source." },
+        "rationale_refs": { "type": "array", "items": { "$ref": "#/$defs/provenanceRef" }, "description": "R-02: non-normative rationale, structurally distinct from 'basis'. May cite a force-absent descriptive Claim -- removing this array must leave the clause's normative content completely unchanged." },
+        "scope_condition": { "type": "string", "minLength": 1, "description": "R-07: a preserved, formal condition -- never a manufactured biconditional. Required whenever any basis Claim itself carries a scope_condition (validator-enforced structurally; faithful preservation of the condition's exact meaning is Not enforceable at this layer)." },
+        "origins": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["user_provided", "inferred", "assumed"] }, "description": "The set of distinct origins among this clause's basis Claim(s) -- validator-checked to equal that set exactly, never independently asserted. Deliberately a set, not a single scalar: 'Requirement Cardinality and Granularity' permits several Claims of DIFFERENT origins to jointly define one testable behavior (e.g. a User-Provided obligation corroborated by an Inferred one), and 'Information-Loss Rules' forbids collapsing that distinction into one summary value -- a single-origin clause is simply the common case of this same array holding one element." },
+        "derivation_confidences": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["low", "moderate", "high"] }, "description": "The set of distinct derivation_confidence values among this clause's Inferred-origin basis Claim(s). Required whenever 'inferred' is a member of origins (mirroring those Claims' own derivation_confidence values, never collapsed to one); forbidden otherwise." },
+        "provisional": { "$ref": "#/$defs/provisionalStanding" },
+        "working_defaults": { "type": "array", "items": { "$ref": "#/$defs/workingDefault" }, "description": "R-09/R-19/R-24: zero or more Requirement-Derivation-introduced value fills for an internal implementation/measurement detail within this already-settled clause." },
+        "testability": { "$ref": "#/$defs/testability" }
+      }
+    },
+
+    "requirementLevelInferencePremise": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "claim_id"], "properties": { "kind": { "const": "claim" }, "claim_id": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "requirement_id"], "properties": { "kind": { "const": "requirement" }, "requirement_id": { "$ref": "#/$defs/id" } } }
+      ],
+      "description": "R-10/R-23: only an accepted IntentSpec Claim or an already-derived Requirement in this same RequirementSpec -- never a MemoryContext entry. This closed oneOf has exactly two members ('claim' and 'requirement'), making R-23 structurally impossible, not merely discouraged. A whole Requirement premise is validator-checked to have a single strength across all its clauses; a mixed-strength Requirement is rejected as a premise with no clause-level fallback, per REQUIREMENT_SPEC.md's mixed-strength RLI premise clarification."
+    },
+
+    "requirementLevelInferenceClause": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clause_id", "derivation", "statement", "strength", "premise", "reasoning", "provisional", "testability"],
+      "properties": {
+        "clause_id": { "$ref": "#/$defs/id" },
+        "derivation": { "const": "requirement_level_inference" },
+        "statement": { "type": "string", "minLength": 1 },
+        "strength": { "enum": ["MUST", "MUST_NOT", "SHOULD", "MAY"], "description": "R-22: must exactly equal the premise's own strength -- never independently chosen, strengthened, or weakened. Validator-enforced." },
+        "premise": { "$ref": "#/$defs/requirementLevelInferencePremise" },
+        "reasoning": { "type": "string", "minLength": 1, "description": "R-10: the stated technical/operational-implication reasoning -- never an interpretive judgment about what the user meant." },
+        "scope_condition": { "type": "string", "minLength": 1, "description": "R-07: required whenever the premise itself carries a scope_condition (validator-enforced structurally), so a condition preserved through a direct-compilation clause is not silently dropped one inference-step later." },
+        "provisional": { "$ref": "#/$defs/provisionalStanding" },
+        "testability": { "$ref": "#/$defs/testability" }
+      },
+      "description": "R-22 forbids a derivation_confidence field here by construction -- this shape has none, unlike directCompilationClause's Inferred-origin case, which is a distinct concept (IntentSpec's own Inference confidence, not this stage's)."
+    },
+
+    "provisionalStanding": {
+      "type": "object", "additionalProperties": false, "required": ["provisional", "reversible"],
+      "properties": {
+        "provisional": { "type": "boolean" },
+        "reversible": { "type": "boolean" },
+        "settled_rationale": { "type": "string", "minLength": 1, "description": "Required when provisional is false (validator-enforced) -- 'Requirement Derivation may instead record it as settled only when it states why continued reconsideration isn't warranted... silence is not that statement.' Forbidden when provisional is true." }
+      }
+    },
+
+    "clause": { "oneOf": [{ "$ref": "#/$defs/directCompilationClause" }, { "$ref": "#/$defs/requirementLevelInferenceClause" }] },
+
+    "invalidation": {
+      "type": "object", "additionalProperties": false, "required": ["reason"],
+      "properties": { "reason": { "type": "string", "minLength": 1 } }
+    },
+
+    "requirement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requirement_id", "clauses", "status"],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/id" },
+        "clauses": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/clause" }, "description": "R-15: one or more clauses. Multiple clauses may carry different strengths within one Requirement (mixed-strength combination, 'Requirement Cardinality and Granularity') -- strength is never homogenized across them." },
+        "status": { "enum": ["valid", "invalidated"] },
+        "invalidation": { "anyOf": [{ "$ref": "#/$defs/invalidation" }, { "type": "null" }], "description": "R-14: required non-null when status is 'invalidated'; required null when 'valid'. An invalidated Requirement is never deleted -- it remains in this version's historical record." }
+      }
+    },
+
+    "ambiguityOpenItem": {
+      "type": "object", "additionalProperties": false, "required": ["open_item_id", "kind", "source_open_item_id"],
+      "properties": { "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "ambiguity" }, "source_open_item_id": { "$ref": "#/$defs/id", "description": "Resolves to an 'ambiguity'-kind open item in the consumed IntentSpec. R-08: never resolved by Requirement Derivation, at any Decision Impact level." } }
+    },
+    "conflictOpenItem": {
+      "type": "object", "additionalProperties": false, "required": ["open_item_id", "kind", "source_conflict_id"],
+      "properties": { "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "conflict" }, "source_conflict_id": { "$ref": "#/$defs/id", "description": "Resolves to a Conflict in the consumed IntentSpec. R-08: never resolved by Requirement Derivation." } }
+    },
+    "unfillableUnknownOpenItem": {
+      "type": "object", "additionalProperties": false, "required": ["open_item_id", "kind", "source_open_item_id", "r19_ineligibility_reason"],
+      "properties": {
+        "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "unfillable_unknown" },
+        "source_open_item_id": { "$ref": "#/$defs/id", "description": "Resolves to an 'unknown'-kind open item in the consumed IntentSpec that fails R-19's fillability test -- treated exactly as an Ambiguity or Conflict, regardless of its formal Unknown classification." },
+        "r19_ineligibility_reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "unfilledR19UnknownOpenItem": {
+      "type": "object", "additionalProperties": false, "required": ["open_item_id", "kind", "source_open_item_id"],
+      "properties": {
+        "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "unfilled_r19_unknown" },
+        "source_open_item_id": { "$ref": "#/$defs/id", "description": "An R-19-eligible Unknown Requirement Derivation chose not to fill this version, carried forward instead. Does not, by itself, make any area Partial -- see Case 25; only a clause whose own testability structurally depends on it does." }
+      }
+    },
+    "unresolvedConstraintCandidateOpenItem": {
+      "type": "object", "additionalProperties": false, "required": ["open_item_id", "kind", "source_claim_id"],
+      "properties": {
+        "open_item_id": { "$ref": "#/$defs/id" }, "kind": { "const": "unresolved_constraint_candidate" },
+        "source_claim_id": { "$ref": "#/$defs/id", "description": "R-20: a Claim whose binding/constraining content is evident but whose own force never resolved to obligation/prohibition/permission/preference. Never assigned a manufactured strength." }
+      }
+    },
+    "openItem": {
+      "oneOf": [
+        { "$ref": "#/$defs/ambiguityOpenItem" },
+        { "$ref": "#/$defs/conflictOpenItem" },
+        { "$ref": "#/$defs/unfillableUnknownOpenItem" },
+        { "$ref": "#/$defs/unfilledR19UnknownOpenItem" },
+        { "$ref": "#/$defs/unresolvedConstraintCandidateOpenItem" }
+      ]
+    }
+  }
+}
