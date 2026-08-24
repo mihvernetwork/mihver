@@ -355,8 +355,9 @@ let checked = 0;
     checked += 1;
   }
 
-  // 9f. Safe fallback/diagnostic: no local "main" ref found -> SKIP with a diagnostic detail, never
-  //     a silent PASS.
+  // 9f. Fail closed: no local "main" ref found -> FAIL with a diagnostic detail, never a silent
+  //     SKIP/PASS. A required protection that could not be evaluated must not let the overall
+  //     checker report "all deterministic checks passed".
   {
     const dir = makeTempRepo();
     gitExec(dir, ['init', '-b', 'trunk']);
@@ -366,8 +367,46 @@ let checked = 0;
     gitExec(dir, ['add', '.']);
     gitExec(dir, ['commit', '-m', 'base']);
     const check = checkDecisionsLogAppendOnlyVsBase(dir);
-    assert.equal(check.status, 'SKIP', `expected a missing local "main" ref to skip with a diagnostic: ${JSON.stringify(check.details)}`);
+    assert.equal(check.status, 'FAIL', `expected a missing local "main" ref to fail closed with a diagnostic: ${JSON.stringify(check.details)}`);
     assert.ok(check.details.some((d) => d.includes('main')), `expected the diagnostic to mention "main", got: ${JSON.stringify(check.details)}`);
+    rmSync(dir, { recursive: true, force: true });
+    checked += 1;
+  }
+
+  // 9g. A genuinely new .project/DECISIONS_LOG.md that did not exist at the merge-base (introduced
+  //     entirely on this branch) is a real, accurate PASS — not a SKIP, and not a FAIL: there are no
+  //     frozen entries yet to protect.
+  {
+    const dir = makeTempRepo();
+    gitExec(dir, ['init', '-b', 'main']);
+    gitExec(dir, ['config', 'user.email', 'test@example.com']);
+    gitExec(dir, ['config', 'user.name', 'Test']);
+    write(dir, 'README.md', '# placeholder\n');
+    gitExec(dir, ['add', '.']);
+    gitExec(dir, ['commit', '-m', 'base, no DECISIONS_LOG.md yet']);
+    gitExec(dir, ['switch', '-c', 'feature']);
+    write(dir, '.project/DECISIONS_LOG.md', BASE_LOG);
+    const check = checkDecisionsLogAppendOnlyVsBase(dir);
+    assert.equal(
+      check.status,
+      'PASS',
+      `expected a DECISIONS_LOG.md introduced entirely on this branch to pass explicitly: ${JSON.stringify(check.details)}`
+    );
+    assert.ok(
+      check.details.some((d) => d.includes('did not exist yet at merge-base')),
+      `expected an explicit "did not exist yet at merge-base" detail, got: ${JSON.stringify(check.details)}`
+    );
+    rmSync(dir, { recursive: true, force: true });
+    checked += 1;
+  }
+
+  // 9h. A malformed entries structure (no "---" separator) in the working-tree version fails closed
+  //     rather than skipping — the protection could not be evaluated, so it must not silently pass.
+  {
+    const dir = makeBaseRepo();
+    write(dir, '.project/DECISIONS_LOG.md', '# Decisions Log\n\nno separator in this version at all.\n');
+    const check = checkDecisionsLogAppendOnlyVsBase(dir);
+    assert.equal(check.status, 'FAIL', `expected a malformed (no "---" separator) entries region to fail closed: ${JSON.stringify(check.details)}`);
     rmSync(dir, { recursive: true, force: true });
     checked += 1;
   }

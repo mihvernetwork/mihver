@@ -123,9 +123,15 @@ export function checkDecisionsLogEntryShape(repoRoot) {
 //   - correcting an entry that was itself introduced only on the still-unmerged branch (i.e. it has
 //     no counterpart at the merge-base) also passes — that entry was never frozen to begin with.
 // CRLF is normalized to LF before comparing so line-ending differences alone never fail the check.
-// Skips cleanly (with a diagnostic detail, not a silent pass) whenever a safe git baseline cannot
-// be established: outside a git repo, no local `main` ref, no merge-base, or the file not present
-// at the merge-base (a genuinely new file, nothing to protect yet).
+//
+// FAILS CLOSED: this check exists to protect frozen entries, so whenever the required frozen
+// baseline cannot actually be established or read — no local `main` ref, no merge-base, or a
+// malformed "---" entries-region structure in either version — the result is FAIL, not SKIP. A
+// silent SKIP here would let `main()`'s summary print "all deterministic checks passed" while this
+// protection was never actually evaluated, which is exactly the false confidence this check exists
+// to prevent. The one case that legitimately isn't a failure: `.project/DECISIONS_LOG.md` genuinely
+// did not exist yet at the merge-base (a brand-new file introduced entirely on this branch) — there
+// are no frozen entries to protect, so that's reported as an explicit, accurate PASS, not a SKIP.
 
 function entriesRegion(content) {
   const match = content.match(/\n---\n/);
@@ -184,24 +190,56 @@ function resolveMergeBaseWithMain(repoRoot) {
 export function checkDecisionsLogAppendOnlyVsBase(repoRoot) {
   const name = 'decisions-log-append-only-vs-base';
   const current = read(repoRoot, '.project/DECISIONS_LOG.md');
-  if (current === null) return { name, status: 'SKIP', details: ['.project/DECISIONS_LOG.md not found'] };
+  if (current === null) return { name, status: 'SKIP', details: ['.project/DECISIONS_LOG.md not found (covered separately by required-files-exist)'] };
 
   const { ref: baseRef, diagnostic } = resolveMergeBaseWithMain(repoRoot);
   if (baseRef === null) {
-    return { name, status: 'SKIP', details: [`could not establish a zero-network git baseline (merge-base with local main): ${diagnostic}`] };
+    return {
+      name,
+      status: 'FAIL',
+      details: [
+        `could not establish the required zero-network git baseline (merge-base with local main), so the append-only protection could not be evaluated: ${diagnostic}`,
+      ],
+    };
+  }
+
+  // Distinguish "the file genuinely didn't exist yet at the merge-base" (a new file introduced on
+  // this branch — nothing frozen to protect, an accurate PASS) from any other failure to read its
+  // content at that commit (a malformed/unreadable baseline — FAIL, never a silent SKIP).
+  let existedAtBase = true;
+  try {
+    execSync(`git cat-file -e ${baseRef}:.project/DECISIONS_LOG.md`, { cwd: repoRoot, stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    existedAtBase = false;
+  }
+  if (!existedAtBase) {
+    return {
+      name,
+      status: 'PASS',
+      details: [`.project/DECISIONS_LOG.md did not exist yet at merge-base ${baseRef} — a new file introduced on this branch; no frozen entries to protect`],
+    };
   }
 
   let atBase;
   try {
     atBase = execSync(`git show ${baseRef}:.project/DECISIONS_LOG.md`, { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
   } catch {
-    return { name, status: 'SKIP', details: [`.project/DECISIONS_LOG.md does not exist at merge-base ${baseRef} — nothing to protect yet`] };
+    return {
+      name,
+      status: 'FAIL',
+      details: [`.project/DECISIONS_LOG.md exists at merge-base ${baseRef} but its content could not be read — the append-only protection could not be evaluated`],
+    };
   }
 
   const currentEntries = entriesRegion(normalizeLineEndings(current));
   const baseEntries = entriesRegion(normalizeLineEndings(atBase));
   if (currentEntries === null || baseEntries === null) {
-    return { name, status: 'SKIP', details: ['could not locate a "---" entries separator in the working tree version or the merge-base version'] };
+    const malformedSides = [currentEntries === null ? 'working tree' : null, baseEntries === null ? `merge-base ${baseRef}` : null].filter(Boolean);
+    return {
+      name,
+      status: 'FAIL',
+      details: [`could not locate a "---" entries separator in the ${malformedSides.join(' or ')} version — the append-only protection could not be evaluated`],
+    };
   }
 
   const currentBlocks = splitEntryBlocks(currentEntries);
