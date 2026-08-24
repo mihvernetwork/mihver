@@ -138,7 +138,7 @@ See "Status" above.
 
 ## Next Gate
 
-PR expected: yes — no PR opened yet for this task.
+PR: #30 — `https://github.com/mihvernetwork/mihver/pull/30`
 Target: main
 Live PR state: verify from GitHub.
-Human review is the next gate once the PR exists. Do not merge.
+Human review is the next gate. Do not merge.

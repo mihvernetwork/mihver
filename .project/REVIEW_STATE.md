@@ -17,10 +17,10 @@ Action" is authoritative for what's next, not anything below.
 
 Task: M0-STEP-03B-REQUIREMENT-SPEC-SCHEMA
 Branch: `m0/step-03b-requirement-schema`
-PR: none opened yet.
+PR: #30 — `https://github.com/mihvernetwork/mihver/pull/30`
 Target: main
 Live PR state: verify from GitHub.
-Human review is the next gate once the PR exists.
+Human review is the next gate.
 
 Implemented M0 Step 03B: the first machine-readable `RequirementSpec` representation
 (`schemas/m0/requirement-spec.schema.json`, `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`,
@@ -157,10 +157,10 @@ identities are validator-checked unique. 19 new regression fixtures added.
 
 ## Pending Human Gate
 
-PR expected: yes — no PR opened yet.
+PR: #30 — `https://github.com/mihvernetwork/mihver/pull/30`
 Target: main
 Live PR state: verify from GitHub.
-Human review is the next gate once the PR exists. Do not merge.
+Human review is the next gate. Do not merge.
 
 ## History
 
