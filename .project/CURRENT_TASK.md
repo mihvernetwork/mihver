@@ -35,6 +35,10 @@ Base: `main` at `9e1f41eac5b97afb5ef15c62e0d9abb05b911203`.
   `docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
 - Conditional Consistency (synchronization-only): `.project/CONTEXT_INDEX.md` (discoverability row
   for `CODEX_ROLES.md`).
+- Two subsequent human-review-fixes rounds on the same branch/PR (#31) additionally touched
+  `CLAUDE.md` (permanent-policy pointer/description sync, no product semantics) and
+  `.project/CURRENT_TASK.md`/`.project/REVIEW_STATE.md` (this task's own record — PR-state sync and
+  itemized reviewer-finding records for each round).
 
 **No M0 product semantics, contracts, ADR semantics, schemas, MIHVER Brain, or Council/product
 architecture touched** — this is development-infrastructure only.
@@ -45,7 +49,11 @@ concurrency, lifecycle, token economy; Reviewer C: Git Operator capability safet
 Envelope, branch/PR behavior). All three independently found the same BLOCKER (Git Operator's
 PREPARE mode contradicted the original blanket "acts only at `READY_TO_PUBLISH`" wording) plus
 several confirmed MAJOR/MINOR findings — all fixed and independently re-verified by Claude against
-actual file content. See `.project/REVIEW_STATE.md`'s "Latest Review" for the full itemized list.
+actual file content. Two further human-review-fixes rounds on PR #31 found and fixed additional
+confirmed findings (Git Operator's pre-publish HEAD guard, Base branch/Base commit split, exact
+file staging, Publication Fingerprint validation binding, publication receipt; then the
+present-regular-file/authorized-deletion staging contradiction). See `.project/REVIEW_STATE.md`'s
+"Latest Review" for the full itemized list, round by round.
 
 **Validation**: `npm run check:project-consistency` — 7/7. `npm run test:project-consistency` —
 19/19. `git diff --check` — clean. `npm test` not run (no schema/validator/fixture file touched by
@@ -57,7 +65,8 @@ this development-infrastructure-only task).
 `docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
 
 **Conditional Consistency** (touched; synchronization-only): `.project/CONTEXT_INDEX.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`.
+`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `CLAUDE.md` (added by the human-review-fixes
+rounds).
 
 **Forbidden, confirmed untouched**: M0 product semantics, contracts, ADR semantics, schemas,
 MIHVER Brain, Council/product architecture, runtime product behavior.

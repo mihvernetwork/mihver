@@ -178,19 +178,35 @@ basis, and never resolves a mismatch itself via merge, rebase, reset, or force o
 4. Verify the working tree/diff matches what the Envelope expects: `git status --porcelain` and
    `git diff --stat` show no file outside the Envelope's `Allowed files to stage`, and no unrelated
    uncommitted changes.
-5. **Stage only the Envelope's exact file paths, with pathspec magic disabled.** Every entry in
-   `Allowed files to stage` must be an exact regular-file path — never a directory, never a
-   wildcard, never `git add -A` / `git add .`, never a symlink or other non-regular file (a symlink
-   is rejected as malformed, not staged — `git hash-object` on a symlink path dereferences and
-   hashes the *pointed-to* content, not the symlink blob Git would actually store, so it cannot be
-   fingerprinted reliably; see the Publication Fingerprint recipe below). An entry is malformed —
-   BLOCKED before staging anything — if it names a directory, contains a pathspec magic character
-   interpretable as a glob (`*`, `?`, `[`) unless staged with pathspec magic explicitly disabled, is
-   empty, or resolves outside the repository. Stage each listed entry individually with pathspec
-   magic disabled and an explicit end-of-options marker:
+5. **Stage only the Envelope's exact file paths, with pathspec magic disabled, distinguishing
+   exactly two authorized shapes.** Every entry in `Allowed files to stage` must be unique (no path
+   listed twice) and must resolve, mechanically, to exactly one of:
+
+   - **(A) Present regular file** — exists in the current working tree, and is a regular file
+     there (not a directory, symlink, or other special file). May represent added or modified
+     content.
+   - **(B) Authorized deletion** — absent from the current working tree, **and** resolves at the
+     Envelope's `Expected pre-publish HEAD` to a tracked regular file: `git ls-tree
+     <Expected pre-publish HEAD> -- <exact-file>` must produce exactly one line for that exact path
+     with mode `100644` or `100755` (a tracked regular file; `120000` is a symlink, `040000` a
+     tree/directory, `160000` a submodule — none of these qualify). An entry that is absent from
+     the working tree but was **not** a tracked regular file at `Expected pre-publish HEAD` (never
+     tracked, or tracked as a directory/symlink/submodule) is malformed: **BLOCKED**, not treated as
+     a deletion.
+
+   Any entry that is neither (A) nor (B) — a directory, a symlink, a pathspec-magic character
+   (`*`, `?`, `[`) unless magic is explicitly disabled, an empty entry, a path resolving outside the
+   repository, or a duplicate of another entry — is malformed: **BLOCKED before staging anything**.
+   A rename is represented as two separate entries, each independently validated: the old path as
+   an (B) authorized deletion, the new path as an (A) present regular file — Git Operator never
+   infers a rename from the pair; it validates each entry on its own terms.
+
+   Stage each entry individually with pathspec magic disabled and an explicit end-of-options marker,
+   using the shape determined above — never guessed, never inferred from whichever command happens
+   to succeed:
    ```text
-   git --literal-pathspecs add -- <exact-file>          # entry exists on disk
-   git --literal-pathspecs rm -- <exact-file>            # entry is an authorized deletion
+   git --literal-pathspecs add -- <exact-file>          # (A) present regular file
+   git --literal-pathspecs rm -- <exact-file>            # (B) authorized deletion
    ```
    Then confirm `git diff --cached --name-only` produces **exactly** the authorized file set — no
    more, no fewer, no directory-coverage interpretation of what "authorized" means. Any discrepancy:
@@ -250,9 +266,11 @@ Base commit: <exact immutable SHA — the ancestry anchor authorized for this ta
 Expected pre-publish HEAD: <exact SHA HEAD must equal before any staging/commit — the branch's
        initial HEAD (= Base commit) for a brand-new task branch, or the previously-known branch
        head for a continuation of an existing PR's fix set>
-Allowed files to stage: <exact regular-file paths only — no directories, no wildcards, no symlinks,
-       no `git add -A`/`.`; an entry that is not an exact regular-file path is itself malformed
-       (BLOCKED)>
+Allowed files to stage: <exact file paths only, each unique, each either (A) a present regular file
+       in the working tree, or (B) an authorized deletion — absent from the working tree but a
+       tracked regular file at "Expected pre-publish HEAD"; no directories, no wildcards, no
+       symlinks, no `git add -A`/`.`; a rename is two entries (old path deleted, new path present);
+       an entry matching neither (A) nor (B), or a duplicate, is itself malformed (BLOCKED)>
 Publication Fingerprint: <see below — the deterministic digest Verifier computed over exactly the
        "Allowed files to stage" set after the last edit and Final Consistency Sweep>
 Commit message: <verbatim>
@@ -266,18 +284,26 @@ PR body: <verbatim text, or a deterministic template with mechanically-filled fi
 implementation beyond this policy.** Scope is deliberately narrowed to keep the recipe exact and
 reproducible by two independent actors (Verifier, then Git Operator) with existing tools only:
 
-- **Domain**: every path in `Allowed files to stage` must be a regular file (never a directory,
-  symlink, or other special file — `Allowed files to stage` already requires this; the fingerprint
-  recipe depends on it). A path containing a raw newline is rejected as malformed in the Envelope
-  itself — Git paths permit this in principle, but this policy does not attempt to fingerprint it.
+- **Domain**: every path in `Allowed files to stage` must already classify, unambiguously, as
+  either shape (A) present regular file or shape (B) authorized deletion (PUBLISH step 5's
+  definitions — Verifier applies the identical classification when it first computes the
+  fingerprint, not only Git Operator when it recomputes one). A path that is neither, or that is
+  ambiguous (e.g. absent from the working tree but not a tracked regular file at `Expected
+  pre-publish HEAD`), is not fingerprinted at all — it is malformed, and Verifier must not produce
+  an Envelope for it until the entry itself is fixed. A path containing a raw newline is rejected as
+  malformed in the Envelope itself — Git paths permit this in principle, but this policy does not
+  attempt to fingerprint it.
 - **Canonical command sequence** (run with `LC_ALL=C` so sorting is a fixed byte-order, never
   locale-dependent), computed by Verifier over exactly the `Allowed files to stage` list and
-  recomputed identically by Git Operator immediately before staging (PUBLISH step 6):
+  recomputed identically by Git Operator immediately before staging (PUBLISH step 6). `$p` ranges
+  only over already-classified entries — `-e "$p"` reduces to "is this shape (A)?" only because
+  shape (B) was already confirmed absent-but-tracked-at-`Expected pre-publish HEAD` beforehand, per
+  the Domain bullet above, not because presence-on-disk is itself the classification rule:
   ```sh
   LC_ALL=C sort <<'EOF' | while IFS= read -r p; do
   <one "Allowed files to stage" entry per line>
   EOF
-    if [ -e "$p" ]; then h=$(git hash-object -- "$p"); else h="ABSENT"; fi
+    if [ -e "$p" ]; then h=$(git hash-object -- "$p"); else h="ABSENT"; fi   # (A) hash, or (B) ABSENT
     printf '%s\0%s\n' "$p" "$h"
   done | shasum -a 256 | awk '{print $1}'
   ```

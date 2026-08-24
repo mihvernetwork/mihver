@@ -78,19 +78,37 @@ implementations; fixed with a literal canonical shell command sequence in the po
 All findings independently re-verified by Claude against actual file content (including a hands-on
 git reproduction of the symlink-dereferencing claim) before being accepted, not merely relayed.
 
+**Final human-review-fix round on PR #31 (`APPROVE_WITH_REQUIRED_CHANGES`), one fresh Codex
+reviewer.** The prior round's fix narrowed the Publication Fingerprint/staging domain to "regular
+files only," but this was internally contradictory with the already-supported `git rm --
+<exact-file>` authorized-deletion case and the fingerprint's own `ABSENT` token — a deletion entry
+is, by definition, absent from the working tree at publish time, so it cannot also be "a regular
+file" there. Fixed by defining exactly two authorized shapes for every `Allowed files to stage`
+entry: **(A) present regular file** (exists in the working tree, is a regular file there), and
+**(B) authorized deletion** (absent from the working tree, but resolves at `Expected pre-publish
+HEAD` to a tracked regular file via `git ls-tree` mode `100644`/`100755` — rejecting `120000`
+symlink, `040000` tree, `160000` submodule; an absent path that was never a tracked regular file at
+that HEAD is malformed, not a deletion). Entries must be unique; a rename is two independently-
+validated entries (old = deletion, new = present file), never inferred as a single `git mv`. The
+one fresh reviewer (scope: authorized-deletion/present-file distinction, `Expected pre-publish HEAD`
+resolution, symlink/directory/special-file rejection, fingerprint `ABSENT` behavior, rename
+representation, entry uniqueness) returned a clean PASS with no findings — independently
+re-verified by Claude by re-reading the final text against each of the reviewer's five questions
+before accepting the PASS verdict.
+
 **Verification (Claude):** `npm run check:project-consistency` — 7/7. `npm run
 test:project-consistency` — 19/19. `git diff --check` — clean. `npm test` not run — no
 schema/validator/fixture file touched by this development-infrastructure-only task.
 
-**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings across both
-rounds independently re-verified against actual file content and fixed; consistency validation
-passed.
+**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings across all
+three rounds independently re-verified against actual file content and fixed; consistency
+validation passed.
 
 ## Required Changes
 
 None remaining — the unanimous PREPARE/`READY_TO_PUBLISH` blocker from the first round and every
-confirmed MAJOR/MINOR finding from both review rounds (four reviewers total across the two rounds)
-is fixed.
+confirmed MAJOR/MINOR finding from all three review rounds (five reviewers total) is fixed; the
+third round's single reviewer returned a clean PASS.
 
 ## Fixes Applied
 
