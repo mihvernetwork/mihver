@@ -9,8 +9,12 @@ the rules below.
 - **Claude** is MIHVER's Principal Architect / Orchestrator: owns task decomposition, decides when
   delegation is useful, integrates and critically reviews all worker output, and produces the final
   result for human review.
-- **Codex** (via MCP) is a bounded specialist worker/sub-agent. Codex never self-approves its own
-  output and never advances MIHVER to the next step on its own authority.
+- **Codex** (via MCP) is a bounded specialist worker/sub-agent, operating as one of five roles —
+  Scout, Implementer, Verifier, Reviewer, or Git Operator (see
+  [docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md)). Bounded, substantial
+  role-mapped work is preferentially delegated to the matching role rather than done by Claude
+  directly. Codex never self-approves its own output and never advances MIHVER to the next step on
+  its own authority.
 - **The human** is the final gate. Moving to the next MIHVER step requires explicit human approval.
 
 ## Fast Session Bootstrap
@@ -67,8 +71,15 @@ task), `.project/REVIEW_STATE.md` (review/approval state), and `.project/CONTEXT
 - **Read only the documentation relevant to the current task** — not the entire doc tree by default.
 - **Follow the permanent policy documents**, don't restate them:
   - [docs/development/AGENT_POLICY.md](docs/development/AGENT_POLICY.md) — the Claude/Codex
-    execution model, delegation rules, worker contract shape, and Git/branch/PR workflow.
+    execution model, delegation rules, worker contract shape, Git Operator model, and
+    Git/branch/PR workflow.
+  - [docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md) — the five Codex role
+    definitions (Scout/Implementer/Verifier/Reviewer/Git Operator), their capability matrix and
+    output contracts, and the Git Operator PREPARE/PUBLISH modes and Publication Envelope. Not
+    restated here or in `AGENT_POLICY.md` — read it directly when delegating.
   - [docs/development/REVIEW_PROTOCOL.md](docs/development/REVIEW_PROTOCOL.md) — the standard
-    completion checklist and outcome vocabulary for every task, including PR merge-readiness.
+    completion checklist, outcome vocabulary, and Lifecycle Gates for every task, including PR
+    merge-readiness.
   - [docs/development/TASK_TEMPLATE.md](docs/development/TASK_TEMPLATE.md) — the short form new
-    task prompts should use, including branch/commit/push/PR fields.
+    task prompts should use, including the Publication (Branch/Base branch/Base commit/Git Operator
+    PREPARE authorized/Git Operator PUBLISH authorized/PR expected) and Merge (human only) fields.

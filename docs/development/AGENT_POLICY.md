@@ -353,6 +353,15 @@ No Git mutation — by Git Operator, by another worker, or by Claude directly �
 write-capable actor in the same working tree; see "Parallel Worker Rules" above, which applies to
 Git Operator exactly as it does to Claude's own direct Git commands.
 
+**`Base branch` and `Base commit` are two separate authorities, not one overloaded field** — see
+`TASK_TEMPLATE.md`'s Publication model and `CODEX_ROLES.md`'s Publication Envelope for the full
+schema. `Base branch` is the PR target (normally `main`); `Base commit` is the immutable ancestry
+anchor Git Operator verifies before every PUBLISH — a `Base branch` that has since moved forward
+must never silently redefine what a task was actually authorized to build on. Before any staging or
+commit, PUBLISH also requires `HEAD` to equal the Envelope's `Expected pre-publish HEAD` exactly —
+proving the branch carries no unexpected pre-existing committed work — with any mismatch reported as
+`BLOCKED`, never resolved via merge, rebase, reset, or force.
+
 ### Branches
 
 All new MIHVER work happens on a dedicated task branch, never directly on `main`. Naming pattern:
@@ -376,7 +385,7 @@ Claude must:
   working tree, create the branch from the current repository state (`git switch -c <branch>`,
   preferred for clarity over `git checkout -b`), which preserves uncommitted changes — never
   `git reset`, `git stash --drop`, `git checkout --`, or anything else that could lose or discard
-  that work in the process. If the task also specifies a `Base` that differs from the branch
+  that work in the process. If the task also specifies a `Base branch` that differs from the branch
   Claude is currently on, stop and report the mismatch rather than improvising a rebase, merge, or
   branch switch that could disturb the uncommitted work;
 - keep all task changes isolated to that branch;

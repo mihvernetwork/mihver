@@ -73,7 +73,7 @@ See "Status" above.
 
 ## Next Gate
 
-PR expected: yes — not yet opened; number unknown until GitHub publication.
+PR: #31
 Target: main
 Live PR state: verify from GitHub.
-Human review is the next gate after PR publication. Do not merge.
+Human review is the current gate. Do not merge.

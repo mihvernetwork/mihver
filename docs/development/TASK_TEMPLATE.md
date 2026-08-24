@@ -74,16 +74,25 @@ change the meaning of, if any — "none" for a pure mirror/navigation/tooling ta
 ## Publication
 
 Branch: <task branch name, if the human supplied one — never invent one if not stated>
-Base: <default: main>
+Base branch: <default: main — the PR target>
+Base commit: <exact immutable SHA the branch is authorized to build on, if known at task start;
+  otherwise Git Operator PREPARE reports the branch tip SHA it created, and that becomes this
+  task's Base commit for every Publication Envelope going forward>
 Git Operator PREPARE authorized: <yes/no — default: no>
 Git Operator PUBLISH authorized: <yes/no — default: no>
 PR expected: <yes/no — default: no>
 
 Omitted publication capability defaults to **no**. A publishing task must have an exact branch
-identity before Git Operator may mutate repository state — never invent one. See
+identity before Git Operator may mutate repository state — never invent one. `Base branch` and
+`Base commit` are deliberately separate: `Base branch` is the moving PR target (normally `main`);
+`Base commit` is the immutable ancestry anchor Git Operator verifies before every PUBLISH
+(`git merge-base --is-ancestor <Base commit> HEAD`) — a `Base branch` that has since moved forward
+must never silently redefine what this task was actually authorized to build on. See
 `AGENT_POLICY.md`'s "Git Operator (preferred path for publication)" and `CODEX_ROLES.md`'s
 "GIT_OPERATOR" section for what PREPARE/PUBLISH authorization actually permits, and the Publication
-Envelope Claude must produce before PUBLISH may run.
+Envelope Claude must produce before PUBLISH may run — including the `Expected pre-publish HEAD`
+guard and the Publication Fingerprint, neither of which is a task-prompt field; both are Claude's
+own Envelope-time responsibility once the task's Publication fields above are set.
 
 ## Merge
 
@@ -107,7 +116,8 @@ Then stop.
 When a task prompt omits the `## Publication` section, or leaves individual fields blank, assume:
 
 ```text
-Base: main
+Base branch: main
+Base commit: unset — Git Operator PREPARE must establish and report one before any PUBLISH
 Git Operator PREPARE authorized: no
 Git Operator PUBLISH authorized: no
 PR expected: no

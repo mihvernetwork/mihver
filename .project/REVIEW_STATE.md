@@ -17,10 +17,13 @@ Action" is authoritative for what's next, not anything below.
 
 Task: DEVELOPMENT-ORCHESTRATION-V3
 Branch: `chore/development-orchestration-v3`
+PR: #31
 Target: main
-PR: not yet opened — number unknown until GitHub publication; do not invent one.
 Live PR state: verify from GitHub.
-Human review is the next gate once the PR exists.
+Human review is the current gate.
+
+**Human review verdict on PR #31: `APPROVE_WITH_REQUIRED_CHANGES`** — this round (below) fixes the
+confirmed findings.
 
 Redesigned MIHVER's development execution model: five explicit Codex roles (Scout, Implementer,
 Verifier, Reviewer, Git Operator — `docs/development/CODEX_ROLES.md`, new), a Claude working cycle
@@ -53,17 +56,41 @@ plus one MINOR — a leftover two-tier "Read-Only vs. Write-Capable Workers" hea
 five-role model, including a Parallel-Worker-Rules gap between Git Operator PREPARE and a mid-flight
 Implementer (Reviewer B). All fixed in `AGENT_POLICY.md`, `CODEX_ROLES.md`, and `REVIEW_PROTOCOL.md`.
 
+**Human-review-fixes round on PR #31 (`APPROVE_WITH_REQUIRED_CHANGES`), two fresh Codex reviewers.**
+Reviewer A (Git Operator privilege boundary, pre-existing-commit protection, Base branch/Base
+commit, exact staging, publication receipt): 2 confirmed MAJOR findings, both fixed — (1) "exact
+file path" staging had no mechanical malformed-entry test and didn't disable Git's own pathspec
+magic (`*`/`?`/`[`), so an entry could still expand beyond a single literal file; fixed by requiring
+`git --literal-pathspecs add --`/`rm --` and explicitly rejecting directories, pathspec-magic
+characters, and non-regular files (symlinks) as malformed. (2) the Publication receipt's PR checks
+were unconditional, leaving `PR expected: no` with nothing to compare and a failed/absent PR lookup
+under `PR expected: yes` un-BLOCKED; fixed by branching the receipt explicitly on `PR expected`,
+requiring exactly one open PR on `yes` (absence/failure is itself BLOCKED) and `pr_number: none` on
+`no`. Reviewer B (Publication Fingerprint validation binding, CLAUDE.md/state consistency): 2
+confirmed MAJOR findings plus 1 MINOR, all fixed — (1) "sorted lexicographically" and
+`git hash-object <path>` were locale/leading-dash-ambiguous; fixed with `LC_ALL=C sort` and
+`git hash-object -- <path>`. (2) `git hash-object` on a symlink dereferences and hashes the
+*pointed-to* content, not the symlink blob Git actually stores — independently confirmed by hand
+(`git hash-object` on a symlink and its target produced the identical hash); fixed by narrowing the
+fingerprint's domain to regular files only, rejecting symlinks/directories/newline-containing paths
+as malformed. (3) MINOR — the recipe was prose-only, risking two operators improvising different
+implementations; fixed with a literal canonical shell command sequence in the policy text itself.
+All findings independently re-verified by Claude against actual file content (including a hands-on
+git reproduction of the symlink-dereferencing claim) before being accepted, not merely relayed.
+
 **Verification (Claude):** `npm run check:project-consistency` — 7/7. `npm run
 test:project-consistency` — 19/19. `git diff --check` — clean. `npm test` not run — no
 schema/validator/fixture file touched by this development-infrastructure-only task.
 
-**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings independently
-re-verified against actual file content and fixed; consistency validation passed.
+**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings across both
+rounds independently re-verified against actual file content and fixed; consistency validation
+passed.
 
 ## Required Changes
 
-None remaining — the unanimous PREPARE/`READY_TO_PUBLISH` blocker and every confirmed MAJOR/MINOR
-finding from all three reviewers is fixed.
+None remaining — the unanimous PREPARE/`READY_TO_PUBLISH` blocker from the first round and every
+confirmed MAJOR/MINOR finding from both review rounds (four reviewers total across the two rounds)
+is fixed.
 
 ## Fixes Applied
 
@@ -72,10 +99,10 @@ See "Latest Review" above for the itemized, per-reviewer list.
 ## Pending Human Gate
 
 Branch: `chore/development-orchestration-v3`
+PR: #31
 Target: main
-PR: not yet opened — number unknown until GitHub publication; do not invent one.
 Live PR state: verify from GitHub.
-Human review is the next gate once the PR exists. Do not merge.
+Human review is the current gate. Do not merge.
 
 ## History
 

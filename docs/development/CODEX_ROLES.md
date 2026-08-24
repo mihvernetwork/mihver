@@ -149,53 +149,90 @@ gates PUBLISH only — see `AGENT_POLICY.md`'s "Git Operator (preferred path for
    fast-forward is not possible (local and remote `main` have diverged): **STOP** — report the
    divergence; never force-update, reset, or otherwise resolve it.
 4. Create or switch to the exact authorized task branch named in the contract — never invent a
-   branch name, never rename or replace one already specified.
+   branch name, never rename or replace one already specified. Report the resulting branch tip SHA
+   in the output — this is the value Claude uses as the *first* Publication Envelope's `Base commit`
+   and `Expected pre-publish HEAD` for a brand-new branch (see "Publication Envelope" below).
 
 ### PUBLISH mode
 
 Runs only after Claude has reached `READY_TO_PUBLISH` (see `REVIEW_PROTOCOL.md`'s Lifecycle Gates)
-and issued a Publication Envelope (below).
+and issued a Publication Envelope (below). Every numbered check below is a STOP / BLOCKED condition
+on failure, in the order given — Git Operator never proceeds past a failed check on a best-effort
+basis, and never resolves a mismatch itself via merge, rebase, reset, or force of any kind.
 
 1. Require Claude's `READY_TO_PUBLISH` signal and a complete Publication Envelope — refuse to
    proceed without both.
-2. Verify the current branch matches the Envelope's `Branch` exactly, and that it is based on the
-   Envelope's `Base` (the Envelope's `Base` is directly reachable as an ancestor of the current
-   branch tip — normally confirmed via `git merge-base --is-ancestor <base> HEAD`). A mismatch here
-   is a STOP / BLOCKED condition, identical in severity to a working-tree mismatch below.
-3. Verify the working tree/diff matches what the Envelope expects: `git status --porcelain` and
-   `git diff --stat` show no file outside the Envelope's `Allowed paths to stage`, and no unrelated
-   uncommitted changes. **If working-tree reality disagrees with the Envelope in any way: STOP /
-   BLOCKED** — report the disagreement; never reinterpret the Envelope or proceed on a best-effort
-   basis. Git Operator does not itself re-run the checks behind the Envelope's `Expected validation
-   state` (that is Verifier's role) — it treats that field as Claude's own attestation and echoes it
-   back in the publication result, but if its own working-tree inspection obviously contradicts it
-   (e.g. uncommitted changes exist that could not have been part of what was validated), that is
-   also STOP / BLOCKED.
-4. Stage only the Envelope's explicitly authorized paths. Never `git add -A` / `git add .`. If an
-   authorized path is a directory, staging it can recursively sweep in unintended descendants — so
-   after staging, list every staged path (`git diff --cached --name-only`) and confirm each one is
-   actually covered by the Envelope's list; any staged path the Envelope does not cover is a STOP /
-   BLOCKED condition (unstage everything and report, never partially commit).
-5. Inspect the staged diff (`git diff --cached`) before committing, re-checking it against step 4's
-   path confirmation. Any remaining disagreement is the same STOP / BLOCKED condition as step 4 —
-   never commit past an unresolved mismatch.
-6. Commit using the Envelope's supplied commit message verbatim — never invent or edit it.
-7. Push the task branch only — never `main`, never force.
-8. **PR handling is gated by the Envelope's `PR expected` field, always:**
-   - `PR expected: no` — never create, modify, or otherwise touch any PR for this branch.
-   - `PR expected: yes` — look up an existing **open** PR whose head is exactly this branch (by
-     branch name in this repository, not by title/content matching); if one exists, use it and do
-     not create another (re-query once, rather than assuming, if creation would otherwise race); if
-     none exists, create one targeting the Envelope's `Base` using the Envelope's `PR title`/`PR
-     body` verbatim — if the Envelope marks the body as "stable generation input" rather than fully
-     verbatim text, it must still be a deterministic template Claude supplies with fields filled in
-     mechanically, never editorial judgment Git Operator exercises itself.
-9. Return a compact publication result (below). Never merge, under any circumstance.
+2. **Pre-publish HEAD guard, before any staging or commit.** Verify the current branch matches the
+   Envelope's `Branch` exactly, then verify `HEAD` equals the Envelope's `Expected pre-publish HEAD`
+   **exactly** (`git rev-parse HEAD`). This proves the branch has no unexpected pre-existing
+   committed work beyond what Claude authorized — a new task branch's initial HEAD is the authorized
+   `Base commit` (from PREPARE, above); a continuation of an existing PR uses the previously-known
+   branch head from before the new uncommitted fix set as `Expected pre-publish HEAD`. Any mismatch:
+   **BLOCKED** — report the actual vs. expected SHA; never merge, rebase, reset, or force-correct
+   into alignment.
+3. Verify the Envelope's `Base commit` is a real ancestor of `HEAD`
+   (`git merge-base --is-ancestor <Base commit> HEAD`). `Base branch` (normally `main`) is used only
+   as the PR target in step 8 below — it is never itself the ancestry check, since `main` can move
+   after `Base commit` was authorized; a moving `Base branch` must never silently redefine this
+   task's authorized `Base commit`.
+4. Verify the working tree/diff matches what the Envelope expects: `git status --porcelain` and
+   `git diff --stat` show no file outside the Envelope's `Allowed files to stage`, and no unrelated
+   uncommitted changes.
+5. **Stage only the Envelope's exact file paths, with pathspec magic disabled.** Every entry in
+   `Allowed files to stage` must be an exact regular-file path — never a directory, never a
+   wildcard, never `git add -A` / `git add .`, never a symlink or other non-regular file (a symlink
+   is rejected as malformed, not staged — `git hash-object` on a symlink path dereferences and
+   hashes the *pointed-to* content, not the symlink blob Git would actually store, so it cannot be
+   fingerprinted reliably; see the Publication Fingerprint recipe below). An entry is malformed —
+   BLOCKED before staging anything — if it names a directory, contains a pathspec magic character
+   interpretable as a glob (`*`, `?`, `[`) unless staged with pathspec magic explicitly disabled, is
+   empty, or resolves outside the repository. Stage each listed entry individually with pathspec
+   magic disabled and an explicit end-of-options marker:
+   ```text
+   git --literal-pathspecs add -- <exact-file>          # entry exists on disk
+   git --literal-pathspecs rm -- <exact-file>            # entry is an authorized deletion
+   ```
+   Then confirm `git diff --cached --name-only` produces **exactly** the authorized file set — no
+   more, no fewer, no directory-coverage interpretation of what "authorized" means. Any discrepancy:
+   unstage everything and report, never partially commit.
+6. **Recompute and verify the Publication Fingerprint** (see "Publication Envelope" below) over the
+   exact authorized file set, using the same deterministic recipe Verifier used to produce it. If
+   the recomputed fingerprint does not match the Envelope's carried fingerprint exactly: BLOCKED —
+   the bytes about to be published are not the bytes Verifier last checked.
+7. Inspect the staged diff (`git diff --cached`) as a final human-legible cross-check against steps
+   5–6 — this is a confirmation, not a substitute for the exact-match checks above.
+8. Commit using the Envelope's supplied commit message verbatim — never invent or edit it.
+9. Push the task branch only — never `main`, never force.
+10. **PR handling is gated by the Envelope's `PR expected` field, always:**
+    - `PR expected: no` — never create, modify, or otherwise touch any PR for this branch.
+    - `PR expected: yes` — look up an existing **open** PR whose head is exactly this branch (by
+      branch name in this repository, not by title/content matching); if one exists, use it and do
+      not create another (re-query once, rather than assuming, if creation would otherwise race); if
+      none exists, create one with base `Base branch` and head this `Branch`, using the Envelope's
+      `PR title`/`PR body` verbatim — if the Envelope marks the body as "stable generation input"
+      rather than fully verbatim text, it must still be a deterministic template Claude supplies
+      with fields filled in mechanically, never editorial judgment Git Operator exercises itself.
+11. **Publication receipt — verify mechanically, not by assertion, branched on `PR expected`:**
+    - always: local `HEAD` equals the commit SHA just created; the remote task-branch `HEAD`
+      (`git ls-remote origin <Branch>`) equals the local `HEAD`; the working tree is clean
+      (`git status --porcelain` empty) after publication.
+    - `PR expected: yes` — require a successful lookup of **exactly one open** PR whose head is
+      `Branch`; absence of that PR, or a failed/ambiguous lookup, is itself BLOCKED at this step
+      (not silently glossed over as "nothing to compare"). Once found: its head branch equals the
+      authorized `Branch`; its head SHA equals the remote task-branch `HEAD`; its base branch
+      equals the Envelope's `Base branch`.
+    - `PR expected: no` — verify no PR was created or touched for this branch; report `pr_number:
+      none` and `pr_head: none` rather than attempting any PR comparison.
+    Any check failing under the `yes` branch is reported as part of the result, not silently
+    assumed.
+12. Return a compact publication result (below). Never merge, under any circumstance.
 
-**Output contract (both modes):** branch name, base commit, whether fast-forward/push succeeded,
-commit SHA if one was made, PR number/URL if one exists or was created (or "none — PR expected: no"),
-the echoed `Expected validation state`, and BLOCKED status with the exact disagreement if PREPARE or
-PUBLISH could not proceed. No narration beyond these facts.
+**Output contract (both modes):** for PREPARE — branch name, resulting branch tip SHA, whether
+fast-forward succeeded, BLOCKED status with the exact disagreement if it could not proceed. For
+PUBLISH — at minimum: `status` (PUBLISHED / BLOCKED), `branch`, `base_branch`, `base_commit`,
+`commit` (the new commit SHA), `local_head`, `remote_head`, `pr_number` (or "none — PR expected:
+no"), `pr_head`, `working_tree` (clean/dirty), and the exact disagreement if BLOCKED. No narration
+beyond these facts.
 
 ## Publication Envelope
 
@@ -206,18 +243,60 @@ literally and does not reinterpret task semantics from it.
 ```text
 PUBLICATION ENVELOPE
 Branch: <exact branch name>
-Base: <exact base — main unless the task has separately, explicitly authorized a different base;
-       Git Operator verifies this is a real ancestor of Branch and does not itself choose a base>
-Allowed paths to stage: <exact file/path list — never a wildcard; a directory entry is staged and
-       then every resulting staged path is checked against this list, not assumed safe>
+Base branch: <the PR target — normally main>
+Base commit: <exact immutable SHA — the ancestry anchor authorized for this task; Git Operator
+       verifies this is a real ancestor of HEAD, and never substitutes a moving Base branch tip
+       for it>
+Expected pre-publish HEAD: <exact SHA HEAD must equal before any staging/commit — the branch's
+       initial HEAD (= Base commit) for a brand-new task branch, or the previously-known branch
+       head for a continuation of an existing PR's fix set>
+Allowed files to stage: <exact regular-file paths only — no directories, no wildcards, no symlinks,
+       no `git add -A`/`.`; an entry that is not an exact regular-file path is itself malformed
+       (BLOCKED)>
+Publication Fingerprint: <see below — the deterministic digest Verifier computed over exactly the
+       "Allowed files to stage" set after the last edit and Final Consistency Sweep>
 Commit message: <verbatim>
 PR expected: yes/no
 PR title: <verbatim, if PR expected>
 PR body: <verbatim text, or a deterministic template with mechanically-filled fields — never content
        Git Operator itself composes or edits — if PR expected>
-Expected validation state: <e.g. "npm test 170/170; check:project-consistency 7/7; git diff --check clean">
 ```
 
-If the working tree, branch ancestry, or staged content does not match this Envelope when Git
-Operator inspects it, that is a STOP / BLOCKED condition (see PUBLISH mode above), not a
+**Publication Fingerprint — the smallest deterministic binding available without adding runtime
+implementation beyond this policy.** Scope is deliberately narrowed to keep the recipe exact and
+reproducible by two independent actors (Verifier, then Git Operator) with existing tools only:
+
+- **Domain**: every path in `Allowed files to stage` must be a regular file (never a directory,
+  symlink, or other special file — `Allowed files to stage` already requires this; the fingerprint
+  recipe depends on it). A path containing a raw newline is rejected as malformed in the Envelope
+  itself — Git paths permit this in principle, but this policy does not attempt to fingerprint it.
+- **Canonical command sequence** (run with `LC_ALL=C` so sorting is a fixed byte-order, never
+  locale-dependent), computed by Verifier over exactly the `Allowed files to stage` list and
+  recomputed identically by Git Operator immediately before staging (PUBLISH step 6):
+  ```sh
+  LC_ALL=C sort <<'EOF' | while IFS= read -r p; do
+  <one "Allowed files to stage" entry per line>
+  EOF
+    if [ -e "$p" ]; then h=$(git hash-object -- "$p"); else h="ABSENT"; fi
+    printf '%s\0%s\n' "$p" "$h"
+  done | shasum -a 256 | awk '{print $1}'
+  ```
+  (`git hash-object -- <path>` — the `--` end-of-options marker prevents a leading-dash filename
+  from being misread as a flag; `shasum -a 256` may be substituted with any equivalent SHA-256
+  utility, since the recipe's own byte stream, not the specific tool name, is what must match.)
+- Any mismatch between Verifier's carried fingerprint and Git Operator's recomputed one is BLOCKED
+  (PUBLISH step 6) — the bytes about to be published are not the bytes Verifier last checked.
+
+This is a documented recipe over existing Git plumbing and standard hashing/sorting utilities — no
+new script or application code is added to the repository to compute it, and no operator improvises
+their own variant of it. **What this does and does not prove:** it proves the exact on-disk bytes of
+every authorized regular file are unchanged between Verifier's last check and the moment of
+publication — it does NOT re-run or re-prove that the validation commands themselves (`npm test`,
+`check:project-consistency`, etc.) passed; that remains Verifier's own separate, already-run result,
+carried informally in Claude's own report rather than as a second Envelope field. If a future task
+needs to fingerprint directories, symlinks, or newline-containing paths, that is new implementation
+work outside this policy document's own narrowed scope, not a silent gap in it.
+
+If the working tree, branch ancestry, staged content, or fingerprint does not match this Envelope
+when Git Operator inspects it, that is a STOP / BLOCKED condition (see PUBLISH mode above), not a
 discrepancy for Git Operator to resolve on its own judgment.
