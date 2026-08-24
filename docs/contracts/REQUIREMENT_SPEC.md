@@ -349,6 +349,8 @@ actually entail it (see "Requirement Identity and Versioning"'s re-derivation tr
 name this case). Requirement Derivation may instead record it as settled only on the same basis
 described for Inferred Claims: stating why continued reconsideration isn't warranted, not by silence.
 
+**Mixed-strength Requirement as premise (R-22 clarification):** "Requirement Cardinality and Granularity" establishes that a single Requirement may combine clauses of different strength, each strength traceable only to its own originating Claim — such a Requirement therefore has no single strength of its own to inherit. A whole Requirement may serve as a Requirement-Level Inference premise only when every one of its clauses shares one strength; a mixed-strength Requirement is not eligible, as a whole, to serve as a Requirement-Level Inference premise. This document does not authorize an individual clause within a Requirement to serve as a Requirement-Level Inference premise in its own right — R-10's premise unit remains exactly the accepted Claim or Requirement, never a clause of one.
+
 ### `MemoryContext` Is Not a Requirement-Level Inference Premise
 
 A Requirement-Derivation-level inference's premise is, and remains, exactly what R-10 already

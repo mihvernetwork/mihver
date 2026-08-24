@@ -23,9 +23,8 @@
             "statement": "A.",
             "strength": "MUST",
             "premise": {
-              "kind": "requirement_clause",
-              "requirement_id": "r2",
-              "clause_id": "cl2"
+              "kind": "requirement",
+              "requirement_id": "r2"
             },
             "reasoning": "circular a",
             "provisional": {
@@ -49,9 +48,8 @@
             "statement": "B.",
             "strength": "MUST",
             "premise": {
-              "kind": "requirement_clause",
-              "requirement_id": "r1",
-              "clause_id": "cl1"
+              "kind": "requirement",
+              "requirement_id": "r1"
             },
             "reasoning": "circular b",
             "provisional": {

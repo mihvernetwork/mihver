@@ -14,7 +14,13 @@
     "revision": null,
     "status": "complete",
     "requirements": [],
-    "open_items": []
+    "open_items": [],
+    "excluded_claims": [
+      {
+        "claim_id": "c1",
+        "reason": "descriptive, no force -- background staffing context, not a normative statement"
+      }
+    ]
   },
   "companions": [
     {

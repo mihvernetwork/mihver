@@ -1,0 +1,24 @@
+{
+  "contract": "requirement-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "requirement_spec", "requirement_spec_id": "rs-r22", "version": 1,
+    "created_at": "2026-08-24T00:00:00Z", "consumed_intent_spec": { "intent_spec_id": "is-r22", "version": 1 },
+    "supersedes_requirement_spec_id": null, "revision": null, "status": "complete", "requirements": [], "open_items": [], "excluded_claims": []
+  },
+  "companions": [{
+    "contract": "intent-spec",
+    "document": {
+      "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "is-r22", "version": 1, "created_at": "2026-08-24T00:00:00Z",
+      "user_idea_refs": [{ "idea_id": "idea-r22", "version": 1 }], "supersedes_intent_spec_id": null,
+      "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+      "claims": [
+        { "claim_id": "c1", "proposition": "retain logs", "origin": "user_provided", "force": { "modality": "obligation" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-r22", "user_idea_version": 1, "speaker": { "kind": "submitting_user" } } },
+        { "claim_id": "c2", "proposition": "delete logs", "origin": "user_provided", "force": { "modality": "obligation" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-r22", "user_idea_version": 1, "speaker": { "kind": "submitting_user" } } }
+      ],
+      "open_items": [],
+      "conflicts": [{ "conflict_id": "conflict-1", "participants": [{ "kind": "claim", "claim_id": "c1" }, { "kind": "claim", "claim_id": "c2" }], "incompatibility_rationale": "The same logs cannot be both retained and deleted.", "decision_impact": { "level": "medium", "unresolved_item": "retention", "downstream_decision": "log lifecycle", "level_rationale": "Deferrable detail." } }],
+      "clarification_decisions": [{ "subject_kind": "conflict", "subject_id": "conflict-1", "needed": false, "rationale": "Medium impact, deferred." }]
+    }
+  }],
+  "expected_error": "not carried forward into this RequirementSpec's open_items -- a surviving Conflict"
+}

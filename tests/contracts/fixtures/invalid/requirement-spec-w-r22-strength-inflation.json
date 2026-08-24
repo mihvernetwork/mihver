@@ -47,9 +47,8 @@
             "statement": "The system SHALL make no outbound network calls.",
             "strength": "MUST",
             "premise": {
-              "kind": "requirement_clause",
-              "requirement_id": "r1",
-              "clause_id": "cl1"
+              "kind": "requirement",
+              "requirement_id": "r1"
             },
             "reasoning": "technical implication",
             "provisional": {

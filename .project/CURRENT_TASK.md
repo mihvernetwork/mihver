@@ -25,12 +25,15 @@ Two mandatory pre-implementation re-derivations, both settled by existing text, 
   artifact, report that it cannot"; "'no valid output' is an acceptable, explicit stage result"),
   `intent-spec.schema.json`'s identical precedent ("Failed parsing produces no IntentSpec"), and
   `REQUIREMENT_SPEC.md`'s own framing ("cannot even attempt honest compilation").
-- **R-22 × mixed-strength Requirement**: resolved via a Requirement-Level-Inference premise that can
-  name either a whole Requirement (`{kind: "requirement", requirement_id}` — R-10's literal premise
-  unit, valid only when all its clauses share one strength) or one specific clause
-  (`{kind: "requirement_clause", ...}` — the narrower escape valve for a genuinely mixed-strength
-  Requirement, forced by "Requirement Cardinality and Granularity"'s already-established per-clause
-  strength independence). Both shapes coexist; neither replaces the other.
+- **R-22 × mixed-strength Requirement**: final decision, after a subsequent human-review-fixes round
+  (see `.project/REVIEW_STATE.md`'s "Latest Review" for detail) reconsidered the interim
+  clause-level-escape-valve resolution this bullet originally described — the Requirement-Level-Inference
+  premise unit remains exactly R-10's literal `{kind: "claim", claim_id}` or
+  `{kind: "requirement", requirement_id}` (valid only when all its clauses share one strength). A
+  mixed-strength Requirement is **not eligible, as a whole, to serve as an RLI premise**, and no
+  clause-level citation is authorized by the frozen text — `{kind: "requirement_clause", ...}` was
+  removed from the schema. See `REQUIREMENT_SPEC.md`'s "Mixed-strength Requirement as premise (R-22
+  clarification)" paragraph. `ADR-0003`'s Status remains **Proposed**.
 
 ## Branch / Base
 

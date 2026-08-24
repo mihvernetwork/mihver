@@ -17,10 +17,17 @@
     "revision": { "anyOf": [{ "$ref": "#/$defs/revision" }, { "type": "null" }], "description": "Required non-null whenever version > 1 (validator-enforced); required null at version 1, since there is nothing to revise yet." },
     "status": { "enum": ["complete", "partial"], "description": "R-16/R-21. Never 'failed' -- Failed means no RequirementSpec artifact exists at all, per this schema's own top-level description." },
     "requirements": { "type": "array", "items": { "$ref": "#/$defs/requirement" }, "description": "R-17: an empty array is a valid Complete output when the consumed IntentSpec genuinely supports no formal Requirements." },
-    "open_items": { "type": "array", "items": { "$ref": "#/$defs/openItem" }, "description": "Carried-forward unresolved items this version does not, or must not, resolve -- unresolved Ambiguities/Conflicts, Unknowns that fail R-19's fillability test, R-19-eligible Unknowns left deliberately unfilled, and R-20 unresolved constraint-candidates." }
+    "open_items": { "type": "array", "items": { "$ref": "#/$defs/openItem" }, "description": "Carried-forward unresolved items this version does not, or must not, resolve -- unresolved Ambiguities/Conflicts, Unknowns that fail R-19's fillability test, R-19-eligible Unknowns left deliberately unfilled, and R-20 unresolved constraint-candidates." },
+    "excluded_claims": { "type": "array", "items": { "$ref": "#/$defs/excludedClaim" }, "description": "Document-wide, validator-checked unique by claim_id. A Claim listed here must not also be cited in any clause's basis/premise/rationale_refs, or be a Conflict participant/R-20 source -- mutually exclusive dispositions." }
   },
   "$defs": {
     "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$", "minLength": 1 },
+
+    "excludedClaim": {
+      "type": "object", "additionalProperties": false, "required": ["claim_id", "reason"],
+      "properties": { "claim_id": { "$ref": "#/$defs/id" }, "reason": { "type": "string", "minLength": 1 } },
+      "description": "REQUIREMENT_SPEC.md's Complete-outcome text: a Claim that carries derivable content but was explicitly excluded (descriptive, no force; redundant with an existing Requirement; etc.) rather than becoming a Requirement."
+    },
 
     "intentSpecRef": {
       "type": "object", "additionalProperties": false, "required": ["intent_spec_id", "version"],
@@ -116,10 +123,9 @@
     "requirementLevelInferencePremise": {
       "oneOf": [
         { "type": "object", "additionalProperties": false, "required": ["kind", "claim_id"], "properties": { "kind": { "const": "claim" }, "claim_id": { "$ref": "#/$defs/id" } } },
-        { "type": "object", "additionalProperties": false, "required": ["kind", "requirement_id"], "properties": { "kind": { "const": "requirement" }, "requirement_id": { "$ref": "#/$defs/id" } } },
-        { "type": "object", "additionalProperties": false, "required": ["kind", "requirement_id", "clause_id"], "properties": { "kind": { "const": "requirement_clause" }, "requirement_id": { "$ref": "#/$defs/id" }, "clause_id": { "$ref": "#/$defs/id" } } }
+        { "type": "object", "additionalProperties": false, "required": ["kind", "requirement_id"], "properties": { "kind": { "const": "requirement" }, "requirement_id": { "$ref": "#/$defs/id" } } }
       ],
-      "description": "R-10/R-23: only an accepted IntentSpec Claim, or an already-derived Requirement (or one specific clause of it) in this same RequirementSpec -- never a MemoryContext entry. This closed oneOf makes R-23 structurally impossible, not merely discouraged: there is no fourth shape here for a memory reference to occupy. 'requirement' is R-10's own literal premise unit (a whole Requirement), validator-checked to have a single strength across all its clauses -- undefined otherwise. 'requirement_clause' is the narrower escape valve for a mixed-strength combined Requirement, letting an inference cite one specific clause so R-22's strength inheritance is always deterministic even when the whole Requirement has no single strength -- a representation refinement of 'Requirement Cardinality and Granularity's already-established per-clause strength independence, not a new semantic rule, and additive to 'requirement' rather than a replacement for it (see REQUIREMENT_SPEC_SCHEMA_MAPPING.md)."
+      "description": "R-10/R-23: only an accepted IntentSpec Claim or an already-derived Requirement in this same RequirementSpec -- never a MemoryContext entry. This closed oneOf has exactly two members ('claim' and 'requirement'), making R-23 structurally impossible, not merely discouraged. A whole Requirement premise is validator-checked to have a single strength across all its clauses; a mixed-strength Requirement is rejected as a premise with no clause-level fallback, per REQUIREMENT_SPEC.md's mixed-strength RLI premise clarification."
     },
 
     "requirementLevelInferenceClause": {

@@ -1,0 +1,22 @@
+{
+  "contract": "requirement-spec",
+  "document": {
+    "schema_version": "1.0.0", "artifact_type": "requirement_spec", "requirement_spec_id": "rs-r24", "version": 1,
+    "created_at": "2026-08-24T00:00:00Z", "consumed_intent_spec": { "intent_spec_id": "is-r24", "version": 1 },
+    "supersedes_requirement_spec_id": null, "revision": null, "status": "complete",
+    "requirements": [{ "requirement_id": "r1", "clauses": [{ "clause_id": "cl1", "derivation": "direct_compilation", "statement": "The system SHALL retry.", "strength": "MUST", "basis": [{ "claim_id": "c1" }], "origins": ["user_provided"], "working_defaults": [{ "source_open_item_id": "oi-unknown", "value": "3", "rationale": "A bounded retry count is an internal implementation detail." }], "testability": { "status": "complete_binary" } }], "status": "valid", "invalidation": null }],
+    "open_items": [{ "open_item_id": "oi-carried", "kind": "unfilled_r19_unknown", "source_open_item_id": "oi-unknown" }]
+  },
+  "companions": [{
+    "contract": "intent-spec",
+    "document": {
+      "schema_version": "1.0.0", "artifact_type": "intent_spec", "intent_spec_id": "is-r24", "version": 1, "created_at": "2026-08-24T00:00:00Z",
+      "user_idea_refs": [{ "idea_id": "idea-r24", "version": 1 }], "supersedes_intent_spec_id": null,
+      "handoff": { "status": "eligible", "requirement_derivation_consumable": true },
+      "claims": [{ "claim_id": "c1", "proposition": "retry", "origin": "user_provided", "force": { "modality": "obligation" }, "discourse_role": "operative", "provenance": { "kind": "user_statement", "idea_id": "idea-r24", "user_idea_version": 1, "speaker": { "kind": "submitting_user" } } }],
+      "open_items": [{ "open_item_id": "oi-unknown", "kind": "unknown", "question": "how many retries?", "relevance_rationale": "Affects requirement detail.", "decision_impact": { "level": "medium", "unresolved_item": "retry count", "downstream_decision": "retry behavior", "level_rationale": "Deferrable detail." } }],
+      "conflicts": [], "clarification_decisions": [{ "subject_kind": "open_item", "subject_id": "oi-unknown", "needed": false, "rationale": "Medium impact, deferred." }]
+    }
+  }],
+  "expected_error": "is both recorded as an \"unfilled_r19_unknown\" open item"
+}

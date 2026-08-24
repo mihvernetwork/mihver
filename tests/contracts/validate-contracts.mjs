@@ -541,7 +541,7 @@ function validateRliClause(label, clause, claims, clauseIndex, requirementIndex,
     if (mapped === null) fail(`${label} RLI premise claim "${clause.premise.claim_id}" is force-absent, or a preference whose own strength never resolved, and supplies no strength for R-22 inheritance`);
     premiseStrength = mapped;
     premiseScopeCondition = claim.scope_condition;
-  } else if (clause.premise.kind === "requirement") {
+  } else {
     const premiseRequirement = requirementIndex.get(clause.premise.requirement_id);
     if (!premiseRequirement) fail(`${label} RLI premise requirement "${clause.premise.requirement_id}" does not resolve in this RequirementSpec`);
     if (premiseRequirement.status === "invalidated") {
@@ -549,20 +549,10 @@ function validateRliClause(label, clause, claims, clauseIndex, requirementIndex,
     }
     const strengths = new Set(premiseRequirement.clauses.map((premiseClause) => premiseClause.strength));
     if (strengths.size !== 1) {
-      fail(`${label} RLI premise requirement "${clause.premise.requirement_id}" has no single strength across its clauses (${[...strengths].join(", ")}) -- premise a specific clause instead ('requirement_clause'), per R-22`);
+      fail(`${label} RLI premise requirement "${clause.premise.requirement_id}" has no single strength across its clauses (${[...strengths].join(", ")}) -- a mixed-strength Requirement is not eligible as an RLI premise at all, per R-22`);
     }
     [premiseStrength] = strengths;
     premiseScopeCondition = premiseRequirement.clauses.length === 1 ? premiseRequirement.clauses[0].scope_condition : undefined;
-  } else {
-    const entry = clauseIndex.get(clause.premise.clause_id);
-    if (!entry || entry.requirement.requirement_id !== clause.premise.requirement_id) {
-      fail(`${label} RLI premise clause "${clause.premise.requirement_id}/${clause.premise.clause_id}" does not resolve in this RequirementSpec`);
-    }
-    if (entry.requirement.status === "invalidated") {
-      fail(`${label} RLI premise clause "${clause.premise.requirement_id}/${clause.premise.clause_id}" belongs to an invalidated Requirement -- an inference whose premise no longer holds is itself unsupported`);
-    }
-    premiseStrength = entry.clause.strength;
-    premiseScopeCondition = entry.clause.scope_condition;
   }
   if (premiseStrength !== clause.strength) {
     fail(`${label} strength "${clause.strength}" does not match its Requirement-Level Inference premise's own strength "${premiseStrength}" -- R-22 forbids independently choosing, strengthening, or weakening it`);
@@ -608,6 +598,40 @@ function validateRequirementSpec(document, companions) {
     }
   }
 
+  if (document.version === 1 && document.supersedes_requirement_spec_id !== null) {
+    fail("a version-1 RequirementSpec must carry supersedes_requirement_spec_id: null -- there is no prior version to supersede");
+  }
+  if (document.version > 1 && document.supersedes_requirement_spec_id === null) {
+    fail(`RequirementSpec version ${document.version} must carry a non-null supersedes_requirement_spec_id (R-12/R-13)`);
+  }
+  const priorRequirementSpecCompanions = companions.filter((c) => c.contract === "requirement-spec").map((c) => c.document);
+  let priorSpec = null;
+  if (document.supersedes_requirement_spec_id !== null && priorRequirementSpecCompanions.length > 0) {
+    priorSpec = priorRequirementSpecCompanions.find((doc) => doc.requirement_spec_id === document.supersedes_requirement_spec_id);
+    if (!priorSpec) fail(`supersedes_requirement_spec_id "${document.supersedes_requirement_spec_id}" does not resolve to any supplied companion RequirementSpec`);
+    else if (priorSpec.version !== document.version - 1) {
+      fail(`supersedes_requirement_spec_id "${document.supersedes_requirement_spec_id}" resolves to version ${priorSpec.version}, not the immediately preceding version ${document.version - 1} -- supersession must be sequential`);
+    }
+  }
+  let priorClaims = new Map();
+  let priorOpenItems = new Map();
+  let priorConflictedClaimIds = new Set();
+  let priorIntentSpecResolved = false;
+  if (priorSpec) {
+    const priorRef = priorSpec.consumed_intent_spec;
+    const priorIntentSpec = intentSpecCompanions.find((doc) => doc.intent_spec_id === priorRef.intent_spec_id && doc.version === priorRef.version);
+    if (priorIntentSpec) {
+      priorIntentSpecResolved = true;
+      priorClaims = new Map(priorIntentSpec.claims.map((claim) => [claim.claim_id, claim]));
+      priorOpenItems = new Map(priorIntentSpec.open_items.map((item) => [item.open_item_id, item]));
+      for (const conflict of priorIntentSpec.conflicts) {
+        for (const participant of conflict.participants) {
+          if (participant.kind === "claim") priorConflictedClaimIds.add(participant.claim_id);
+        }
+      }
+    }
+  }
+
   unique(document.requirements.map((requirement) => requirement.requirement_id), "requirement_id values");
   const allClauseIds = [];
   const clauseIndex = new Map();
@@ -628,12 +652,45 @@ function validateRequirementSpec(document, companions) {
   unique(allClauseIds, "clause_id values across the whole RequirementSpec");
   unique(document.open_items.map((item) => item.open_item_id), "open_item_id values");
 
+  if (document.revision !== null) {
+    const requirementIdSet = new Set(document.requirements.map((r) => r.requirement_id));
+    const openItemIdSet = new Set(document.open_items.map((i) => i.open_item_id));
+    for (const id of document.revision.affected_requirement_ids) {
+      if (!requirementIdSet.has(id)) fail(`revision.affected_requirement_ids "${id}" does not resolve to a requirement_id in this RequirementSpec`);
+    }
+    for (const id of document.revision.affected_open_item_ids) {
+      if (!openItemIdSet.has(id)) fail(`revision.affected_open_item_ids "${id}" does not resolve to an open_item_id in this RequirementSpec`);
+    }
+  }
+  for (const requirement of document.requirements) {
+    if (requirement.status === "invalidated" && (document.revision === null || !document.revision.affected_requirement_ids.includes(requirement.requirement_id))) {
+      fail(`requirement ${requirement.requirement_id} is invalidated but is not named in a non-null revision.affected_requirement_ids -- "Requirement Invalidation and Re-Derivation" ties invalidation to a versioned revision event, never a bare status on an original (non-revised) version`);
+    }
+  }
+
   let anyBlockingItem = false;
   const workingDefaultMemoryKeys = [];
   const workingDefaultSourceItems = [];
   for (const requirement of document.requirements) {
     for (const clause of requirement.clauses) {
       const label = `requirement ${requirement.requirement_id} clause ${clause.clause_id}`;
+      if (requirement.status === "invalidated") {
+        // Historical record. When a companion prior RequirementSpec (and its own consumed prior
+        // IntentSpec) is supplied, this clause's basis/premise/strength/origin is validated against
+        // THAT prior IntentSpec instead -- never the current one, which may have withdrawn the claim
+        // this Requirement was originally derived from. When no prior companion is resolvable, this
+        // remains a full skip (see REQUIREMENT_SPEC_SCHEMA_MAPPING.md §10). Either way, historical
+        // content never contributes to this version's own blocking/partial-status or R-19
+        // working-default accounting below.
+        if (priorIntentSpecResolved) {
+          if (clause.derivation === "direct_compilation") {
+            validateDirectCompilationClause(label, clause, priorClaims, priorOpenItems, memoryContexts, priorConflictedClaimIds);
+          } else {
+            validateRliClause(label, clause, priorClaims, clauseIndex, requirementIndex, priorOpenItems, priorConflictedClaimIds);
+          }
+        }
+        continue;
+      }
       if (clause.derivation === "direct_compilation") {
         validateDirectCompilationClause(label, clause, claims, openItems, memoryContexts, conflictedClaimIds);
         for (const workingDefault of clause.working_defaults ?? []) {
@@ -659,44 +716,6 @@ function validateRequirementSpec(document, companions) {
   unique(workingDefaultSourceItems, "R-19 working_defaults source_open_item_id values across the whole RequirementSpec");
   unique(workingDefaultMemoryKeys, "R-24 (source_open_item_id, memory_context_id, entry_id) working-default citations");
 
-  const unfillableSourceIds = new Set();
-  for (const item of document.open_items) {
-    const label = `open item ${item.open_item_id}`;
-    if (item.kind === "ambiguity") {
-      const source = openItems.get(item.source_open_item_id);
-      if (!source || source.kind !== "ambiguity") fail(`${label} source_open_item_id "${item.source_open_item_id}" does not resolve to an ambiguity in the consumed IntentSpec`);
-      anyBlockingItem = true;
-    } else if (item.kind === "conflict") {
-      if (!conflicts.has(item.source_conflict_id)) fail(`${label} source_conflict_id "${item.source_conflict_id}" does not resolve in the consumed IntentSpec`);
-      anyBlockingItem = true;
-    } else if (item.kind === "unfillable_unknown") {
-      const source = openItems.get(item.source_open_item_id);
-      if (!source || source.kind !== "unknown") fail(`${label} source_open_item_id "${item.source_open_item_id}" does not resolve to an unknown in the consumed IntentSpec`);
-      unfillableSourceIds.add(item.source_open_item_id);
-      anyBlockingItem = true;
-    } else if (item.kind === "unfilled_r19_unknown") {
-      const source = openItems.get(item.source_open_item_id);
-      if (!source || source.kind !== "unknown") fail(`${label} source_open_item_id "${item.source_open_item_id}" does not resolve to an unknown in the consumed IntentSpec`);
-    } else if (item.kind === "unresolved_constraint_candidate") {
-      const source = claims.get(item.source_claim_id);
-      if (!source) fail(`${label} source_claim_id "${item.source_claim_id}" does not resolve in the consumed IntentSpec`);
-      if (source.force !== undefined) {
-        fail(`${label} source_claim_id "${item.source_claim_id}" carries a resolved force -- R-20 applies only to a Claim whose force never resolved to obligation/prohibition/permission/preference`);
-      }
-      anyBlockingItem = true;
-    }
-  }
-
-  for (const sourceId of workingDefaultSourceItems) {
-    if (unfillableSourceIds.has(sourceId)) {
-      fail(`source_open_item_id "${sourceId}" is both recorded as an "unfillable_unknown" open item (fails R-19) and filled by a working_default (requires R-19 eligibility) -- these are mutually exclusive dispositions for the same surviving Unknown`);
-    }
-  }
-
-  if (anyBlockingItem && document.status !== "partial") {
-    fail('a RequirementSpec with an unresolved ambiguity/conflict/unfillable-unknown/unresolved-constraint-candidate open item, or a testability-blocked clause, must carry status "partial"');
-  }
-
   // R-23 acyclicity: a Requirement-Level Inference premise graph over clause_ids must be acyclic.
   // A clause premising itself is caught here too (visiting a clause already on the current path).
   // A whole-Requirement premise ('requirement' kind) fans out to every clause of that Requirement --
@@ -710,9 +729,7 @@ function validateRequirementSpec(document, companions) {
     if (!entry) return;
     visiting.add(clauseId);
     if (entry.clause.derivation === "requirement_level_inference") {
-      if (entry.clause.premise.kind === "requirement_clause") {
-        visit(entry.clause.premise.clause_id);
-      } else if (entry.clause.premise.kind === "requirement") {
+      if (entry.clause.premise.kind === "requirement") {
         const premiseRequirement = requirementIndex.get(entry.clause.premise.requirement_id);
         (premiseRequirement?.clauses ?? []).forEach((premiseClause) => visit(premiseClause.clause_id));
       }
@@ -721,6 +738,117 @@ function validateRequirementSpec(document, companions) {
     visited.add(clauseId);
   }
   allClauseIds.forEach(visit);
+
+  const unfillableSourceIdList = [];
+  const unfilledR19SourceIdList = [];
+  const citedAmbiguityIdList = [];
+  const citedConflictIdList = [];
+  const accountedClaimIds = new Set();
+  for (const item of document.open_items) {
+    const label = `open item ${item.open_item_id}`;
+    if (item.kind === "ambiguity") {
+      const source = openItems.get(item.source_open_item_id);
+      if (!source || source.kind !== "ambiguity") fail(`${label} source_open_item_id "${item.source_open_item_id}" does not resolve to an ambiguity in the consumed IntentSpec`);
+      citedAmbiguityIdList.push(item.source_open_item_id);
+      anyBlockingItem = true;
+    } else if (item.kind === "conflict") {
+      if (!conflicts.has(item.source_conflict_id)) fail(`${label} source_conflict_id "${item.source_conflict_id}" does not resolve in the consumed IntentSpec`);
+      citedConflictIdList.push(item.source_conflict_id);
+      anyBlockingItem = true;
+    } else if (item.kind === "unfillable_unknown") {
+      const source = openItems.get(item.source_open_item_id);
+      if (!source || source.kind !== "unknown") fail(`${label} source_open_item_id "${item.source_open_item_id}" does not resolve to an unknown in the consumed IntentSpec`);
+      unfillableSourceIdList.push(item.source_open_item_id);
+      anyBlockingItem = true;
+    } else if (item.kind === "unfilled_r19_unknown") {
+      const source = openItems.get(item.source_open_item_id);
+      if (!source || source.kind !== "unknown") fail(`${label} source_open_item_id "${item.source_open_item_id}" does not resolve to an unknown in the consumed IntentSpec`);
+      unfilledR19SourceIdList.push(item.source_open_item_id);
+    } else if (item.kind === "unresolved_constraint_candidate") {
+      const source = claims.get(item.source_claim_id);
+      if (!source) fail(`${label} source_claim_id "${item.source_claim_id}" does not resolve in the consumed IntentSpec`);
+      if (source.force !== undefined) {
+        fail(`${label} source_claim_id "${item.source_claim_id}" carries a resolved force -- R-20 applies only to a Claim whose force never resolved to obligation/prohibition/permission/preference`);
+      }
+      accountedClaimIds.add(item.source_claim_id);
+      anyBlockingItem = true;
+    }
+  }
+
+  unique(citedAmbiguityIdList, "carried-forward ambiguity source_open_item_id values (each surviving Ambiguity must be carried forward exactly once)");
+  unique(citedConflictIdList, "carried-forward conflict source_conflict_id values (each surviving Conflict must be carried forward exactly once)");
+  unique(unfillableSourceIdList, "unfillable_unknown source_open_item_id values");
+  unique(unfilledR19SourceIdList, "unfilled_r19_unknown source_open_item_id values");
+  const citedAmbiguityIds = new Set(citedAmbiguityIdList);
+  const citedConflictIds = new Set(citedConflictIdList);
+  const unfillableSourceIds = new Set(unfillableSourceIdList);
+  const unfilledR19SourceIds = new Set(unfilledR19SourceIdList);
+
+  for (const sourceId of workingDefaultSourceItems) {
+    if (unfillableSourceIds.has(sourceId)) {
+      fail(`source_open_item_id "${sourceId}" is both recorded as an "unfillable_unknown" open item (fails R-19) and filled by a working_default (requires R-19 eligibility) -- these are mutually exclusive dispositions for the same surviving Unknown`);
+    }
+    if (unfilledR19SourceIds.has(sourceId)) {
+      fail(`source_open_item_id "${sourceId}" is both recorded as an "unfilled_r19_unknown" open item (deliberately left unfilled) and filled by a working_default -- these are mutually exclusive dispositions for the same surviving Unknown`);
+    }
+  }
+  for (const sourceId of unfillableSourceIds) {
+    if (unfilledR19SourceIds.has(sourceId)) {
+      fail(`source_open_item_id "${sourceId}" is recorded as both "unfillable_unknown" (R-19-ineligible) and "unfilled_r19_unknown" (R-19-eligible) -- these are mutually exclusive dispositions for the same surviving Unknown`);
+    }
+  }
+
+  // Source disposition accounting ("Information-Loss Rules": lossy only by explicit, statable design,
+  // never by accident) -- every relevant item in the consumed IntentSpec must have an explicit,
+  // checkable disposition here, not just backward reference integrity from this document outward.
+  for (const item of intentSpec.open_items) {
+    if (item.kind === "ambiguity" && !citedAmbiguityIds.has(item.open_item_id)) {
+      fail(`ambiguity "${item.open_item_id}" in the consumed IntentSpec is not carried forward into this RequirementSpec's open_items -- a surviving Ambiguity must never silently disappear`);
+    }
+    if (item.kind === "unknown" && !unfillableSourceIds.has(item.open_item_id) && !unfilledR19SourceIds.has(item.open_item_id) && !workingDefaultSourceItems.includes(item.open_item_id)) {
+      fail(`unknown "${item.open_item_id}" in the consumed IntentSpec is neither filled by a working_default nor carried forward as an "unfillable_unknown"/"unfilled_r19_unknown" open item -- a surviving Unknown must never silently disappear`);
+    }
+  }
+  for (const conflict of intentSpec.conflicts) {
+    if (!citedConflictIds.has(conflict.conflict_id)) {
+      fail(`conflict "${conflict.conflict_id}" in the consumed IntentSpec is not carried forward into this RequirementSpec's open_items -- a surviving Conflict must never silently disappear`);
+    }
+    for (const participant of conflict.participants) {
+      if (participant.kind === "claim") accountedClaimIds.add(participant.claim_id);
+    }
+  }
+  for (const requirement of document.requirements) {
+    for (const clause of requirement.clauses) {
+      if (clause.derivation === "direct_compilation") {
+        for (const b of clause.basis) accountedClaimIds.add(b.claim_id);
+      } else if (clause.premise.kind === "claim") {
+        accountedClaimIds.add(clause.premise.claim_id);
+      }
+      for (const ref of clause.rationale_refs ?? []) {
+        if (ref.kind === "claim") accountedClaimIds.add(ref.claim_id);
+      }
+    }
+  }
+  const excludedClaims = document.excluded_claims ?? [];
+  unique(excludedClaims.map((entry) => entry.claim_id), "excluded_claims claim_id values");
+  const excludedClaimIds = new Set();
+  for (const entry of excludedClaims) {
+    if (!claims.has(entry.claim_id)) fail(`excluded_claims claim_id "${entry.claim_id}" does not resolve in the consumed IntentSpec`);
+    if (accountedClaimIds.has(entry.claim_id)) {
+      fail(`excluded_claims claim_id "${entry.claim_id}" is also cited elsewhere in this RequirementSpec (basis/RLI premise/rationale_refs/Conflict participant/R-20 source) -- a Claim cannot be both explicitly excluded and contributing`);
+    }
+    excludedClaimIds.add(entry.claim_id);
+  }
+  for (const claim of intentSpec.claims) {
+    if (!accountedClaimIds.has(claim.claim_id) && !excludedClaimIds.has(claim.claim_id)) {
+      fail(`claim "${claim.claim_id}" in the consumed IntentSpec has no disposition in this RequirementSpec -- it must contribute to a Requirement clause, be cited in excluded_claims with a stated reason, be an R-20 source_claim_id, or be a carried-forward Conflict participant`);
+    }
+  }
+
+  if (anyBlockingItem && document.status !== "partial") {
+    fail('a RequirementSpec with an unresolved ambiguity/conflict/unfillable-unknown/unresolved-constraint-candidate open item, or a testability-blocked clause, must carry status "partial"');
+  }
+
 }
 
 // --- Multi-companion fixture harness ------------------------------------------------------------
@@ -733,10 +861,22 @@ function validateRequirementSpec(document, companions) {
 // resolveMemoryContext, and validateRequirementSpec's intent_spec_id@version lookup), never by which
 // position it occupies in this array.
 function normalizeCompanions(fixture) {
-  const list = [];
-  if (fixture.companion) list.push(fixture.companion);
-  if (fixture.companions) list.push(...fixture.companions);
-  return list;
+  if (fixture.companion !== undefined && fixture.companions !== undefined) {
+    fail('fixture declares both "companion" and "companions" -- exactly one form, or neither, is allowed');
+  }
+  if (fixture.companion !== undefined) {
+    if (typeof fixture.companion !== "object" || fixture.companion === null || Array.isArray(fixture.companion)) {
+      fail('fixture "companion" must be a single {contract, document} object');
+    }
+    return [fixture.companion];
+  }
+  if (fixture.companions !== undefined) {
+    if (!Array.isArray(fixture.companions)) {
+      fail('fixture "companions" must be an array of {contract, document} objects');
+    }
+    return fixture.companions;
+  }
+  return [];
 }
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
@@ -783,7 +923,11 @@ for (const expectation of ["valid", "invalid"]) {
     let valid = validator.schema(fixture.document);
     let diagnostic = valid ? "" : JSON.stringify(validator.schema.errors);
 
-    const companions = normalizeCompanions(fixture);
+    let companions = [];
+    if (valid) {
+      try { companions = normalizeCompanions(fixture); }
+      catch (error) { valid = false; diagnostic = error.message; }
+    }
     if (valid) {
       for (const companion of companions) {
         const companionValidator = validators[companion.contract];

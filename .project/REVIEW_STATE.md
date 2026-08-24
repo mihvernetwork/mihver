@@ -33,9 +33,15 @@ entry records the review process and its outcome.
 **Two mandatory pre-implementation re-derivations**, both independently re-confirmed by multiple
 reviewers as correctly textually determined, neither requiring a `SCHEMA_DESIGN_GAP` stop:
 Failed-outcome representation (no `RequirementSpec` artifact at all — mirrors `intent-spec.schema.json`'s
-identical decision one stage earlier) and R-22 × mixed-strength Requirement premise (resolved by
-letting a Requirement-Level-Inference premise name either a whole Requirement, single-strength-checked,
-or one specific clause — see `REQUIREMENT_SPEC_SCHEMA_MAPPING.md` §5/§8 for the full textual basis).
+identical decision one stage earlier) and R-22 × mixed-strength Requirement premise. **R-22's resolution
+was subsequently revised by a later human-review-fixes round** (same task/branch/PR, after this entry's
+own round below): the interim clause-level-escape-valve shape this entry's Reviewer A findings describe
+(`{kind: "requirement_clause", ...}`) was reconsidered against R-10/R-22/R-23's literal text and
+removed — the RLI premise unit remains exactly a whole Requirement (single-strength-checked) or a Claim;
+a mixed-strength Requirement is not eligible, as a whole, to serve as a premise, and no clause-level
+citation is authorized. `ADR-0003`'s Status remains **Proposed**. See `REQUIREMENT_SPEC_SCHEMA_MAPPING.md`
+§8 for the current textual basis; the Reviewer A narrative below is preserved as an accurate record of
+that earlier round's own findings and is not itself rewritten.
 
 **Review process — a process deviation, corrected mid-task.** The task instructed four independent
 read-only **Codex** reviewers (Section 31). The first review round was dispatched as four
