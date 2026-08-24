@@ -57,7 +57,7 @@ MemoryContext consumers — owner: `docs/foundation/M0_SCOPE.md`:
 RequirementSpec machine schema: IMPLEMENTED (M0 Step 03B) — owner: `schemas/m0/requirement-spec.schema.json`,
 `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`
 MIHVER Brain adapter / retrieval runtime: NOT IMPLEMENTED (observable: no adapter code in this repo)
-Contract suite (`npm test`): 148/148 (observable: `npm test`'s own output)
+Contract suite (`npm test`): 170/170 (observable: `npm test`'s own output)
 
 Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
 checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
@@ -285,22 +285,28 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   integration (`tests/contracts/validate-contracts.mjs`) for the (still Proposed) `RequirementSpec`
   semantic contract, plus a dedicated `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md` mapping
   every R-01–R-24 invariant to its enforcement layer. Preserves R-01 through R-24 exactly as
-  previously defined — no semantic redesign; `REQUIREMENT_SPEC.md`, `REQUIREMENT_CASES.md`,
-  `INTENT_SPEC.md`, and `MEMORY_CONTEXT.md` were not edited. Extended the fixture harness with a
-  backward-compatible multi-companion model (`fixture.companions`, resolved by stable artifact
-  identity) alongside the existing singular `fixture.companion`, without rewriting any pre-existing
-  fixture. Two re-derived representation decisions, both textually determined rather than invented:
-  a "Failed" Requirement Derivation run produces no `RequirementSpec` artifact at all (mirroring
-  `intent-spec.schema.json`'s identical "Failed parsing produces no IntentSpec" decision); and R-22's
-  strength-inheritance rule extends to per-clause granularity for a Requirement-Level Inference
-  premising on one clause of a mixed-strength combined Requirement, a representation refinement of
-  "Requirement Cardinality and Granularity"'s own already-established per-clause strength
-  independence, not new semantics. `ADR-0003`'s Status remains **Proposed**; this checkpoint does not
-  change it — see `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`'s own "Status / Purpose"
-  section and "Open Items" below for the separate, later human decision.
-  - Contract suite at merged head: **148/148** (85 pre-existing plus 63 new `RequirementSpec`
-    fixtures — 44 from the initial coverage matrix, 19 added as regression tests for defects four
-    independent Codex reviewers found and Claude fixed during the same task's own review round).
+  previously defined — no semantic redesign; **a subsequent human-review-fixes round on the same PR
+  explicitly authorized exactly one narrow `REQUIREMENT_SPEC.md` semantic clarification** (the R-22 ×
+  mixed-strength Requirement premise question, below) — no other `RequirementSpec` semantics changed,
+  and `REQUIREMENT_CASES.md`, `INTENT_SPEC.md`, `MEMORY_CONTEXT.md` remain unedited throughout.
+  Extended the fixture harness with a backward-compatible multi-companion model (`fixture.companions`,
+  resolved by stable artifact identity) alongside the existing singular `fixture.companion`, without
+  rewriting any pre-existing fixture. Two re-derived representation decisions, both textually
+  determined rather than invented: a "Failed" Requirement Derivation run produces no `RequirementSpec`
+  artifact at all (mirroring `intent-spec.schema.json`'s identical "Failed parsing produces no
+  IntentSpec" decision); and R-22 × mixed-strength Requirement — **final decision**, after the
+  human-review-fixes round reconsidered an interim per-clause-premise draft this checkpoint originally
+  described: the Requirement-Level-Inference premise unit remains exactly R-10's literal `{kind:
+  "claim"}` or `{kind: "requirement", requirement_id}` (valid only when all its clauses share one
+  strength); a mixed-strength Requirement is **not eligible, as a whole, to serve as a premise**, and
+  no clause-level citation is authorized — `{kind: "requirement_clause", ...}` was removed from the
+  schema. See `REQUIREMENT_SPEC.md`'s "Mixed-strength Requirement as premise (R-22 clarification)"
+  paragraph. `ADR-0003`'s Status remains **Proposed**; this checkpoint does not change it — see
+  `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`'s own "Status / Purpose" section and "Open
+  Items" below for the separate, later human decision.
+  - Contract suite at merged head: **170/170** (148 at this task's own initial completion — 85
+    pre-existing plus 63 new `RequirementSpec` fixtures — plus 22 more added by the subsequent
+    human-review-fixes round above).
 
 ## Open Items
 

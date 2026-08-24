@@ -110,8 +110,11 @@ against regression. Both re-derivation questions (Failed-outcome, R-22×mixed-st
 independently re-examined by multiple reviewers and confirmed correctly determined by existing text,
 not requiring a stop.
 
-**Validation**: `npm test` — 148/148 (85 pre-existing + 63 new; all 85 pre-existing fixtures confirmed
-byte-unchanged). `npm run check:project-consistency` — 7/7. `npm run test:project-consistency` — 19/19.
+**Validation**: `npm test` — 148/148 at this task's own completion (85 pre-existing + 63 new; all 85
+pre-existing fixtures confirmed byte-unchanged); a subsequent human-review-fixes round on the same
+branch/PR brought the current total to **170/170** (22 additional regression fixtures — see
+`.project/REVIEW_STATE.md`'s "Latest Review" for detail). `npm run check:project-consistency` — 7/7.
+`npm run test:project-consistency` — 19/19.
 `git diff --check` — clean. `git diff main --stat` — confirmed no forbidden-path file touched
 (individually checked, all empty).
 

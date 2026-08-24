@@ -1761,10 +1761,11 @@ Purpose:
 - ADR-0002 Accepted,
 - RequirementSpec semantic contract + schema,
 - ADR-0003 Proposed,
-- **148/148 current contract fixtures** (32 at Step 02B/Phase 3, 59 after the MemoryContext Schema
+- **170/170 current contract fixtures** (32 at Step 02B/Phase 3, 59 after the MemoryContext Schema
   Foundation/Phase 10, 83 after Dependency B/Phase 9, 85 after the `DECISION_OPTION` historical-
   source gate (PR #26) — Dependency D (PR #27) added no new fixtures — 148 after the RequirementSpec
-  schema (Phase 11) — see each phase for its own checkpoint count),
+  schema's initial completion (Phase 11), 170 after a subsequent human-review-fixes round on the same
+  PR — see each phase for its own checkpoint count),
 - durable `.project` context bootstrap,
 - `npm run context`,
 - Claude/Codex/human development operating model,
@@ -1875,7 +1876,9 @@ This is the current lowest-rework sequence.
       contract suite at merged head: 85/85
 
 8. RequirementSpec Step 03B — DONE
-      schema + validator + fixtures implemented, contract suite 148/148 --
+      schema + validator + fixtures implemented, contract suite 170/170
+      (148 at initial completion, 170 after a subsequent human-review-fixes
+      round on the same PR) --
       see docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md for detail
       ADR-0003 acceptance reconsideration remains a separate, later human
       decision; see PROJECT_STATE.md's "Next Authorized Action"

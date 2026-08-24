@@ -130,8 +130,11 @@ its clauses' conditions might disagree, and a laundered `semantic_authority_clas
 behavior, not a Step 03B regression) were not fixed, and are recorded here rather than silently
 dropped.
 
-**Verification (Claude):** `npm test` — 148/148 (85 pre-existing, confirmed byte-unchanged, plus 63
-new). `npm run check:project-consistency` — 7/7. `npm run test:project-consistency` — 19/19.
+**Verification (Claude):** `npm test` — 148/148 at this round's own completion (85 pre-existing,
+confirmed byte-unchanged, plus 63 new); a subsequent human-review-fixes round on the same branch/PR
+brought the current total to **170/170** (22 additional regression fixtures, including the R-22
+clarification's own fixture updates). `npm run check:project-consistency` — 7/7. `npm run
+test:project-consistency` — 19/19.
 `git diff --check` — clean. `git diff main --stat` against every forbidden path (`docs/contracts/REQUIREMENT_SPEC.md`,
 `docs/examples/REQUIREMENT_CASES.md`, `docs/contracts/INTENT_SPEC.md`, `docs/contracts/MEMORY_CONTEXT.md`,
 `docs/foundation/`, `schemas/m0/user-idea.schema.json`, `schemas/m0/intent-spec.schema.json`,
