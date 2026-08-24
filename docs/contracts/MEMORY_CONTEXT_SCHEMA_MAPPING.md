@@ -102,8 +102,11 @@ boundary; it does not itself define the citing side.** Current status by depende
   rationale for an R-19-eligible working default — never as a Requirement-Level Inference premise
   (R-23 unaffected), never as `brain_memory_id` alone, and never as a direct mutable Brain reference.
   This document remains implementation-independent, per its own stated deferral pattern: no
-  `RequirementSpec` JSON field name is fixed here or by `REQUIREMENT_SPEC.md` itself, and no
-  `RequirementSpec` schema exists yet — see "No RequirementSpec Machine Schema Yet" below.
+  `RequirementSpec` JSON field name is fixed here or by `REQUIREMENT_SPEC.md` itself — a
+  `RequirementSpec` schema has since been designed (M0 Step 03B) as its own, separate machine
+  representation; see "RequirementSpec Machine Schema (M0 Step 03B)" below and
+  `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md` for its own field-name choices, which this
+  document does not restate.
 
 **Canonical Brain-memory identity is additionally partitioned, not merely entry-identity.** The
 audit model is: one Producer invocation retrieves one canonical Brain record into exactly one
@@ -116,17 +119,18 @@ producing multiple entries, of any disposition, within a single invocation; Case
 independent `MemoryContext` productions for two different retrieval purposes are two *separate*
 artifacts, not two entries inside one.
 
-## No RequirementSpec Machine Schema Yet
+## RequirementSpec Machine Schema (M0 Step 03B)
 
-Dependency D's semantic authorization (`REQUIREMENT_SPEC.md`'s R-24) is deliberately
-implementation-independent, mirroring this document's own relationship to `MemoryContext`. No
-`schemas/m0/requirement-spec.schema.json` exists, no `RequirementSpec` fixture serialization exists,
-and no field name for a memory-informed-rationale citation is fixed anywhere — `RequirementSpec`'s
-own machine-readable schema (M0 Step 03B) remains deferred, unaffected by dependency D landing.
-Dependency D's own machine representability need is limited to the `MemoryContext` side of the
-citation, which this schema already provides via the `(memory_context_id, entry_id)` pair (see
-"Stable identity for cross-artifact reference" above) — nothing about implementing dependency D
-required, or now requires, a `schemas/m0/memory-context.schema.json` change.
+`schemas/m0/requirement-spec.schema.json` now exists, with its own dedicated mapping at
+[REQUIREMENT_SPEC_SCHEMA_MAPPING](./REQUIREMENT_SPEC_SCHEMA_MAPPING.md) — this document does not
+restate or duplicate that mapping's content. Dependency D's own machine representability need was
+always limited to the `MemoryContext` side of the citation, which this schema already provided via the
+`(memory_context_id, entry_id)` pair (see "Stable identity for cross-artifact reference" above) before
+Step 03B began; nothing about Step 03B required, or now requires, a
+`schemas/m0/memory-context.schema.json` change — this document's own content is unaffected by Step
+03B's schema having been designed. `ADR-0003` (`RequirementSpec`'s own semantic-model ADR) remains
+**Proposed**; Step 03B's schema work does not, by itself, change that Status — see
+`docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`'s own "Status / Purpose" section.
 
 ## The Seven Independent Authority Axes, as represented
 

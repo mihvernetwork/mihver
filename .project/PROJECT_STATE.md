@@ -54,9 +54,10 @@ MemoryContext consumers — owner: `docs/foundation/M0_SCOPE.md`:
 - Research Planning → `DISCOVERY_ATTENTION`
 - Requirement Derivation → `DECISION_OPTION` only
 
-RequirementSpec machine schema: NOT IMPLEMENTED (observable: no `schemas/m0/requirement-spec.schema.json`)
+RequirementSpec machine schema: IMPLEMENTED (M0 Step 03B) — owner: `schemas/m0/requirement-spec.schema.json`,
+`docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`
 MIHVER Brain adapter / retrieval runtime: NOT IMPLEMENTED (observable: no adapter code in this repo)
-Contract suite (`npm test`): 85/85 (observable: `npm test`'s own output)
+Contract suite (`npm test`): 148/148 (observable: `npm test`'s own output)
 
 Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
 checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
@@ -275,47 +276,51 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
     functions identically either way. `MemoryContext` is bound to the specific consumed
     `IntentSpec` version containing the surviving Unknown — never to `RequirementSpec`, which is
     this stage's own output.
-  - No `RequirementSpec` schema exists yet; no MIHVER Brain adapter or runtime exists.
+  - **At the time of this checkpoint, no `RequirementSpec` schema existed yet; a schema has since
+    been designed — see the "M0 Step 03B — RequirementSpec Schema" checkpoint below.** No MIHVER
+    Brain adapter or runtime exists even now.
   - Contract suite at merged head: **85/85**.
+- **M0 Step 03B — RequirementSpec Schema.** Created the first machine-readable JSON Schema
+  (`schemas/m0/requirement-spec.schema.json`, JSON Schema Draft 2020-12) and deterministic validator
+  integration (`tests/contracts/validate-contracts.mjs`) for the (still Proposed) `RequirementSpec`
+  semantic contract, plus a dedicated `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md` mapping
+  every R-01–R-24 invariant to its enforcement layer. Preserves R-01 through R-24 exactly as
+  previously defined — no semantic redesign; `REQUIREMENT_SPEC.md`, `REQUIREMENT_CASES.md`,
+  `INTENT_SPEC.md`, and `MEMORY_CONTEXT.md` were not edited. Extended the fixture harness with a
+  backward-compatible multi-companion model (`fixture.companions`, resolved by stable artifact
+  identity) alongside the existing singular `fixture.companion`, without rewriting any pre-existing
+  fixture. Two re-derived representation decisions, both textually determined rather than invented:
+  a "Failed" Requirement Derivation run produces no `RequirementSpec` artifact at all (mirroring
+  `intent-spec.schema.json`'s identical "Failed parsing produces no IntentSpec" decision); and R-22's
+  strength-inheritance rule extends to per-clause granularity for a Requirement-Level Inference
+  premising on one clause of a mixed-strength combined Requirement, a representation refinement of
+  "Requirement Cardinality and Granularity"'s own already-established per-clause strength
+  independence, not new semantics. `ADR-0003`'s Status remains **Proposed**; this checkpoint does not
+  change it — see `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`'s own "Status / Purpose"
+  section and "Open Items" below for the separate, later human decision.
+  - Contract suite at merged head: **148/148** (85 pre-existing plus 63 new `RequirementSpec`
+    fixtures — 44 from the initial coverage matrix, 19 added as regression tests for defects four
+    independent Codex reviewers found and Claude fixed during the same task's own review round).
 
 ## Open Items
 
 - `ADR-0003` (Requirement Derivation Model) Status is **Proposed**, not Accepted, on `main` as
-  merged via PR #13. Mirroring `ADR-0002`'s own precedent, moving it to Accepted is expected to
-  require its own future condition (e.g. schema design plus an adversarial review pass against
-  real cases) — see its own "Future Work" section for the actual condition, not restated here to
-  avoid drift. `ADR-0004` Dependency D's semantic closure (PR #27, see checkpoint above) removes the
-  reason to delay `RequirementSpec` machine representation on memory-provenance grounds — R-01
-  through R-24 are now the settled semantic baseline a `RequirementSpec` schema would represent —
-  but this is an observation only, not itself a condition `ADR-0003`'s own Future Work section
-  names, and not itself authorization for anything. `ADR-0003`'s own acceptance remains a later,
-  explicit decision under its own stated criteria. No task in this session has been authorized to
-  change `ADR-0003`'s Status.
+  merged via PR #13. Mirroring `ADR-0002`'s own precedent, moving it to Accepted requires its own
+  future condition — see its own "Future Work" section for the actual condition, not restated here to
+  avoid drift: schema design work, plus an adversarial review pass against real cases. **The M0 Step
+  03B checkpoint above (schema design plus its own adversarial review) is an observation relevant to
+  that condition, not itself the acceptance decision** — `ADR-0003`'s own acceptance remains a later,
+  separate, explicit human decision under its own stated criteria. No task in this session has been
+  authorized to change `ADR-0003`'s Status.
 
 ## Next Authorized Action
 
-None automatically. Per `REVIEW_PROTOCOL.md` item 9, completing a task is not authorization to
-start the next one. In particular: moving `ADR-0003` to Accepted, beginning M0 Step 03B, and
-performing any `mihver-brain` or runtime memory-integration work are all **not** authorized by any
-checkpoint recorded above — each requires its own separate, explicit human task instruction, given
-later. **Dependency D is now DONE** (see the "`ADR-0004` Dependency D — Memory-Informed R-19 Working
-Defaults" checkpoint above, PR #27) — its completion does not, by itself, authorize the next task.
-
-**`RequirementSpec` Step 03B is now the logical next M0 task family**, now that Dependency D's
-semantic closure is recorded — but it is **not authorized by this entry**. Conceptual scope only,
-recorded here for future reference, not designed or implemented by this reconciliation:
-
-- `RequirementSpec` JSON Schema.
-- Schema mapping (invariant-by-invariant, mirroring `MEMORY_CONTEXT_SCHEMA_MAPPING.md`'s pattern).
-- Deterministic validator integration.
-- Valid/invalid fixtures.
-- Adversarial schema-level coverage.
-- Must preserve R-01 through R-24 exactly as currently defined — no semantic redesign.
-- Should represent memory-informed R-19 provenance (R-24's citation shape) once, now that
-  Dependency D's semantics are settled, rather than designing around a later amendment.
-- `ADR-0003` acceptance should be reconsidered only after its own stated acceptance condition is
-  actually met — not automatically alongside Step 03B.
-- Exact schema field design is not performed here.
+None automatically. Per `REVIEW_PROTOCOL.md`'s Completion Checklist rule "Stop before the next
+task," completing a task is not authorization to start the next one. In particular: moving
+`ADR-0003` to Accepted, implementing Research Planning, and performing any `mihver-brain` or runtime
+memory-integration work are all **not** authorized by any checkpoint recorded above — each requires
+its own separate, explicit human task instruction, given later. **M0 Step 03B is now DONE** (see the
+checkpoint above) — its completion does not, by itself, authorize the next task.
 
 This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out

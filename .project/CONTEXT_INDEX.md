@@ -23,13 +23,15 @@ that's a gap in the index, not license to guess; search deliberately, and consid
 | Requirement Derivation model decision (Proposed) | `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md` |
 | `RequirementSpec` semantic contract | `docs/contracts/REQUIREMENT_SPEC.md` |
 | Requirement semantic test corpus | `docs/examples/REQUIREMENT_CASES.md` |
+| `RequirementSpec` machine-readable schema | `schemas/m0/requirement-spec.schema.json` |
+| `RequirementSpec` schema ↔ semantic invariant mapping | `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md` |
 | Memory Context Authority Boundary decision (Accepted) | `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md` |
 | `MemoryContext` semantic contract | `docs/contracts/MEMORY_CONTEXT.md` |
 | MemoryContext semantic test corpus | `docs/examples/MEMORY_CONTEXT_CASES.md` |
 | MemoryContext machine-readable schema | `schemas/m0/memory-context.schema.json` |
 | MemoryContext schema ↔ semantic invariant mapping | `docs/contracts/MEMORY_CONTEXT_SCHEMA_MAPPING.md` |
 | Schema ↔ contract invariant coverage | `docs/contracts/SCHEMA_MAPPING.md` |
-| Machine-readable schemas | `schemas/m0/user-idea.schema.json`, `schemas/m0/intent-spec.schema.json` |
+| Machine-readable schemas | `schemas/m0/user-idea.schema.json`, `schemas/m0/intent-spec.schema.json`, `schemas/m0/requirement-spec.schema.json` |
 | Deterministic contract validator + fixtures | `tests/contracts/validate-contracts.mjs`, `tests/contracts/fixtures/**` |
 | Claude/Codex execution model, Git & branch workflow | `docs/development/AGENT_POLICY.md` |
 | Document Owner/Mirror/Historical model, Task File Scope (Primary/Conditional/Forbidden) | `docs/development/AGENT_POLICY.md` ("Document Authority Model", "Task File Scope Model") |

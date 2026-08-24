@@ -1,0 +1,159 @@
+{
+  "contract": "requirement-spec",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "requirement_spec",
+    "requirement_spec_id": "rs-ln",
+    "version": 1,
+    "created_at": "2026-08-24T00:00:00Z",
+    "consumed_intent_spec": {
+      "intent_spec_id": "is-1",
+      "version": 1
+    },
+    "supersedes_requirement_spec_id": null,
+    "revision": null,
+    "status": "partial",
+    "requirements": [
+      {
+        "requirement_id": "r1",
+        "clauses": [
+          {
+            "clause_id": "cl-goal",
+            "derivation": "direct_compilation",
+            "statement": "The system SHOULD surface academic-performance-based indicators of students who may need support.",
+            "strength": "SHOULD",
+            "basis": [
+              {
+                "claim_id": "ca"
+              }
+            ],
+            "origins": [
+              "user_provided"
+            ],
+            "testability": {
+              "status": "blocked",
+              "reason": "no metric/comparator for 'indicators...who may need support'"
+            }
+          },
+          {
+            "clause_id": "cl-no-rank",
+            "derivation": "direct_compilation",
+            "statement": "The system MUST NOT produce per-student rankings.",
+            "strength": "MUST_NOT",
+            "basis": [
+              {
+                "claim_id": "cb"
+              }
+            ],
+            "origins": [
+              "user_provided"
+            ],
+            "testability": {
+              "status": "complete_binary"
+            }
+          },
+          {
+            "clause_id": "cl-no-score",
+            "derivation": "direct_compilation",
+            "statement": "The system MUST NOT assign numeric risk scores.",
+            "strength": "MUST_NOT",
+            "basis": [
+              {
+                "claim_id": "cc"
+              }
+            ],
+            "origins": [
+              "user_provided"
+            ],
+            "testability": {
+              "status": "complete_binary"
+            }
+          }
+        ],
+        "status": "valid",
+        "invalidation": null
+      }
+    ],
+    "open_items": []
+  },
+  "companions": [
+    {
+      "contract": "intent-spec",
+      "document": {
+        "schema_version": "1.0.0",
+        "artifact_type": "intent_spec",
+        "intent_spec_id": "is-1",
+        "version": 1,
+        "created_at": "2026-08-24T00:00:00Z",
+        "user_idea_refs": [
+          {
+            "idea_id": "idea-1",
+            "version": 1
+          }
+        ],
+        "supersedes_intent_spec_id": null,
+        "handoff": {
+          "status": "eligible",
+          "requirement_derivation_consumable": true
+        },
+        "claims": [
+          {
+            "claim_id": "ca",
+            "proposition": "help teachers identify possibly-struggling students",
+            "origin": "user_provided",
+            "force": {
+              "modality": "preference",
+              "strength": "strong"
+            },
+            "discourse_role": "operative",
+            "provenance": {
+              "kind": "user_statement",
+              "idea_id": "idea-1",
+              "user_idea_version": 1,
+              "speaker": {
+                "kind": "submitting_user"
+              }
+            }
+          },
+          {
+            "claim_id": "cb",
+            "proposition": "do not rank students",
+            "origin": "user_provided",
+            "force": {
+              "modality": "prohibition"
+            },
+            "discourse_role": "operative",
+            "provenance": {
+              "kind": "user_statement",
+              "idea_id": "idea-1",
+              "user_idea_version": 1,
+              "speaker": {
+                "kind": "submitting_user"
+              }
+            }
+          },
+          {
+            "claim_id": "cc",
+            "proposition": "do not assign risk scores",
+            "origin": "user_provided",
+            "force": {
+              "modality": "prohibition"
+            },
+            "discourse_role": "operative",
+            "provenance": {
+              "kind": "user_statement",
+              "idea_id": "idea-1",
+              "user_idea_version": 1,
+              "speaker": {
+                "kind": "submitting_user"
+              }
+            }
+          }
+        ],
+        "open_items": [],
+        "conflicts": [],
+        "clarification_decisions": []
+      }
+    }
+  ]
+}

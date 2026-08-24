@@ -1,0 +1,135 @@
+{
+  "contract": "requirement-spec",
+  "document": {
+    "schema_version": "1.0.0",
+    "artifact_type": "requirement_spec",
+    "requirement_spec_id": "rs-z",
+    "version": 1,
+    "created_at": "2026-08-24T00:00:00Z",
+    "consumed_intent_spec": {
+      "intent_spec_id": "is-1",
+      "version": 1
+    },
+    "supersedes_requirement_spec_id": null,
+    "revision": null,
+    "status": "complete",
+    "requirements": [
+      {
+        "requirement_id": "r1",
+        "clauses": [
+          {
+            "clause_id": "cl1",
+            "derivation": "direct_compilation",
+            "statement": "The system SHALL retry a failed background job automatically.",
+            "strength": "MUST",
+            "basis": [
+              {
+                "claim_id": "c1"
+              }
+            ],
+            "origins": [
+              "user_provided"
+            ],
+            "testability": {
+              "status": "complete_binary"
+            },
+            "working_defaults": [
+              {
+                "source_open_item_id": "oi-amb",
+                "value": "any non-2xx response",
+                "rationale": "filled ambiguity as if it were an unknown"
+              }
+            ]
+          }
+        ],
+        "status": "valid",
+        "invalidation": null
+      }
+    ],
+    "open_items": []
+  },
+  "companions": [
+    {
+      "contract": "intent-spec",
+      "document": {
+        "schema_version": "1.0.0",
+        "artifact_type": "intent_spec",
+        "intent_spec_id": "is-1",
+        "version": 1,
+        "created_at": "2026-08-24T00:00:00Z",
+        "user_idea_refs": [
+          {
+            "idea_id": "idea-1",
+            "version": 1
+          }
+        ],
+        "supersedes_intent_spec_id": null,
+        "handoff": {
+          "status": "eligible",
+          "requirement_derivation_consumable": true
+        },
+        "claims": [
+          {
+            "claim_id": "c1",
+            "proposition": "retry a failed background job automatically",
+            "origin": "user_provided",
+            "force": {
+              "modality": "obligation"
+            },
+            "discourse_role": "operative",
+            "provenance": {
+              "kind": "user_statement",
+              "idea_id": "idea-1",
+              "user_idea_version": 1,
+              "speaker": {
+                "kind": "submitting_user"
+              }
+            }
+          }
+        ],
+        "open_items": [
+          {
+            "open_item_id": "oi-amb",
+            "kind": "ambiguity",
+            "question": "what counts as a failure?",
+            "relevance_rationale": "Wording supports multiple readings.",
+            "wording_refs": [
+              {
+                "idea_id": "idea-1",
+                "user_idea_version": 1,
+                "turn_id": "turn-1",
+                "quote": "ambiguous phrase"
+              }
+            ],
+            "candidate_readings": [
+              {
+                "reading_id": "r-a",
+                "reading": "reading A"
+              },
+              {
+                "reading_id": "r-b",
+                "reading": "reading B"
+              }
+            ],
+            "decision_impact": {
+              "level": "medium",
+              "unresolved_item": "what counts as a failure?",
+              "downstream_decision": "requirement scope",
+              "level_rationale": "MEDIUM: shifts detail, not shape."
+            }
+          }
+        ],
+        "conflicts": [],
+        "clarification_decisions": [
+          {
+            "subject_kind": "open_item",
+            "subject_id": "oi-amb",
+            "needed": false,
+            "rationale": "LOW/MEDIUM impact, deferred."
+          }
+        ]
+      }
+    }
+  ],
+  "expected_error": "is an \"ambiguity\", not an \"unknown\""
+}

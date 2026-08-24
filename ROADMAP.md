@@ -469,17 +469,14 @@ Major established rules include:
 
 The semantic contract is merged and heavily adversarially reviewed, but ADR-0003 has not yet moved to Accepted.
 
-## 8.3 Step 03B — NOT YET DONE
+## 8.3 Step 03B — DONE
 
-Still missing:
-
-- `RequirementSpec` JSON Schema,
-- fixtures,
-- validator mapping/enforcement,
-- schema-level adversarial coverage,
-- acceptance reconsideration for ADR-0003.
-
-This remains an important near-term M0 dependency.
+`RequirementSpec` JSON Schema, fixtures, validator mapping/enforcement, and schema-level adversarial
+coverage are implemented — see `schemas/m0/requirement-spec.schema.json` and
+`docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md` for the authoritative detail, and
+`.project/PROJECT_STATE.md`'s "Current Capability Snapshot" for current status; not restated here.
+`ADR-0003` acceptance reconsideration remains a separate, later human decision — see that ADR's own
+Status field.
 
 ---
 
@@ -860,7 +857,8 @@ Requirement Derivation  — DECISION_OPTION only
 - `MemoryContext` is not, and does not become, Evidence.
 - `MemoryContext` absence/unavailability is non-blocking — Requirement Derivation functions
   identically either way.
-- No `RequirementSpec` schema exists yet; no Brain adapter or runtime exists.
+- **At the time of this checkpoint, no `RequirementSpec` schema existed yet; a schema has since been
+  designed — see Phase 11 above.** No Brain adapter or runtime exists even now.
 - Contract suite at merged head: **85/85**. Adversarially reviewed across the implementation and two
   follow-up closure rounds on the same PR — see `.project/REVIEW_STATE.md`'s history for the full
   detail.
@@ -1378,22 +1376,19 @@ not started or implied by the schema foundation above.
 
 ---
 
-## Phase 11 — RequirementSpec Step 03B schema — PLANNED / HIGH PRIORITY
+## Phase 11 — RequirementSpec Step 03B schema — DONE
 
-Build:
+`RequirementSpec` JSON Schema, valid/invalid fixtures, schema mapping, validator integration, and
+adversarial coverage against `REQUIREMENT_CASES.md` are implemented — see
+`docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md` for full detail, not restated here. `ADR-0003`
+acceptance reconsideration is a separate, later human decision, unaffected by this Phase's own
+completion.
 
-- `RequirementSpec` JSON Schema,
-- valid/invalid fixtures,
-- schema mapping,
-- validator integration,
-- referential/lifecycle checks where structurally enforceable,
-- adversarial coverage against the Requirement cases.
+### Ordering note (historical)
 
-Then reconsider ADR-0003 acceptance.
-
-### Ordering note
-
-Memory provenance amendments should be settled before finalizing RequirementSpec schema if they change Requirement provenance/premise shape; otherwise schema churn is likely.
+This phase's own memory-provenance-ordering concern was satisfied before it began: `ADR-0004`
+Dependency D (Phase 9, PR #27) landed first, so `RequirementSpec`'s R-24 memory-informed-rationale
+shape was already settled, not designed around a later amendment.
 
 ---
 
@@ -1764,12 +1759,12 @@ Purpose:
 - UserIdea semantic contract + schema,
 - IntentSpec semantic contract + schema,
 - ADR-0002 Accepted,
-- RequirementSpec semantic contract,
+- RequirementSpec semantic contract + schema,
 - ADR-0003 Proposed,
-- **85/85 current contract fixtures** (32 at Step 02B/Phase 3, 59 after the MemoryContext Schema
+- **148/148 current contract fixtures** (32 at Step 02B/Phase 3, 59 after the MemoryContext Schema
   Foundation/Phase 10, 83 after Dependency B/Phase 9, 85 after the `DECISION_OPTION` historical-
-  source gate (PR #26) — Dependency D (PR #27) added no new fixtures — see each phase for its own
-  checkpoint count),
+  source gate (PR #26) — Dependency D (PR #27) added no new fixtures — 148 after the RequirementSpec
+  schema (Phase 11) — see each phase for its own checkpoint count),
 - durable `.project` context bootstrap,
 - `npm run context`,
 - Claude/Codex/human development operating model,
@@ -1874,16 +1869,16 @@ This is the current lowest-rework sequence.
       memory supplies zero independent authority; new invariant R-24 requires
       a distinct memory-informed-rationale citation via
       (memory_context_id, entry_id); R-19/R-23 unchanged
-      no RequirementSpec schema or Brain adapter/runtime exists yet
+      at the time of this checkpoint, no RequirementSpec schema or Brain
+      adapter/runtime existed yet -- a schema has since been designed, see
+      item 8 below; no Brain adapter/runtime exists even now
       contract suite at merged head: 85/85
 
-8. RequirementSpec Step 03B — NEXT, not authorized
-      schema + validator + fixtures
-      ADR-0003 acceptance reconsideration
-      RequirementSpec machine provenance can now be designed once, since its
-      memory-informed default semantics (Dependency D) are settled --
-      this is a sequencing observation, not authorization to begin; see
-      PROJECT_STATE.md's "Next Authorized Action"
+8. RequirementSpec Step 03B — DONE
+      schema + validator + fixtures implemented, contract suite 148/148 --
+      see docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md for detail
+      ADR-0003 acceptance reconsideration remains a separate, later human
+      decision; see PROJECT_STATE.md's "Next Authorized Action"
 
 9. Brain SB-02 retrieval parity/freeze
       then MIHVER ↔ Brain adapter/runtime afterward -- distinct from the schema
