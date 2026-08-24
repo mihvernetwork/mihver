@@ -15,49 +15,143 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE
-Branch: `chore/post-dependency-d-reconcile`
-PR: `mihvernetwork/mihver#28` ("chore: reconcile state after Dependency D") — existing open PR,
-continued, not a new PR, not merged by this task
+Task: DEVELOPMENT-CONSISTENCY-V2-FINAL-FIX
+Branch: `chore/development-consistency-v2`
+PR: #29 — `https://github.com/mihvernetwork/mihver/pull/29`
+Target: main
+Live PR state: verify from GitHub.
+Human review is the current gate. Not merged by this task.
 
-A tiny factual-hygiene closure on top of PR #28's already-approved durable-state reconciliation. No
-state/roadmap decision reopened. Fixed exactly one factual defect family in
-`.project/DECISIONS_LOG.md`'s PR #26 entry: a false claim that this branch's own HEAD-at-start
-matched PR #26's merge commit (`a16491d41d93f4edac9378b6184de071aa681f32`) — it actually matched the
-later PR #27 merge commit (`bb70a9ec92da1a17fbb4129f3c062626ecd00cd5`), since the reconciliation
-covered both PRs together and this branch's own `main` base was taken after PR #27, not PR #26.
-Also made the "validator behavior unchanged" claim in that same entry precise: the deterministic
-source-gate decision logic was unchanged; only surrounding diagnostic error-message wording was
-clarified/extended by PR #26 — not every byte/message in the file. PR #27's own entry was
-independently re-verified correct (task-start HEAD genuinely equals PR #27's own merge SHA) and left
-untouched. No pre-existing `DECISIONS_LOG.md` entry above the PR #26 hunk touched; no third entry
-added; no entry recorded for this reconciliation PR's own future merge.
+A narrow deterministic-correction pass on top of `DEVELOPMENT-CONSISTENCY-V2-HARDENING` (below),
+closing two final consistency defects a human review found. Did not redesign Owner/Mirror/Historical,
+the three-tier task scope model, the Final Consistency Sweep, the one-bounded-reconciliation policy,
+or any of the prior round's five fixes — all approved and unchanged.
 
-**Verification:** `git diff .project/DECISIONS_LOG.md` shows exactly one hunk, scoped to the PR #26
-entry's text, independently confirmed by direct diff inspection (not merely asserted). `npm test`:
-85/85. `git diff --check`: clean. `git diff HEAD^ --stat`: `.project/DECISIONS_LOG.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` only.
+1. `checkDecisionsLogAppendOnlyVsBase` now fails closed: it previously returned `SKIP` whenever the
+   required frozen baseline couldn't be established (no local `main`, no merge-base, a malformed
+   "---" entries structure in either version) — silently letting `main()`'s summary print "all
+   deterministic checks passed" while this protection was never actually evaluated. It now returns
+   `FAIL` in all three of those cases. The one case that is genuinely not a failure — the file did
+   not exist yet at the merge-base (introduced entirely on this branch, nothing frozen to protect) —
+   is detected explicitly via `git cat-file -e` and reported as an accurate `PASS`, kept distinct
+   from "the check couldn't run." The pre-existing "no local main" test was updated to expect `FAIL`;
+   two new tests were added (genuinely-new-file → `PASS`; malformed structure → `FAIL`).
+2. Removed the live PR-state mirror from this file's own "Latest Review": the previous round left
+   `PR #29 (\`OPEN\`, verified via \`gh pr view 29\`)` here, directly contradicting the "GitHub owns
+   live PR state" guidance that same round had just added to `AGENT_POLICY.md`. Replaced with the
+   stable wording that guidance prescribes (as shown above: `PR:` / `Target:` / `Live PR state:
+   verify from GitHub` / `Human review is the current gate`), and scrubbed the same "PR #29 is open"
+   phrasing from this file's Pending Human Gate section. `## History` below was left untouched — its
+   PR-state statements are already scoped to a specific past point ("as of this entry," "opened, not
+   yet merged"), which is accurate historical record-keeping, not a live mirror.
+
+Files touched this round: `scripts/dev/project-consistency.mjs`, `tests/dev/project-consistency.test.mjs`
+(Primary); `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md` (Conditional Consistency, this
+round's own task/review record). No `docs/development/AGENT_POLICY.md`, `.project/PROJECT_STATE.md`,
+`docs/foundation/**`, `docs/contracts/**`, `docs/adr/**`, `docs/examples/**`, `schemas/**`,
+`tests/contracts/**`, or `ROADMAP.md` file touched — confirmed by `git diff main --stat`.
+
+**No new Codex reviewer round** — per this task's explicit instruction, this is a deterministic final
+consistency correction with no new substantive design surface. Both fixes were independently verified
+by Claude directly: the fail-closed code path was hand-traced against all three FAIL triggers plus the
+genuinely-new-file PASS case, and confirmed by the two new/updated tests actually failing before the
+fix and passing after; the PR-state removal was confirmed by re-reading the full "Latest Review" and
+"Pending Human Gate" sections for any remaining "OPEN"/"is open" live assertion (none remain outside
+`## History`).
+
+**Verification (Claude):** `npm test` — 85/85. `npm run check:project-consistency` — 7/7 checks PASS.
+`npm run test:project-consistency` — 19/19 test groups PASS (17 pre-existing plus 2 new; 1 existing
+test updated from expecting `SKIP` to expecting `FAIL`). `git diff --check` — clean. `git diff main
+--stat` — confirmed to touch exactly the files named above; targeted `git diff main --stat` against
+every forbidden path (`docs/foundation/`, `docs/contracts/`, `docs/adr/`, `docs/examples/`,
+`schemas/`, `tests/contracts/`, `ROADMAP.md`, `mihver-brain`) produced empty output.
+
+**Final recommendation: `READY_FOR_HUMAN_REVIEW`.** Both fixes independently verified against actual
+code/file content and the full validation suite re-run after each change.
 
 ## Required Changes
 
-None — this was a self-contained, Claude-identified factual correction per explicit human
-instruction; no external reviewer dispatched for a single-paragraph factual-wording fix.
+None remaining — both defects named in this round's task are fixed.
 
 ## Fixes Applied
 
-- `.project/DECISIONS_LOG.md`'s PR #26 entry: corrected the false HEAD-at-start claim (now correctly
-  attributes task-start HEAD to PR #27's merge commit, with an explanatory note); made the validator
-  claim precise (decision logic unchanged; diagnostic wording clarified/extended).
-
-**Final recommendation: `READY_FOR_HUMAN_REVIEW`.**
+See "Latest Review" above for the itemized list (the fail-closed baseline fix; the live PR-state
+mirror removal).
 
 ## Pending Human Gate
 
-Commit and push to the existing branch `chore/post-dependency-d-reconcile`, existing PR #28. Do not
-open a new PR. Not merged by this task. Human review of PR #28 (now including this fact-closure
-round) is the next gate.
+PR: #29
+Target: main
+Live PR state: verify from GitHub.
+Human review is the current gate. No new PR opened; this round's commits are pushed to the same
+existing PR #29. Do not merge.
 
 ## History
+
+- 2026-08-24 — `DEVELOPMENT-CONSISTENCY-V2-HARDENING` (PR #29, pushed to the same branch/PR as
+  `DEVELOPMENT-CONSISTENCY-MODEL-V2` below, not a new branch): a narrow hardening pass closing five
+  confirmed implementation/consistency gaps a human review of the opened PR raised: CLI-entrypoint
+  portability (`pathToFileURL` guard, real child-process smoke test); cross-reference whitespace
+  tolerance for line-wrapped quoted headings, with five new `HEADING_REFERENCES` registrations
+  pointing at `ADR-0004`'s "Post-Acceptance Dependency B/C/D Disposition" heading; the
+  `DECISIONS_LOG.md` append-only check's anchor point moved from "vs. HEAD" to "vs. merge-base with
+  local `main`", compared entry-block-by-entry; PR-state drift in `CURRENT_TASK.md`/this file fixed,
+  plus new standing guidance in `AGENT_POLICY.md`'s Operational State Scope; and `PROJECT_STATE.md`'s
+  Dependency A/B/C/D umbrella owner split into four fact-specific pointers. Two independent read-only
+  Codex reviewers: Reviewer A (deterministic checker/portability) found and had fixed 1 confirmed
+  blocking `splitEntryBlocks` boundary bug (a blank-line-separated append could corrupt a preceding
+  frozen entry's block and false-fail); Reviewer B (Owner-Mirror/workflow self-consistency) found and
+  had fixed 2 confirmed blocking issues (`CURRENT_TASK.md`'s Next Gate/Status sections not yet
+  rewritten for this round when the reviewer ran). `npm test`: 85/85. Verdict:
+  `READY_FOR_HUMAN_REVIEW`. A follow-up task, `DEVELOPMENT-CONSISTENCY-V2-FINAL-FIX`, subsequently
+  found and fixed two further defects a human review raised in this round's own work: the append-only
+  baseline check returned `SKIP` (not `FAIL`) whenever the required frozen baseline couldn't be
+  established, letting the overall checker report "all deterministic checks passed" while that
+  protection went unevaluated; and a live PR-state snapshot this round had left in this file's own
+  "Latest Review" despite this round's own new PR-state guidance. Moved here from "Latest Review" now
+  that those sections describe `DEVELOPMENT-CONSISTENCY-V2-FINAL-FIX` instead, per this file's
+  branch/task scoping — both entries share branch `chore/development-consistency-v2` and PR #29. —
+  branch `chore/development-consistency-v2`
+
+- 2026-08-24 — `DEVELOPMENT-CONSISTENCY-MODEL-V2` (PR #29, opened, not yet merged as of this entry):
+  a bounded improvement to MIHVER's own development *operating model* (not M0 product semantics),
+  addressing the recurring post-implementation "closure chain" pattern documented throughout this
+  file's own History. Introduced a formal Owner / Mirror / Historical Record document-authority model
+  and a three-tier Primary / Conditional Consistency / Forbidden task file-scope model in
+  `docs/development/AGENT_POLICY.md`; a mandatory Final Consistency Sweep phase (with a
+  proportionality rule) and an `IMPLEMENTATION_COMPLETE → SEMANTIC_REVIEW_COMPLETE →
+  CONSISTENCY_SWEEP_COMPLETE → READY_FOR_HUMAN_REVIEW` verdict progression in
+  `docs/development/REVIEW_PROTOCOL.md`; the three-tier scope shape plus Owning Facts Changed /
+  Mirrors Potentially Affected / Required Final Consistency Sweep / Durable-State Impact fields in
+  `docs/development/TASK_TEMPLATE.md`; a deterministic, read-only, zero-network consistency checker
+  (`scripts/dev/project-consistency.mjs`, `npm run check:project-consistency`) with its own test suite
+  (`tests/dev/project-consistency.test.mjs`, `npm run test:project-consistency`); and a concrete,
+  minimal demonstration of the Owner/Mirror pattern via `.project/PROJECT_STATE.md`'s new "Current
+  Capability Snapshot" section and a short `ROADMAP.md` editing-policy note. Three independent
+  read-only Codex reviewers, one per axis: Reviewer A (Authority/Owner-Mirror Model) 2/5 PASS
+  initially, 3 confirmed findings, all fixed; Reviewer B (Task/Review Workflow) 5/5 PASS; Reviewer C
+  (Deterministic Tooling) 6/7 PASS, 1 confirmed test-coverage finding, fixed. `npm test`: 85/85.
+  Verdict: `READY_FOR_HUMAN_REVIEW`. PR #29 opened (title "dev: add development consistency model
+  v2") — not merged. A follow-up task, `DEVELOPMENT-CONSISTENCY-V2-HARDENING`, subsequently closed
+  five confirmed implementation/consistency gaps a human review of the opened PR raised (CLI-entrypoint
+  portability; cross-reference whitespace tolerance; the append-only baseline's anchor point; PR-state
+  drift in this file and `CURRENT_TASK.md`; `PROJECT_STATE.md`'s owner-pointer grouping), on the same
+  branch/PR, before any human merge decision. Moved here from "Latest Review" now that those sections
+  describe `DEVELOPMENT-CONSISTENCY-V2-HARDENING` instead, per this file's branch/task scoping — both
+  entries share branch `chore/development-consistency-v2` and PR #29, since the hardening round was a
+  continuation on the same open PR, not a new branch. — branch `chore/development-consistency-v2`
+
+- 2026-08-23 — `POST-DEPENDENCY-D-RECONCILIATION-FACT-CLOSURE` (PR #28, merged status not
+  independently re-verified by the present task — this entry only records that it was the prior
+  "Latest Review" before `DEVELOPMENT-CONSISTENCY-MODEL-V2` began on a new, unrelated branch): a
+  tiny factual-hygiene closure on top of PR #28's already-approved durable-state reconciliation,
+  fixing a false HEAD-at-start claim and an imprecise validator-behavior claim in
+  `.project/DECISIONS_LOG.md`'s PR #26 entry. `npm test`: 85/85. Verdict: `READY_FOR_HUMAN_REVIEW`.
+  Moved here from "Latest Review" now that those sections describe
+  `DEVELOPMENT-CONSISTENCY-MODEL-V2` instead — a new branch
+  (`chore/development-consistency-v2`), unrelated to `chore/post-dependency-d-reconcile`; full detail
+  preserved in this file's own git history at the commit that superseded this entry. — branch
+  `chore/post-dependency-d-reconcile`
 
 - 2026-08-23 — `POST-DEPENDENCY-D-DURABLE-STATE-RECONCILIATION` (PR #28, opened, not yet merged):
   durable-state/navigation reconciliation only, after PR #26 (`DECISION_OPTION` historical-source
