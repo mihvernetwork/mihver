@@ -73,16 +73,60 @@ A change to a contract, ADR, foundation document, or any status/current-state fi
 repository-wide sweep of the files listed above that are actually relevant to what changed. Do not
 manufacture process for a change that has no consistency surface to sweep.
 
-**Verdict progression.** For a task with a non-trivial consistency surface, track:
+**Verdict progression** is the non-publishing core of the full Lifecycle Gates chain below:
 
 ```text
-IMPLEMENTATION_COMPLETE → SEMANTIC_REVIEW_COMPLETE → CONSISTENCY_SWEEP_COMPLETE → READY_FOR_HUMAN_REVIEW
+IMPLEMENTATION_COMPLETE → VERIFICATION_COMPLETE → REVIEW_COMPLETE → CONSISTENCY_SWEEP_COMPLETE
 ```
 
-A task is `READY_FOR_HUMAN_REVIEW` only after the consistency sweep stage, never straight from
-`SEMANTIC_REVIEW_COMPLETE`. For a tiny task under the proportionality rule above, these stages may
-collapse into one pass — the point is that the sweep happened, not that it produced its own separate
-verdict label every time.
+A task never reaches its next lifecycle gate straight from an earlier one, skipping a stage — for a
+tiny task under the proportionality rule above, stages may collapse into one pass, but the point is
+that each stage's work actually happened, not that it produced its own separate verdict label every
+time.
+
+## Lifecycle Gates
+
+The full task lifecycle, from human authorization through human merge — see
+[AGENT_POLICY.md](./AGENT_POLICY.md) for the Codex roles and Git Operator model each gate maps onto:
+
+```text
+AUTHORIZED
+  ↓ (human gives the task; Claude bootstraps — CLAUDE.md's Fast Session Bootstrap)
+CONTEXT_READY
+  ↓ (Claude has read the task's Required Context; decomposition can begin — if the task's "Git
+  ↓  Operator PREPARE authorized" field is yes, PREPARE may run here, before implementation begins:
+  ↓  see AGENT_POLICY.md's "Git Operator (preferred path for publication)" — PREPARE is gated by task
+  ↓  authorization, not by a later lifecycle gate; only PUBLISH is gated by READY_TO_PUBLISH below)
+IMPLEMENTATION_COMPLETE
+  ↓ (bounded work done — directly by Claude, or via one or more Implementers)
+VERIFICATION_COMPLETE
+  ↓ (deterministic checks run and pass — directly by Claude, or via a Verifier)
+REVIEW_COMPLETE
+  ↓ (independent adversarial review done; findings adjudicated and, if required, fixed, with the
+  ↓  fix/reverification/re-review loop ending in an `APPROVED` outcome — see "Outcomes" below; this
+  ↓  gate is never reached from an interim `APPROVE WITH REQUIRED CHANGES` or a `REDESIGN` verdict.
+  ↓  Supersedes the earlier "SEMANTIC_REVIEW_COMPLETE" label.)
+CONSISTENCY_SWEEP_COMPLETE
+  ↓ (Final Consistency Sweep, above, run and clean)
+READY_TO_PUBLISH
+  ↓ (Claude has issued a complete Publication Envelope — CODEX_ROLES.md — authorizing Git Operator's
+  ↓  PUBLISH mode; this gate exists only for a task whose Git fields actually authorize publication)
+PUBLISHED
+  ↓ (Git Operator has pushed the branch and opened/updated the PR — a mechanical fact, not a verdict:
+  ↓  PUBLISHED does NOT mean approved)
+READY_FOR_HUMAN_REVIEW
+  ↓ (Claude's own technical-readiness report is complete and the PR, if any, is live for the human to
+  ↓  read — this does NOT mean merge is authorized)
+HUMAN MERGE / REQUIRED_CHANGES
+  (the human's own final gate — merge, or name the required changes and return to the appropriate
+   earlier gate; see "PR Merge Readiness" below)
+```
+
+`READY_TO_PUBLISH` and `PUBLISHED` are skipped entirely for a task whose Git fields don't authorize
+publication (see `TASK_TEMPLATE.md`'s Publication model) — such a task goes directly from
+`CONSISTENCY_SWEEP_COMPLETE` to `READY_FOR_HUMAN_REVIEW` (e.g. a task delivered for direct human
+inspection of the working tree, not via a PR). Merge is never anyone's authority but the human's,
+regardless of how many earlier gates were reached cleanly.
 
 ## When Independent Review Is Recommended or Required
 

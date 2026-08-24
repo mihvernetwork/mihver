@@ -6,13 +6,30 @@ prompts.
 ## Authority Hierarchy
 
 ```text
-Human            — final approval gate; only the human authorizes moving to the next MIHVER step.
-Claude           — Principal Architect / Orchestrator; decomposes, delegates, reviews, integrates.
-Codex (via MCP)  — bounded specialist worker; executes scoped tasks, never self-approves.
+Human
+  ↓ authorization
+Claude Orchestrator
+  ├─ Codex Scout
+  ├─ Codex Implementer
+  ├─ Codex Verifier
+  ├─ Codex Reviewer
+  └─ Codex Git Operator
+          ↓
+        GitHub PR
+          ↓
+      Human review gate
+          ↓
+      Human-only merge
 ```
 
+Claude decides, decomposes, delegates, adjudicates, and integrates. Codex performs bounded
+inspection, implementation, verification, independent review, and publication operations — never
+decides *what* to build, never self-approves, and never advances MIHVER to its next step. The
+human retains irreversible/governance authority: final approval, and the only authority to merge.
 Neither Claude nor Codex may act as if it held the human's authority. Codex may not act as if it
-held Claude's integration/review authority.
+held Claude's integration/review authority. See [CODEX_ROLES.md](./CODEX_ROLES.md) for each Codex
+role's full capability matrix and output contract; this file governs *whether/when* a role acts,
+not the role's own internal contract.
 
 ## Session Bootstrap
 
@@ -141,16 +158,40 @@ silently widen a worker's authority beyond what the human task itself granted.
 
 ## Claude Responsibilities
 
-- Understand the task and decide whether delegation is useful (see "When to Delegate to Codex"
-  below) — delegation must add value, not simulate activity.
-- Write bounded task contracts for every Codex worker (see "Task Contract" below).
-- Critically review every worker's output before using it — see
-  [REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md).
-- Reject unsupported or out-of-scope *material* worker recommendations explicitly, not silently —
-  "material" means it would change what gets built, changed, or reported if accepted; trivial or
-  duplicate suggestions don't need individual adjudication in the final report.
-- Integrate accepted results and produce the final artifact/report for human review.
-- Remain responsible for the final result even when Codex produced the underlying material.
+Claude's own working cycle, per task and per phase within a task:
+
+```text
+UNDERSTAND → DECOMPOSE → DELEGATE → ADJUDICATE → INTEGRATE → AUTHORIZE NEXT PHASE → REPORT
+```
+
+- **Understand** the task before decomposing it — do not delegate a piece Claude has not itself
+  scoped.
+- **Decompose** substantial bounded work into pieces a single Codex role can execute reliably (see
+  "When to Delegate to Codex" below).
+- **Delegate** is the *preferred default* for routine operations that map cleanly onto a role:
+  repository inspection → Scout, implementation → Implementer, tests/diff verification → Verifier,
+  adversarial review → Reviewer, branch/commit/push/PR → Git Operator. Concretely: if the work
+  involves editing more than a small, isolated handful of lines in files Claude has not already
+  fully read this task, running a test/build/validation command, or producing an independent
+  judgment on work Claude itself authored, route it to the matching role rather than doing it
+  directly — these are the routine cases the table above exists for. Direct Claude action remains
+  possible when the work is a single trivial lookup, a one-line fix in a file already fully read
+  this task, or dispatching a worker would clearly cost more than it returns — but when Claude does
+  substantial role-mapped work directly instead of delegating it, the task's own report names which
+  exception applied, rather than silently skipping delegation. Delegation must add value, not
+  simulate activity.
+- **Adjudicate** every worker's output as a claim to check, never a finding to relay — see
+  [REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md). Reject unsupported or out-of-scope *material*
+  recommendations explicitly, not silently — "material" means it would change what gets built,
+  changed, or reported if accepted; trivial or duplicate suggestions don't need individual
+  adjudication in the final report.
+- **Integrate** accepted results into a coherent whole; remain responsible for the final result even
+  when Codex produced the underlying material.
+- **Authorize next phase** explicitly — a worker's completion is not, by itself, authorization to
+  advance the task's lifecycle gate (see `REVIEW_PROTOCOL.md`'s Lifecycle Gates); Claude makes that
+  call.
+- **Report** the outcome for human review, naming unresolved ambiguity and risk rather than hiding
+  it behind a clean-looking summary.
 
 ## Codex Responsibilities
 
@@ -159,27 +200,32 @@ silently widen a worker's authority beyond what the human task itself granted.
   Allowed Scope.
 - Never approve its own output, mark a task complete, or advance MIHVER to its next step.
 - Never commit, push, or otherwise change repository history unless the task contract explicitly
-  authorizes it — and a Claude-authored worker contract may never authorize more Git authority
-  (commit / push / PR) than the human-facing task itself granted Claude. Claude cannot grant Codex
-  an authority Claude does not itself have; if the human task's "Commit allowed" / "Push allowed" /
-  "PR expected" fields say no, no worker contract Claude writes for that task may say yes either.
+  authorizes it, and only the Git Operator role may do so at all — no other role ever mutates Git
+  state. A Claude-authored worker contract may never authorize more Git authority than the
+  human-facing task itself granted Claude. Claude cannot grant Codex an authority Claude does not
+  itself have; if the human task's "Git Operator PREPARE authorized" / "Git Operator PUBLISH
+  authorized" / "PR expected" fields (see `TASK_TEMPLATE.md`'s Publication model) say no, no worker
+  contract Claude writes for that task may say yes either.
 - Report uncertainty and incomplete results honestly rather than filling gaps with invented
   confidence.
 
 ## When to Delegate to Codex
 
-Prefer Codex for:
+Delegation is the preferred default for substantial bounded work; route it by role (full contracts
+in [CODEX_ROLES.md](./CODEX_ROLES.md)):
 
-- repository inspection,
-- architecture critique,
-- adversarial analysis,
-- bounded implementation,
-- tests,
-- independent review.
+| Kind of work | Role |
+|---|---|
+| Repository inspection, targeted evidence-gathering | Scout |
+| Bounded file writes to an already-decided change | Implementer |
+| Tests, diff/status checks, deterministic validation | Verifier |
+| Adversarial/independent review of produced work | Reviewer |
+| Branch prep, commit, push, PR creation | Git Operator |
 
 Do not spawn a Codex worker merely to simulate parallelism or thoroughness. If a task is a single
 trivial lookup, or something Claude can do directly with equal reliability and less overhead, do it
-directly.
+directly — see "Claude Responsibilities" above for when direct action is the exception, not the
+default.
 
 ## Task Contract
 
@@ -195,15 +241,27 @@ EXPECTED OUTPUT
 VALIDATION
 ```
 
-An underspecified task contract (missing any of the above) is not ready to dispatch.
+An underspecified task contract (missing any of the above) is not ready to dispatch. `ROLE` must be
+exactly one of the five roles defined in [CODEX_ROLES.md](./CODEX_ROLES.md): `SCOUT`, `IMPLEMENTER`,
+`VERIFIER`, `REVIEWER`, `GIT_OPERATOR`.
 
-## Read-Only vs. Write-Capable Workers
+## Mutation Classes: Read-Only, Content-Write, Git-Mutation
 
-- **Read-only workers** (inspection, critique, adversarial analysis, independent review) are the
-  default. They may read the repository and return findings; they may not modify any file.
-- **Write-capable workers** (bounded implementation, tests) are used only when the task is
-  implementation work with an explicitly scoped file set. A write-capable worker's Allowed Scope
-  must name the specific files or directories it may change.
+Three classes, not two — conflating the latter two is exactly the gap that let Git Operator's
+addition go unnoticed in an older two-tier framing:
+
+- **Read-only** (default): Scout, Verifier, and Reviewer never modify any file and never mutate Git
+  state.
+- **Content-write**: Implementer edits file content within its Allowed Scope, only when the task is
+  implementation work with an explicitly scoped file set. Never mutates Git state.
+- **Git-mutation**: Git Operator mutates Git/repository publication state (branches, commits, push,
+  PR) but never edits file content itself — it stages and commits what Claude/Implementer already
+  produced. See "Parallel Worker Rules" below: a content-write actor and a Git-mutation actor are
+  never active concurrently in the same working tree, even though they touch different kinds of
+  state.
+
+See [CODEX_ROLES.md](./CODEX_ROLES.md)'s Capability Matrix for the full per-role breakdown — not
+restated here.
 
 ## Parallel Worker Rules
 
@@ -225,11 +283,15 @@ An underspecified task contract (missing any of the above) is not ready to dispa
 - **File-scope disjointness does not make Git operations safe to run concurrently.** A single
   working tree has one index, one `HEAD`, and one set of branch refs — these are shared state even
   when the files being edited aren't. Therefore: `git add`, `commit`, `push`, `branch`, `checkout`,
-  and `switch` are never performed by more than one actor (a worker, or Claude) at the same time,
-  regardless of how disjoint their file scopes are. In practice this means Git-mutating commands
-  are run by Claude alone, after every concurrently-dispatched worker for that batch has finished
-  and Claude has integrated their results — never by a worker mid-flight, and never interleaved
-  with another still-running worker's edits. A write-capable worker with its own authorized commit
+  and `switch` are never performed by more than one actor (Git Operator, another worker, or Claude)
+  at the same time, regardless of how disjoint their file scopes are. In practice this means
+  Git-mutating commands are run by exactly one authorized Git actor at a time — Git Operator, or
+  Claude directly for the exception cases in "Git & Branch Workflow" below — only after every
+  concurrently-dispatched content-writing worker for that batch has finished and Claude has
+  integrated their results; never by a worker mid-flight, and never interleaved with another still-
+  running worker's edits. This includes Git Operator's own PREPARE mode: it must not create or
+  switch branches while an Implementer from the same or an overlapping task is still mid-edit. A
+  write-capable worker with its own authorized commit
   scope (see "Commits" below) still only commits after Claude confirms no other worker is
   concurrently writing to the same working tree.
 
@@ -264,6 +326,32 @@ self-report.
 Core invariant:
 
 > `main` contains only reviewed, approved, and frozen MIHVER checkpoints.
+
+### Git Operator (preferred path for publication)
+
+Branch preparation and publication (commit/push/PR) are, by default, delegated to the Codex Git
+Operator role — the only role permitted to mutate Git state, and only for publication mechanics,
+never content decisions. Its full contract (PREPARE/PUBLISH modes, prohibited operations, output
+contract) lives in [CODEX_ROLES.md](./CODEX_ROLES.md)'s "GIT_OPERATOR" section — not restated here.
+The rules below this point (Branches/Commits/Push/Pull Requests) remain Claude's own direct
+authority for the cases where dispatching a Git Operator isn't warranted (a tiny, low-risk change,
+or the narrow "Gate Recording Commit" exception) — they bind Git Operator equally whenever it is
+used instead.
+
+**The two Git Operator modes are gated separately, not both by `READY_TO_PUBLISH`.** PREPARE may
+run once the task itself is `AUTHORIZED`/`CONTEXT_READY` and its "Git Operator PREPARE authorized"
+field is `yes` — i.e. before implementation begins, to establish a safe, correctly-based branch.
+**PUBLISH may act only at the `READY_TO_PUBLISH` lifecycle gate** — see
+[REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md)'s Lifecycle Gates. Reaching `READY_TO_PUBLISH` requires
+Claude to have produced a complete Publication Envelope (`CODEX_ROLES.md`); Git Operator executes
+that Envelope literally and reports `BLOCKED` rather than reinterpreting it if working-tree reality
+disagrees. `PUBLISHED` (the Git Operator's own output — a pushed branch and an open PR) never means
+approved, and `READY_FOR_HUMAN_REVIEW` never means merge-authorized — both remain distinct from the
+human's own final merge decision.
+
+No Git mutation — by Git Operator, by another worker, or by Claude directly — may overlap another
+write-capable actor in the same working tree; see "Parallel Worker Rules" above, which applies to
+Git Operator exactly as it does to Claude's own direct Git commands.
 
 ### Branches
 
@@ -304,8 +392,13 @@ Claude must:
 
 ### Commits
 
-Claude may create a commit only when the current task explicitly authorizes commits (see
-`TASK_TEMPLATE.md`'s "Commit allowed" field — the default is **no**). When authorized:
+This section (through "Pull Requests" below) governs Claude's own *direct* commit/push/PR
+authority — the exception case; the preferred default is delegating this to Git Operator (see
+"Git Operator (preferred path for publication)" above). Both are gated by the same task-level
+authorization: Claude may create a commit only when the current task explicitly authorizes
+publication (see `TASK_TEMPLATE.md`'s "Git Operator PUBLISH authorized" field — the default is
+**no**; this field gates the *authorization to publish at all*, whether exercised by Claude
+directly or delegated to Git Operator). When authorized:
 
 - commit only files within the task's declared scope;
 - inspect staged changes (`git status`, `git diff --cached`) before committing — never commit
@@ -321,8 +414,9 @@ don't each need separate re-authorization.
 A narrow, separate authority from the general commit rule above: once a human has given
 **explicit approval** for a gate decision (a PR merge, a milestone freeze, a task's completion)
 in conversation, Claude may create exactly **one** commit recording that decision — even if
-nothing in the current exchange set `Commit allowed: yes` the way a full task prompt would,
-because this commit only records the approval; it does not perform or continue the approved work.
+nothing in the current exchange set `Git Operator PUBLISH authorized: yes` the way a full task
+prompt would, because this commit only records the approval; it does not perform or continue the
+approved work.
 
 - Allowed files for a Gate Recording Commit:
   - `.project/REVIEW_STATE.md`
@@ -331,7 +425,7 @@ because this commit only records the approval; it does not perform or continue t
 - It must change no architecture, code, contract, schema, test, or policy file. A Gate Recording
   Commit is non-substantive by definition; if recording the decision requires touching anything
   outside the three files above, it is not a Gate Recording Commit and needs its own task
-  authorization (`Commit allowed: yes`) instead.
+  authorization (`Git Operator PUBLISH authorized: yes`) instead.
 - Exactly one commit per approval — don't split it, and don't fold unrelated changes into it.
 - A pure Gate Recording Commit does not invalidate, supersede, or re-open the human approval it
   records — it is a record of the decision, not a new decision, and it does not itself constitute
@@ -342,10 +436,10 @@ because this commit only records the approval; it does not perform or continue t
 
 ### Push
 
-Claude may push a task branch only when the current task explicitly authorizes it (see
-`TASK_TEMPLATE.md`'s "Push allowed" field — the default is **no**). Claude must never push
-development changes directly to `main`, authorized or not — `main` only receives content through
-an approved, merged PR.
+Claude may push a task branch only when the current task explicitly authorizes publication (see
+`TASK_TEMPLATE.md`'s "Git Operator PUBLISH authorized" field — the default is **no**). Claude must
+never push development changes directly to `main`, authorized or not — `main` only receives content
+through an approved, merged PR.
 
 ### Pull Requests
 
@@ -376,10 +470,10 @@ merge to main
 - Claude and Codex must never self-approve or self-merge a PR. Human approval is the merge gate —
   see the Authority Hierarchy above.
 - A PR is opened only when the task's "PR expected" field authorizes it (default: **no**). This
-  field authorizes opening the PR itself — it does not separately authorize the commits or push
-  the PR depends on; those still need their own "Commit allowed" / "Push allowed" fields set
-  consistently (a task can't sensibly set `PR expected: yes` while leaving `Push allowed: no`
-  unless the branch is already pushed for other reasons).
+  field authorizes opening the PR itself — it does not separately authorize the commit/push the PR
+  depends on; those still need "Git Operator PUBLISH authorized: yes" set consistently (a task
+  can't sensibly set `PR expected: yes` while leaving publication unauthorized, unless the branch
+  is already pushed for other reasons).
 - Preferred final merge strategy is **squash and merge**, unless the task explicitly requires
   preserving individual commits.
 - A PR may only be considered merge-ready after an `APPROVED` review outcome — see
@@ -413,3 +507,10 @@ results, Claude must not hide this. Claude should do one of:
 2. assign an independent worker to check the disputed point,
 3. resolve the issue directly,
 4. or report the uncertainty to the human rather than papering over it.
+
+**Git Operator `BLOCKED`** is a distinct case, not covered by the general retry logic above: if
+Git Operator reports the working tree disagrees with the Publication Envelope, Claude must not
+retry with a widened Envelope, force flags, or any reinterpretation of what was authorized. Resolve
+the actual disagreement first (re-inspect the working tree, correct the Envelope to match reality
+if the mismatch is benign, or escalate to the human if it isn't) and only then reissue a corrected
+Envelope for a fresh PUBLISH attempt.
