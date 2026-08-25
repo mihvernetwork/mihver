@@ -9,13 +9,38 @@ the rules below.
 - **Claude** is MIHVER's Principal Architect / Orchestrator: owns task decomposition, decides when
   delegation is useful, integrates and critically reviews all worker output, and produces the final
   result for human review.
-- **Codex** (via MCP) is a bounded specialist worker/sub-agent, operating as one of five roles —
-  Scout, Implementer, Verifier, Reviewer, or Git Operator (see
+- **Codex** (via MCP) is a bounded specialist worker/sub-agent, operating as one of four roles —
+  Scout, Implementer, Verifier, or Reviewer (see
   [docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md)). Bounded, substantial
   role-mapped work is preferentially delegated to the matching role rather than done by Claude
-  directly. Codex never self-approves its own output and never advances MIHVER to the next step on
-  its own authority.
+  directly. Codex never self-approves its own output, never advances MIHVER to the next step on its
+  own authority, and never holds GitHub write credentials — no Codex role mutates Git/repository
+  publication state (see "Publication" below).
+- **Publication** (branch → commit → push → PR) is privilege-separated from both Claude and Codex —
+  see "Publication" below. Neither Claude nor any Codex role holds or exercises GitHub write
+  credentials.
 - **The human** is the final gate. Moving to the next MIHVER step requires explicit human approval.
+
+## Publication
+
+MIHVER's publication path is: Claude constructs a **PublicationEnvelope** → the deterministic,
+non-LLM, network-free **Local Publication Builder**
+(`scripts/dev/publication-builder.mjs`) validates it and produces exactly one **local** commit →
+a future privileged **Publication Broker** (not implemented — see below) independently verifies and
+performs the actual push/PR. See
+[docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md)'s "Publication Protocol" and
+"Future Publication Broker Interface" for the full contract, and
+[schemas/dev/publication-envelope.schema.json](schemas/dev/publication-envelope.schema.json) /
+[schemas/dev/publication-receipt.schema.json](schemas/dev/publication-receipt.schema.json) for the
+machine-readable shapes.
+
+**REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** The privileged Publication Broker (separate OS
+identity, GitHub App credential, privilege boundary, real push, PR creation, GitHub ruleset) is not
+implemented by any code in the repository today. Until it exists, no automated path — not Claude
+directly, not any Codex role — pushes a branch or creates/modifies a PR. **Human manual publication
+is the temporary fallback** for every task, regardless of what a task's own Publication fields say.
+This retires the earlier Codex Git Operator role and Claude's own direct push/PR exception, both of
+which assumed an LLM-adjacent actor could safely hold that authority.
 
 ## Fast Session Bootstrap
 
@@ -67,19 +92,21 @@ task), `.project/REVIEW_STATE.md` (review/approval state), and `.project/CONTEXT
   development changes directly to `main`.
 - **Do not commit, push, or open a PR unless explicitly instructed**, even when a task otherwise
   completes cleanly. See "Git & Branch Workflow" in
-  [AGENT_POLICY.md](docs/development/AGENT_POLICY.md) for the full policy.
+  [AGENT_POLICY.md](docs/development/AGENT_POLICY.md) for the full policy. Push and PR creation are
+  additionally NOT AVAILABLE through any automated path at all right now — see "Publication" above.
 - **Read only the documentation relevant to the current task** — not the entire doc tree by default.
 - **Follow the permanent policy documents**, don't restate them:
   - [docs/development/AGENT_POLICY.md](docs/development/AGENT_POLICY.md) — the Claude/Codex
-    execution model, delegation rules, worker contract shape, Git Operator model, and
-    Git/branch/PR workflow.
-  - [docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md) — the five Codex role
-    definitions (Scout/Implementer/Verifier/Reviewer/Git Operator), their capability matrix and
-    output contracts, and the Git Operator PREPARE/PUBLISH modes and Publication Envelope. Not
-    restated here or in `AGENT_POLICY.md` — read it directly when delegating.
+    execution model, delegation rules, worker contract shape, the Local Publication Builder model,
+    and Git/branch/PR workflow.
+  - [docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md) — the four Codex role
+    definitions (Scout/Implementer/Verifier/Reviewer), their capability matrix and output contracts,
+    and the Publication Protocol (PublicationEnvelope, Local Publication Builder, Publication
+    Receipt, and the not-yet-implemented Publication Broker interface). Not restated here or in
+    `AGENT_POLICY.md` — read it directly when delegating.
   - [docs/development/REVIEW_PROTOCOL.md](docs/development/REVIEW_PROTOCOL.md) — the standard
     completion checklist, outcome vocabulary, and Lifecycle Gates for every task, including PR
     merge-readiness.
   - [docs/development/TASK_TEMPLATE.md](docs/development/TASK_TEMPLATE.md) — the short form new
-    task prompts should use, including the Publication (Branch/Base branch/Base commit/Git Operator
-    PREPARE authorized/Git Operator PUBLISH authorized/PR expected) and Merge (human only) fields.
+    task prompts should use, including the Publication (Branch/Base branch/Base commit/Local
+    Publication Builder authorized/PR expected) and Merge (human only) fields.

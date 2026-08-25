@@ -5,84 +5,58 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-DEVELOPMENT-ORCHESTRATION-V3
+DEVELOPMENT-ORCHESTRATION-V3.1-A-PUBLICATION-BOUNDARY
 
 ## Objective
 
-Redesign MIHVER's development execution model so Claude becomes primarily a Principal
-Architect / Orchestrator and routine bounded work moves to five specialized Codex roles: Scout
-(read-only inspection), Implementer (bounded writes), Verifier (read-only + deterministic
-validation), Reviewer (read-only adversarial review), and Git Operator (the only role permitted to
-mutate Git state, via PREPARE/PUBLISH modes and a Publication Envelope). Development-infrastructure
-only — no M0 product semantics, contracts, ADR semantics, schemas, MIHVER Brain, or
-Council/product architecture changed.
-
-**V3 transition rule**: current V2 policy remained authoritative during this task's own execution.
-Git Operator was designed but not used for real publication — Claude remained the sole policy-file
-editor throughout, per the task's own explicit instruction.
+Implement the first repository-side foundation of MIHVER's privilege-separated publication
+architecture: neither Claude nor any Codex role holds GitHub write credentials. Target pipeline:
+Claude constructs a `PublicationEnvelope` → the deterministic, non-LLM, network-free **Local
+Publication Builder** (`scripts/dev/publication-builder.mjs`) produces exactly one local commit →
+a future privileged **Publication Broker** (explicitly NOT implemented — V3.1-B) independently
+verifies and performs the actual push/PR. Retires the V3 Codex Git Operator role — real V3 dogfood
+proved Codex sandboxes have no network access and could never safely or functionally own GitHub
+publication — leaving four Codex roles: Scout, Implementer, Verifier, Reviewer.
 
 ## Branch / Base
 
-Branch: `chore/development-orchestration-v3` (already prepared before this task began).
-Base: `main` at `9e1f41eac5b97afb5ef15c62e0d9abb05b911203`.
+Branch: `chore/publication-boundary-v3-1a`.
+Base: `main` at `dbc051690f733a841cc9e0d898597505ebb533a1`.
 
 ## Status
 
-**Complete, pending human review.**
+**Complete, pending human review.** Per this task's own explicit instruction: Claude did NOT commit,
+push, or open a PR. Human manual publication is the required next step.
 
-**Files changed**:
-- Primary: `docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md` (new),
-  `docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
-- Conditional Consistency (synchronization-only): `.project/CONTEXT_INDEX.md` (discoverability row
-  for `CODEX_ROLES.md`).
-- Two subsequent human-review-fixes rounds on the same branch/PR (#31) additionally touched
-  `CLAUDE.md` (permanent-policy pointer/description sync, no product semantics) and
-  `.project/CURRENT_TASK.md`/`.project/REVIEW_STATE.md` (this task's own record — PR-state sync and
-  itemized reviewer-finding records for each round).
+**Files changed** (working tree only, uncommitted):
+- Primary: `scripts/dev/publication-builder.mjs` (new), `tests/dev/publication-builder.test.mjs`
+  (new), `schemas/dev/publication-envelope.schema.json` (new),
+  `schemas/dev/publication-receipt.schema.json` (new), `docs/development/AGENT_POLICY.md`,
+  `docs/development/CODEX_ROLES.md`, `docs/development/TASK_TEMPLATE.md`,
+  `docs/development/REVIEW_PROTOCOL.md`, `CLAUDE.md`, `package.json` (two new npm scripts).
+- Conditional Consistency (synchronization-only): `.project/CONTEXT_INDEX.md` (topic rows for the
+  retired Git Operator role and the new Publication Protocol / Local Publication Builder / schemas),
+  this file and `.project/REVIEW_STATE.md` (this task's own record).
 
-**No M0 product semantics, contracts, ADR semantics, schemas, MIHVER Brain, or Council/product
-architecture touched** — this is development-infrastructure only.
+**Validation run and passing** (by Claude directly — Codex's own sandbox could not write to the OS
+temp directory the test suite needs, which is itself confirmatory evidence for this task's core
+premise that Codex sandboxes cannot be trusted with publication-adjacent filesystem/network
+authority): `npm test` (170 fixtures), `npm run test:project-consistency` (19 test groups),
+`npm run check:project-consistency` (7/7 checks), `npm run test:publication-builder` (27 tests,
+including adversarial cases: wrong repo, main/master branch, wrong pre-publish HEAD, non-ancestor
+base, duplicate/traversal/absolute/symlink/directory/submodule-mode paths, fingerprint mismatch,
+staged-name mismatch via a hostile execFileSyncImpl, a pre-commit hook attempting to smuggle an
+extra file into the commit, dirty unrelated file, malformed envelope, rename pair), `git diff
+--check` (clean).
 
-**Three fresh, independent read-only Codex reviewers**, one per axis (Reviewer A: authority
-separation/privilege escalation/Human-only merge; Reviewer B: Claude↔Codex workflow, delegation,
-concurrency, lifecycle, token economy; Reviewer C: Git Operator capability safety, Publication
-Envelope, branch/PR behavior). All three independently found the same BLOCKER (Git Operator's
-PREPARE mode contradicted the original blanket "acts only at `READY_TO_PUBLISH`" wording) plus
-several confirmed MAJOR/MINOR findings — all fixed and independently re-verified by Claude against
-actual file content. Two further human-review-fixes rounds on PR #31 found and fixed additional
-confirmed findings (Git Operator's pre-publish HEAD guard, Base branch/Base commit split, exact
-file staging, Publication Fingerprint validation binding, publication receipt; then the
-present-regular-file/authorized-deletion staging contradiction). See `.project/REVIEW_STATE.md`'s
-"Latest Review" for the full itemized list, round by round.
+**Independent review**: two fresh Codex Reviewers (Reviewer A: protocol/local-builder correctness;
+Reviewer B: authority separation/credential leakage/bypass paths/policy consistency) plus a Codex
+Verifier re-running the validation suite (blocked by its own sandbox's temp-dir write restriction on
+two of six commands — see above; the six it could evaluate, plus its source-level grep for `push`/
+`gh` invocations, corroborate the "never pushes" claim). Claude adjudicated every finding — see
+`.project/REVIEW_STATE.md`.
 
-**Validation**: `npm run check:project-consistency` — 7/7. `npm run test:project-consistency` —
-19/19. `git diff --check` — clean. `npm test` not run (no schema/validator/fixture file touched by
-this development-infrastructure-only task).
-
-## Allowed Scope
-
-**Primary**: `docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md`,
-`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
-
-**Conditional Consistency** (touched; synchronization-only): `.project/CONTEXT_INDEX.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `CLAUDE.md` (added by the human-review-fixes
-rounds).
-
-**Forbidden, confirmed untouched**: M0 product semantics, contracts, ADR semantics, schemas,
-MIHVER Brain, Council/product architecture, runtime product behavior.
-
-## Required Context
-
-`docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md`,
-`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
-
-## Validation
-
-See "Status" above.
-
-## Next Gate
-
-PR: #31
-Target: main
-Live PR state: verify from GitHub.
-Human review is the current gate. Do not merge.
+**Remaining V3.1-B work** (explicitly out of scope for this task, per its own instructions): a
+separate OS identity for the Publication Broker, a GitHub App credential, a Unix-socket/MCP
+privilege boundary, the real `git push`, PR creation, and a GitHub ruleset enforcing this boundary
+server-side.

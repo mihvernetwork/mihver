@@ -87,16 +87,18 @@ time.
 ## Lifecycle Gates
 
 The full task lifecycle, from human authorization through human merge — see
-[AGENT_POLICY.md](./AGENT_POLICY.md) for the Codex roles and Git Operator model each gate maps onto:
+[AGENT_POLICY.md](./AGENT_POLICY.md) for the Codex roles and the Publication Protocol each gate maps
+onto:
 
 ```text
 AUTHORIZED
   ↓ (human gives the task; Claude bootstraps — CLAUDE.md's Fast Session Bootstrap)
 CONTEXT_READY
-  ↓ (Claude has read the task's Required Context; decomposition can begin — if the task's "Git
-  ↓  Operator PREPARE authorized" field is yes, PREPARE may run here, before implementation begins:
-  ↓  see AGENT_POLICY.md's "Git Operator (preferred path for publication)" — PREPARE is gated by task
-  ↓  authorization, not by a later lifecycle gate; only PUBLISH is gated by READY_TO_PUBLISH below)
+  ↓ (Claude has read the task's Required Context; decomposition can begin. Claude may create/switch
+  ↓  to the authorized task branch directly here, before implementation begins — see
+  ↓  AGENT_POLICY.md's "Branches"; this is gated by task authorization, not by a later lifecycle
+  ↓  gate. Only issuing a PublicationEnvelope and running the Local Publication Builder is gated by
+  ↓  READY_TO_PUBLISH below.)
 IMPLEMENTATION_COMPLETE
   ↓ (bounded work done — directly by Claude, or via one or more Implementers)
 VERIFICATION_COMPLETE
@@ -109,24 +111,31 @@ REVIEW_COMPLETE
 CONSISTENCY_SWEEP_COMPLETE
   ↓ (Final Consistency Sweep, above, run and clean)
 READY_TO_PUBLISH
-  ↓ (Claude has issued a complete Publication Envelope — CODEX_ROLES.md — authorizing Git Operator's
-  ↓  PUBLISH mode; this gate exists only for a task whose Git fields actually authorize publication)
-PUBLISHED
-  ↓ (Git Operator has pushed the branch and opened/updated the PR — a mechanical fact, not a verdict:
-  ↓  PUBLISHED does NOT mean approved)
+  ↓ (Claude has issued a complete PublicationEnvelope — CODEX_ROLES.md — and invoked the
+  ↓  deterministic Local Publication Builder; this gate exists only for a task whose Publication
+  ↓  fields actually authorize it — see TASK_TEMPLATE.md)
+LOCALLY_COMMITTED
+  ↓ (the Local Publication Builder produced exactly one local commit and a `COMMITTED` Publication
+  ↓  Receipt — a mechanical fact, not a verdict: LOCALLY_COMMITTED does NOT mean approved, and it is
+  ↓  NOT a push and NOT a PR. Remote publication automation is not available — see
+  ↓  AGENT_POLICY.md's "Publication is privilege-separated, not a Codex role (V3.1-A)" — so the
+  ↓  human pushes this commit and opens the PR themselves.)
 READY_FOR_HUMAN_REVIEW
-  ↓ (Claude's own technical-readiness report is complete and the PR, if any, is live for the human to
-  ↓  read — this does NOT mean merge is authorized)
+  ↓ (Claude's own technical-readiness report is complete and either the local commit is ready for
+  ↓  the human to push/PR manually, or (once the Publication Broker exists) a PR is live for the
+  ↓  human to read — this does NOT mean merge is authorized)
 HUMAN MERGE / REQUIRED_CHANGES
   (the human's own final gate — merge, or name the required changes and return to the appropriate
    earlier gate; see "PR Merge Readiness" below)
 ```
 
-`READY_TO_PUBLISH` and `PUBLISHED` are skipped entirely for a task whose Git fields don't authorize
-publication (see `TASK_TEMPLATE.md`'s Publication model) — such a task goes directly from
-`CONSISTENCY_SWEEP_COMPLETE` to `READY_FOR_HUMAN_REVIEW` (e.g. a task delivered for direct human
-inspection of the working tree, not via a PR). Merge is never anyone's authority but the human's,
-regardless of how many earlier gates were reached cleanly.
+`READY_TO_PUBLISH` and `LOCALLY_COMMITTED` are skipped entirely for a task whose Publication fields
+don't authorize the Local Publication Builder (see `TASK_TEMPLATE.md`'s Publication model) — such a
+task goes directly from `CONSISTENCY_SWEEP_COMPLETE` to `READY_FOR_HUMAN_REVIEW` (e.g. a task
+delivered for direct human inspection of the working tree). Merge is never anyone's authority but
+the human's, regardless of how many earlier gates were reached cleanly, and no automated path — even
+once a task reaches `LOCALLY_COMMITTED` — pushes a branch or opens a PR until the Publication Broker
+(V3.1-B) exists.
 
 ## When Independent Review Is Recommended or Required
 

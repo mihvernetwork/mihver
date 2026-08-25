@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/publication-receipt.schema.json",
+  "title": "MIHVER Local Publication Receipt",
+  "description": "Machine-readable result of the deterministic Local Publication Builder (scripts/dev/publication-builder.mjs), per V3.1-A. Reports a local commit only -- it never reports a push or a remote PR state, since the builder never performs either. Consumed by Claude for its own report, and is the artifact the future privileged Publication Broker (V3.1-B, not implemented here) will independently re-verify before any remote effect.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status", "protocol_version", "repository", "branch", "base_commit",
+    "pre_publish_head", "fingerprint", "local_head", "working_tree"
+  ],
+  "properties": {
+    "status": { "enum": ["COMMITTED", "BLOCKED"] },
+    "protocol_version": { "const": "1.0.0" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["remote_name", "owner", "name"],
+      "properties": {
+        "remote_name": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "branch": { "type": "string", "minLength": 1 },
+    "base_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "pre_publish_head": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "Required (non-schema-enforced) when status is COMMITTED; absent on BLOCKED." },
+    "local_head": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "HEAD after the builder ran -- equals commit_sha on COMMITTED, equals pre_publish_head on BLOCKED (no commit made)." },
+    "working_tree": { "enum": ["clean", "dirty"] },
+    "failure_reason": { "type": "string", "minLength": 1, "description": "Required (non-schema-enforced), exact, machine-readable reason when status is BLOCKED; absent on COMMITTED." }
+  }
+}
