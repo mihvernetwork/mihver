@@ -74,30 +74,39 @@ change the meaning of, if any — "none" for a pure mirror/navigation/tooling ta
 ## Publication
 
 Branch: <task branch name, if the human supplied one — never invent one if not stated>
-Base branch: <default: main — the PR target>
-Base commit: <exact immutable SHA the branch is authorized to build on, if known at task start;
-  otherwise Git Operator PREPARE reports the branch tip SHA it created, and that becomes this
-  task's Base commit for every Publication Envelope going forward>
-Git Operator PREPARE authorized: <yes/no — default: no>
-Git Operator PUBLISH authorized: <yes/no — default: no>
-PR expected: <yes/no — default: no>
+Base branch: <default: main — the eventual PR target, actionable only once the Publication Broker
+  (V3.1-B) exists>
+Base commit: <exact immutable SHA the branch is authorized to build on — Claude establishes and
+  reports this directly when creating the branch (see AGENT_POLICY.md's "Branches"), and that
+  becomes this task's Base commit for every PublicationEnvelope going forward>
+Local Publication Builder authorized: <yes/no — default: no>
+PR expected: <yes/no — default: no; carried into the PublicationEnvelope for the future Broker, but
+  NOT actionable today — see below>
 
 Omitted publication capability defaults to **no**. A publishing task must have an exact branch
-identity before Git Operator may mutate repository state — never invent one. `Base branch` and
-`Base commit` are deliberately separate: `Base branch` is the moving PR target (normally `main`);
-`Base commit` is the immutable ancestry anchor Git Operator verifies before every PUBLISH
-(`git merge-base --is-ancestor <Base commit> HEAD`) — a `Base branch` that has since moved forward
-must never silently redefine what this task was actually authorized to build on. See
-`AGENT_POLICY.md`'s "Git Operator (preferred path for publication)" and `CODEX_ROLES.md`'s
-"GIT_OPERATOR" section for what PREPARE/PUBLISH authorization actually permits, and the Publication
-Envelope Claude must produce before PUBLISH may run — including the `Expected pre-publish HEAD`
-guard and the Publication Fingerprint, neither of which is a task-prompt field; both are Claude's
-own Envelope-time responsibility once the task's Publication fields above are set.
+identity before any commit is made — never invent one. `Base branch` and `Base commit` are
+deliberately separate: `Base branch` is the moving eventual PR target (normally `main`); `Base
+commit` is the immutable ancestry anchor `scripts/dev/publication-builder.mjs` verifies before ever
+staging or committing (`git merge-base --is-ancestor <Base commit> HEAD`) — a `Base branch` that has
+since moved forward must never silently redefine what this task was actually authorized to build on.
+See `AGENT_POLICY.md`'s "Publication is privilege-separated, not a Codex role (V3.1-A)" and
+`CODEX_ROLES.md`'s "Publication Protocol" for what "Local Publication Builder authorized: yes"
+actually permits (a local commit only, from a Claude-authored PublicationEnvelope — never a push,
+never a PR), including the `Expected pre-publish HEAD` guard and the Publication Fingerprint,
+neither of which is a task-prompt field; both are Claude's own Envelope-time responsibility once the
+fields above are set.
+
+**REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** Regardless of how this section's fields are set,
+no automated path pushes a branch or creates/touches a PR — the privileged Publication Broker
+(V3.1-B) that would do so is not implemented. `PR expected: yes` only pre-fills the Envelope's
+`pr_title`/`pr_body` for whenever the Broker exists; it authorizes nothing today. Human manual
+publication (the human pushes the Builder's local commit and opens the PR themselves) is the
+temporary fallback for every task.
 
 ## Merge
 
-**HUMAN ONLY.** No task field authorizes Claude, Codex, or Git Operator to merge a PR — see
-`AGENT_POLICY.md`'s Authority Hierarchy.
+**HUMAN ONLY.** No task field authorizes Claude, Codex, or the Publication Broker to merge a PR —
+see `AGENT_POLICY.md`'s Authority Hierarchy.
 
 ## Codex
 
@@ -117,9 +126,9 @@ When a task prompt omits the `## Publication` section, or leaves individual fiel
 
 ```text
 Base branch: main
-Base commit: unset — Git Operator PREPARE must establish and report one before any PUBLISH
-Git Operator PREPARE authorized: no
-Git Operator PUBLISH authorized: no
+Base commit: unset — Claude must establish and report one when creating the branch, before any
+  PublicationEnvelope is issued
+Local Publication Builder authorized: no
 PR expected: no
 ```
 

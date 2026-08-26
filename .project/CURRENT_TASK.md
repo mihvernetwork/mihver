@@ -5,84 +5,116 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-DEVELOPMENT-ORCHESTRATION-V3
+DEVELOPMENT-ORCHESTRATION-V3.1-A-PUBLICATION-BOUNDARY
 
 ## Objective
 
-Redesign MIHVER's development execution model so Claude becomes primarily a Principal
-Architect / Orchestrator and routine bounded work moves to five specialized Codex roles: Scout
-(read-only inspection), Implementer (bounded writes), Verifier (read-only + deterministic
-validation), Reviewer (read-only adversarial review), and Git Operator (the only role permitted to
-mutate Git state, via PREPARE/PUBLISH modes and a Publication Envelope). Development-infrastructure
-only — no M0 product semantics, contracts, ADR semantics, schemas, MIHVER Brain, or
-Council/product architecture changed.
-
-**V3 transition rule**: current V2 policy remained authoritative during this task's own execution.
-Git Operator was designed but not used for real publication — Claude remained the sole policy-file
-editor throughout, per the task's own explicit instruction.
+Implement the first repository-side foundation of MIHVER's privilege-separated publication
+architecture: neither Claude nor any Codex role holds GitHub write credentials. Target pipeline:
+Claude constructs a `PublicationEnvelope` → the deterministic, non-LLM, network-free **Local
+Publication Builder** (`scripts/dev/publication-builder.mjs`) produces exactly one local commit →
+a future privileged **Publication Broker** (explicitly NOT implemented — V3.1-B) independently
+verifies and performs the actual push/PR. Retires the V3 Codex Git Operator role — real V3 dogfood
+proved Codex sandboxes have no network access and could never safely or functionally own GitHub
+publication — leaving four Codex roles: Scout, Implementer, Verifier, Reviewer.
 
 ## Branch / Base
 
-Branch: `chore/development-orchestration-v3` (already prepared before this task began).
-Base: `main` at `9e1f41eac5b97afb5ef15c62e0d9abb05b911203`.
+Branch: `chore/publication-boundary-v3-1a`.
+Base: `main` at `dbc051690f733a841cc9e0d898597505ebb533a1`.
 
 ## Status
 
 **Complete, pending human review.**
 
-**Files changed**:
-- Primary: `docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md` (new),
-  `docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
-- Conditional Consistency (synchronization-only): `.project/CONTEXT_INDEX.md` (discoverability row
-  for `CODEX_ROLES.md`).
-- Two subsequent human-review-fixes rounds on the same branch/PR (#31) additionally touched
-  `CLAUDE.md` (permanent-policy pointer/description sync, no product semantics) and
-  `.project/CURRENT_TASK.md`/`.project/REVIEW_STATE.md` (this task's own record — PR-state sync and
-  itemized reviewer-finding records for each round).
+**Publication:**
+- Human manual fallback is in use.
+- Task branch changes through the prior closure round are committed and pushed; this pass's own
+  PR #32 remediation fix (below) is currently uncommitted working-tree changes, pending the same
+  manual step.
+- PR expected: yes; PR #32 is the human-review-tracked PR for this task.
+- PR identity/state: verify from GitHub.
+- Human review is the current gate.
+- Human-only merge unchanged.
 
-**No M0 product semantics, contracts, ADR semantics, schemas, MIHVER Brain, or Council/product
-architecture touched** — this is development-infrastructure only.
+**Files changed** (this branch, across the original task and its final preflight-isolation
+closure — see History in `.project/REVIEW_STATE.md` for the two commits):
+- Primary: `scripts/dev/publication-builder.mjs`, `tests/dev/publication-builder.test.mjs`,
+  `schemas/dev/publication-envelope.schema.json`, `schemas/dev/publication-receipt.schema.json`,
+  `docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md`,
+  `docs/development/TASK_TEMPLATE.md`, `docs/development/REVIEW_PROTOCOL.md`, `CLAUDE.md`,
+  `package.json` (two new npm scripts).
+- Conditional Consistency (synchronization-only): `.project/CONTEXT_INDEX.md` (topic rows for the
+  retired Git Operator role and the new Publication Protocol / Local Publication Builder / schemas),
+  this file and `.project/REVIEW_STATE.md` (this task's own record).
 
-**Three fresh, independent read-only Codex reviewers**, one per axis (Reviewer A: authority
-separation/privilege escalation/Human-only merge; Reviewer B: Claude↔Codex workflow, delegation,
-concurrency, lifecycle, token economy; Reviewer C: Git Operator capability safety, Publication
-Envelope, branch/PR behavior). All three independently found the same BLOCKER (Git Operator's
-PREPARE mode contradicted the original blanket "acts only at `READY_TO_PUBLISH`" wording) plus
-several confirmed MAJOR/MINOR findings — all fixed and independently re-verified by Claude against
-actual file content. Two further human-review-fixes rounds on PR #31 found and fixed additional
-confirmed findings (Git Operator's pre-publish HEAD guard, Base branch/Base commit split, exact
-file staging, Publication Fingerprint validation binding, publication receipt; then the
-present-regular-file/authorized-deletion staging contradiction). See `.project/REVIEW_STATE.md`'s
-"Latest Review" for the full itemized list, round by round.
+**Final preflight-isolation closure** (previously committed/pushed): the exported `preflight()` entry
+point was isolated the same way `buildLocalCommit()` already isolates its whole run — it now always
+runs under a fresh, empty, process-owned `core.hooksPath` plus `core.fsmonitor=`, established
+internally rather than trusted from any caller-supplied `hooksDir`. The read-only guard logic itself
+was extracted into an internal `preflightCore()`, which `buildLocalCommit()` calls directly under its
+own existing isolation boundary (one boundary per run, not two).
 
-**Validation**: `npm run check:project-consistency` — 7/7. `npm run test:project-consistency` —
-19/19. `git diff --check` — clean. `npm test` not run (no schema/validator/fixture file touched by
-this development-infrastructure-only task).
+**PR #32 human-review remediation round (this pass, currently uncommitted)**: fixed three findings
+confirmed on open PR #32 (`APPROVE_WITH_REQUIRED_CHANGES`). (1) BLOCKER — the Envelope fingerprint
+was only ever checked against fresh raw-worktree bytes, never against the actual staged/index bytes
+about to be committed, leaving a window where a file mutated after preflight's fingerprint check but
+before/during staging could pass `verifyStagedBlobIdentity` (mutated raw bytes == mutated staged
+bytes) while no longer matching what the Envelope authorized; fixed by adding
+`computeStagedFingerprint`/`verifyStagedFingerprint`, recomputing the same canonical recipe from the
+actual staged index blobs after staging and requiring it to still equal
+`envelope.publication_fingerprint` (`STAGED_FINGERPRINT_MISMATCH` on mismatch), plus a new immediate
+pre-commit re-check that `HEAD` still equals `expected_pre_publish_head`
+(`PRE_COMMIT_HEAD_CHANGED` on mismatch). (2) BLOCKER — `restoreIndexToTree` discarded its
+`git read-tree` result, so a BLOCKED receipt could claim safe cleanup even if restoration itself
+silently failed; fixed so `restoreIndexToTree` independently re-derives the post-restore index tree
+(`git write-tree`) and requires it to exactly equal the pre-staging snapshot, with every post-staging
+failure path routed through a new `failAfterStaging` that reports the distinct `INDEX_RESTORE_FAILED`
+(preserving the original triggering reason as diagnostic data) whenever restoration cannot be
+verified. (3) MAJOR — `byteSort` used JavaScript's default UTF-16 code-unit string comparison, not
+the documented UTF-8 canonical byte order (they disagree for any path above U+FFFF); fixed to
+`Buffer.compare` over each path's UTF-8 encoding. Five new adversarial/regression tests added:
+mutation-race → `STAGED_FINGERPRINT_MISMATCH`; `PRE_COMMIT_HEAD_CHANGED`; `read-tree` throwing →
+`INDEX_RESTORE_FAILED`; `read-tree` lying about success (no actual restore) →
+`INDEX_RESTORE_FAILED`; UTF-8-vs-UTF-16 byte-order regression (U+E000 vs U+10000).
+`docs/development/CODEX_ROLES.md`'s Publication Protocol steps and "Publication Fingerprint" section
+updated to describe the two-stage fingerprint (early worktree check, final staged-index seal), the
+pre-commit HEAD re-check, and verified (not merely attempted) index restoration.
 
-## Allowed Scope
+**Final integrity hardening** (cumulative, as of this pass): fresh empty `core.hooksPath` for the
+entire builder run (including a direct `preflight()` call); `core.fsmonitor` disabled for every git
+invocation; `--no-gpg-sign` on the commit; `git check-attr` fail-closed on
+filter/text/eol/working-tree-encoding/ident for every present file; `git hash-object --no-filters`
+for all content digests; `core.autocrlf=false` during staging; raw-worktree blob SHA required to
+exactly equal the staged index blob SHA; a final staged-index fingerprint seal requiring the actual
+committed bytes to equal `envelope.publication_fingerprint`; an immediate pre-commit HEAD re-check;
+exact, independently-verified pre-builder index snapshot/restore on any post-staging failure, with a
+distinct `INDEX_RESTORE_FAILED` state when restoration cannot be proven; exported `preflight()`
+isolated from the same hook/fsmonitor surface as `buildLocalCommit()`; true UTF-8 canonical byte-order
+sort. No residual clean/smudge-filter risk is treated as accepted — the fail-closed `check-attr` guard
+blocks any explicit `filter=` attribute before any filter command could run.
 
-**Primary**: `docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md`,
-`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
+**Validation run and passing** (by Claude directly): `npm run test:publication-builder`
+(42/42 — the dedicated publication-builder suite, including every adversarial case above plus this
+round's five new tests), `npm test` (170/170 contract fixtures), `npm run test:project-consistency`
+(19/19 test groups), `npm run check:project-consistency` (7/7 checks), `git diff --check` (clean).
 
-**Conditional Consistency** (touched; synchronization-only): `.project/CONTEXT_INDEX.md`,
-`.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `CLAUDE.md` (added by the human-review-fixes
-rounds).
+**Independent review**: two fresh Codex Reviewers from the original round (Reviewer A: protocol/
+local-builder correctness; Reviewer B: authority separation/credential leakage/bypass paths/policy
+consistency) plus a Codex Verifier re-running the validation suite (blocked by its own sandbox's
+temp-dir write restriction on two of six commands; the six it could evaluate, plus its source-level
+grep for `push`/`gh` invocations, corroborate the "never pushes" claim); and, for this PR #32
+remediation round, one fresh read-only Codex Reviewer scoped to exactly the six items above
+(fingerprint→staged-index binding, mutation-race closure, pre-commit HEAD re-check, verified index
+restoration, restoration-failure reporting, UTF-8 canonical byte order). That Reviewer found the
+first five implementation points correct and the UTF-8 sort correct with adequate regression
+coverage, but flagged two real test-coverage gaps: no direct test for `PRE_COMMIT_HEAD_CHANGED`, and
+the restoration-failure test only covered `read-tree` throwing, not `read-tree` reporting success
+without actually restoring (the exact case the `write-tree` re-verification exists to catch). Claude
+adjudicated both as genuine and added the two missing tests (see above) rather than dismissing them.
+Claude adjudicates every finding — see `.project/REVIEW_STATE.md`.
 
-**Forbidden, confirmed untouched**: M0 product semantics, contracts, ADR semantics, schemas,
-MIHVER Brain, Council/product architecture, runtime product behavior.
-
-## Required Context
-
-`docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md`,
-`docs/development/REVIEW_PROTOCOL.md`, `docs/development/TASK_TEMPLATE.md`.
-
-## Validation
-
-See "Status" above.
-
-## Next Gate
-
-PR: #31
-Target: main
-Live PR state: verify from GitHub.
-Human review is the current gate. Do not merge.
+**Remaining V3.1-B work** (explicitly out of scope for this task, per its own instructions): a
+separate OS identity for the Publication Broker, a GitHub App credential, a Unix-socket/MCP
+privilege boundary, the real `git push`, PR creation, and a GitHub ruleset enforcing this boundary
+server-side.

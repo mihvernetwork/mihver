@@ -9,7 +9,9 @@
     "night-runner-executor": "node scripts/dev/night-runner-executor.mjs",
     "test:night-runner-executor": "node tests/night-runner-executor/validate-executor.mjs",
     "check:project-consistency": "node scripts/dev/project-consistency.mjs",
-    "test:project-consistency": "node tests/dev/project-consistency.test.mjs"
+    "test:project-consistency": "node tests/dev/project-consistency.test.mjs",
+    "publication-builder": "node scripts/dev/publication-builder.mjs",
+    "test:publication-builder": "node tests/dev/publication-builder.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

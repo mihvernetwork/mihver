@@ -12,8 +12,13 @@ Claude Orchestrator
   ├─ Codex Scout
   ├─ Codex Implementer
   ├─ Codex Verifier
-  ├─ Codex Reviewer
-  └─ Codex Git Operator
+  └─ Codex Reviewer
+          ↓
+   PublicationEnvelope
+          ↓
+Local Publication Builder (deterministic, non-LLM, network-free — local commit only)
+          ↓
+Publication Broker (privileged, non-LLM — NOT IMPLEMENTED, see CODEX_ROLES.md)
           ↓
         GitHub PR
           ↓
@@ -23,13 +28,16 @@ Claude Orchestrator
 ```
 
 Claude decides, decomposes, delegates, adjudicates, and integrates. Codex performs bounded
-inspection, implementation, verification, independent review, and publication operations — never
-decides *what* to build, never self-approves, and never advances MIHVER to its next step. The
-human retains irreversible/governance authority: final approval, and the only authority to merge.
-Neither Claude nor Codex may act as if it held the human's authority. Codex may not act as if it
-held Claude's integration/review authority. See [CODEX_ROLES.md](./CODEX_ROLES.md) for each Codex
-role's full capability matrix and output contract; this file governs *whether/when* a role acts,
-not the role's own internal contract.
+inspection, implementation, verification, and independent review — never decides *what* to build,
+never self-approves, never advances MIHVER to its next step, and never mutates Git/repository
+publication state. Publication (local commit → push → PR) is a privilege-separated pipeline neither
+Claude nor Codex is the credential holder for — see "Git & Branch Workflow" below and
+[CODEX_ROLES.md](./CODEX_ROLES.md)'s "Publication Protocol". The human retains irreversible/
+governance authority: final approval, and the only authority to merge. Neither Claude nor Codex may
+act as if it held the human's authority. Codex may not act as if it held Claude's
+integration/review authority. See [CODEX_ROLES.md](./CODEX_ROLES.md) for each Codex role's full
+capability matrix and output contract; this file governs *whether/when* a role acts, not the role's
+own internal contract.
 
 ## Session Bootstrap
 
@@ -170,7 +178,8 @@ UNDERSTAND → DECOMPOSE → DELEGATE → ADJUDICATE → INTEGRATE → AUTHORIZE
   "When to Delegate to Codex" below).
 - **Delegate** is the *preferred default* for routine operations that map cleanly onto a role:
   repository inspection → Scout, implementation → Implementer, tests/diff verification → Verifier,
-  adversarial review → Reviewer, branch/commit/push/PR → Git Operator. Concretely: if the work
+  adversarial review → Reviewer. Branch/commit/push/PR are not a Codex role at all — see "Git &
+  Branch Workflow" below. Concretely: if the work
   involves editing more than a small, isolated handful of lines in files Claude has not already
   fully read this task, running a test/build/validation command, or producing an independent
   judgment on work Claude itself authored, route it to the matching role rather than doing it
@@ -199,13 +208,10 @@ UNDERSTAND → DECOMPOSE → DELEGATE → ADJUDICATE → INTEGRATE → AUTHORIZE
 - Never expand its own scope, redefine the objective, or decide to modify a file outside its
   Allowed Scope.
 - Never approve its own output, mark a task complete, or advance MIHVER to its next step.
-- Never commit, push, or otherwise change repository history unless the task contract explicitly
-  authorizes it, and only the Git Operator role may do so at all — no other role ever mutates Git
-  state. A Claude-authored worker contract may never authorize more Git authority than the
-  human-facing task itself granted Claude. Claude cannot grant Codex an authority Claude does not
-  itself have; if the human task's "Git Operator PREPARE authorized" / "Git Operator PUBLISH
-  authorized" / "PR expected" fields (see `TASK_TEMPLATE.md`'s Publication model) say no, no worker
-  contract Claude writes for that task may say yes either.
+- **Never commit, push, or otherwise mutate Git/repository state, under any role, ever.** No Codex
+  role may do so — see "Git & Branch Workflow" below for what replaced the retired Git Operator
+  role. A Claude-authored worker contract may never authorize Git mutation for any Codex worker; if
+  a worker contract appears to grant it, that contract is malformed.
 - Report uncertainty and incomplete results honestly rather than filling gaps with invented
   confidence.
 
@@ -220,7 +226,11 @@ in [CODEX_ROLES.md](./CODEX_ROLES.md)):
 | Bounded file writes to an already-decided change | Implementer |
 | Tests, diff/status checks, deterministic validation | Verifier |
 | Adversarial/independent review of produced work | Reviewer |
-| Branch prep, commit, push, PR creation | Git Operator |
+
+Branch prep, commit, push, and PR creation are no longer a Codex role at all — see "Git & Branch
+Workflow" below. Local-commit publication is Claude constructing a PublicationEnvelope and invoking
+the deterministic Local Publication Builder; push/PR creation are NOT AVAILABLE until the privileged
+Publication Broker (V3.1-B) exists.
 
 Do not spawn a Codex worker merely to simulate parallelism or thoroughness. If a task is a single
 trivial lookup, or something Claude can do directly with equal reliability and less overhead, do it
@@ -242,23 +252,25 @@ VALIDATION
 ```
 
 An underspecified task contract (missing any of the above) is not ready to dispatch. `ROLE` must be
-exactly one of the five roles defined in [CODEX_ROLES.md](./CODEX_ROLES.md): `SCOUT`, `IMPLEMENTER`,
-`VERIFIER`, `REVIEWER`, `GIT_OPERATOR`.
+exactly one of the four roles defined in [CODEX_ROLES.md](./CODEX_ROLES.md): `SCOUT`, `IMPLEMENTER`,
+`VERIFIER`, `REVIEWER`.
 
 ## Mutation Classes: Read-Only, Content-Write, Git-Mutation
 
-Three classes, not two — conflating the latter two is exactly the gap that let Git Operator's
-addition go unnoticed in an older two-tier framing:
+Three classes, not two — conflating the latter two was the historical gap the now-retired Git
+Operator role existed to close for Codex specifically. As of V3.1-A, Git-mutation is no longer a
+Codex capability at all — it belongs only to the deterministic Local Publication Builder (local
+commit) and, in future, the privileged Publication Broker (push/PR) — see "Git & Branch Workflow"
+below and [CODEX_ROLES.md](./CODEX_ROLES.md)'s "Publication Protocol":
 
 - **Read-only** (default): Scout, Verifier, and Reviewer never modify any file and never mutate Git
   state.
 - **Content-write**: Implementer edits file content within its Allowed Scope, only when the task is
   implementation work with an explicitly scoped file set. Never mutates Git state.
-- **Git-mutation**: Git Operator mutates Git/repository publication state (branches, commits, push,
-  PR) but never edits file content itself — it stages and commits what Claude/Implementer already
-  produced. See "Parallel Worker Rules" below: a content-write actor and a Git-mutation actor are
-  never active concurrently in the same working tree, even though they touch different kinds of
-  state.
+- **Git-mutation**: performed only by the Local Publication Builder (a local commit, from a
+  Claude-authored PublicationEnvelope) or, once it exists, the privileged Publication Broker
+  (push/PR) — never by a Codex role, and never concurrently with a content-write actor in the same
+  working tree; see "Parallel Worker Rules" below.
 
 See [CODEX_ROLES.md](./CODEX_ROLES.md)'s Capability Matrix for the full per-role breakdown — not
 restated here.
@@ -283,17 +295,15 @@ restated here.
 - **File-scope disjointness does not make Git operations safe to run concurrently.** A single
   working tree has one index, one `HEAD`, and one set of branch refs — these are shared state even
   when the files being edited aren't. Therefore: `git add`, `commit`, `push`, `branch`, `checkout`,
-  and `switch` are never performed by more than one actor (Git Operator, another worker, or Claude)
-  at the same time, regardless of how disjoint their file scopes are. In practice this means
-  Git-mutating commands are run by exactly one authorized Git actor at a time — Git Operator, or
-  Claude directly for the exception cases in "Git & Branch Workflow" below — only after every
-  concurrently-dispatched content-writing worker for that batch has finished and Claude has
-  integrated their results; never by a worker mid-flight, and never interleaved with another still-
-  running worker's edits. This includes Git Operator's own PREPARE mode: it must not create or
-  switch branches while an Implementer from the same or an overlapping task is still mid-edit. A
-  write-capable worker with its own authorized commit
-  scope (see "Commits" below) still only commits after Claude confirms no other worker is
-  concurrently writing to the same working tree.
+  and `switch` are never performed by more than one actor (the Local Publication Builder, another
+  worker, or Claude) at the same time, regardless of how disjoint their file scopes are. In practice
+  this means Git-mutating commands are run by exactly one authorized Git actor at a time — Claude
+  directly, per "Git & Branch Workflow" below, or the Local Publication Builder Claude invokes —
+  only after every concurrently-dispatched content-writing worker for that batch has finished and
+  Claude has integrated their results; never by a worker mid-flight, and never interleaved with
+  another still-running worker's edits. Claude must not create or switch branches, or invoke the
+  Local Publication Builder, while an Implementer from the same or an overlapping task is still
+  mid-edit.
 
 ## Separation of Implementation and Review
 
@@ -327,40 +337,49 @@ Core invariant:
 
 > `main` contains only reviewed, approved, and frozen MIHVER checkpoints.
 
-### Git Operator (preferred path for publication)
+### Publication is privilege-separated, not a Codex role (V3.1-A)
 
-Branch preparation and publication (commit/push/PR) are, by default, delegated to the Codex Git
-Operator role — the only role permitted to mutate Git state, and only for publication mechanics,
-never content decisions. Its full contract (PREPARE/PUBLISH modes, prohibited operations, output
-contract) lives in [CODEX_ROLES.md](./CODEX_ROLES.md)'s "GIT_OPERATOR" section — not restated here.
-The rules below this point (Branches/Commits/Push/Pull Requests) remain Claude's own direct
-authority for the cases where dispatching a Git Operator isn't warranted (a tiny, low-risk change,
-or the narrow "Gate Recording Commit" exception) — they bind Git Operator equally whenever it is
-used instead.
+Real V3 dogfood proved Codex sandboxes have no network access and therefore could never safely or
+functionally own GitHub publication — the Codex Git Operator role from V3 is retired. Publication
+now flows: Claude constructs a **PublicationEnvelope** → the deterministic, non-LLM, network-free
+**Local Publication Builder** (`scripts/dev/publication-builder.mjs`) produces exactly one **local**
+commit and a Publication Receipt → a future privileged **Publication Broker** independently
+verifies and performs the actual push/PR. Full contract (Envelope shape, Builder behavior, Receipt
+shape, and what the Broker is/isn't) lives in [CODEX_ROLES.md](./CODEX_ROLES.md)'s "Publication
+Protocol" — not restated here.
 
-**The two Git Operator modes are gated separately, not both by `READY_TO_PUBLISH`.** PREPARE may
-run once the task itself is `AUTHORIZED`/`CONTEXT_READY` and its "Git Operator PREPARE authorized"
-field is `yes` — i.e. before implementation begins, to establish a safe, correctly-based branch.
-**PUBLISH may act only at the `READY_TO_PUBLISH` lifecycle gate** — see
-[REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md)'s Lifecycle Gates. Reaching `READY_TO_PUBLISH` requires
-Claude to have produced a complete Publication Envelope (`CODEX_ROLES.md`); Git Operator executes
-that Envelope literally and reports `BLOCKED` rather than reinterpreting it if working-tree reality
-disagrees. `PUBLISHED` (the Git Operator's own output — a pushed branch and an open PR) never means
-approved, and `READY_FOR_HUMAN_REVIEW` never means merge-authorized — both remain distinct from the
-human's own final merge decision.
+**The Broker is NOT IMPLEMENTED.** No separate OS identity, GitHub App credential, privilege
+boundary, real push, PR creation, or GitHub ruleset exists yet — that is V3.1-B's scope, not this
+policy's. **Until it exists: REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** Neither Claude nor any
+Codex role pushes a branch or creates/modifies a PR, under any task authorization whatsoever — the
+"Push" and "Pull Requests" sections below are retired as *automated* paths and describe only what
+remains true (never `main`, never force, human-only merge) for the human's own manual publication.
+This also retires Claude's own former direct push/PR exception: an LLM-adjacent actor holding that
+authority is exactly the privilege-separation gap V3.1-A exists to close, regardless of whether it
+is exercised by Claude or by a delegated Codex worker.
 
-No Git mutation — by Git Operator, by another worker, or by Claude directly — may overlap another
-write-capable actor in the same working tree; see "Parallel Worker Rules" above, which applies to
-Git Operator exactly as it does to Claude's own direct Git commands.
+**What Claude may still do directly:** author a PublicationEnvelope and invoke the Local Publication
+Builder to produce a local commit (see "Commits" below — this replaces the old PREPARE/PUBLISH
+split; there is no separate "branch preparation" mode, since the Builder's own guards — repo root,
+branch identity, ancestry, `Expected pre-publish HEAD` — cover what PREPARE used to check, and Claude
+still creates/switches the task branch directly per "Branches" below before ever invoking it).
+`READY_TO_PUBLISH` (per [REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md)'s Lifecycle Gates) still gates
+*producing* the Envelope and running the Builder; a `COMMITTED` Publication Receipt is a mechanical
+fact about a local commit, never an approval, and never proof of a push or PR that did not happen.
+
+No Git mutation — by the Local Publication Builder, by a worker, or by Claude directly — may overlap
+another write-capable actor in the same working tree; see "Parallel Worker Rules" above, which
+applies to the Builder exactly as it does to Claude's own direct Git commands.
 
 **`Base branch` and `Base commit` are two separate authorities, not one overloaded field** — see
-`TASK_TEMPLATE.md`'s Publication model and `CODEX_ROLES.md`'s Publication Envelope for the full
-schema. `Base branch` is the PR target (normally `main`); `Base commit` is the immutable ancestry
-anchor Git Operator verifies before every PUBLISH — a `Base branch` that has since moved forward
-must never silently redefine what a task was actually authorized to build on. Before any staging or
-commit, PUBLISH also requires `HEAD` to equal the Envelope's `Expected pre-publish HEAD` exactly —
-proving the branch carries no unexpected pre-existing committed work — with any mismatch reported as
-`BLOCKED`, never resolved via merge, rebase, reset, or force.
+`TASK_TEMPLATE.md`'s Publication model and `CODEX_ROLES.md`'s PublicationEnvelope for the full
+schema. `Base branch` is the eventual PR target (normally `main`, actionable only once the Broker
+exists); `Base commit` is the immutable ancestry anchor the Local Publication Builder verifies before
+ever staging or committing — a `Base branch` that has since moved forward must never silently
+redefine what a task was actually authorized to build on. Before any staging or commit, the Builder
+also requires `HEAD` to equal the Envelope's `Expected pre-publish HEAD` exactly — proving the branch
+carries no unexpected pre-existing committed work — with any mismatch reported as `BLOCKED`, never
+resolved via merge, rebase, reset, or force.
 
 ### Branches
 
@@ -401,13 +420,13 @@ Claude must:
 
 ### Commits
 
-This section (through "Pull Requests" below) governs Claude's own *direct* commit/push/PR
-authority — the exception case; the preferred default is delegating this to Git Operator (see
-"Git Operator (preferred path for publication)" above). Both are gated by the same task-level
-authorization: Claude may create a commit only when the current task explicitly authorizes
-publication (see `TASK_TEMPLATE.md`'s "Git Operator PUBLISH authorized" field — the default is
-**no**; this field gates the *authorization to publish at all*, whether exercised by Claude
-directly or delegated to Git Operator). When authorized:
+Local commits (never a push, never a network call) remain Claude's own direct authority, gated by
+task-level authorization: Claude may create a commit only when the current task explicitly
+authorizes it (see `TASK_TEMPLATE.md`'s "Local Publication Builder authorized" field — the default
+is **no**). When authorized, the preferred path is a PublicationEnvelope run through
+`scripts/dev/publication-builder.mjs` (see "Publication is privilege-separated, not a Codex role
+(V3.1-A)" above and [CODEX_ROLES.md](./CODEX_ROLES.md)'s "Publication Protocol"); a small, low-risk
+change may still be committed by Claude with plain `git commit` instead, under the same rules:
 
 - commit only files within the task's declared scope;
 - inspect staged changes (`git status`, `git diff --cached`) before committing — never commit
@@ -416,14 +435,15 @@ directly or delegated to Git Operator). When authorized:
 - use clear, conventional commit messages.
 
 Intermediate commits are allowed on task branches once commits are authorized for the task — they
-don't each need separate re-authorization.
+don't each need separate re-authorization. A local commit, by either path, is never a push and
+never touches GitHub — see "Push" and "Pull Requests" below.
 
 ### Gate Recording Commit
 
 A narrow, separate authority from the general commit rule above: once a human has given
 **explicit approval** for a gate decision (a PR merge, a milestone freeze, a task's completion)
 in conversation, Claude may create exactly **one** commit recording that decision — even if
-nothing in the current exchange set `Git Operator PUBLISH authorized: yes` the way a full task
+nothing in the current exchange set "Local Publication Builder authorized: yes" the way a full task
 prompt would, because this commit only records the approval; it does not perform or continue the
 approved work.
 
@@ -434,25 +454,30 @@ approved work.
 - It must change no architecture, code, contract, schema, test, or policy file. A Gate Recording
   Commit is non-substantive by definition; if recording the decision requires touching anything
   outside the three files above, it is not a Gate Recording Commit and needs its own task
-  authorization (`Git Operator PUBLISH authorized: yes`) instead.
+  authorization ("Local Publication Builder authorized: yes") instead.
 - Exactly one commit per approval — don't split it, and don't fold unrelated changes into it.
 - A pure Gate Recording Commit does not invalidate, supersede, or re-open the human approval it
   records — it is a record of the decision, not a new decision, and it does not itself constitute
   approval of anything further (in particular, it never authorizes an actual merge to `main` —
   see "Pull Requests" below).
-- Push follows the same authorization as any other commit — see "Push" below; a Gate Recording
-  Commit does not implicitly authorize a push.
+- Like every other commit, it never implies a push — see "Push" below.
 
 ### Push
 
-Claude may push a task branch only when the current task explicitly authorizes publication (see
-`TASK_TEMPLATE.md`'s "Git Operator PUBLISH authorized" field — the default is **no**). Claude must
-never push development changes directly to `main`, authorized or not — `main` only receives content
-through an approved, merged PR.
+**NOT AVAILABLE as an automated path.** Neither Claude nor any Codex worker pushes any branch, under
+any task authorization whatsoever — see "Publication is privilege-separated, not a Codex role
+(V3.1-A)" above. Pushing a task branch is human manual action until the privileged Publication
+Broker (V3.1-B) exists. This is an absolute rule, not one a task prompt can opt back into: `main`
+was never pushable by Claude/Codex either, and now no branch is.
 
 ### Pull Requests
 
-Normal lifecycle:
+**NOT AVAILABLE as an automated path**, for the same reason as "Push" above — opening, modifying, or
+touching a PR requires the same GitHub write credential a push does, which no LLM-adjacent actor
+holds. Until the Publication Broker (V3.1-B) exists, PR creation is exclusively human manual action,
+from the branch the human pushes themselves off the Local Publication Builder's local commit.
+
+Once the Broker exists, the eventual lifecycle is:
 
 ```text
 main
@@ -463,9 +488,9 @@ Claude + Codex work
   ↓
 validation
   ↓
-push branch
+PublicationEnvelope → Local Publication Builder → local commit
   ↓
-Pull Request
+Publication Broker: push branch, open/update PR
   ↓
 human / architecture review
   ↓
@@ -476,17 +501,13 @@ approval
 merge to main
 ```
 
-- Claude and Codex must never self-approve or self-merge a PR. Human approval is the merge gate —
-  see the Authority Hierarchy above.
-- A PR is opened only when the task's "PR expected" field authorizes it (default: **no**). This
-  field authorizes opening the PR itself — it does not separately authorize the commit/push the PR
-  depends on; those still need "Git Operator PUBLISH authorized: yes" set consistently (a task
-  can't sensibly set `PR expected: yes` while leaving publication unauthorized, unless the branch
-  is already pushed for other reasons).
+- Claude and Codex must never self-approve or self-merge a PR — this remains true once the Broker
+  exists. Human approval is the merge gate — see the Authority Hierarchy above.
 - Preferred final merge strategy is **squash and merge**, unless the task explicitly requires
   preserving individual commits.
 - A PR may only be considered merge-ready after an `APPROVED` review outcome — see
-  [REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md).
+  [REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md) — this is unchanged by who performs the push/PR
+  mechanics.
 
 ### Frozen Checkpoint Rule
 
@@ -517,9 +538,9 @@ results, Claude must not hide this. Claude should do one of:
 3. resolve the issue directly,
 4. or report the uncertainty to the human rather than papering over it.
 
-**Git Operator `BLOCKED`** is a distinct case, not covered by the general retry logic above: if
-Git Operator reports the working tree disagrees with the Publication Envelope, Claude must not
-retry with a widened Envelope, force flags, or any reinterpretation of what was authorized. Resolve
-the actual disagreement first (re-inspect the working tree, correct the Envelope to match reality
-if the mismatch is benign, or escalate to the human if it isn't) and only then reissue a corrected
-Envelope for a fresh PUBLISH attempt.
+**Local Publication Builder `BLOCKED`** is a distinct case, not covered by the general retry logic
+above: if `scripts/dev/publication-builder.mjs` reports the working tree disagrees with the
+PublicationEnvelope, Claude must not retry with a widened Envelope or any reinterpretation of what
+was authorized — the Builder has no force flags to begin with. Resolve the actual disagreement first
+(re-inspect the working tree, correct the Envelope to match reality if the mismatch is benign, or
+escalate to the human if it isn't) and only then reissue a corrected Envelope for a fresh attempt.
