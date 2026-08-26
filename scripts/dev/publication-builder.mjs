@@ -315,9 +315,15 @@ export function verifyNoContentTransform(repoRoot, classifiedEntries, options = 
 
 // --- Fingerprint (must match AGENT_POLICY.md's canonical recipe exactly) -----------------------
 
-// LC_ALL=C byte-order sort on the raw path strings, matching the shell recipe's `sort` behavior.
+// True UTF-8 byte-order sort (matching `LC_ALL=C sort` over the paths' UTF-8 encoding), NOT
+// JavaScript's default `<`/`>` string comparison -- that compares UTF-16 *code units*, which
+// disagrees with UTF-8 byte order for any path containing a character above U+FFFF (e.g. U+10000):
+// its UTF-16 form starts with a surrogate code unit (0xD800) that sorts below U+E000's single code
+// unit (0xE000), while its UTF-8 byte encoding (starting 0xF0) sorts above U+E000's (starting
+// 0xEE). `Buffer.compare` on each path's UTF-8 bytes is the actual canonical ordering the
+// Publication Protocol owns.
 function byteSort(paths) {
-  return [...paths].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  return [...paths].sort((a, b) => Buffer.compare(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8')));
 }
 
 // `--no-filters` is required, not cosmetic: plain `git hash-object <path>` silently runs the same
@@ -328,18 +334,27 @@ function rawBlobSha(repoRoot, path, options) {
   return git(repoRoot, ['hash-object', '--no-filters', '--', path], options).trim();
 }
 
-export function computeFingerprint(repoRoot, classifiedEntries, options = {}) {
+// Shared canonical recipe (byte-sorted path + NUL + digest + newline, SHA-256) parameterized only
+// by how each PRESENT entry's digest is obtained -- computeFingerprint sources it from raw worktree
+// bytes (the early preflight authorization check), computeStagedFingerprint from the actual index
+// blob just staged (the final pre-commit seal). Both must agree with envelope.publication_fingerprint
+// for a commit to ever be made; see verifyStagedFingerprint below for why both checks are required.
+function computeFingerprintFromDigests(classifiedEntries, digestFn) {
   const byPath = new Map(classifiedEntries.map((c) => [c.path, c]));
   const hash = createHash('sha256');
   for (const path of byteSort([...byPath.keys()])) {
     const entry = byPath.get(path);
-    const digest = entry.shape === 'A' ? rawBlobSha(repoRoot, path, options) : 'ABSENT';
+    const digest = entry.shape === 'A' ? digestFn(entry.path) : 'ABSENT';
     hash.update(path, 'utf8');
     hash.update(Buffer.from([0]));
     hash.update(digest, 'utf8');
     hash.update('\n', 'utf8');
   }
   return hash.digest('hex');
+}
+
+export function computeFingerprint(repoRoot, classifiedEntries, options = {}) {
+  return computeFingerprintFromDigests(classifiedEntries, (path) => rawBlobSha(repoRoot, path, options));
 }
 
 // --- Working-tree scope guard -------------------------------------------------------------------
@@ -401,6 +416,33 @@ function verifyStagedBlobIdentity(repoRoot, classifiedEntries, options) {
   return { status: 'OK' };
 }
 
+// A sentinel that can never equal a real 40-hex git blob SHA, used when a PRESENT entry's staged
+// blob is unexpectedly unreadable -- guarantees the fingerprint this feeds into can never
+// accidentally collide with envelope.publication_fingerprint (a 64-hex value derived from real
+// digests), rather than silently hashing the empty string.
+const STAGED_BLOB_UNREADABLE = 'STAGED_BLOB_UNREADABLE';
+
+// Recomputes the canonical fingerprint from the bytes actually sitting in the index right now --
+// the ACTUAL bytes about to enter the commit -- rather than trusting the raw-worktree fingerprint
+// preflight verified before staging began. Binding only to preflight's raw-worktree read leaves a
+// window open: a file can be mutated after preflight's fingerprint check but before/during `git
+// add` stages it, so the fresh raw bytes and the freshly staged bytes can agree with each other
+// (satisfying verifyStagedBlobIdentity) while both have silently drifted from what the Envelope
+// actually authorized. This is the final seal: the exact bytes about to be committed must
+// themselves equal envelope.publication_fingerprint, not merely equal whatever the worktree
+// happened to contain a moment earlier.
+function computeStagedFingerprint(repoRoot, classifiedEntries, options = {}) {
+  return computeFingerprintFromDigests(classifiedEntries, (path) => stagedBlobSha(repoRoot, path, options) ?? STAGED_BLOB_UNREADABLE);
+}
+
+function verifyStagedFingerprint(repoRoot, classifiedEntries, expectedFingerprint, options) {
+  const actual = computeStagedFingerprint(repoRoot, classifiedEntries, options);
+  if (actual !== expectedFingerprint) {
+    return blocked('STAGED_FINGERPRINT_MISMATCH', { expected: expectedFingerprint, actual });
+  }
+  return { status: 'OK' };
+}
+
 // Creates a fresh, empty, process-local hooks directory, runs `fn(hooksDir)`, and always removes the
 // directory afterward -- the actual hook-suppression boundary. buildLocalCommit passes this dir as
 // `options.hooksDir` to every git() call it makes for its whole run (not only the commit itself), so
@@ -432,8 +474,17 @@ function snapshotIndexTree(repoRoot, options) {
 
 // Replaces the index wholesale with the exact tree captured by snapshotIndexTree -- the precise
 // inverse of whatever staging did, regardless of what the index looked like before this run started.
+// Returns true only when restoration is independently PROVEN, not merely attempted: `git read-tree`
+// reporting success is not itself sufficient evidence (a hostile/corrupted execFileSyncImpl, or any
+// other tool-level lie, could report success without actually restoring the index), so this
+// re-snapshots the index immediately after and requires it to exactly equal treeSha -- the same
+// write-tree comparison snapshotIndexTree itself uses to capture state, applied here to verify it.
+// A caller must never report a BLOCKED failure as "safely restored" without this proof: doing so
+// would let a real restoration failure look identical to a normal, safely-recovered BLOCKED result.
 function restoreIndexToTree(repoRoot, treeSha, options) {
-  tryGit(repoRoot, ['read-tree', treeSha], options);
+  const result = tryGit(repoRoot, ['read-tree', treeSha], options);
+  if (!result.ok) return false;
+  return snapshotIndexTree(repoRoot, options) === treeSha;
 }
 
 function stagedNames(repoRoot, options) {
@@ -550,7 +601,30 @@ export function buildLocalCommit(envelope, repoRoot, options = {}) {
     if (!preBuildTree) return blockedAfterStaging('INDEX_SNAPSHOT_FAILED');
 
     let stagingStarted = false;
-    const restore = () => { if (stagingStarted) restoreIndexToTree(root, preBuildTree, runOptions); };
+
+    // Every post-staging failure path must go through this, never `blockedAfterStaging` directly:
+    // restoration is attempted and then independently VERIFIED (see restoreIndexToTree), and if that
+    // verification fails, the result is a distinct INDEX_RESTORE_FAILED -- never the original
+    // triggering reason reported as though cleanup succeeded, since a caller reading a plain
+    // STAGED_NAME_MISMATCH-shaped BLOCKED (for example) would reasonably assume the repository was
+    // left clean, which may no longer be true. The original reason/extra are preserved as structured
+    // diagnostic data either way.
+    const failAfterStaging = (reason, extra = {}) => {
+      const restored = stagingStarted ? restoreIndexToTree(root, preBuildTree, runOptions) : true;
+      if (!restored) {
+        return {
+          status: 'BLOCKED', ...receiptBase, pre_publish_head, local_head: pre_publish_head,
+          working_tree: workingTreeClean(root, runOptions) ? 'clean' : 'dirty',
+          failure_reason: JSON.stringify({
+            reason: 'INDEX_RESTORE_FAILED',
+            note: 'index restoration could not be verified after a post-staging failure; manual repository inspection/intervention is required',
+            triggering_reason: reason,
+            triggering_extra: extra
+          })
+        };
+      }
+      return blockedAfterStaging(reason, extra);
+    };
 
     try {
       stagingStarted = true;
@@ -558,8 +632,7 @@ export function buildLocalCommit(envelope, repoRoot, options = {}) {
       for (const entry of classified) {
         const staged = stageEntry(root, entry, runOptions);
         if (!staged.ok) {
-          restore();
-          return blockedAfterStaging('STAGING_FAILED', { path: entry.path });
+          return failAfterStaging('STAGING_FAILED', { path: entry.path });
         }
       }
 
@@ -570,8 +643,7 @@ export function buildLocalCommit(envelope, repoRoot, options = {}) {
         || actualStaged.length !== expectedStaged.size
         || [...expectedStaged].some((p) => !stagedSet.has(p));
       if (stagedMismatch) {
-        restore();
-        return blockedAfterStaging('STAGED_NAME_MISMATCH', { expected: [...expectedStaged], actual: actualStaged });
+        return failAfterStaging('STAGED_NAME_MISMATCH', { expected: [...expectedStaged], actual: actualStaged });
       }
 
       // Mechanical proof required by V3.1-A: raw-worktree blob SHA (filters disabled) must exactly
@@ -579,8 +651,28 @@ export function buildLocalCommit(envelope, repoRoot, options = {}) {
       // past verifyNoContentTransform/the autocrlf override -- fail closed and restore the index.
       const blobIdentityCheck = verifyStagedBlobIdentity(root, classified, runOptions);
       if (blobIdentityCheck.status !== 'OK') {
-        restore();
-        return blockedAfterStaging(blobIdentityCheck.reason, blobIdentityCheck);
+        return failAfterStaging(blobIdentityCheck.reason, blobIdentityCheck);
+      }
+
+      // Final seal required by V3.1-A: the canonical fingerprint recomputed from the ACTUAL staged
+      // index blobs -- not fresh worktree bytes -- must still equal envelope.publication_fingerprint.
+      // preflight's fingerprint check only proves the worktree matched the Envelope *before* staging
+      // began; a file mutated after that check but before/during `git add` could otherwise let bytes
+      // the Envelope never authorized reach the commit, since the mutated raw bytes and the mutated
+      // staged bytes would still agree with each other and pass verifyStagedBlobIdentity above.
+      const fingerprintCheck = verifyStagedFingerprint(root, classified, envelope.publication_fingerprint, runOptions);
+      if (fingerprintCheck.status !== 'OK') {
+        return failAfterStaging(fingerprintCheck.reason, fingerprintCheck);
+      }
+
+      // Final pre-commit HEAD seal: re-read HEAD immediately before committing and require it still
+      // equal expected_pre_publish_head (already verified once, before staging, by preflight). HEAD
+      // could otherwise have moved during staging -- e.g. a concurrent process committing on this
+      // same branch -- letting this run's commit land on top of an unauthorized parent.
+      const headRecheck = tryGit(root, ['rev-parse', 'HEAD'], runOptions);
+      const headNow = headRecheck.ok ? headRecheck.stdout.trim() : null;
+      if (headNow !== pre_publish_head) {
+        return failAfterStaging('PRE_COMMIT_HEAD_CHANGED', { expected: pre_publish_head, actual: headNow });
       }
 
       // Hook isolation for the commit itself: --no-verify alone only skips pre-commit/commit-msg --
@@ -589,8 +681,7 @@ export function buildLocalCommit(envelope, repoRoot, options = {}) {
       // prevents an external signing program from being invoked.
       const commitResult = tryGit(root, ['commit', '--no-verify', '--no-gpg-sign', '-m', envelope.commit_message], runOptions);
       if (!commitResult.ok) {
-        restore();
-        return blockedAfterStaging('COMMIT_FAILED');
+        return failAfterStaging('COMMIT_FAILED');
       }
 
       const headAfter = tryGit(root, ['rev-parse', 'HEAD'], runOptions);
@@ -617,8 +708,7 @@ export function buildLocalCommit(envelope, repoRoot, options = {}) {
     } catch (error) {
       // Any thrown error once staging has begun (a throwing git() call, e.g. from rawBlobSha) must
       // still trigger index restoration -- fail closed rather than letting the exception skip cleanup.
-      restore();
-      return blockedAfterStaging('UNEXPECTED_ERROR', { message: error?.message ?? String(error) });
+      return failAfterStaging('UNEXPECTED_ERROR', { message: error?.message ?? String(error) });
     }
   });
 }

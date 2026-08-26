@@ -177,8 +177,10 @@ interpolation. It:
    `working-tree-encoding`, and `ident` `git check-attr` values and BLOCKS on any explicit
    (non-`"unspecified"`) value before touching that file's bytes at all — no external clean/process
    filter command is ever invoked by this module (see "Content-transform guard" below);
-10. recomputes the Publication Fingerprint (below, using `git hash-object --no-filters` — raw bytes
-    only) and compares it to the Envelope's carried value — any mismatch is BLOCKED;
+10. recomputes the Publication Fingerprint from the raw worktree (below, using
+    `git hash-object --no-filters` — raw bytes only) and compares it to the Envelope's carried value
+    — any mismatch is BLOCKED. This is an **early authorization check**, not the final binding proof
+    — see "What this does and does not prove" below;
 11. snapshots the exact current index as a tree (`git write-tree`) so any failure from this point on
     can restore precisely that state (not merely reset to `HEAD`, which could discard a caller's
     legitimate pre-existing staged changes), then stages each entry individually with
@@ -190,7 +192,20 @@ interpolation. It:
     requires it to exactly equal the raw-worktree blob SHA (`git hash-object --no-filters`) computed
     fresh at this point — restoring the snapshotted index and reporting BLOCKED (`STAGED_BLOB_MISMATCH`)
     on any mismatch;
-13. commits locally using `commit_message` verbatim, with **every** git invocation this run makes
+13. recomputes the same canonical Publication Fingerprint recipe a second time — the **final seal** —
+    but sourced from the actual staged index blob of each shape (A) entry (not fresh worktree bytes),
+    and requires it to still exactly equal the Envelope's carried value, restoring the snapshotted
+    index and reporting BLOCKED (`STAGED_FINGERPRINT_MISMATCH`) on any mismatch. This closes a window
+    step 10 alone cannot: a file mutated after step 10's worktree check but before/during step 11's
+    staging would have its mutated raw bytes agree with its mutated staged bytes (satisfying step 12),
+    while both had already silently drifted from what the Envelope authorized — only a fingerprint
+    bound to the bytes actually about to be committed closes that gap;
+14. immediately before committing, re-reads `HEAD` one more time and requires it still exactly equal
+    `expected_pre_publish_head` (already verified once, at step 5, before staging began) — restoring
+    the snapshotted index and reporting BLOCKED (`PRE_COMMIT_HEAD_CHANGED`) if HEAD moved during
+    staging (e.g. a concurrent process committing on the same branch), so this run's commit can never
+    land on an unauthorized parent;
+15. commits locally using `commit_message` verbatim, with **every** git invocation this run makes
     (not only the commit) executed under `-c core.hooksPath=<a fresh, empty, process-local directory
     created and destroyed for this one run>` plus `-c core.fsmonitor=`, so no
     pre-commit/prepare-commit-msg/commit-msg/post-commit/fsmonitor hook — repository- or
@@ -198,6 +213,15 @@ interpolation. It:
     and `--no-gpg-sign` as defense in depth. Any exception thrown after staging begins (a failing git
     call, a failed cleanup) still triggers the same index restoration before BLOCKED is reported —
     fail-closed, not merely fail-return.
+
+**Index restoration is itself verified, not merely attempted.** Every restoration this run performs
+(steps 11–14's "restoring the snapshotted index" and the exception path in step 15) re-derives the
+post-restore index tree (`git write-tree`) and requires it to exactly equal the snapshot captured
+before staging began — `git read-tree` reporting success is not itself trusted as proof. If
+restoration cannot be verified, the result is the distinct `INDEX_RESTORE_FAILED` failure reason
+(never the original triggering reason reported as though cleanup succeeded), with the original
+reason/details preserved as structured diagnostic data and an explicit note that manual repository
+inspection/intervention is required.
 
 It **never** pushes, calls an authenticated GitHub API, creates/modifies/merges a PR, reads GitHub
 credentials, or invokes `gh auth token`/switches identity — there is no code path in the script that
@@ -224,20 +248,26 @@ reproducible:
   shape (B) (Builder step 7's definitions). A path that is neither, or ambiguous, is not
   fingerprinted at all — it is malformed and BLOCKED until the entry itself is fixed. A path
   containing a raw newline is rejected as malformed in the Envelope itself.
-- **Canonical recipe** (byte-order sort, not locale-dependent), over exactly the `allowed_files`
-  list: for each path, sorted, compute `git hash-object --no-filters -- <path>` if shape (A) or the
-  literal string `ABSENT` if shape (B); feed `path \0 hash \n` for each into a running SHA-256; the
-  final hex digest is the Publication Fingerprint. `--no-filters` is required, not cosmetic: plain
-  `git hash-object <path>` silently runs the same clean filter / autocrlf normalization as `git add`,
-  so without it the fingerprint would bind filtered bytes (and could itself execute an external
-  filter command) rather than the raw worktree bytes it claims to bind.
-  `scripts/dev/publication-builder.mjs`'s `computeFingerprint` export is the canonical, single
-  implementation of this recipe — Claude constructs an Envelope by calling it, and the Builder
-  recomputes it identically before staging (step 10); there is exactly one implementation, not two
-  independently-written ones to keep in sync.
-- **What this does and does not prove:** it proves the exact on-disk bytes of every authorized
-  regular file are unchanged between when Claude computed the Envelope's fingerprint and the moment
-  the Builder runs — it does NOT re-run or re-prove that validation commands (`npm test`,
+- **Canonical recipe** (true UTF-8 byte-order sort — `Buffer.compare` over each path's UTF-8
+  encoding, not JavaScript's default string comparison, which compares UTF-16 *code units* and
+  disagrees with UTF-8 byte order for any path containing a character above U+FFFF; also not
+  locale-dependent), over exactly the `allowed_files` list: for each path, sorted, compute
+  `git hash-object --no-filters -- <path>` if shape (A) or the literal string `ABSENT` if shape (B);
+  feed `path \0 hash \n` for each into a running SHA-256; the final hex digest is the Publication
+  Fingerprint. `--no-filters` is required, not cosmetic: plain `git hash-object <path>` silently runs
+  the same clean filter / autocrlf normalization as `git add`, so without it the fingerprint would
+  bind filtered bytes (and could itself execute an external filter command) rather than the raw
+  worktree bytes it claims to bind. `scripts/dev/publication-builder.mjs` implements this recipe
+  once, parameterized only by where each entry's digest comes from: `computeFingerprint` (raw
+  worktree bytes, step 10 above — what Claude calls to construct an Envelope) and
+  `computeStagedFingerprint` (actual staged index bytes, step 13 above — the Builder's final seal);
+  there is exactly one canonical recipe, not two independently-written ones to keep in sync.
+- **What this does and does not prove:** step 10's worktree fingerprint proves the exact on-disk
+  bytes of every authorized regular file matched the Envelope at the moment preflight ran — it is an
+  early authorization check, not the binding proof. Step 13's staged-index fingerprint is what
+  actually binds the commit: it proves the exact bytes about to enter the commit still match the
+  Envelope, closing the window where a file could otherwise be mutated after step 10 but
+  before/during staging. Neither step re-runs or re-proves that validation commands (`npm test`,
   `check:project-consistency`, etc.) passed; that remains Claude's/Verifier's own separate,
   already-run result, carried informally in Claude's report rather than as a second Envelope field.
 

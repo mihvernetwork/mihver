@@ -101,27 +101,89 @@ and replaced "residual clean/smudge-filter risk being accepted" with the current
 `check-attr` guard's actual behavior (it blocks any explicit `filter=` attribute before any filter
 command could run, so no filter-execution risk is accepted as residual).
 
-**Validation (this pass, run directly by Claude)**: `npm run test:publication-builder` (37/37 — the
-dedicated publication-builder suite, all prior adversarial cases plus the new direct-`preflight()`
-fsmonitor-isolation test), `npm test` (170/170 contract fixtures), `npm run test:project-consistency`
-(19/19 test groups), `npm run check:project-consistency` (7/7 checks), `git diff --check` (clean).
+**PR #32 human-review remediation round** (verdict on the open PR: `APPROVE_WITH_REQUIRED_CHANGES`;
+this pass, currently uncommitted; narrow scope: `scripts/dev/publication-builder.mjs`,
+`tests/dev/publication-builder.test.mjs`, `docs/development/CODEX_ROLES.md`, this file, and
+`CURRENT_TASK.md`). Fixed three confirmed findings:
 
-**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings from the prior
-rounds, plus the exported-`preflight()` isolation gap this closure round confirmed and fixed, are
-independently re-verified against actual file content; the two rejected findings from the prior
-rounds are recorded above with their rationale, not silently omitted. Task branch changes are
-committed and pushed; human review and human manual publication (PR open/merge) remain the next
-steps.
+(1) **BLOCKER — envelope fingerprint not sealed to staged bytes.** `preflightCore()` only ever
+compared a fresh raw-worktree fingerprint to `envelope.publication_fingerprint`, before staging.
+`verifyStagedBlobIdentity()` afterward only proved fresh raw-worktree bytes equaled the staged index
+bytes — never that the staged bytes still matched the Envelope. A file mutated after preflight's
+fingerprint check but before/during `git add` could have its mutated raw bytes and mutated staged
+bytes agree with each other, satisfying `verifyStagedBlobIdentity`, while both had drifted from what
+was authorized. Fixed by adding `computeStagedFingerprint`/`verifyStagedFingerprint`: after staging
+and the existing blob-identity check, the canonical fingerprint recipe is recomputed a second time,
+sourced from the actual staged index blob of each entry (not worktree bytes), and required to still
+equal `envelope.publication_fingerprint` — `STAGED_FINGERPRINT_MISMATCH` on any mismatch, restoring
+the index. Also added, immediately before the commit call, a re-read of `HEAD` requiring it still
+equal `expected_pre_publish_head` — `PRE_COMMIT_HEAD_CHANGED` on any mismatch, restoring the index
+(closes a HEAD-moved-during-staging race, e.g. a concurrent commit on the same branch).
+
+(2) **BLOCKER — index restoration unverified.** `restoreIndexToTree()` discarded its
+`git read-tree` result, so a BLOCKED receipt could claim the index was safely restored even when
+restoration itself silently failed. Fixed: `restoreIndexToTree()` now independently re-derives the
+post-restore index tree (`git write-tree`) and returns true only when it exactly equals the
+pre-staging snapshot. Every post-staging failure path (staging failure, staged-name mismatch, blob
+mismatch, staged-fingerprint mismatch, pre-commit HEAD change, commit failure, unexpected exception)
+now routes through a new `failAfterStaging` helper: if restoration cannot be verified, the result is
+the distinct `INDEX_RESTORE_FAILED` (never the original triggering reason reported as though cleanup
+succeeded), with the original reason/extra preserved as structured diagnostic data and an explicit
+note that manual repository inspection/intervention is required.
+
+(3) **MAJOR — canonical sort was UTF-16, not UTF-8, byte order.** `byteSort` used JavaScript's
+default `<`/`>` string comparison, which orders by UTF-16 code unit, not the documented UTF-8 byte
+order the Publication Protocol owns — the two disagree for any path containing a character above
+U+FFFF. Fixed to `Buffer.compare` over each path's UTF-8 encoding.
+
+Five new adversarial/regression tests added: mutation-race (file mutated between preflight and
+staging) → `STAGED_FINGERPRINT_MISMATCH`, HEAD unchanged, index exactly restored;
+`PRE_COMMIT_HEAD_CHANGED` when HEAD moves between preflight and the final pre-commit check;
+`INDEX_RESTORE_FAILED` when `read-tree` throws; `INDEX_RESTORE_FAILED` when `read-tree` reports
+success without actually restoring (caught by the `write-tree` re-verification); and a UTF-8-vs-
+UTF-16 byte-order regression using a `U+E000`/`U+10000` path pair, independently reconstructing both
+candidate orderings and asserting `computeFingerprint` matches only the UTF-8 one.
+`docs/development/CODEX_ROLES.md`'s Publication Protocol steps and "Publication Fingerprint" section
+updated: the worktree fingerprint is now described as an early authorization check, the staged-index
+fingerprint as the final binding seal, plus the new pre-commit HEAD re-check and the verified (not
+merely attempted) index-restoration guarantee.
+
+**One fresh, independent read-only Codex Reviewer**, scoped to exactly six items: fingerprint→
+staged-index binding; mutation-race closure; pre-commit HEAD re-check; verified index restoration;
+restoration-failure reporting; UTF-8 canonical byte order. Found the first five implementation points
+correct (PASS) and the UTF-8 sort correct with adequate regression coverage (PASS), but flagged two
+genuine test-coverage gaps (not implementation defects): no test directly exercised
+`PRE_COMMIT_HEAD_CHANGED`, and the restoration-failure test only covered `read-tree` throwing, not
+`read-tree` reporting success without actually restoring — the exact case the `write-tree`
+re-verification exists to catch. Claude adjudicated both as genuine and added the two missing tests
+(counted above) rather than dismissing them; the Reviewer's note that not every `failAfterStaging`
+call site has its own dedicated restoration-failure test was adjudicated as not required — all call
+sites share the same `failAfterStaging` implementation, already covered by the two restoration-
+failure tests.
+
+**Validation (this pass, run directly by Claude)**: `npm run test:publication-builder` (42/42 — the
+dedicated publication-builder suite, all prior adversarial cases plus this round's five new tests),
+`npm test` (170/170 contract fixtures), `npm run test:project-consistency` (19/19 test groups),
+`npm run check:project-consistency` (7/7 checks), `git diff --check` (clean).
+
+**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings from every
+prior round, plus this PR #32 remediation round's three confirmed findings and the Reviewer's two
+test-coverage gaps, are fixed and independently re-verified against actual file content; the two
+rejected findings from the original round remain recorded above with their rationale, not silently
+omitted. This pass's changes remain uncommitted working-tree state pending human manual commit/push
+on top of the already-published closure commits; human review on PR #32 and human manual publication
+of this fix are the next steps.
 
 ## Required Changes
 
-None remaining for Claude's own technical assessment — all confirmed findings from both Reviewers
-are fixed; two findings were adjudicated and rejected with recorded rationale (see "Latest Review").
-Human review, and human manual publication (commit/push/PR), are the next steps.
+None remaining for Claude's own technical assessment — all confirmed findings across every round,
+including PR #32's `APPROVE_WITH_REQUIRED_CHANGES` findings above, are fixed; two findings from the
+original round were adjudicated and rejected with recorded rationale (see "Latest Review"). Human
+review on PR #32, and human manual publication of this pass's fix, are the next steps.
 
 ## Fixes Applied
 
-See "Latest Review" above for the itemized, per-reviewer list.
+See "Latest Review" above for the itemized, per-round list.
 
 ## Pending Human Gate
 
@@ -129,8 +191,9 @@ Branch: `chore/publication-boundary-v3-1a`
 Target: main
 Publication:
 - human manual fallback is in use
-- task branch changes are committed and pushed
-- PR expected: yes
+- task branch changes through the prior closure round are committed and pushed; this pass's own
+  PR #32 remediation fix remains uncommitted working-tree changes, pending the same manual step
+- PR expected: yes; PR #32 is the human-review-tracked PR for this task
 - PR identity/state: verify from GitHub
 - human review is the current gate
 - human-only merge unchanged

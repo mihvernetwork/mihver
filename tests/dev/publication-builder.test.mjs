@@ -11,6 +11,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync, symlinkSync, unlinkSync 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   preflight,
   buildLocalCommit,
@@ -619,6 +620,152 @@ test('BLOCKED: staged-name mismatch leaves the index fully reset (unstage everyt
   buildLocalCommit(envelope, root, { execFileSyncImpl: lyingImpl });
   const stagedAfter = git(root, ['diff', '--cached', '--name-only']).trim();
   assert.equal(stagedAfter, '', 'index must be fully reset after a BLOCKED staged-name mismatch');
+});
+
+test('BLOCKED: PRE_COMMIT_HEAD_CHANGED when HEAD moves between preflight and the final pre-commit check', () => {
+  const root = tempRepo('headchanged');
+  const base = initRepo(root);
+  branchAt(root, 'chore/test-branch', base);
+  writeFileSync(join(root, 'new.txt'), 'hello\n');
+  const allowed_files = [{ path: 'new.txt', action: 'present' }];
+  const fingerprint = computeFingerprint(root, classifyAllowedFiles(root, allowed_files, base).classified);
+  const envelope = baseEnvelope({ base_commit: base, expected_pre_publish_head: base, allowed_files, publication_fingerprint: fingerprint });
+  const realExecFileSync = execFileSync;
+  const fakeHead = 'f'.repeat(40);
+  let headCalls = 0;
+  // Exactly `rev-parse HEAD` (as the last two tokens) is called once during preflight (must return
+  // the real HEAD so preflight passes) and once more immediately before commit (this simulates HEAD
+  // having moved in between -- e.g. a concurrent process committing on the same branch).
+  const isHeadCall = (args) => args.length >= 2 && args[args.length - 2] === 'rev-parse' && args[args.length - 1] === 'HEAD';
+  const lyingImpl = (cmd, args, opts) => {
+    if (isHeadCall(args)) {
+      headCalls += 1;
+      if (headCalls > 1) return Buffer.from(`${fakeHead}\n`);
+    }
+    return realExecFileSync(cmd, args, opts);
+  };
+  const receipt = buildLocalCommit(envelope, root, { execFileSyncImpl: lyingImpl });
+  assert.equal(receipt.status, 'BLOCKED');
+  assert.equal(JSON.parse(receipt.failure_reason).reason, 'PRE_COMMIT_HEAD_CHANGED');
+  assert.equal(git(root, ['rev-parse', 'HEAD']).trim(), base, 'HEAD must remain unchanged -- no commit made');
+  assert.equal(git(root, ['diff', '--cached', '--name-only']).trim(), '', 'index must be exactly restored');
+});
+
+test('BLOCKED: INDEX_RESTORE_FAILED when read-tree lies about success without actually restoring the index', () => {
+  const root = tempRepo('restorelies');
+  const base = initRepo(root);
+  branchAt(root, 'chore/test-branch', base);
+  writeFileSync(join(root, 'new.txt'), 'hello\n');
+  const allowed_files = [{ path: 'new.txt', action: 'present' }];
+  const fingerprint = computeFingerprint(root, classifyAllowedFiles(root, allowed_files, base).classified);
+  const envelope = baseEnvelope({ base_commit: base, expected_pre_publish_head: base, allowed_files, publication_fingerprint: fingerprint });
+  const realExecFileSync = execFileSync;
+  // Induce a normal post-staging BLOCKED condition, then have `read-tree` report success (exit 0)
+  // without actually running it -- the exact case the write-tree re-verification exists to catch,
+  // distinct from read-tree throwing outright (covered by the sibling test above).
+  const lyingImpl = (cmd, args, opts) => {
+    if (args.includes('diff') && args.includes('--cached')) return Buffer.from('new.txt\nextra-not-really-staged.txt\n');
+    if (args.includes('read-tree')) return Buffer.from('');
+    return realExecFileSync(cmd, args, opts);
+  };
+  const receipt = buildLocalCommit(envelope, root, { execFileSyncImpl: lyingImpl });
+  assert.equal(receipt.status, 'BLOCKED');
+  const parsed = JSON.parse(receipt.failure_reason);
+  assert.equal(parsed.reason, 'INDEX_RESTORE_FAILED');
+  assert.equal(parsed.triggering_reason, 'STAGED_NAME_MISMATCH');
+  assert.equal(git(root, ['diff', '--cached', '--name-only']).trim(), 'new.txt', 'the un-restored staged content must still be present, proving the lie was caught');
+});
+
+test('BLOCKED: STAGED_FINGERPRINT_MISMATCH when a file mutates between preflight and staging (mutation race)', () => {
+  const root = tempRepo('mutationrace');
+  const base = initRepo(root);
+  branchAt(root, 'chore/test-branch', base);
+  const filePath = join(root, 'race.txt');
+  writeFileSync(filePath, 'version A -- what the Envelope fingerprint was computed over\n');
+  const allowed_files = [{ path: 'race.txt', action: 'present' }];
+  const fingerprint = computeFingerprint(root, classifyAllowedFiles(root, allowed_files, base).classified);
+  const envelope = baseEnvelope({ base_commit: base, expected_pre_publish_head: base, allowed_files, publication_fingerprint: fingerprint });
+  const realExecFileSync = execFileSync;
+  let mutated = false;
+  // Simulates a file changing after preflight's fingerprint check succeeded but before `git add`
+  // actually stages it: version B (never authorized by the Envelope) is what gets staged.
+  const lyingImpl = (cmd, args, opts) => {
+    if (!mutated && args.includes('add') && args.includes('race.txt')) {
+      mutated = true;
+      writeFileSync(filePath, 'version B -- never authorized by the Envelope\n');
+    }
+    return realExecFileSync(cmd, args, opts);
+  };
+  const receipt = buildLocalCommit(envelope, root, { execFileSyncImpl: lyingImpl });
+  assert.equal(receipt.status, 'BLOCKED');
+  assert.equal(JSON.parse(receipt.failure_reason).reason, 'STAGED_FINGERPRINT_MISMATCH');
+  assert.equal(git(root, ['rev-parse', 'HEAD']).trim(), base, 'HEAD must remain unchanged -- no commit made');
+  assert.equal(git(root, ['diff', '--cached', '--name-only']).trim(), '', 'index must be exactly restored, not left holding version B');
+});
+
+test('BLOCKED: INDEX_RESTORE_FAILED surfaces distinctly when read-tree restoration cannot be verified', () => {
+  const root = tempRepo('restorefail');
+  const base = initRepo(root);
+  branchAt(root, 'chore/test-branch', base);
+  writeFileSync(join(root, 'new.txt'), 'hello\n');
+  const allowed_files = [{ path: 'new.txt', action: 'present' }];
+  const fingerprint = computeFingerprint(root, classifyAllowedFiles(root, allowed_files, base).classified);
+  const envelope = baseEnvelope({ base_commit: base, expected_pre_publish_head: base, allowed_files, publication_fingerprint: fingerprint });
+  const realExecFileSync = execFileSync;
+  // Induce a normal post-staging BLOCKED condition (a lying `diff --cached` producing a staged-name
+  // mismatch), then additionally break `read-tree` restoration itself -- the Builder must not report
+  // the original STAGED_NAME_MISMATCH as though cleanup succeeded when it did not.
+  const lyingImpl = (cmd, args, opts) => {
+    if (args.includes('diff') && args.includes('--cached')) return Buffer.from('new.txt\nextra-not-really-staged.txt\n');
+    if (args.includes('read-tree')) {
+      throw new Error('simulated read-tree failure');
+    }
+    return realExecFileSync(cmd, args, opts);
+  };
+  const receipt = buildLocalCommit(envelope, root, { execFileSyncImpl: lyingImpl });
+  assert.equal(receipt.status, 'BLOCKED');
+  const parsed = JSON.parse(receipt.failure_reason);
+  assert.equal(parsed.reason, 'INDEX_RESTORE_FAILED');
+  assert.equal(parsed.triggering_reason, 'STAGED_NAME_MISMATCH', 'original triggering reason must be preserved as diagnostic data');
+  assert.equal(git(root, ['diff', '--cached', '--name-only']).trim(), 'new.txt', 'restoration genuinely failed -- the real staged content must still be present, not silently cleaned');
+});
+
+test('computeFingerprint uses true UTF-8 byte-order sort, not UTF-16 code-unit order', () => {
+  const root = tempRepo('utf8sort');
+  const base = initRepo(root);
+  branchAt(root, 'chore/test-branch', base);
+  const pathE000 = '\u{E000}.txt'; // UTF-8: 0xEE 0x80 0x80
+  const path10000 = '\u{10000}.txt'; // UTF-8: 0xF0 0x90 0x80 0x80 -- but UTF-16 leading surrogate 0xD800 < 0xE000
+  writeFileSync(join(root, pathE000), 'a\n');
+  writeFileSync(join(root, path10000), 'b\n');
+  const allowed_files = [
+    { path: pathE000, action: 'present' },
+    { path: path10000, action: 'present' },
+  ];
+  const classified = classifyAllowedFiles(root, allowed_files, base).classified;
+  const actual = computeFingerprint(root, classified);
+
+  const digestE000 = execFileSync('git', ['hash-object', '--no-filters', '--', pathE000], { cwd: root, encoding: 'utf8' }).trim();
+  const digest10000 = execFileSync('git', ['hash-object', '--no-filters', '--', path10000], { cwd: root, encoding: 'utf8' }).trim();
+  const digestByPath = { [pathE000]: digestE000, [path10000]: digest10000 };
+  const recipe = (orderedPaths) => {
+    const hash = createHash('sha256');
+    for (const p of orderedPaths) {
+      hash.update(p, 'utf8');
+      hash.update(Buffer.from([0]));
+      hash.update(digestByPath[p], 'utf8');
+      hash.update('\n', 'utf8');
+    }
+    return hash.digest('hex');
+  };
+
+  // U+E000 (0xEE...) sorts before U+10000 (0xF0...) in UTF-8 byte order.
+  const utf8ByteOrder = [pathE000, path10000];
+  // U+10000's UTF-16 leading surrogate (0xD800) sorts below U+E000's single code unit (0xE000).
+  const utf16CodeUnitOrder = [path10000, pathE000];
+
+  assert.equal(actual, recipe(utf8ByteOrder), 'computeFingerprint must follow UTF-8 byte order');
+  assert.notEqual(actual, recipe(utf16CodeUnitOrder), 'computeFingerprint must NOT follow UTF-16 code-unit order');
 });
 
 test('parseGitHubRemote handles https and ssh forms, rejects anything else', () => {

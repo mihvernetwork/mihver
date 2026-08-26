@@ -29,8 +29,10 @@ Base: `main` at `dbc051690f733a841cc9e0d898597505ebb533a1`.
 
 **Publication:**
 - Human manual fallback is in use.
-- Task branch changes are committed and pushed.
-- PR expected: yes.
+- Task branch changes through the prior closure round are committed and pushed; this pass's own
+  PR #32 remediation fix (below) is currently uncommitted working-tree changes, pending the same
+  manual step.
+- PR expected: yes; PR #32 is the human-review-tracked PR for this task.
 - PR identity/state: verify from GitHub.
 - Human review is the current gate.
 - Human-only merge unchanged.
@@ -46,37 +48,71 @@ closure — see History in `.project/REVIEW_STATE.md` for the two commits):
   retired Git Operator role and the new Publication Protocol / Local Publication Builder / schemas),
   this file and `.project/REVIEW_STATE.md` (this task's own record).
 
-**Final pre-PR fix (this pass)**: the exported `preflight()` entry point was isolated the same way
-`buildLocalCommit()` already isolates its whole run — it now always runs under a fresh, empty,
-process-owned `core.hooksPath` plus `core.fsmonitor=`, established internally rather than trusted
-from any caller-supplied `hooksDir`. The read-only guard logic itself was extracted into an internal
-`preflightCore()`, which `buildLocalCommit()` calls directly under its own existing isolation
-boundary (one boundary per run, not two). A new adversarial test invokes exported `preflight()`
-directly (not via `buildLocalCommit()`) against a repo with a malicious `core.fsmonitor` configured
-and asserts the sentinel file is never created.
+**Final preflight-isolation closure** (previously committed/pushed): the exported `preflight()` entry
+point was isolated the same way `buildLocalCommit()` already isolates its whole run — it now always
+runs under a fresh, empty, process-owned `core.hooksPath` plus `core.fsmonitor=`, established
+internally rather than trusted from any caller-supplied `hooksDir`. The read-only guard logic itself
+was extracted into an internal `preflightCore()`, which `buildLocalCommit()` calls directly under its
+own existing isolation boundary (one boundary per run, not two).
+
+**PR #32 human-review remediation round (this pass, currently uncommitted)**: fixed three findings
+confirmed on open PR #32 (`APPROVE_WITH_REQUIRED_CHANGES`). (1) BLOCKER — the Envelope fingerprint
+was only ever checked against fresh raw-worktree bytes, never against the actual staged/index bytes
+about to be committed, leaving a window where a file mutated after preflight's fingerprint check but
+before/during staging could pass `verifyStagedBlobIdentity` (mutated raw bytes == mutated staged
+bytes) while no longer matching what the Envelope authorized; fixed by adding
+`computeStagedFingerprint`/`verifyStagedFingerprint`, recomputing the same canonical recipe from the
+actual staged index blobs after staging and requiring it to still equal
+`envelope.publication_fingerprint` (`STAGED_FINGERPRINT_MISMATCH` on mismatch), plus a new immediate
+pre-commit re-check that `HEAD` still equals `expected_pre_publish_head`
+(`PRE_COMMIT_HEAD_CHANGED` on mismatch). (2) BLOCKER — `restoreIndexToTree` discarded its
+`git read-tree` result, so a BLOCKED receipt could claim safe cleanup even if restoration itself
+silently failed; fixed so `restoreIndexToTree` independently re-derives the post-restore index tree
+(`git write-tree`) and requires it to exactly equal the pre-staging snapshot, with every post-staging
+failure path routed through a new `failAfterStaging` that reports the distinct `INDEX_RESTORE_FAILED`
+(preserving the original triggering reason as diagnostic data) whenever restoration cannot be
+verified. (3) MAJOR — `byteSort` used JavaScript's default UTF-16 code-unit string comparison, not
+the documented UTF-8 canonical byte order (they disagree for any path above U+FFFF); fixed to
+`Buffer.compare` over each path's UTF-8 encoding. Five new adversarial/regression tests added:
+mutation-race → `STAGED_FINGERPRINT_MISMATCH`; `PRE_COMMIT_HEAD_CHANGED`; `read-tree` throwing →
+`INDEX_RESTORE_FAILED`; `read-tree` lying about success (no actual restore) →
+`INDEX_RESTORE_FAILED`; UTF-8-vs-UTF-16 byte-order regression (U+E000 vs U+10000).
+`docs/development/CODEX_ROLES.md`'s Publication Protocol steps and "Publication Fingerprint" section
+updated to describe the two-stage fingerprint (early worktree check, final staged-index seal), the
+pre-commit HEAD re-check, and verified (not merely attempted) index restoration.
 
 **Final integrity hardening** (cumulative, as of this pass): fresh empty `core.hooksPath` for the
-entire builder run (now including a direct `preflight()` call); `core.fsmonitor` disabled for every
-git invocation; `--no-gpg-sign` on the commit; `git check-attr` fail-closed on
+entire builder run (including a direct `preflight()` call); `core.fsmonitor` disabled for every git
+invocation; `--no-gpg-sign` on the commit; `git check-attr` fail-closed on
 filter/text/eol/working-tree-encoding/ident for every present file; `git hash-object --no-filters`
 for all content digests; `core.autocrlf=false` during staging; raw-worktree blob SHA required to
-exactly equal the staged index blob SHA; exact pre-builder index snapshot/restore on any
-post-staging failure; exported `preflight()` isolated from the same hook/fsmonitor surface as
-`buildLocalCommit()`. No residual clean/smudge-filter risk is treated as accepted — the fail-closed
-`check-attr` guard blocks any explicit `filter=` attribute before any filter command could run.
+exactly equal the staged index blob SHA; a final staged-index fingerprint seal requiring the actual
+committed bytes to equal `envelope.publication_fingerprint`; an immediate pre-commit HEAD re-check;
+exact, independently-verified pre-builder index snapshot/restore on any post-staging failure, with a
+distinct `INDEX_RESTORE_FAILED` state when restoration cannot be proven; exported `preflight()`
+isolated from the same hook/fsmonitor surface as `buildLocalCommit()`; true UTF-8 canonical byte-order
+sort. No residual clean/smudge-filter risk is treated as accepted — the fail-closed `check-attr` guard
+blocks any explicit `filter=` attribute before any filter command could run.
 
 **Validation run and passing** (by Claude directly): `npm run test:publication-builder`
-(37/37 — the dedicated publication-builder suite, including every adversarial case above plus the
-new direct-`preflight()` fsmonitor-isolation test), `npm test` (170/170 contract fixtures),
-`npm run test:project-consistency` (19/19 test groups), `npm run check:project-consistency`
-(7/7 checks), `git diff --check` (clean).
+(42/42 — the dedicated publication-builder suite, including every adversarial case above plus this
+round's five new tests), `npm test` (170/170 contract fixtures), `npm run test:project-consistency`
+(19/19 test groups), `npm run check:project-consistency` (7/7 checks), `git diff --check` (clean).
 
-**Independent review**: two fresh Codex Reviewers (Reviewer A: protocol/local-builder correctness;
-Reviewer B: authority separation/credential leakage/bypass paths/policy consistency) plus a Codex
-Verifier re-running the validation suite (blocked by its own sandbox's temp-dir write restriction on
-two of six commands — see above; the six it could evaluate, plus its source-level grep for `push`/
-`gh` invocations, corroborate the "never pushes" claim). Claude adjudicated every finding — see
-`.project/REVIEW_STATE.md`.
+**Independent review**: two fresh Codex Reviewers from the original round (Reviewer A: protocol/
+local-builder correctness; Reviewer B: authority separation/credential leakage/bypass paths/policy
+consistency) plus a Codex Verifier re-running the validation suite (blocked by its own sandbox's
+temp-dir write restriction on two of six commands; the six it could evaluate, plus its source-level
+grep for `push`/`gh` invocations, corroborate the "never pushes" claim); and, for this PR #32
+remediation round, one fresh read-only Codex Reviewer scoped to exactly the six items above
+(fingerprint→staged-index binding, mutation-race closure, pre-commit HEAD re-check, verified index
+restoration, restoration-failure reporting, UTF-8 canonical byte order). That Reviewer found the
+first five implementation points correct and the UTF-8 sort correct with adequate regression
+coverage, but flagged two real test-coverage gaps: no direct test for `PRE_COMMIT_HEAD_CHANGED`, and
+the restoration-failure test only covered `read-tree` throwing, not `read-tree` reporting success
+without actually restoring (the exact case the `write-tree` re-verification exists to catch). Claude
+adjudicated both as genuine and added the two missing tests (see above) rather than dismissing them.
+Claude adjudicates every finding — see `.project/REVIEW_STATE.md`.
 
 **Remaining V3.1-B work** (explicitly out of scope for this task, per its own instructions): a
 separate OS identity for the Publication Broker, a GitHub App credential, a Unix-socket/MCP
