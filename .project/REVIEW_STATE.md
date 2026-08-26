@@ -17,11 +17,14 @@ Action" is authoritative for what's next, not anything below.
 
 Task: DEVELOPMENT-ORCHESTRATION-V3.1-A-PUBLICATION-BOUNDARY
 Branch: `chore/publication-boundary-v3-1a`
-PR: not yet opened — PR identity/state: verify from GitHub.
 Target: main
-Publication: human manual fallback is in use; task branch has been manually committed/pushed
-(HEAD `2cac1ef`); PR expected: yes; human review remains the current gate; human-only merge
-unchanged.
+Publication:
+- human manual fallback is in use
+- task branch changes are committed and pushed
+- PR expected: yes
+- PR identity/state: verify from GitHub
+- human review is the current gate
+- human-only merge unchanged
 
 Implemented the repository-side foundation of MIHVER's privilege-separated publication
 architecture: `PublicationEnvelope` (`schemas/dev/publication-envelope.schema.json`) → deterministic
@@ -71,9 +74,11 @@ evidence for this task's core premise that a Codex sandbox cannot be trusted wit
 adjacent filesystem/network authority. Its source-level grep confirmed zero `git push` invocations,
 zero `gh` command-name invocations, and the `--no-verify` fix present.
 
-**Final pre-PR consistency + preflight isolation fix** (this pass, human-directed, narrow scope: only
-`scripts/dev/publication-builder.mjs`, `tests/dev/publication-builder.test.mjs`, this file, and
-`CURRENT_TASK.md`): closed a real residual gap the prior rounds' "content-transform fail-closed"
+**Final preflight-isolation closure** (commit `0e5e490f56a2be80b3385d9db2e0eeabc2cfce95`, on top of the
+original commit `2cac1efa7d55d64ff9c2b0bd457697c34e4aabc1`, both committed and pushed to this branch;
+human-directed, narrow scope: only `scripts/dev/publication-builder.mjs`,
+`tests/dev/publication-builder.test.mjs`, this file, and `CURRENT_TASK.md`): closed a real residual
+gap the prior rounds' "content-transform fail-closed"
 hardening had introduced without also isolating the exported `preflight()` entry point itself — its
 own read-only checks (`status`, `check-attr`, `hash-object`, etc.) were just as exposed to a
 repo/user-controlled `core.fsmonitor` command as `buildLocalCommit()`'s calls were before hook
@@ -89,9 +94,9 @@ exported `preflight()` directly (not `buildLocalCommit()`), and asserts the sent
 created. `preflight()` remains strictly read-only — no staging or commit added to its path.
 
 Also synchronized this file and `CURRENT_TASK.md`, which had drifted stale after the prior human
-review's remediation and the subsequent manual commit/push (`2cac1ef`): removed "working tree only,
-uncommitted" and "Claude did not commit/push" framing (the branch has in fact been manually
-committed/pushed), corrected the stale "27 tests" `publication-builder` count to the current 37,
+review's remediation and manual commit/push: removed "working tree only, uncommitted" and "Claude
+did not commit/push" framing (the branch has in fact been manually committed and pushed),
+corrected the stale "27 tests" `publication-builder` count to the current 37,
 and replaced "residual clean/smudge-filter risk being accepted" with the current fail-closed
 `check-attr` guard's actual behavior (it blocks any explicit `filter=` attribute before any filter
 command could run, so no filter-execution risk is accepted as residual).
@@ -102,11 +107,11 @@ fsmonitor-isolation test), `npm test` (170/170 contract fixtures), `npm run test
 (19/19 test groups), `npm run check:project-consistency` (7/7 checks), `git diff --check` (clean).
 
 **Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings from the prior
-rounds, plus this pass's own confirmed exported-`preflight()` isolation gap, are fixed and
+rounds, plus the exported-`preflight()` isolation gap this closure round confirmed and fixed, are
 independently re-verified against actual file content; the two rejected findings from the prior
-rounds are recorded above with their rationale, not silently omitted. This pass's changes remain
-uncommitted working-tree state per its own explicit instruction (no commit, no push, no PR); human
-manual publication of this fix, on top of the already-published `2cac1ef`, is the next step.
+rounds are recorded above with their rationale, not silently omitted. Task branch changes are
+committed and pushed; human review and human manual publication (PR open/merge) remain the next
+steps.
 
 ## Required Changes
 
@@ -121,11 +126,16 @@ See "Latest Review" above for the itemized, per-reviewer list.
 ## Pending Human Gate
 
 Branch: `chore/publication-boundary-v3-1a`
-Publication: human manual fallback is in use; task branch has been manually committed/pushed
-(HEAD `2cac1ef`); this pass's own preflight-isolation fix remains uncommitted working-tree state;
-PR expected: yes; PR identity/state: verify from GitHub.
 Target: main
-Human review remains the current gate. Do not merge — human-only merge, unchanged.
+Publication:
+- human manual fallback is in use
+- task branch changes are committed and pushed
+- PR expected: yes
+- PR identity/state: verify from GitHub
+- human review is the current gate
+- human-only merge unchanged
+
+Do not merge.
 
 ## History
 

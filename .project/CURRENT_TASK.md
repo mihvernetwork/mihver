@@ -29,15 +29,14 @@ Base: `main` at `dbc051690f733a841cc9e0d898597505ebb533a1`.
 
 **Publication:**
 - Human manual fallback is in use.
-- Task branch has been manually committed/pushed (HEAD `2cac1ef`); this pass's own two-file fix
-  (below) is currently uncommitted working-tree changes, pending the same manual step.
+- Task branch changes are committed and pushed.
 - PR expected: yes.
 - PR identity/state: verify from GitHub.
-- Human review remains the current gate.
-- Human-only merge, unchanged.
+- Human review is the current gate.
+- Human-only merge unchanged.
 
-**Files changed** (this branch, across the original task and this final pre-PR consistency +
-preflight isolation fix):
+**Files changed** (this branch, across the original task and its final preflight-isolation
+closure — see History in `.project/REVIEW_STATE.md` for the two commits):
 - Primary: `scripts/dev/publication-builder.mjs`, `tests/dev/publication-builder.test.mjs`,
   `schemas/dev/publication-envelope.schema.json`, `schemas/dev/publication-receipt.schema.json`,
   `docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md`,
