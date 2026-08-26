@@ -17,9 +17,11 @@ Action" is authoritative for what's next, not anything below.
 
 Task: DEVELOPMENT-ORCHESTRATION-V3.1-A-PUBLICATION-BOUNDARY
 Branch: `chore/publication-boundary-v3-1a`
-PR: not yet opened — human will publish manually per this task's own instruction.
+PR: not yet opened — PR identity/state: verify from GitHub.
 Target: main
-Human review is the current gate. Claude did not commit/push/open a PR.
+Publication: human manual fallback is in use; task branch has been manually committed/pushed
+(HEAD `2cac1ef`); PR expected: yes; human review remains the current gate; human-only merge
+unchanged.
 
 Implemented the repository-side foundation of MIHVER's privilege-separated publication
 architecture: `PublicationEnvelope` (`schemas/dev/publication-envelope.schema.json`) → deterministic
@@ -54,32 +56,57 @@ by the existing `DIRECTORY_NOT_ALLOWED` check; only a legitimate submodule→reg
 
 Reviewer B (authority separation, credential leakage, bypass paths, policy consistency) found 4
 findings. BLOCKER (git hooks/filters during `add`/`commit`) — same root cause as Reviewer A's #1;
-fixed identically (`--no-verify`), with the residual clean/smudge-filter risk explicitly documented
-as an accepted, out-of-scope limitation (this repository defines no `.gitattributes` filters today).
-MAJOR (schema validation) — duplicate of Reviewer A's #3, fixed once. MAJOR ("Local Publication
-Builder authorized: yes" also lets Claude commit directly with plain `git commit` for a small
-change) — **rejected**: the privilege-separation invariant this task closes is specifically about
-*remote* GitHub write credentials (push/PR); a local commit never touches them regardless of which
-of the two documented paths produces it, so this is a design choice already stated explicitly in
-`AGENT_POLICY.md`'s "Commits" section, not a bypass. MINOR (CLAUDE.md's "unless explicitly
-instructed" phrasing) — reviewed; the very next sentence already states push/PR are NOT AVAILABLE
-through any automated path regardless of instruction, so no further change made.
+fixed identically (`--no-verify`). MAJOR (schema validation) — duplicate of Reviewer A's #3, fixed
+once. MAJOR ("Local Publication Builder authorized: yes" also lets Claude commit directly with plain
+`git commit` for a small change) — **rejected**: the privilege-separation invariant this task closes
+is specifically about *remote* GitHub write credentials (push/PR); a local commit never touches them
+regardless of which of the two documented paths produces it, so this is a design choice already
+stated explicitly in `AGENT_POLICY.md`'s "Commits" section, not a bypass. MINOR (CLAUDE.md's "unless
+explicitly instructed" phrasing) — reviewed; the very next sentence already states push/PR are NOT
+AVAILABLE through any automated path regardless of instruction, so no further change made.
 
 **Codex Verifier** re-ran the validation suite independently; its own sandbox could not write to the
 OS temp directory two of the six commands need (`EPERM` on `mkdtemp`) — itself corroborating
 evidence for this task's core premise that a Codex sandbox cannot be trusted with publication-
 adjacent filesystem/network authority. Its source-level grep confirmed zero `git push` invocations,
-zero `gh` command-name invocations, and the `--no-verify` fix present. Claude directly ran and
-confirmed all suites pass: `npm test` (170 fixtures), `npm run test:project-consistency` (19 test
-groups), `npm run check:project-consistency` (7/7), `npm run test:publication-builder` (27 tests,
-covering every adversarial case this task required: wrong repo, main/master branch, wrong
-pre-publish HEAD, non-ancestor base, duplicate/traversal/absolute/symlink/directory/submodule-mode
-paths, fingerprint mismatch, staged-name mismatch, dirty unrelated file, malformed envelope, rename
-pair, hook-smuggling, full-index-reset-on-BLOCKED), `git diff --check` (clean).
+zero `gh` command-name invocations, and the `--no-verify` fix present.
 
-**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings fixed and
-independently re-verified against actual file content; the two rejected findings are recorded above
-with their rationale, not silently omitted.
+**Final pre-PR consistency + preflight isolation fix** (this pass, human-directed, narrow scope: only
+`scripts/dev/publication-builder.mjs`, `tests/dev/publication-builder.test.mjs`, this file, and
+`CURRENT_TASK.md`): closed a real residual gap the prior rounds' "content-transform fail-closed"
+hardening had introduced without also isolating the exported `preflight()` entry point itself — its
+own read-only checks (`status`, `check-attr`, `hash-object`, etc.) were just as exposed to a
+repo/user-controlled `core.fsmonitor` command as `buildLocalCommit()`'s calls were before hook
+isolation was added, whenever `preflight()` was invoked directly rather than through
+`buildLocalCommit()`. Fixed by extracting the read-only guard chain into an internal
+`preflightCore()`; the exported `preflight()` now always creates its own fresh, empty,
+process-owned hooks directory and runs `preflightCore()` under `core.hooksPath=<that dir>` plus
+`core.fsmonitor=`, never trusting a caller-supplied `hooksDir` as the isolation boundary;
+`buildLocalCommit()` calls `preflightCore()` directly under the one isolation boundary it already
+owns for its whole run, so the run still isolates hooks/fsmonitor exactly once, not twice. Added one
+new adversarial test: configures a malicious `core.fsmonitor` that touches a sentinel file, invokes
+exported `preflight()` directly (not `buildLocalCommit()`), and asserts the sentinel was never
+created. `preflight()` remains strictly read-only — no staging or commit added to its path.
+
+Also synchronized this file and `CURRENT_TASK.md`, which had drifted stale after the prior human
+review's remediation and the subsequent manual commit/push (`2cac1ef`): removed "working tree only,
+uncommitted" and "Claude did not commit/push" framing (the branch has in fact been manually
+committed/pushed), corrected the stale "27 tests" `publication-builder` count to the current 37,
+and replaced "residual clean/smudge-filter risk being accepted" with the current fail-closed
+`check-attr` guard's actual behavior (it blocks any explicit `filter=` attribute before any filter
+command could run, so no filter-execution risk is accepted as residual).
+
+**Validation (this pass, run directly by Claude)**: `npm run test:publication-builder` (37/37 — the
+dedicated publication-builder suite, all prior adversarial cases plus the new direct-`preflight()`
+fsmonitor-isolation test), `npm test` (170/170 contract fixtures), `npm run test:project-consistency`
+(19/19 test groups), `npm run check:project-consistency` (7/7 checks), `git diff --check` (clean).
+
+**Technical result: `APPROVED` / `READY_TO_COMMIT`.** All reviewer-confirmed findings from the prior
+rounds, plus this pass's own confirmed exported-`preflight()` isolation gap, are fixed and
+independently re-verified against actual file content; the two rejected findings from the prior
+rounds are recorded above with their rationale, not silently omitted. This pass's changes remain
+uncommitted working-tree state per its own explicit instruction (no commit, no push, no PR); human
+manual publication of this fix, on top of the already-published `2cac1ef`, is the next step.
 
 ## Required Changes
 
@@ -94,10 +121,11 @@ See "Latest Review" above for the itemized, per-reviewer list.
 ## Pending Human Gate
 
 Branch: `chore/publication-boundary-v3-1a`
-PR: not yet opened — human publishes manually per this task's own explicit instruction.
+Publication: human manual fallback is in use; task branch has been manually committed/pushed
+(HEAD `2cac1ef`); this pass's own preflight-isolation fix remains uncommitted working-tree state;
+PR expected: yes; PR identity/state: verify from GitHub.
 Target: main
-Human review is the current gate. Do not merge. Claude did not commit/push/open a PR — the working
-tree on this branch holds the uncommitted changes for human review and manual publication.
+Human review remains the current gate. Do not merge — human-only merge, unchanged.
 
 ## History
 

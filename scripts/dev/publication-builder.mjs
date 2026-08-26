@@ -453,8 +453,10 @@ function workingTreeClean(repoRoot, options) {
 // --- Top-level preflight (every read-only check, no staging/commit) ------------------------------
 
 // Runs every guard up to and including the fingerprint check, without staging or committing
-// anything. Exported so tests/callers can validate an Envelope without mutating the index.
-export function preflight(envelope, repoRoot, options = {}) {
+// anything. Internal implementation -- callers must go through the exported `preflight` (which
+// establishes its own hook/fsmonitor isolation boundary) or, for buildLocalCommit, reuse the
+// isolation boundary it already owns for its whole run via `options.hooksDir`.
+function preflightCore(envelope, repoRoot, options = {}) {
   const shapeCheck = validateEnvelopeShape(envelope);
   if (!shapeCheck.ok) return blocked('MALFORMED_ENVELOPE', { errors: shapeCheck.errors });
 
@@ -492,6 +494,18 @@ export function preflight(envelope, repoRoot, options = {}) {
   return { status: 'OK', classified: classification.classified, pre_publish_head: headCheck.head };
 }
 
+// Exported entry point. preflight() is read-only (no staging/commit), but its internal git calls
+// (status, check-attr, hash-object, etc.) are just as capable of running a repo/user-controlled
+// core.fsmonitor command as buildLocalCommit's are, so a direct caller must get the same isolation
+// buildLocalCommit gives itself -- a fresh, empty, process-owned hooks directory for this call only.
+// A caller-supplied `options.hooksDir` is deliberately never trusted as that boundary: it could name
+// a directory the caller (or something upstream of the caller) controls, which is exactly the trust
+// this isolation exists to remove. buildLocalCommit does not call this function -- it already owns
+// one fresh isolation directory for its entire run and calls preflightCore directly under that.
+export function preflight(envelope, repoRoot, options = {}) {
+  return withEmptyHooksDir((hooksDir) => preflightCore(envelope, repoRoot, { ...options, hooksDir }));
+}
+
 // --- Top-level build: preflight + stage + commit (local only, never push) ------------------------
 
 export function buildLocalCommit(envelope, repoRoot, options = {}) {
@@ -519,7 +533,7 @@ export function buildLocalCommit(envelope, repoRoot, options = {}) {
       failure_reason: JSON.stringify({ reason: pre.reason, ...pre })
     });
 
-    const pre = preflight(envelope, root, runOptions);
+    const pre = preflightCore(envelope, root, runOptions);
     if (pre.status !== 'OK') return preBlocked(pre);
 
     const { classified, pre_publish_head } = pre;

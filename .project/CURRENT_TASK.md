@@ -25,29 +25,52 @@ Base: `main` at `dbc051690f733a841cc9e0d898597505ebb533a1`.
 
 ## Status
 
-**Complete, pending human review.** Per this task's own explicit instruction: Claude did NOT commit,
-push, or open a PR. Human manual publication is the required next step.
+**Complete, pending human review.**
 
-**Files changed** (working tree only, uncommitted):
-- Primary: `scripts/dev/publication-builder.mjs` (new), `tests/dev/publication-builder.test.mjs`
-  (new), `schemas/dev/publication-envelope.schema.json` (new),
-  `schemas/dev/publication-receipt.schema.json` (new), `docs/development/AGENT_POLICY.md`,
-  `docs/development/CODEX_ROLES.md`, `docs/development/TASK_TEMPLATE.md`,
-  `docs/development/REVIEW_PROTOCOL.md`, `CLAUDE.md`, `package.json` (two new npm scripts).
+**Publication:**
+- Human manual fallback is in use.
+- Task branch has been manually committed/pushed (HEAD `2cac1ef`); this pass's own two-file fix
+  (below) is currently uncommitted working-tree changes, pending the same manual step.
+- PR expected: yes.
+- PR identity/state: verify from GitHub.
+- Human review remains the current gate.
+- Human-only merge, unchanged.
+
+**Files changed** (this branch, across the original task and this final pre-PR consistency +
+preflight isolation fix):
+- Primary: `scripts/dev/publication-builder.mjs`, `tests/dev/publication-builder.test.mjs`,
+  `schemas/dev/publication-envelope.schema.json`, `schemas/dev/publication-receipt.schema.json`,
+  `docs/development/AGENT_POLICY.md`, `docs/development/CODEX_ROLES.md`,
+  `docs/development/TASK_TEMPLATE.md`, `docs/development/REVIEW_PROTOCOL.md`, `CLAUDE.md`,
+  `package.json` (two new npm scripts).
 - Conditional Consistency (synchronization-only): `.project/CONTEXT_INDEX.md` (topic rows for the
   retired Git Operator role and the new Publication Protocol / Local Publication Builder / schemas),
   this file and `.project/REVIEW_STATE.md` (this task's own record).
 
-**Validation run and passing** (by Claude directly — Codex's own sandbox could not write to the OS
-temp directory the test suite needs, which is itself confirmatory evidence for this task's core
-premise that Codex sandboxes cannot be trusted with publication-adjacent filesystem/network
-authority): `npm test` (170 fixtures), `npm run test:project-consistency` (19 test groups),
-`npm run check:project-consistency` (7/7 checks), `npm run test:publication-builder` (27 tests,
-including adversarial cases: wrong repo, main/master branch, wrong pre-publish HEAD, non-ancestor
-base, duplicate/traversal/absolute/symlink/directory/submodule-mode paths, fingerprint mismatch,
-staged-name mismatch via a hostile execFileSyncImpl, a pre-commit hook attempting to smuggle an
-extra file into the commit, dirty unrelated file, malformed envelope, rename pair), `git diff
---check` (clean).
+**Final pre-PR fix (this pass)**: the exported `preflight()` entry point was isolated the same way
+`buildLocalCommit()` already isolates its whole run — it now always runs under a fresh, empty,
+process-owned `core.hooksPath` plus `core.fsmonitor=`, established internally rather than trusted
+from any caller-supplied `hooksDir`. The read-only guard logic itself was extracted into an internal
+`preflightCore()`, which `buildLocalCommit()` calls directly under its own existing isolation
+boundary (one boundary per run, not two). A new adversarial test invokes exported `preflight()`
+directly (not via `buildLocalCommit()`) against a repo with a malicious `core.fsmonitor` configured
+and asserts the sentinel file is never created.
+
+**Final integrity hardening** (cumulative, as of this pass): fresh empty `core.hooksPath` for the
+entire builder run (now including a direct `preflight()` call); `core.fsmonitor` disabled for every
+git invocation; `--no-gpg-sign` on the commit; `git check-attr` fail-closed on
+filter/text/eol/working-tree-encoding/ident for every present file; `git hash-object --no-filters`
+for all content digests; `core.autocrlf=false` during staging; raw-worktree blob SHA required to
+exactly equal the staged index blob SHA; exact pre-builder index snapshot/restore on any
+post-staging failure; exported `preflight()` isolated from the same hook/fsmonitor surface as
+`buildLocalCommit()`. No residual clean/smudge-filter risk is treated as accepted — the fail-closed
+`check-attr` guard blocks any explicit `filter=` attribute before any filter command could run.
+
+**Validation run and passing** (by Claude directly): `npm run test:publication-builder`
+(37/37 — the dedicated publication-builder suite, including every adversarial case above plus the
+new direct-`preflight()` fsmonitor-isolation test), `npm test` (170/170 contract fixtures),
+`npm run test:project-consistency` (19/19 test groups), `npm run check:project-consistency`
+(7/7 checks), `git diff --check` (clean).
 
 **Independent review**: two fresh Codex Reviewers (Reviewer A: protocol/local-builder correctness;
 Reviewer B: authority separation/credential leakage/bypass paths/policy consistency) plus a Codex

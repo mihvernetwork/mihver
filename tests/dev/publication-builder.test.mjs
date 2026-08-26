@@ -588,6 +588,21 @@ test('COMMITTED: binary file with no gitattributes succeeds (no transform applie
   assert.equal(gotSha, wantSha);
 });
 
+test('exported preflight() is isolated from core.fsmonitor even when called directly (not via buildLocalCommit)', () => {
+  const root = tempRepo('preflight-fsmonitor');
+  const base = initRepo(root);
+  branchAt(root, 'chore/test-branch', base);
+  const sentinel = join(root, 'PREFLIGHT_FSMONITOR_RAN.txt');
+  git(root, ['config', 'core.fsmonitor', `sh -c 'touch "${sentinel}"; echo 1'`]);
+  writeFileSync(join(root, 'new.txt'), 'hello\n');
+  const allowed_files = [{ path: 'new.txt', action: 'present' }];
+  const fingerprint = computeFingerprint(root, classifyAllowedFiles(root, allowed_files, base).classified);
+  const envelope = baseEnvelope({ base_commit: base, expected_pre_publish_head: base, allowed_files, publication_fingerprint: fingerprint });
+  const result = preflight(envelope, root);
+  assert.equal(result.status, 'OK');
+  assert.throws(() => execFileSync('test', ['-e', sentinel]), 'core.fsmonitor command executed during a direct preflight() call: sentinel file was created');
+});
+
 test('BLOCKED: staged-name mismatch leaves the index fully reset (unstage everything)', () => {
   const root = tempRepo('fullreset');
   const base = initRepo(root);
