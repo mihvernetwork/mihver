@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/publication-grant.schema.json",
+  "title": "MIHVER Publication Grant (broker-owned state)",
+  "description": "Machine-readable shape of a server-side PublicationGrant record (tools/publication-broker/internal/grant.Grant is the canonical Go implementation). Never authored by Claude or any Codex role -- created only through the privileged admin Unix socket (internal/grant.AdminHandle.Create), by a human, in response to a REQUEST DIGEST mihver-publish printed. See docs/development/PUBLICATION_BROKER.md's 'Server-Side PublicationGrant' section, which is the semantic owner of the grant lifecycle this schema only describes the shape of.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["grant_id", "request_digest", "repository_owner", "repository_name", "branch", "base_branch", "base_commit", "expires_at", "state", "authorized_at", "state_changed_at"],
+  "properties": {
+    "grant_id": { "type": "string", "pattern": "^[0-9a-f]{32}$", "description": "16 random bytes, hex-encoded (internal/grant.newGrantID)." },
+    "request_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "The exact REQUEST DIGEST this grant authorizes -- a grant is bound to at most one digest, ever." },
+    "repository_owner": { "type": "string", "minLength": 1 },
+    "repository_name": { "type": "string", "minLength": 1 },
+    "branch": { "type": "string", "minLength": 1 },
+    "base_branch": { "type": "string", "minLength": 1 },
+    "base_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "state": { "enum": ["AUTHORIZED", "IN_PROGRESS", "PUBLISHED", "BLOCKED", "REVOKED", "EXPIRED"] },
+    "authorized_at": { "type": "string", "format": "date-time" },
+    "state_changed_at": { "type": "string", "format": "date-time" },
+    "blocked_reason": { "type": "string", "minLength": 1, "description": "Present only once state is BLOCKED." },
+    "remote_head_observed": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "Set once a push under this grant succeeds -- what makes an identical retry after a partial failure idempotent rather than re-pushing." },
+    "pr_number": { "type": "integer", "minimum": 1, "description": "Present only once a PR has been created or reused under this grant." }
+  }
+}

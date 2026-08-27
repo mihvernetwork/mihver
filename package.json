@@ -11,7 +11,9 @@
     "check:project-consistency": "node scripts/dev/project-consistency.mjs",
     "test:project-consistency": "node tests/dev/project-consistency.test.mjs",
     "publication-builder": "node scripts/dev/publication-builder.mjs",
-    "test:publication-builder": "node tests/dev/publication-builder.test.mjs"
+    "test:publication-builder": "node tests/dev/publication-builder.test.mjs",
+    "test:publication-broker": "cd tools/publication-broker && go test ./...",
+    "test:publication-remote-name-parity": "node tests/dev/publication-remote-name-parity.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

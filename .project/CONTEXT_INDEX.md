@@ -35,9 +35,11 @@ that's a gap in the index, not license to guess; search deliberately, and consid
 | Deterministic contract validator + fixtures | `tests/contracts/validate-contracts.mjs`, `tests/contracts/fixtures/**` |
 | Claude/Codex execution model, Git & branch workflow, privilege-separated publication | `docs/development/AGENT_POLICY.md` |
 | Document Owner/Mirror/Historical model, Task File Scope (Primary/Conditional/Forbidden) | `docs/development/AGENT_POLICY.md` ("Document Authority Model", "Task File Scope Model") |
-| Codex role definitions (Scout/Implementer/Verifier/Reviewer), capability matrix, output contracts, Publication Protocol (PublicationEnvelope, Local Publication Builder, Publication Receipt, future Broker interface) | `docs/development/CODEX_ROLES.md` |
+| Codex role definitions (Scout/Implementer/Verifier/Reviewer), capability matrix, output contracts, Publication Protocol (PublicationEnvelope, Local Publication Builder, Publication Receipt) | `docs/development/CODEX_ROLES.md` |
 | Deterministic Local Publication Builder (local commit only; never pushes) + adversarial tests | `scripts/dev/publication-builder.mjs`, `tests/dev/publication-builder.test.mjs` |
-| Publication Envelope / Receipt machine-readable schemas | `schemas/dev/publication-envelope.schema.json`, `schemas/dev/publication-receipt.schema.json` |
+| Publication Envelope / Receipt machine-readable schemas + Go-validator parity test | `schemas/dev/publication-envelope.schema.json`, `schemas/dev/publication-receipt.schema.json`, `tests/dev/publication-remote-name-parity.test.mjs` |
+| Privileged Publication Broker: architecture, protocol, deployment design (source implemented V3.1-B; NOT provisioned/activated) | `docs/development/PUBLICATION_BROKER.md`, `tools/publication-broker/**` |
+| Publication Broker wire/state machine-readable schemas | `schemas/dev/publication-broker-request.schema.json`, `schemas/dev/publication-grant.schema.json`, `schemas/dev/publication-broker-result.schema.json`, `schemas/dev/publication-package-manifest.schema.json` |
 | Task completion checklist, review outcome vocabulary, Final Consistency Sweep, Lifecycle Gates | `docs/development/REVIEW_PROTOCOL.md` |
 | Human → Claude task prompt shape, Publication/Merge model | `docs/development/TASK_TEMPLATE.md` |
 | Deterministic development-consistency checks | `scripts/dev/project-consistency.mjs` (`npm run check:project-consistency`) |

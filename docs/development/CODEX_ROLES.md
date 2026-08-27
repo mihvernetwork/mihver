@@ -13,7 +13,8 @@ authoritative on *what a given role's own contract looks like* once Claude has d
 retired as of V3.1-A (`DEVELOPMENT-ORCHESTRATION-V3.1-A`) — real V3 dogfood proved Codex sandboxes
 have no network access and therefore could never functionally or safely own GitHub publication. See
 "Publication Protocol" below for the deterministic, non-LLM subsystem that replaced it, and
-"Future Publication Broker Interface" for what is explicitly not yet implemented.
+"Publication Broker (V3.1-B — source implemented, NOT provisioned/activated)" for what remains
+before remote publication automation is actually available.
 
 ## Capability Matrix
 
@@ -28,8 +29,8 @@ No role ever self-approves its own output, marks a task complete, or advances MI
 step — that authority is Claude's (technical assessment) and, beyond that, the human's (governance
 decision), per `AGENT_POLICY.md`'s Authority Hierarchy. No role mutates Git/repository publication
 state — that authority now belongs only to the deterministic Local Publication Builder (local commit
-only) and, in future, the privileged Publication Broker (not implemented) — see "Publication
-Protocol" below.
+only) and, once provisioned, the privileged Publication Broker (source implemented as of V3.1-B, not
+yet provisioned/activated — see `PUBLICATION_BROKER.md`) — see "Publication Protocol" below.
 
 ## SCOUT
 
@@ -116,11 +117,14 @@ finding before acting on it; a Reviewer's verdict is a claim to check, not a fac
 
 V3.1-A (`DEVELOPMENT-ORCHESTRATION-V3.1-A`) replaced the Codex Git Operator role above with a
 privilege-separated pipeline. Neither Claude nor any Codex role holds GitHub write credentials —
-only a future privileged, non-LLM Publication Broker will:
+only the privileged, non-LLM Publication Broker (source implemented as of V3.1-B, not yet
+provisioned/activated) does, once a human provisions it:
 
 ```text
 Claude → PublicationEnvelope → Local Publication Builder → local commit SHA
-                                                              → Publication Broker (NOT IMPLEMENTED)
+                                                              → PublicationPackage (V3.1-B)
+                                                              → Publication Broker
+                                                                (source implemented, NOT PROVISIONED)
                                                               → GitHub App → task branch / PR
 ```
 
@@ -147,8 +151,9 @@ allowed_files: <exact file paths only, each unique, each either "present" (a reg
        matching neither shape, or a duplicate, is malformed (BLOCKED)>
 publication_fingerprint: <the deterministic digest — see below — over exactly `allowed_files`>
 commit_message: <verbatim>
-pr_expected: true/false                          <- carried for the future Broker; NOT actionable today
-pr_title / pr_body: <verbatim, if pr_expected>    <- carried for the future Broker; NOT actionable today
+pr_expected: true/false                          <- carried through to the Broker's PublicationPackage;
+                                                      NOT actionable until the Broker is provisioned
+pr_title / pr_body: <verbatim, if pr_expected>    <- same; NOT actionable until the Broker is provisioned
 ```
 
 ### Local Publication Builder
@@ -280,25 +285,41 @@ because the Builder never performs either. See
 [schemas/dev/publication-receipt.schema.json](../../schemas/dev/publication-receipt.schema.json) for
 the full shape.
 
-### Future Publication Broker Interface
+### Publication Broker (V3.1-B — source implemented, NOT provisioned/activated)
 
-Defined here as an interface only — **NOT IMPLEMENTED** by any code in this repository as of
-V3.1-A. The future privileged Broker will receive a PublicationEnvelope plus the Local Publication
-Builder's Publication Receipt (specifically its `commit_sha`), independently re-verify sufficient
-facts (branch identity, ancestry, fingerprint, receipt integrity) against its own view of the
-repository, and only then perform the actual push and, if `pr_expected` is true, PR creation/update.
+Owned in full by [PUBLICATION_BROKER.md](./PUBLICATION_BROKER.md), not restated here. As of
+`DEVELOPMENT-ORCHESTRATION-V3.1-B-PRIVILEGED-PUBLICATION-BROKER-FOUNDATION`, the privileged Broker's
+source, protocol, and tests are implemented (`tools/publication-broker/`) — the interface sketched in
+earlier V3.1-A text (a bare Envelope + Receipt handoff) has been superseded by the actual implemented
+transport: the unprivileged side builds an immutable **PublicationPackage** (Envelope bytes, Receipt
+bytes, a self-contained Git bundle, and a manifest binding their digests — see
+`schemas/dev/publication-package-manifest.schema.json`), computes an ambiguity-free **REQUEST
+DIGEST** over it, and a human independently authorizes that exact digest via the Broker's privileged
+admin socket before the Broker will act on it — see `PUBLICATION_BROKER.md`'s "Server-Side
+PublicationGrant" section for why a Claude-authored Envelope alone is never sufficient authorization
+evidence. The Broker never trusts the Envelope/Receipt's own claims for anything remote-effect-
+critical — it independently re-derives branch identity, commit ancestry/parentage, changed paths, and
+the canonical fingerprint from its own imported copy of the Git object graph before ever minting a
+GitHub write token.
 
-**NOT IMPLEMENTED (belongs to V3.1-B):**
+**IMPLEMENTED (source, as of V3.1-B) but NOT PROVISIONED/ACTIVATED:**
 
-- a separate OS identity for the Broker process
-- a GitHub App credential
-- a Unix-socket/MCP privilege boundary between Claude/Codex and the Broker
-- a real `git push`
-- PR creation
-- a GitHub ruleset enforcing this boundary server-side
+- the Broker source itself (`tools/publication-broker/`), its protocol, and its adversarial test
+  suite (`npm run test:publication-broker`) — all tested against disposable local Git repos, local
+  Unix sockets, and fake HTTP servers, never a real GitHub credential
+- a separate OS identity for the Broker process — designed in `PUBLICATION_BROKER.md`'s "macOS
+  Privilege/Deployment Design", not created by any task to date
+- a GitHub App credential — no App exists, no private key has been generated or installed
+- the Unix-socket privilege boundary between Claude/Codex and the Broker — the client/admin socket
+  *code* exists and is tested; no socket is listening against real infrastructure
+- a real `git push` or PR creation against GitHub — the *mechanics* are implemented and tested
+  against fakes; never exercised against a live credential
+- a GitHub ruleset enforcing this boundary server-side — designed, not applied
 
-**Until V3.1-B exists: REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** No code path — Claude
-directly, any Codex role, or the Local Publication Builder — pushes a branch or touches a PR. Human
-manual publication (the human runs `git push`/`gh pr create` themselves from the Builder's local
-commit) is the temporary fallback for every task, regardless of a task's own Publication fields. See
-`AGENT_POLICY.md`'s "Git & Branch Workflow" and `TASK_TEMPLATE.md`'s Publication field defaults.
+**Until V3.1-C's human provisioning (see `PUBLICATION_BROKER.md`'s own checklist) and a passing
+end-to-end live dogfood: REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** No code path — Claude
+directly, any Codex role, the Local Publication Builder, or the now-implemented-but-unprovisioned
+Broker source — pushes a branch or touches a PR. Human manual publication (the human runs
+`git push`/`gh pr create` themselves from the Builder's local commit) remains the fallback for every
+task, regardless of a task's own Publication fields, exactly as under V3.1-A. See `AGENT_POLICY.md`'s
+"Git & Branch Workflow" and `TASK_TEMPLATE.md`'s Publication field defaults.

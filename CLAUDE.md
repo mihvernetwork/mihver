@@ -26,21 +26,26 @@ the rules below.
 MIHVER's publication path is: Claude constructs a **PublicationEnvelope** → the deterministic,
 non-LLM, network-free **Local Publication Builder**
 (`scripts/dev/publication-builder.mjs`) validates it and produces exactly one **local** commit →
-a future privileged **Publication Broker** (not implemented — see below) independently verifies and
+the privileged **Publication Broker** (source implemented as of V3.1-B under
+`tools/publication-broker/`; NOT provisioned or activated — see below) independently verifies and
 performs the actual push/PR. See
-[docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md)'s "Publication Protocol" and
-"Future Publication Broker Interface" for the full contract, and
+[docs/development/PUBLICATION_BROKER.md](docs/development/PUBLICATION_BROKER.md) for the Broker's
+full architecture/protocol, [docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md)'s
+"Publication Protocol" for how it fits the overall pipeline, and
 [schemas/dev/publication-envelope.schema.json](schemas/dev/publication-envelope.schema.json) /
 [schemas/dev/publication-receipt.schema.json](schemas/dev/publication-receipt.schema.json) for the
 machine-readable shapes.
 
-**REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** The privileged Publication Broker (separate OS
-identity, GitHub App credential, privilege boundary, real push, PR creation, GitHub ruleset) is not
-implemented by any code in the repository today. Until it exists, no automated path — not Claude
-directly, not any Codex role — pushes a branch or creates/modifies a PR. **Human manual publication
-is the temporary fallback** for every task, regardless of what a task's own Publication fields say.
-This retires the earlier Codex Git Operator role and Claude's own direct push/PR exception, both of
-which assumed an LLM-adjacent actor could safely hold that authority.
+**REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** The Publication Broker's source is implemented
+and tested (never against a live GitHub credential), but its privileged runtime — a separate OS
+identity, an installed GitHub App credential, an active privilege boundary, and an applied GitHub
+ruleset — is NOT provisioned by any task to date. Until a human completes that provisioning (see
+`PUBLICATION_BROKER.md`'s "Human Provisioning Checklist") and an end-to-end live dogfood passes, no
+automated path — not Claude directly, not any Codex role, not the Broker source sitting unprovisioned
+— pushes a branch or creates/modifies a PR. **Human manual publication is the temporary fallback**
+for every task, regardless of what a task's own Publication fields say. This retires the earlier
+Codex Git Operator role and Claude's own direct push/PR exception, both of which assumed an
+LLM-adjacent actor could safely hold that authority.
 
 ## Fast Session Bootstrap
 
@@ -102,8 +107,11 @@ task), `.project/REVIEW_STATE.md` (review/approval state), and `.project/CONTEXT
   - [docs/development/CODEX_ROLES.md](docs/development/CODEX_ROLES.md) — the four Codex role
     definitions (Scout/Implementer/Verifier/Reviewer), their capability matrix and output contracts,
     and the Publication Protocol (PublicationEnvelope, Local Publication Builder, Publication
-    Receipt, and the not-yet-implemented Publication Broker interface). Not restated here or in
-    `AGENT_POLICY.md` — read it directly when delegating.
+    Receipt). Not restated here or in `AGENT_POLICY.md` — read it directly when delegating.
+  - [docs/development/PUBLICATION_BROKER.md](docs/development/PUBLICATION_BROKER.md) — the
+    privileged Publication Broker's architecture, protocol, and deployment design (source
+    implemented as of V3.1-B; NOT provisioned or activated). Read it when a task touches
+    `tools/publication-broker/` or Broker provisioning — not restated here.
   - [docs/development/REVIEW_PROTOCOL.md](docs/development/REVIEW_PROTOCOL.md) — the standard
     completion checklist, outcome vocabulary, and Lifecycle Gates for every task, including PR
     merge-readiness.

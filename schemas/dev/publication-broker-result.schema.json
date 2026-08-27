@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/publication-broker-result.schema.json",
+  "title": "MIHVER Publication Broker Result",
+  "description": "Machine-readable shape of the Publication Broker's own output for one publish request (tools/publication-broker/internal/server.Result is the canonical Go implementation). Mirrors the Local Publication Builder's COMMITTED/BLOCKED vocabulary (schemas/dev/publication-receipt.schema.json) at the remote-effect layer: PUBLISHED here means the Broker independently verified the commit, pushed it, and (if pr_expected) created/updated a PR -- never merged, approved, or closed one. This result NEVER carries a token, private key, or any other secret -- see docs/development/PUBLICATION_BROKER.md's 'GitHub App Credential / Token Model' section.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status"],
+  "properties": {
+    "status": { "enum": ["PUBLISHED", "BLOCKED"] },
+    "grant_id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+    "commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "remote_head": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "The remote branch's head SHA after this operation; required (non-schema-enforced) when status is PUBLISHED." },
+    "pr_number": { "type": "integer", "minimum": 1, "description": "Present only when pr_expected was true and a PR was created or reused." },
+    "failure_reason": { "type": "string", "minLength": 1, "description": "Required (non-schema-enforced), exact, machine-readable reason when status is BLOCKED; absent on PUBLISHED." }
+  }
+}

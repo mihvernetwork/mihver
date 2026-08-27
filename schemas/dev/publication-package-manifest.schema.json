@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/publication-package-manifest.schema.json",
+  "title": "MIHVER Publication Package Manifest",
+  "description": "Machine-readable shape of the PublicationPackage manifest V3.1-B's unprivileged client (cmd/mihver-publish) produces alongside a self-contained Git bundle, and the privileged Publication Broker consumes as UNTRUSTED input (tools/publication-broker/internal/protocol.PackageManifest is the canonical Go implementation of this exact shape). The manifest binds the Envelope/Receipt/bundle digests the REQUEST DIGEST is computed over -- see docs/development/PUBLICATION_BROKER.md's 'PublicationPackage / Request Digest' section, which is the semantic owner of the recipe itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol_version", "envelope_digest_sha256", "receipt_digest_sha256", "bundle_digest_sha256", "commit_sha"],
+  "properties": {
+    "protocol_version": { "const": "1.0.0" },
+    "envelope_digest_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 hex digest of the exact raw Envelope JSON bytes carried alongside this manifest." },
+    "receipt_digest_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 hex digest of the exact raw Receipt JSON bytes carried alongside this manifest." },
+    "bundle_digest_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 hex digest of the exact raw Git bundle bytes carried alongside this manifest." },
+    "commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "The exact commit the bundle is claimed to carry; the Broker independently confirms this by resolving the bundle's fixed import ref after fetching it into broker-owned storage -- see internal/pkgimport." }
+  }
+}

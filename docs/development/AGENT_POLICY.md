@@ -18,7 +18,7 @@ Claude Orchestrator
           ↓
 Local Publication Builder (deterministic, non-LLM, network-free — local commit only)
           ↓
-Publication Broker (privileged, non-LLM — NOT IMPLEMENTED, see CODEX_ROLES.md)
+Publication Broker (privileged, non-LLM — source implemented, NOT provisioned, see PUBLICATION_BROKER.md)
           ↓
         GitHub PR
           ↓
@@ -230,12 +230,29 @@ in [CODEX_ROLES.md](./CODEX_ROLES.md)):
 Branch prep, commit, push, and PR creation are no longer a Codex role at all — see "Git & Branch
 Workflow" below. Local-commit publication is Claude constructing a PublicationEnvelope and invoking
 the deterministic Local Publication Builder; push/PR creation are NOT AVAILABLE until the privileged
-Publication Broker (V3.1-B) exists.
+Publication Broker (source implemented as of V3.1-B, not yet provisioned/activated) is provisioned
+and live.
 
 Do not spawn a Codex worker merely to simulate parallelism or thoroughness. If a task is a single
 trivial lookup, or something Claude can do directly with equal reliability and less overhead, do it
 directly — see "Claude Responsibilities" above for when direct action is the exception, not the
 default.
+
+**A Claude `Agent`/subagent never satisfies a task requirement that explicitly requires Codex** — this
+is not a naming technicality: a Claude `general-purpose` (or any other non-Codex) subagent performing
+a Scout/Implementer/Verifier/Reviewer-shaped task is still Claude, not Codex, regardless of which role
+label its prompt uses. (Confirmed gap, `DEVELOPMENT-ORCHESTRATION-V3.1-B-PROVENANCE-CORRECTION-AND-
+CODEX-VERIFICATION`: two "independent reviewer" rounds and one "final validation" round on the
+Publication Broker branch used Claude/Sonnet subagents or direct Claude execution where the actual
+Codex MCP tool — `mcp__codex__codex`/`mcp__codex__codex-reply` — should have been invoked instead.)
+When a task maps to one of the four Codex roles and explicitly requires Codex, Claude must invoke the
+actual Codex MCP tool for that piece of work. If Codex is unavailable, fails to start, or requires an
+approval that cannot be completed, the task must report `BLOCKED_BY_CODEX_UNAVAILABLE` rather than
+silently substituting a Claude subagent or direct Claude execution and presenting it as equivalent.
+Every final report that delegates role-mapped work must identify the actual tool family used (Codex
+MCP vs. a Claude subagent vs. direct Claude execution) and the invocation count — never leave this
+ambiguous by omission. This rule grants Codex no push, PR, merge, credential, or publication authority
+beyond what "Publication Protocol" above already defines.
 
 ## Task Contract
 
@@ -337,26 +354,28 @@ Core invariant:
 
 > `main` contains only reviewed, approved, and frozen MIHVER checkpoints.
 
-### Publication is privilege-separated, not a Codex role (V3.1-A)
+### Publication is privilege-separated, not a Codex role (V3.1-A / V3.1-B)
 
 Real V3 dogfood proved Codex sandboxes have no network access and therefore could never safely or
 functionally own GitHub publication — the Codex Git Operator role from V3 is retired. Publication
 now flows: Claude constructs a **PublicationEnvelope** → the deterministic, non-LLM, network-free
 **Local Publication Builder** (`scripts/dev/publication-builder.mjs`) produces exactly one **local**
-commit and a Publication Receipt → a future privileged **Publication Broker** independently
-verifies and performs the actual push/PR. Full contract (Envelope shape, Builder behavior, Receipt
-shape, and what the Broker is/isn't) lives in [CODEX_ROLES.md](./CODEX_ROLES.md)'s "Publication
-Protocol" — not restated here.
+commit and a Publication Receipt → the privileged **Publication Broker** independently verifies and
+performs the actual push/PR. Full contract (Envelope shape, Builder behavior, Receipt shape) lives in
+[CODEX_ROLES.md](./CODEX_ROLES.md)'s "Publication Protocol"; the Broker's own architecture, protocol,
+and deployment design own in [PUBLICATION_BROKER.md](./PUBLICATION_BROKER.md) — not restated here.
 
-**The Broker is NOT IMPLEMENTED.** No separate OS identity, GitHub App credential, privilege
-boundary, real push, PR creation, or GitHub ruleset exists yet — that is V3.1-B's scope, not this
-policy's. **Until it exists: REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** Neither Claude nor any
-Codex role pushes a branch or creates/modifies a PR, under any task authorization whatsoever — the
-"Push" and "Pull Requests" sections below are retired as *automated* paths and describe only what
-remains true (never `main`, never force, human-only merge) for the human's own manual publication.
-This also retires Claude's own former direct push/PR exception: an LLM-adjacent actor holding that
-authority is exactly the privilege-separation gap V3.1-A exists to close, regardless of whether it
-is exercised by Claude or by a delegated Codex worker.
+**The Broker's source is implemented (V3.1-B, `tools/publication-broker/`) but NOT PROVISIONED.** No
+separate OS identity has been created, no GitHub App credential installed, no privilege boundary
+active, and no GitHub ruleset applied — provisioning that is V3.1-C's scope, not this policy's, and
+not any task's default authority. **Until provisioning (and a passing end-to-end live dogfood):
+REMOTE PUBLICATION AUTOMATION = NOT AVAILABLE.** Neither Claude nor any Codex role — nor the Broker
+source sitting unprovisioned — pushes a branch or creates/modifies a PR, under any task authorization
+whatsoever — the "Push" and "Pull Requests" sections below are retired as *automated* paths and
+describe only what remains true (never `main`, never force, human-only merge) for the human's own
+manual publication. This also retires Claude's own former direct push/PR exception: an LLM-adjacent
+actor holding that authority is exactly the privilege-separation gap V3.1-A exists to close,
+regardless of whether it is exercised by Claude or by a delegated Codex worker.
 
 **What Claude may still do directly:** author a PublicationEnvelope and invoke the Local Publication
 Builder to produce a local commit (see "Commits" below — this replaces the old PREPARE/PUBLISH
@@ -466,18 +485,19 @@ approved work.
 
 **NOT AVAILABLE as an automated path.** Neither Claude nor any Codex worker pushes any branch, under
 any task authorization whatsoever — see "Publication is privilege-separated, not a Codex role
-(V3.1-A)" above. Pushing a task branch is human manual action until the privileged Publication
-Broker (V3.1-B) exists. This is an absolute rule, not one a task prompt can opt back into: `main`
-was never pushable by Claude/Codex either, and now no branch is.
+(V3.1-A / V3.1-B)" above. Pushing a task branch is human manual action until the privileged
+Publication Broker (source implemented as of V3.1-B, not yet provisioned/activated) is provisioned
+and live. This is an absolute rule, not one a task prompt can opt back into: `main` was never
+pushable by Claude/Codex either, and now no branch is.
 
 ### Pull Requests
 
 **NOT AVAILABLE as an automated path**, for the same reason as "Push" above — opening, modifying, or
 touching a PR requires the same GitHub write credential a push does, which no LLM-adjacent actor
-holds. Until the Publication Broker (V3.1-B) exists, PR creation is exclusively human manual action,
-from the branch the human pushes themselves off the Local Publication Builder's local commit.
+holds. Until the Publication Broker is provisioned and live, PR creation is exclusively human manual
+action, from the branch the human pushes themselves off the Local Publication Builder's local commit.
 
-Once the Broker exists, the eventual lifecycle is:
+Once the Broker is provisioned and activated, the eventual lifecycle is:
 
 ```text
 main
