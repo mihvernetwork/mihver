@@ -764,6 +764,18 @@ function isGlobalStatus(args) {
   return sub[0] === "status" && sub.length === 2;
 }
 
+const FILTER_CONFIG_QUERY = ["config", "--get-regexp", "^filter\\..+\\.(clean|process|smudge)$"];
+
+function deepEqualArgs(actual, expected) {
+  return actual.length === expected.length && actual.every((value, index) => value === expected[index]);
+}
+
+function noConfiguredFiltersError() {
+  const err = new Error("no matching filter config");
+  err.status = 1;
+  return err;
+}
+
 // --- Finding 1: degraded pack -----------------------------------------------------------------------
 
 test("F1: nonexistent --repo path produces a schema-valid, deterministic degraded pack; exit 2; JSON-only stdout", () => {
@@ -1301,6 +1313,120 @@ test("F7: canonicalizeJson rejects an array with an extraneous own property outs
 // =====================================================================================================
 
 // --- Finding G1: fsmonitor / optional-lock isolation ------------------------------------------------
+
+test("G0: a configured repository-local Git filter driver aborts before any status/diff call", () => {
+  const { root } = standardFixture("g0-filter-configured", { taskBranch: "main" });
+  const workingTreeCalls = [];
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      const sub = subArgs(args);
+      if (sub[0] === "status" || sub[0] === "diff") workingTreeCalls.push(sub);
+      if (deepEqualArgs(sub, FILTER_CONFIG_QUERY)) return "filter.lfs.clean=git-lfs clean -- %f\n";
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.equal(pack.validity.valid, false);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.equal(pack.validity.errors[0].code, "GIT_FILTER_DRIVER_CONFIGURED");
+  assert.match(pack.validity.errors[0].message, /\(1 filter driver definition\(s\) detected;/);
+  assert.ok(!pack.validity.errors[0].message.includes("git-lfs"));
+  assert.deepEqual(workingTreeCalls, []);
+});
+
+test("G0e: crafted filter output is reduced to a bounded count and never embedded in the degraded message", () => {
+  const { root } = standardFixture("g0-filter-untrusted-output", { taskBranch: "main" });
+  const workingTreeCalls = [];
+  const dangerousLine =
+    "filter.evil.clean git-lfs.clean --dangerous-arg-with-many-repeated-.clean-.clean-.clean-substrings";
+  const configuredOutput = `${Array.from({ length: 250 }, () => dangerousLine).join("\n")}\n`;
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      const sub = subArgs(args);
+      if (sub[0] === "status" || sub[0] === "diff") workingTreeCalls.push(sub);
+      if (deepEqualArgs(sub, FILTER_CONFIG_QUERY)) return configuredOutput;
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  const error = pack.validity.errors[0];
+  assert.equal(pack.validity.valid, false);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.equal(error.code, "GIT_FILTER_DRIVER_CONFIGURED");
+  assert.match(error.message, /\(250 filter driver definition\(s\) detected;/);
+  assert.ok(!error.message.includes("--dangerous-arg"));
+  assert.ok(error.message.length < 2000);
+  assert.deepEqual(workingTreeCalls, []);
+});
+
+test("G0b: git config --get-regexp status 1 means no filter and compilation proceeds normally", () => {
+  const { root } = standardFixture("g0-filter-absent", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (deepEqualArgs(subArgs(args), FILTER_CONFIG_QUERY)) throw noConfiguredFiltersError();
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.equal(pack.validity.valid, true);
+  assert.equal(pack.validity.executionEligible, true);
+});
+
+test("G0c: an unexpected filter-driver query failure aborts before any status/diff call", () => {
+  const { root } = standardFixture("g0-filter-check-failed", { taskBranch: "main" });
+  const workingTreeCalls = [];
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      const sub = subArgs(args);
+      if (sub[0] === "status" || sub[0] === "diff") workingTreeCalls.push(sub);
+      if (deepEqualArgs(sub, FILTER_CONFIG_QUERY)) {
+        const err = new Error("unexpected git config failure");
+        err.status = 3;
+        throw err;
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.equal(pack.validity.valid, false);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.equal(pack.validity.errors[0].code, "GIT_FILTER_DRIVER_CHECK_UNAVAILABLE");
+  assert.deepEqual(workingTreeCalls, []);
+});
+
+test("G0d: the filter-driver query uses GIT_GLOBAL_ARGS and the hardened Git environment", () => {
+  const { root } = standardFixture("g0-filter-query-hardening", { taskBranch: "main" });
+  let queryCall = null;
+  compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (deepEqualArgs(subArgs(args), FILTER_CONFIG_QUERY)) {
+        queryCall = { cmd, args, opts };
+        throw noConfiguredFiltersError();
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.ok(queryCall);
+  assert.equal(queryCall.cmd, "git");
+  assert.deepEqual(queryCall.args.slice(0, GIT_GLOBAL_ARGS.length), GIT_GLOBAL_ARGS);
+  assert.deepEqual(subArgs(queryCall.args), FILTER_CONFIG_QUERY);
+  assert.equal(queryCall.opts.cwd, root);
+  assert.equal(queryCall.opts.shell, false);
+  assert.deepEqual(queryCall.opts.stdio, ["ignore", "pipe", "pipe"]);
+  const gitKeys = Object.keys(queryCall.opts.env).filter((key) => key.startsWith("GIT_")).sort();
+  assert.deepEqual(
+    gitKeys,
+    [
+      "GIT_ATTR_NOSYSTEM",
+      "GIT_CONFIG_GLOBAL",
+      "GIT_CONFIG_NOSYSTEM",
+      "GIT_LITERAL_PATHSPECS",
+      "GIT_NO_REPLACE_OBJECTS",
+      "GIT_OPTIONAL_LOCKS",
+      "GIT_PAGER",
+      "GIT_TERMINAL_PROMPT",
+    ]
+  );
+  assert.equal(queryCall.opts.env.GIT_CONFIG_NOSYSTEM, "1");
+  assert.equal(queryCall.opts.env.GIT_CONFIG_GLOBAL, process.platform === "win32" ? "NUL" : "/dev/null");
+  assert.equal(queryCall.opts.env.GIT_ATTR_NOSYSTEM, "1");
+});
 
 test("G1: every Git invocation includes --no-optional-locks and -c core.fsmonitor= (fsmonitor/lock isolation)", () => {
   const { root } = standardFixture("g1-global-args", { taskBranch: "main" });

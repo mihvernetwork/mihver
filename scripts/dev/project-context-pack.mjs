@@ -223,6 +223,31 @@ function buildHardenedGitEnv() {
   return env;
 }
 
+function detectConfiguredGitFilters(repoRoot, execFileSyncImpl) {
+  const hardenedEnv = buildHardenedGitEnv();
+  try {
+    const out = execFileSyncImpl(
+      "git",
+      [...GIT_GLOBAL_ARGS, "config", "--get-regexp", "^filter\\..+\\.(clean|process|smudge)$"],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+        shell: false,
+        stdio: ["ignore", "pipe", "pipe"],
+        env: hardenedEnv,
+      }
+    );
+    const stdout = String(out);
+    const definitionCount = stdout.split(/\r?\n/).filter(Boolean).length;
+    return stdout.length > 0
+      ? { ok: false, reason: "CONFIGURED", definitionCount }
+      : { ok: false, reason: "CHECK_FAILED" };
+  } catch (err) {
+    if (err?.status === 1) return { ok: true };
+    return { ok: false, reason: "CHECK_FAILED" };
+  }
+}
+
 // Builds a `tryGit(repoRoot, args)` function bound to a specific execFileSync-compatible
 // implementation. The production default (see compileProjectContextPack) always binds the real
 // `execFileSync`; tests bind a fake implementation that inspects `args` (after stripping
@@ -948,10 +973,17 @@ function logInternalError(detail) {
 // failed its own schema self-validation. Deliberately built WITHOUT going through the normal
 // schema-validating finalize path (finalizePack) -- a degraded pack must be correct by
 // construction and must never recursively risk the same failure it exists to recover from. Fully
-// static and deterministic: no caller-supplied text (including an absolute --repo path) and no
-// raw exception message is ever included -- only a fixed, stable code/message pair. Exception
-// detail goes to stderr via logInternalError, never into the returned object.
-function buildDegradedPack() {
+// static and deterministic: no caller-supplied text (including an absolute --repo path), raw
+// exception message, or repository configuration content is ever included. Overrides use fixed,
+// stable code/message templates plus at most a bounded safe integer. Exception detail goes to
+// stderr via logInternalError, never into the returned object.
+function buildDegradedPack(errorOverride = {}) {
+  const error = {
+    code: errorOverride.code ?? "INTERNAL_COMPILATION_ERROR",
+    message:
+      errorOverride.message ??
+      "Pack compilation failed and a safe degraded snapshot was returned instead. See stderr for diagnostic detail.",
+  };
   const body = {
     $schema: SCHEMA_URI,
     kind: "ProjectContextPack",
@@ -983,12 +1015,7 @@ function buildDegradedPack() {
     validity: {
       valid: false,
       executionEligible: false,
-      errors: [
-        {
-          code: "INTERNAL_COMPILATION_ERROR",
-          message: "Pack compilation failed and a safe degraded snapshot was returned instead. See stderr for diagnostic detail.",
-        },
-      ],
+      errors: [error],
       warnings: [],
     },
   };
@@ -1029,7 +1056,22 @@ export function compileProjectContextPack(repoRoot, options = {}) {
       return buildDegradedPack();
     }
 
-    const tryGit = buildTryGit(options.execFileSyncImpl ?? execFileSync);
+    const execFileSyncImpl = options.execFileSyncImpl ?? execFileSync;
+    const tryGit = buildTryGit(execFileSyncImpl);
+    const filterDetection = detectConfiguredGitFilters(repoRoot, execFileSyncImpl);
+    if (!filterDetection.ok) {
+      if (filterDetection.reason === "CONFIGURED") {
+        return buildDegradedPack({
+          code: "GIT_FILTER_DRIVER_CONFIGURED",
+          message: `Repository-local Git config defines one or more filter.<name>.clean/.process/.smudge drivers, which Git can invoke as an arbitrary command during a working-tree git status/diff. Compilation aborted before any such command ran. (${filterDetection.definitionCount} filter driver definition(s) detected; names withheld to avoid embedding untrusted repository configuration content in this message.)`,
+        });
+      }
+      return buildDegradedPack({
+        code: "GIT_FILTER_DRIVER_CHECK_UNAVAILABLE",
+        message:
+          "The pre-flight check for configured Git filter drivers (git config --get-regexp) failed unexpectedly, so filter-driver safety could not be confirmed. Compilation aborted before any working-tree git status/diff ran, fail-closed.",
+      });
+    }
 
     // Start-of-compilation observation for the bounded consistency fence (Finding 4). This is a
     // change-detection fence, not a filesystem transaction/lock -- see this file's header comment

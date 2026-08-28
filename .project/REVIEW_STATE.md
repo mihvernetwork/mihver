@@ -15,79 +15,61 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: PROJECT-CONTINUITY-V1A-PR34-GIT-OBSERVATION-BOUNDARY-REVIEW-CLOSEOUT
+Task: PROJECT-CONTINUITY-V1A-PR34-GIT-FILTER-SIDE-EFFECT-CLOSURE
 Branch: `chore/project-continuity-v1a-context-pack`
 Target: main
 Publication:
 - Local Publication Builder authorized: no
 - remote publication: human manual fallback only (unchanged by this task)
-- one local commit only, per this task's own explicit instruction — no push/PR mutation/merge
+- no commit authorization granted — all changes below are uncommitted, working-tree only; no
+  push/PR mutation/merge
 
-Independent-review closeout for implementation commit `429cbefeeaacdf7a6ad859e31579af0f961f956f`
-(six Git-observation-boundary fixes), whose own required Codex-review phase a prior final report
-incorrectly skipped. Both reviewers reported material findings; all were adjudicated and every
-accepted one fixed. See `.project/CURRENT_TASK.md` for the full fix list.
+Closes the one remaining gap in `ProjectContextPack`'s Git child-process side-effect boundary:
+repository-local `filter.<name>.clean`/`.process`/`.smudge` drivers, which Git can invoke as an
+arbitrary command during an ordinary working-tree `git status`/`git diff`, were previously
+undetected. See `.project/CURRENT_TASK.md` for the full implementation/review/verification record;
+summarized here.
 
-**Reviewer A — Git Process Boundary** (`mcp__codex__codex`, threadId
-`01a0495c-e478-7520-b370-40fc5847ed3f`), inspecting the exact committed tree at `429cbef`. Verdict
-as reported: NOT PASS.
-- Critical (ACCEPTED): child environment was a strip-based denylist (`{...process.env}` minus
-  `GIT_*`), not an explicit allowlist — `PATH` and every other non-`GIT_*` variable remained
-  inherited. Fixed via `buildHardenedGitEnv`: an explicit allowlist (`PATH`, `HOME`/`USERPROFILE`,
-  XDG dirs, Windows/temp-dir variables) plus ten forced safe/deterministic values. `PATH`-based
-  executable resolution remains a documented, honestly-stated residual limitation, not claimed
-  closed — Node has no absolute-path-first resolution primitive, and every other Git-invoking
-  script in this repository shares the identical bare-command pattern.
-- High (ACCEPTED): `--no-replace-objects` absent. Fixed: added to `GIT_GLOBAL_ARGS` and
-  `GIT_NO_REPLACE_OBJECTS=1` force-set.
-- High (ACCEPTED): none of the requested deterministic/safety env controls were set. Fixed: all ten
-  now force-set (`GIT_OPTIONAL_LOCKS`, `GIT_TERMINAL_PROMPT`, `GIT_LITERAL_PATHSPECS`,
-  `GIT_NO_REPLACE_OBJECTS`, `GIT_CONFIG_NOSYSTEM`, `GIT_CONFIG_GLOBAL`, `GIT_ATTR_NOSYSTEM`,
-  `GIT_PAGER`, `LC_ALL`, `LANG`).
-- Medium (ACCEPTED): index-write test didn't exercise the touched-but-identical-content case;
-  environment tests only checked `GIT_DIR`. Addressed with a strengthened G3 test (checks the exact
-  forced-key set, and that `GIT_ASKPASS` is also stripped) plus a new G3c allowlist-structure test.
-  A live hostile-`PATH` proof test was deliberately not added — it would only demonstrate the
-  accepted, already-honestly-documented residual limitation, not a regression.
-- Low (ACCEPTED): documentation overstated the resulting isolation (didn't disclose `PATH`/`HOME`/
-  locale inheritance). Fixed in the same doc rewrite.
-- Confirmed clean: single centralized `tryGit` harness; `-c core.fsmonitor=` genuinely blocks a
-  configured fsmonitor; `.git/index` empirically unchanged (mtime/inode/size identical); `GIT_DIR`/
-  `GIT_WORK_TREE`/`GIT_INDEX_FILE` excluded; no temp files created; sole child-process target is
-  `"git"`.
+**Implementer** (`mcp__codex__codex`, thread `01a04992-89cb-76a2-8e90-b34220368829`): added
+`detectConfiguredGitFilters`, run before the first Git call the compiler makes
+(`observeGitState`'s `git status`), under the same hardened env/global-args every other call uses.
+Three-way exit-code handling: exit 0 with output → block (`GIT_FILTER_DRIVER_CONFIGURED`); `err.status
+=== 1` → no match, proceed; anything else → block (`GIT_FILTER_DRIVER_CHECK_UNAVAILABLE`, never
+conflated with "no match"). A blocking result returns a degraded pack immediately, before any
+working-tree Git call — structurally unreached, not merely skipped.
 
-**Reviewer B — Final Determinism** (`mcp__codex__codex`, threadId
-`01a0495e-b3d5-7551-b9b5-58d961dd95ae`), inspecting the same committed tree. Verdict as reported:
-NOT PASS.
-- High (ACCEPTED): `resolveRefForEachRef` accepted a malformed or multi-line `for-each-ref` result's
-  first line as a best-effort OID, or silently treated it as "the ref doesn't exist" — never as a
-  lookup failure. Reproduced empirically by the reviewer (malformed output fell through to the
-  `origin/main` fallback with `valid:true`). Fixed: a non-empty result is accepted only when it is
-  exactly one well-formed 40-hex OID line; any other non-empty shape now fails closed as
-  `BASELINE_REF_LOOKUP_UNAVAILABLE`.
-- Low (ACCEPTED): the fence's error message didn't mention branch, even though branch state is
-  bound into it. Fixed: message now names branch/detached state explicitly.
-- Confirmed clean: fence binds branch/detached, HEAD, and working-tree status all three, and a
-  branch-only change (same commit, different ref) does fail closed; genuine local-main/origin-main
-  lookup failures do block eligibility; the canonicalizer rejects all six exceptional property cases
-  (non-enumerable data/accessor properties, own symbol keys, array numeric accessors, non-enumerable
-  array indices, extra array properties) without evaluating or silently omitting any of them;
-  ordinary arrays/objects are unaffected; the pack remains derived and non-authorizing.
+**Reviewer** (`mcp__codex__codex`, thread `01a0499b-a1f3-7b13-99cc-ba59efb1a4cb`), fresh/
+independent. Verdict: CHANGES REQUIRED, one finding, ACCEPTED and fixed:
+- MAJOR: the original key-extraction regex could, via greedy backtracking, capture attacker-
+  controlled config *value* text (not just the key name) into an unbounded degraded-pack message —
+  and `buildDegradedPack` bypasses schema self-validation, so a crafted/numerous config could yield
+  a non-schema-valid pack and leak unsanitized command text. Fixed: the CONFIGURED path no longer
+  parses any text out of the git output at all — only a bounded integer count of matched lines,
+  combined with fixed template text. New test "G0e" (250 adversarial lines) confirms the message
+  never contains the attacker string; independently confirmed observed length 364 chars (schema
+  limit 2000). Re-checked by the same Reviewer post-fix: **VERDICT: RESOLVED** — all four PASS
+  items reconfirmed.
+- Confirmed clean (unaffected by the fix): exit-code three-way handling both directions; structural
+  short-circuit; config-resolution scope matches the later status/diff calls exactly (includes
+  followed, system/global disabled); fail-closed decision never depended on key extraction; both
+  pre-existing `buildDegradedPack` call sites unaffected; new codes match the schema's `code`
+  pattern; G0/G0b/G0c/G0d genuinely assert the short-circuit, not merely the error code; no
+  pre-existing test broke; new doc subsection and its TOCTOU residual-limitation disclosure match
+  the file's existing tone/rigor.
 
-**Post-fix revalidation (run directly by Claude, after every accepted finding above was fixed)**:
-`npm run test:context-pack` — 110/110 (up from 103, 7 new tests: R1/R1b/R1c/R2/R3/R4, plus a
-strengthened G3 and new G3c); `npm test` — 170/170; `npm run test:project-consistency` — 19/19;
-`npm run check:project-consistency` — 7/7; `npm run test:publication-remote-name-parity` — 44/44;
-`npm run test:publication-builder` — 42/42; Go `tools/publication-broker` suite unaffected and
-unchanged this task. Real-repository smoke output re-validated against the schema; the `diff
---name-only` call confirmed to carry `-c diff.external=` (before the `diff` token) and
-`--no-ext-diff` (after it); every Git invocation confirmed to include `--no-replace-objects`. `git
-status --short` before/after every compiler invocation identical (fixture and real repository) —
-the compiler still performs no filesystem write. `git diff --name-only` confined to
-`scripts/dev/project-context-pack.mjs`, `tests/dev/project-context-pack.test.mjs`, and
-`docs/development/PROJECT_CONTINUITY.md` — no forbidden file touched, `.project/DECISIONS_LOG.md`
-untouched.
+**Verifier** (`mcp__codex__codex`, three fresh sessions across the task, correcting a read-only-
+sandbox `mkdtemp` block partway through): `npm run test:context-pack` — 115/115 (5 new tests:
+G0/G0b/G0c/G0d/G0e); `npm test` — 170/170; `npm run test:project-consistency` — 19/19; `npm run
+check:project-consistency` — 7/7; `git diff --check` clean; real-repository `npm run context:pack`
+— `valid:true`, no filter-driver error code; `executionEligible:false` correctly, due solely to
+this task's own legitimately dirty working tree.
 
-**Human review of the implementation is the next gate** — this task does not authorize its own
-merge, push, marking PR #34 ready, or PR mutation. See `.project/PROJECT_STATE.md`'s "Next
-Authorized Action" once a human has reviewed this.
+**Process deviation, corrected mid-task**: Claude ran validation directly via Bash once before
+dispatching the first Verifier; the user corrected this twice. `docs/development/AGENT_POLICY.md`
+was amended — a separate, explicitly user-directed edit, not part of this task's own scope — to
+make Verifier delegation unconditional (no size threshold, no self-verification by a producing
+agent), mirroring the existing Implementer threshold rule.
+
+**Human review is the next gate** — this task does not authorize its own commit, merge, push,
+marking PR #34 ready, or PR mutation. See `.project/PROJECT_STATE.md`'s "Next Authorized Action"
+once a human has reviewed this and the separate `AGENT_POLICY.md` amendment.

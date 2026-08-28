@@ -152,6 +152,27 @@ changed-paths `git diff --name-only` call — additionally passes `-c diff.exter
 `diff` subcommand token) and `--no-ext-diff` (after it), so `changedPaths` is always Git's own
 internal diff, never a substituted external command's output.
 
+### Git filter-driver pre-flight
+
+Before the first filter-capable Git call, the compiler queries repository-local Git config (and
+its `include`/`includeIf` files) for any `filter.<name>.clean`, `.process`, or `.smudge` definition.
+These filter drivers can name arbitrary external commands that Git may invoke while comparing a
+tracked working-tree path during an otherwise ordinary `git status` or `git diff`. The query uses
+the same hardened arguments and environment as every other Git child process, with system and
+global config disabled. If any driver is configured, compilation returns a degraded pack with
+`GIT_FILTER_DRIVER_CONFIGURED` before any working-tree status/diff runs. Its diagnostic reports
+only the number of matching definitions; names and command values are withheld so untrusted,
+unbounded repository configuration content is never embedded in the pack. If the query itself
+cannot reliably distinguish configured from absent, compilation instead fails closed with
+`GIT_FILTER_DRIVER_CHECK_UNAVAILABLE`, also before any such call. Exit status 1 from
+`git config --get-regexp` is handled as its documented no-match result and permits compilation.
+
+**Documented residual limitation**: this pre-flight is a point-in-time check, not a lock. A
+concurrent local process that changes `.git/config` (or one of its included files) to add a filter
+driver after the check but before a subsequent `git status` runs is not caught. This is consistent
+with the compiler's existing threat model: a trusted local developer machine or CI runner already
+controls its own repository state; the pre-flight does not claim a stronger guarantee.
+
 Every Git subprocess is spawned with a **hardened, explicitly-allowlisted environment**
 (`buildHardenedGitEnv` in `scripts/dev/project-context-pack.mjs`) — built by starting from an empty
 object and copying in only a small fixed set of non-`GIT_*` variables Git/Node's own subprocess
