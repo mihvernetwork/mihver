@@ -248,3 +248,6 @@ Entries above this line are unmodified, per this log's append-only policy.
   zero-network, read-only, derived ProjectContextPack that never grants execution or publication
   authority. PR #34 is the human-review vehicle; merge remains human-only. —
   `docs/development/PROJECT_CONTINUITY.md`
+- 2026-08-29 — Project Continuity V1A accepted and frozen: PR #34 merged to `main`, squash commit
+  `dbdb4f7049d2a73728038f1c98efc47ddfee3727`, establishing the deterministic `ProjectContextPack` v1
+  foundation. — `docs/development/PROJECT_CONTINUITY.md`
