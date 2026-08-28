@@ -244,3 +244,14 @@ Entries above this line are unmodified, per this log's append-only policy.
   not assumed. Contract suite at this commit: **85/85**, confirmed by running `npm test` directly
   against `main`. No prior entry in this log recorded an approval decision for this merge; this
   entry records only the independently-verified merge fact, not a reconstructed human quote.
+- 2026-08-28 — Human-authorized `PROJECT-CONTINUITY-V1A-CONTEXT-PACK`: implement `ProjectContextPack`
+  v1, a deterministic, machine-readable, read-only derived snapshot of MIHVER's repository/task/
+  review state (`scripts/dev/project-context-pack.mjs`, `scripts/dev/canonical-json.mjs`,
+  `schemas/dev/project-context-pack.schema.json`, `docs/development/PROJECT_CONTINUITY.md`) —
+  explicitly a derived snapshot, never a new authority source, and never itself execution-
+  authorizing. Two independent read-only Codex reviewers found and Claude fixed one fail-open gap
+  (`executionEligible` did not require an active task) and one torn-read/TOCTOU gap (a source's
+  hash and its later parsed interpretation could observe two different reads of the same file); see
+  `.project/REVIEW_STATE.md` for full findings and adjudication. Pending human review of the
+  implementation before merge — not yet merged. Authorized next task once this one is reviewed:
+  `PROJECT-CONTINUITY-V1B-RUN-BUNDLE`. — branch `chore/project-continuity-v1a-context-pack`

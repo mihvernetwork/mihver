@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/project-context-pack.schema.json",
+  "title": "MIHVER ProjectContextPack v1",
+  "description": "A compact, deterministic, machine-readable snapshot derived from MIHVER's live Git state and owning repository artifacts. A DERIVED SNAPSHOT, never a new authority source -- see docs/development/PROJECT_CONTINUITY.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "kind",
+    "schemaVersion",
+    "compiler",
+    "repository",
+    "project",
+    "activeTask",
+    "review",
+    "stop",
+    "sources",
+    "validity",
+    "contextHash"
+  ],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "kind": { "const": "ProjectContextPack" },
+    "schemaVersion": { "const": "1.0.0" },
+    "compiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "project-context-pack.mjs" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detached",
+        "branch",
+        "head",
+        "baseline",
+        "mergeBase",
+        "ahead",
+        "behind",
+        "workingTree",
+        "changedPaths",
+        "workingTreeStatusUnavailable",
+        "executionBlocked"
+      ],
+      "properties": {
+        "detached": { "type": "boolean" },
+        "branch": { "type": ["string", "null"], "minLength": 1, "maxLength": 512 },
+        "head": { "$ref": "#/$defs/sha1Hex" },
+        "baseline": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ref", "oid"],
+          "properties": {
+            "ref": { "enum": ["main", "origin/main", null] },
+            "oid": { "$ref": "#/$defs/sha1Hex" }
+          },
+          "if": { "properties": { "ref": { "const": null } } },
+          "then": { "properties": { "oid": { "const": null } } },
+          "else": { "properties": { "oid": { "not": { "const": null } } } }
+        },
+        "mergeBase": { "$ref": "#/$defs/sha1Hex" },
+        "ahead": { "type": ["integer", "null"], "minimum": 0 },
+        "behind": { "type": ["integer", "null"], "minimum": 0 },
+        "workingTree": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["clean", "entries"],
+          "properties": {
+            "clean": { "type": "boolean" },
+            "entries": {
+              "type": "array",
+              "maxItems": 100000,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["status", "path"],
+                "properties": {
+                  "status": { "type": "string", "pattern": "^[ MADRCUT?!]{2}$" },
+                  "path": { "type": "string", "minLength": 1, "maxLength": 4096 }
+                }
+              }
+            }
+          },
+          "if": { "properties": { "clean": { "const": true } } },
+          "then": { "properties": { "entries": { "type": "array", "maxItems": 0 } } }
+        },
+        "changedPaths": {
+          "type": "array",
+          "maxItems": 100000,
+          "items": { "type": "string", "minLength": 1, "maxLength": 4096 }
+        },
+        "workingTreeStatusUnavailable": { "type": "boolean" },
+        "executionBlocked": { "type": "boolean" }
+      },
+      "if": { "properties": { "detached": { "const": true } } },
+      "then": { "properties": { "branch": { "const": null } } }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["milestone", "latestCheckpoint", "nextAuthorizedAction", "source"],
+      "properties": {
+        "milestone": { "type": ["string", "null"], "maxLength": 2000 },
+        "latestCheckpoint": { "type": ["string", "null"], "maxLength": 2000 },
+        "nextAuthorizedAction": { "type": ["string", "null"], "maxLength": 2000 },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+            "sha256": { "$ref": "#/$defs/sha256Hex" }
+          }
+        }
+      }
+    },
+    "activeTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active", "declaredBranch", "taskId", "objective", "status", "requiredContext"],
+      "properties": {
+        "active": { "type": "boolean" },
+        "declaredBranch": { "type": ["string", "null"], "minLength": 1, "maxLength": 512 },
+        "taskId": { "type": ["string", "null"], "maxLength": 2000 },
+        "objective": { "type": ["string", "null"], "maxLength": 2000 },
+        "status": { "type": ["string", "null"], "maxLength": 2000 },
+        "requiredContext": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": { "type": "string", "minLength": 1, "maxLength": 4096 }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current", "declaredBranch", "declaredTaskId", "outcome"],
+      "properties": {
+        "current": { "type": "boolean" },
+        "declaredBranch": { "type": ["string", "null"], "minLength": 1, "maxLength": 512 },
+        "declaredTaskId": { "type": ["string", "null"], "maxLength": 2000 },
+        "outcome": { "type": ["string", "null"], "maxLength": 2000 }
+      }
+    },
+    "stop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["present", "sha256"],
+      "properties": {
+        "present": { "type": "boolean" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "if": { "properties": { "present": { "const": false } } },
+      "then": { "properties": { "sha256": { "const": null } } }
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/sourceEntry" }
+    },
+    "validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "executionEligible", "errors", "warnings"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "executionEligible": { "type": "boolean" },
+        "errors": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/finding" } },
+        "warnings": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/finding" } }
+      }
+    },
+    "contextHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "$defs": {
+    "sha1Hex": {
+      "anyOf": [{ "type": "null" }, { "type": "string", "pattern": "^[0-9a-f]{40}$" }]
+    },
+    "sha256Hex": {
+      "anyOf": [{ "type": "null" }, { "type": "string", "pattern": "^[0-9a-f]{64}$" }]
+    },
+    "sourceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "role",
+        "required",
+        "present",
+        "safety",
+        "byteLength",
+        "workingTreeSha256",
+        "headBlobOid",
+        "state"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "role": { "enum": ["CORE_AUTHORITY", "TASK_REQUIRED_CONTEXT"] },
+        "required": { "type": "boolean" },
+        "present": { "type": "boolean" },
+        "safety": {
+          "enum": [
+            "SAFE",
+            "UNSAFE_INVALID",
+            "UNSAFE_ABSOLUTE_PATH",
+            "UNSAFE_TRAVERSAL",
+            "UNSAFE_ESCAPES_REPO",
+            "UNSAFE_SYMLINK",
+            "UNSAFE_NOT_REGULAR_FILE"
+          ]
+        },
+        "byteLength": { "type": ["integer", "null"], "minimum": 0 },
+        "workingTreeSha256": { "$ref": "#/$defs/sha256Hex" },
+        "headBlobOid": { "$ref": "#/$defs/sha1Hex" },
+        "state": { "enum": ["CLEAN", "MODIFIED", "UNTRACKED", "MISSING", "UNSAFE", "UNKNOWN"] }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$", "maxLength": 200 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "path": { "type": "string", "minLength": 1, "maxLength": 4096 }
+      }
+    }
+  }
+}

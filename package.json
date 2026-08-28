@@ -13,7 +13,9 @@
     "publication-builder": "node scripts/dev/publication-builder.mjs",
     "test:publication-builder": "node tests/dev/publication-builder.test.mjs",
     "test:publication-broker": "cd tools/publication-broker && go test ./...",
-    "test:publication-remote-name-parity": "node tests/dev/publication-remote-name-parity.test.mjs"
+    "test:publication-remote-name-parity": "node tests/dev/publication-remote-name-parity.test.mjs",
+    "context:pack": "node scripts/dev/project-context-pack.mjs",
+    "test:context-pack": "node tests/dev/project-context-pack.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",
