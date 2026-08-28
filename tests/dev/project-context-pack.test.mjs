@@ -905,7 +905,7 @@ test("F3: ahead/behind (rev-list) failure yields HISTORY_COUNTS_UNAVAILABLE, not
 test("F3: changed-path diff failure yields CHANGED_PATHS_UNAVAILABLE, not a silent empty list", () => {
   const { root } = standardFixture("f3-diff", { taskBranch: "feature/f3-diff" });
   const pack = compileProjectContextPack(root, {
-    execFileSyncImpl: makeFailingExec((args) => args[0] === "diff" && args.includes("--name-only")),
+    execFileSyncImpl: makeFailingExec((args) => args.includes("diff") && args.includes("--name-only")),
   });
   assert.deepEqual(pack.repository.changedPaths, []);
   assert.ok(pack.validity.errors.some((e) => e.code === "CHANGED_PATHS_UNAVAILABLE"));
@@ -1329,10 +1329,26 @@ test("G2: compiling never updates the on-disk Git index (--no-optional-locks pro
 
 // --- Finding G3: inherited GIT_* environment isolation ------------------------------------------------
 
-test("G3: the Git environment passed to execFileSyncImpl has every inherited GIT_* variable stripped", () => {
+// The only GIT_* keys the hardened environment is ever allowed to carry are the fixed,
+// deterministic, safe values buildHardenedGitEnv itself force-sets -- never a value inherited from
+// this process's own environment.
+const FORCED_SAFE_GIT_ENV_KEYS = [
+  "GIT_OPTIONAL_LOCKS",
+  "GIT_TERMINAL_PROMPT",
+  "GIT_LITERAL_PATHSPECS",
+  "GIT_NO_REPLACE_OBJECTS",
+  "GIT_CONFIG_NOSYSTEM",
+  "GIT_CONFIG_GLOBAL",
+  "GIT_ATTR_NOSYSTEM",
+  "GIT_PAGER",
+].sort();
+
+test("G3: the Git environment passed to execFileSyncImpl carries only the forced safe GIT_* keys -- no inherited GIT_* variable leaks through", () => {
   const { root } = standardFixture("g3-env-strip", { taskBranch: "main" });
   const originalGitDir = process.env.GIT_DIR;
+  const originalGitAskpass = process.env.GIT_ASKPASS;
   process.env.GIT_DIR = "/should/never/be/inherited";
+  process.env.GIT_ASKPASS = "/should/never/be/inherited/either";
   let sawEnv = null;
   try {
     compileProjectContextPack(root, {
@@ -1344,10 +1360,35 @@ test("G3: the Git environment passed to execFileSyncImpl has every inherited GIT
   } finally {
     if (originalGitDir === undefined) delete process.env.GIT_DIR;
     else process.env.GIT_DIR = originalGitDir;
+    if (originalGitAskpass === undefined) delete process.env.GIT_ASKPASS;
+    else process.env.GIT_ASKPASS = originalGitAskpass;
   }
   assert.ok(sawEnv);
-  const gitKeys = Object.keys(sawEnv).filter((k) => k.startsWith("GIT_"));
-  assert.deepEqual(gitKeys, []);
+  const gitKeys = Object.keys(sawEnv).filter((k) => k.startsWith("GIT_")).sort();
+  assert.deepEqual(gitKeys, FORCED_SAFE_GIT_ENV_KEYS);
+  assert.equal(sawEnv.GIT_OPTIONAL_LOCKS, "0");
+  assert.equal(sawEnv.GIT_TERMINAL_PROMPT, "0");
+  assert.equal(sawEnv.GIT_NO_REPLACE_OBJECTS, "1");
+  assert.notEqual(sawEnv.GIT_CONFIG_GLOBAL, "/should/never/be/inherited");
+});
+
+test("G3c: the Git environment is an explicit allowlist -- an arbitrary non-Git inherited variable does not pass through", () => {
+  const { root } = standardFixture("g3c-allowlist", { taskBranch: "main" });
+  const key = "MIHVER_TEST_SHOULD_NEVER_LEAK";
+  process.env[key] = "leaked-value";
+  let sawEnv = null;
+  try {
+    compileProjectContextPack(root, {
+      execFileSyncImpl: (cmd, args, opts) => {
+        sawEnv = opts.env;
+        return execFileSync(cmd, args, opts);
+      },
+    });
+  } finally {
+    delete process.env[key];
+  }
+  assert.ok(sawEnv);
+  assert.equal(sawEnv[key], undefined);
 });
 
 test("G3b: a hostile inherited GIT_DIR does not redirect compilation away from repoRoot", () => {
@@ -1462,6 +1503,115 @@ test("G6b: canonicalizeJson rejects a non-enumerable own property on an array (d
 
 test("G6c: canonicalizeJson accepts an ordinary array -- 'length' is itself a legitimate non-enumerable property", () => {
   assert.doesNotThrow(() => canonicalizeJson([1, 2, 3]));
+});
+
+// =====================================================================================================
+// PROJECT-CONTINUITY-V1A-PR34-GIT-OBSERVATION-BOUNDARY-REVIEW-CLOSEOUT regression tests
+// =====================================================================================================
+
+// --- Reviewer B, High: malformed/ambiguous baseline-ref output must fail closed, never be silently
+// read as "the ref doesn't exist" -----------------------------------------------------------------
+
+test("R1: malformed (non-hex) output for refs/heads/main fails closed as BASELINE_REF_LOOKUP_UNAVAILABLE, never as legitimate absence", () => {
+  const { root } = standardFixture("r1-malformed-local-main", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      const sub = subArgs(args);
+      if (sub[0] === "for-each-ref" && sub.includes("refs/heads/main")) {
+        return "not-a-valid-oid\n";
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.equal(pack.repository.baseline.ref, null);
+  assert.equal(pack.repository.baseline.oid, null);
+  assert.ok(pack.validity.errors.some((e) => e.code === "BASELINE_REF_LOOKUP_UNAVAILABLE"));
+  assert.equal(pack.validity.valid, false);
+  assert.equal(pack.validity.executionEligible, false);
+  // Must NOT silently fall through to origin/main as if local main were merely absent.
+  assert.notEqual(pack.repository.baseline.ref, "origin/main");
+});
+
+test("R1b: multi-line (ambiguous) output for refs/heads/main fails closed as BASELINE_REF_LOOKUP_UNAVAILABLE", () => {
+  const { root } = standardFixture("r1b-multiline-local-main", { taskBranch: "main" });
+  const fakeOid1 = "a".repeat(40);
+  const fakeOid2 = "b".repeat(40);
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      const sub = subArgs(args);
+      if (sub[0] === "for-each-ref" && sub.includes("refs/heads/main")) {
+        return `${fakeOid1}\n${fakeOid2}\n`;
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.equal(pack.repository.baseline.oid, null);
+  assert.ok(pack.validity.errors.some((e) => e.code === "BASELINE_REF_LOOKUP_UNAVAILABLE"));
+  // The first line must NOT be silently accepted as a best-effort guess at the real OID.
+  assert.notEqual(pack.repository.baseline.oid, fakeOid1);
+});
+
+test("R1c: an exactly-one-well-formed-OID result for refs/heads/main is still accepted normally (no regression)", () => {
+  const { root, mainOid } = standardFixture("r1c-normal-local-main", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root);
+  assert.equal(pack.repository.baseline.ref, "main");
+  assert.equal(pack.repository.baseline.oid, mainOid);
+  assert.ok(!pack.validity.errors.some((e) => e.code === "BASELINE_REF_LOOKUP_UNAVAILABLE"));
+});
+
+// --- Reviewer A: --no-replace-objects, forced safe env values, external-diff neutralization -------
+
+test("R2: every Git invocation includes --no-replace-objects", () => {
+  const { root } = standardFixture("r2-no-replace-objects", { taskBranch: "main" });
+  const seenCalls = [];
+  compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      seenCalls.push(args);
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.ok(seenCalls.length > 0);
+  for (const args of seenCalls) {
+    assert.ok(args.includes("--no-replace-objects"), `missing --no-replace-objects in: ${JSON.stringify(args)}`);
+  }
+});
+
+test("R3: the changed-path diff call neutralizes diff.external both as a global -c override and via --no-ext-diff", () => {
+  const { root } = standardFixture("r3-no-ext-diff", { taskBranch: "feature/r3-ext-diff" });
+  const seenCalls = [];
+  compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      seenCalls.push(args);
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  const diffCall = seenCalls.find((args) => args.includes("diff") && args.includes("--name-only"));
+  assert.ok(diffCall, "expected a diff --name-only call to have been made");
+  assert.ok(diffCall.includes("--no-ext-diff"));
+  const extIndex = diffCall.indexOf("diff.external=");
+  assert.ok(extIndex > 0, `expected "diff.external=" in: ${JSON.stringify(diffCall)}`);
+  assert.equal(diffCall[extIndex - 1], "-c");
+  // -c diff.external= must precede the "diff" subcommand token, never follow it.
+  assert.ok(extIndex < diffCall.indexOf("diff"));
+});
+
+test("R4: a branch-only change between start and end of compilation reports a message mentioning branch", () => {
+  const { root } = standardFixture("r4-branch-message", { taskBranch: "main" });
+  let call = 0;
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      const sub = subArgs(args);
+      if (sub[0] === "branch" && sub[1] === "--show-current") {
+        call += 1;
+        if (call === 1) return execFileSync(cmd, args, opts);
+        return "other-fake-branch\n";
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  const finding = pack.validity.errors.find((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION");
+  assert.ok(finding);
+  assert.match(finding.message, /branch/i);
 });
 
 // --- cleanup -------------------------------------------------------------------------------------

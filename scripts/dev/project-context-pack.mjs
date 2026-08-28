@@ -143,18 +143,83 @@ function truncate(text, maxLen) {
 //     otherwise name an ARBITRARY external command Git invokes on ordinary read operations
 //     (status, diff, add) regardless of what this compiler itself asked for. Mirrors
 //     scripts/dev/publication-builder.mjs's identical fsmonitor-neutralization requirement.
-export const GIT_GLOBAL_ARGS = ["--no-optional-locks", "-c", "core.fsmonitor="];
+//   --no-replace-objects -- ignores repository `refs/replace/*` object replacement, so commit/tree
+//     traversal (merge-base, rev-list, diff) observes the actual object graph, not a substituted
+//     one a replace ref could redirect it to.
+export const GIT_GLOBAL_ARGS = ["--no-optional-locks", "--no-replace-objects", "-c", "core.fsmonitor="];
 
-// Every GIT_* environment variable is stripped before spawning Git -- an inherited GIT_DIR,
-// GIT_WORK_TREE, GIT_INDEX_FILE, GIT_CONFIG*, GIT_ASKPASS, GIT_SSH*, etc. from this process's own
-// environment could otherwise silently redirect a "read this repoRoot" call to a different
-// location entirely, or plumb unwanted credential-adjacent behavior into a subprocess this
-// compiler only ever intends to use for local, read-only queries against an explicit `cwd`.
-function buildSanitizedGitEnv() {
-  const env = { ...process.env };
-  for (const key of Object.keys(env)) {
-    if (key.startsWith("GIT_")) delete env[key];
+// Extra flags for the one call whose output could otherwise be influenced by a configured/
+// inherited external diff driver. `-c diff.external=` is a top-level Git option and must precede
+// the subcommand name; `--no-ext-diff` is `git diff`'s own flag and must follow it. Together they
+// neutralize `diff.external`/a per-path `diff=` attribute driver, so `changedPaths` is always
+// Git's own internal diff, never a substituted external command's output.
+const NO_EXTERNAL_DIFF_GLOBAL_ARGS = ["-c", "diff.external="];
+const NO_EXTERNAL_DIFF_SUBCOMMAND_ARGS = ["--no-ext-diff"];
+
+// The child environment is an EXPLICIT ALLOWLIST, not `{...process.env}` with keys removed:
+// starting from an empty object and copying in only the few non-`GIT_*` variables Git/Node's own
+// subprocess machinery needs to function at all (PATH to locate the `git` executable; HOME/
+// USERPROFILE and the XDG dirs because Git itself may consult them even with system/global config
+// disabled below; SYSTEMROOT/circumstantial Windows variables for correctness on that platform;
+// TMPDIR/TEMP/TMP since Git can use a temp directory for some internal operations). No other
+// inherited variable -- including any GIT_* one -- ever reaches the child. On top of the allowlist,
+// a fixed set of safe/deterministic values is always force-set, overriding whatever the allowlisted
+// passthrough variables might otherwise have implied:
+//   GIT_OPTIONAL_LOCKS=0     -- environment-level backstop for the --no-optional-locks argv flag.
+//   GIT_TERMINAL_PROMPT=0    -- never allow an interactive credential/host-key prompt to hang.
+//   GIT_LITERAL_PATHSPECS=1  -- pathspec arguments (e.g. a source's relative path) are never
+//                               glob-magic-interpreted.
+//   GIT_NO_REPLACE_OBJECTS=1 -- environment-level backstop for --no-replace-objects.
+//   GIT_CONFIG_NOSYSTEM=1    -- system-wide gitconfig never read.
+//   GIT_CONFIG_GLOBAL=<null device> -- the user's own global gitconfig never read either (this
+//                               compiler never needs identity/alias/credential config for anything
+//                               it does, and a global config is exactly where an unrelated
+//                               `core.fsmonitor`/`diff.external`/similar could otherwise still hide
+//                               even with this call's own `-c core.fsmonitor=` override, which only
+//                               applies to config Git would otherwise read from -- combining both is
+//                               what makes the fsmonitor neutralization complete).
+//   GIT_ATTR_NOSYSTEM=1      -- system-wide gitattributes never read.
+//   GIT_PAGER=cat            -- no interactive pager can ever intercept output.
+//   LC_ALL=C / LANG=C        -- deterministic, locale-independent Git message/formatting output.
+//
+// Documented residual limitation: `PATH` itself is still allowlisted through, because
+// `execFileSync("git", ...)` (shell:false) resolves the executable via a PATH search and Node has
+// no built-in "resolve to an absolute path first" primitive; a hostile PATH entry earlier than the
+// real `git` binary is not defended against by this function. This is the same bare-command
+// invocation pattern already used by every other Git-invoking script in this repository
+// (scripts/dev/publication-builder.mjs, scripts/dev/project-consistency.mjs,
+// scripts/dev/project-context.mjs) -- none of them pin an absolute binary path either. Closing it
+// for this one compiler alone, without a repository-wide policy change, would be a false sense of
+// security rather than an actual boundary; the realistic threat model here (a trusted local
+// developer machine or CI runner that already controls its own PATH) is the same one every other
+// script in this repository already relies on.
+function buildHardenedGitEnv() {
+  const passthroughKeys = [
+    "PATH",
+    "HOME",
+    "USERPROFILE",
+    "XDG_CONFIG_HOME",
+    "XDG_CACHE_HOME",
+    "SYSTEMROOT",
+    "SYSTEMDRIVE",
+    "TMPDIR",
+    "TEMP",
+    "TMP",
+  ];
+  const env = {};
+  for (const key of passthroughKeys) {
+    if (process.env[key] !== undefined) env[key] = process.env[key];
   }
+  env.GIT_OPTIONAL_LOCKS = "0";
+  env.GIT_TERMINAL_PROMPT = "0";
+  env.GIT_LITERAL_PATHSPECS = "1";
+  env.GIT_NO_REPLACE_OBJECTS = "1";
+  env.GIT_CONFIG_NOSYSTEM = "1";
+  env.GIT_CONFIG_GLOBAL = process.platform === "win32" ? "NUL" : "/dev/null";
+  env.GIT_ATTR_NOSYSTEM = "1";
+  env.GIT_PAGER = "cat";
+  env.LC_ALL = "C";
+  env.LANG = "C";
   return env;
 }
 
@@ -164,7 +229,7 @@ function buildSanitizedGitEnv() {
 // GIT_GLOBAL_ARGS) and throws for an exact subcommand argument array, deterministically simulating
 // "this Git query is unavailable" without a shell.
 function buildTryGit(execFileSyncImpl) {
-  const sanitizedEnv = buildSanitizedGitEnv();
+  const hardenedEnv = buildHardenedGitEnv();
   return function tryGit(repoRoot, args) {
     try {
       const out = execFileSyncImpl("git", [...GIT_GLOBAL_ARGS, ...args], {
@@ -172,7 +237,7 @@ function buildTryGit(execFileSyncImpl) {
         encoding: "utf8",
         shell: false,
         stdio: ["ignore", "pipe", "pipe"],
-        env: sanitizedEnv,
+        env: hardenedEnv,
       });
       // Trim only trailing newline(s) -- NOT a full trim(), which would strip the leading space of
       // `git status --porcelain`'s first line for any entry whose status code starts with a space
@@ -192,13 +257,18 @@ function buildTryGit(execFileSyncImpl) {
 // and only exits non-zero on a genuine query failure. This cleanly distinguishes "the ref is
 // absent" (a normal, expected repository state) from "the lookup itself failed" (fail closed),
 // which `rev-parse --verify`'s single "non-zero exit" outcome cannot: that command exits non-zero
-// for both cases alike.
+// for both cases alike. A non-empty result that is NOT exactly one well-formed 40-hex OID line
+// (malformed output, or more than one matching ref) is ALSO treated as a lookup failure -- never
+// silently read as "the ref doesn't exist" (empty) or accepted as a best-effort first guess.
 function resolveRefForEachRef(repoRoot, tryGit, ref) {
   const result = tryGit(repoRoot, ["for-each-ref", "--format=%(objectname)", ref]);
   if (!result.ok) return { failed: true, oid: null };
   if (result.out.length === 0) return { failed: false, oid: null };
-  const oid = result.out.split("\n")[0];
-  return { failed: false, oid: /^[0-9a-f]{40}$/.test(oid) ? oid : null };
+  const lines = result.out.split("\n");
+  if (lines.length !== 1 || !/^[0-9a-f]{40}$/.test(lines[0])) {
+    return { failed: true, oid: null };
+  }
+  return { failed: false, oid: lines[0] };
 }
 
 // --- Markdown section parsing (mirrors scripts/dev/project-context.mjs's conventions) ----------
@@ -595,7 +665,13 @@ function compileRepositorySnapshot(repoRoot, tryGit, errors) {
       ahead = Number(parts[1]);
     }
 
-    const diffNames = tryGit(repoRoot, ["diff", "--name-only", `${baselineOid}...HEAD`]);
+    const diffNames = tryGit(repoRoot, [
+      ...NO_EXTERNAL_DIFF_GLOBAL_ARGS,
+      "diff",
+      ...NO_EXTERNAL_DIFF_SUBCOMMAND_ARGS,
+      "--name-only",
+      `${baselineOid}...HEAD`,
+    ]);
     if (!diffNames.ok) {
       errors.push({
         code: "CHANGED_PATHS_UNAVAILABLE",
@@ -819,8 +895,9 @@ function compileValidity({
     errors.push({
       code: "REPOSITORY_CHANGED_DURING_COMPILATION",
       message:
-        "HEAD or the working tree changed between the start and end of compilation -- this is a " +
-        "consistency fence that detects an observed change, not a filesystem transaction/lock.",
+        "Branch/detached state, HEAD, or the working tree changed between the start and end of " +
+        "compilation -- this is a consistency fence that detects an observed change, not a " +
+        "filesystem transaction/lock.",
     });
   }
 

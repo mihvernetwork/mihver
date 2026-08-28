@@ -130,28 +130,56 @@ array — never an interpolated shell command string. `tests/dev/project-context
 mechanically checks (by source inspection and by diffing repository state before/after
 compilation) that this holds.
 
-Every Git invocation is additionally isolated on two more axes, both prepended/applied
-automatically and exported as `GIT_GLOBAL_ARGS` (`scripts/dev/project-context-pack.mjs`) so tests
-can deterministically account for them:
+Every Git invocation is additionally isolated on several more axes, prepended/applied automatically
+and exported as `GIT_GLOBAL_ARGS` (`scripts/dev/project-context-pack.mjs`) so tests can
+deterministically account for them:
 
 - **`--no-optional-locks`** — an ordinary `git status`/`git diff` can otherwise refresh and write
   back the on-disk index as a side effect of what looks like a pure read; this flag disables that
   entire class of incidental write, which a genuinely read-only compiler must never perform even
   unintentionally. `tests/dev/project-context-pack.test.mjs` confirms `.git/index`'s own mtime is
   unchanged by compilation.
-- **`-c core.fsmonitor=`** — neutralizes a repository/global/system Git config's `core.fsmonitor`
-  setting, which can otherwise name an arbitrary external command Git invokes on ordinary read
-  operations (status, diff, `ls-files`) regardless of what this compiler itself asked for. Mirrors
+- **`--no-replace-objects`** — ignores repository `refs/replace/*` object replacement, so
+  commit/tree traversal (`merge-base`, `rev-list`, `diff`) observes the actual object graph, never
+  one a replace ref could redirect it to.
+- **`-c core.fsmonitor=`** — neutralizes a repository-local Git config's `core.fsmonitor` setting,
+  which can otherwise name an arbitrary external command Git invokes on ordinary read operations
+  (status, diff, `ls-files`) regardless of what this compiler itself asked for. Mirrors
   `scripts/dev/publication-builder.mjs`'s identical existing fsmonitor-neutralization requirement.
 
-Every Git subprocess is also spawned with a **sanitized environment**: every inherited `GIT_*`
-variable (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`, `GIT_CONFIG*`, `GIT_ASKPASS`, `GIT_SSH*`,
-etc.) is stripped before spawning, so this process's own environment can never silently redirect a
-"read this `repoRoot`" call to a different location, or plumb unwanted credential-adjacent
-behavior into a subprocess this compiler only ever uses for local, read-only queries against an
-explicit `cwd`. `tests/dev/project-context-pack.test.mjs` confirms both that the sanitized
-environment object contains no `GIT_*` key, and that a hostile inherited `GIT_DIR` does not change
-compilation's result.
+The one call whose output could otherwise be influenced by a configured external diff driver — the
+changed-paths `git diff --name-only` call — additionally passes `-c diff.external=` (before the
+`diff` subcommand token) and `--no-ext-diff` (after it), so `changedPaths` is always Git's own
+internal diff, never a substituted external command's output.
+
+Every Git subprocess is spawned with a **hardened, explicitly-allowlisted environment**
+(`buildHardenedGitEnv` in `scripts/dev/project-context-pack.mjs`) — built by starting from an empty
+object and copying in only a small fixed set of non-`GIT_*` variables Git/Node's own subprocess
+machinery needs to function at all (`PATH`, `HOME`/`USERPROFILE`, the XDG config/cache dirs,
+Windows system-root variables, and the temp-directory variables), never by spreading
+`{...process.env}` and removing keys after the fact. On top of that allowlist, a fixed set of safe,
+deterministic values is always force-set — `GIT_OPTIONAL_LOCKS=0`, `GIT_TERMINAL_PROMPT=0`,
+`GIT_LITERAL_PATHSPECS=1`, `GIT_NO_REPLACE_OBJECTS=1`, `GIT_CONFIG_NOSYSTEM=1`,
+`GIT_CONFIG_GLOBAL=` (the null device), `GIT_ATTR_NOSYSTEM=1`, `GIT_PAGER=cat`, `LC_ALL=C`,
+`LANG=C` — so no inherited `GIT_*` variable (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`,
+`GIT_CONFIG*`, `GIT_ASKPASS`, `GIT_SSH*`, etc.) can ever reach the child, this process's own
+environment can never silently redirect a "read this `repoRoot`" call to a different location or
+config source, and output is deterministic and locale-independent.
+`tests/dev/project-context-pack.test.mjs` confirms the environment carries only the fixed forced
+`GIT_*` keys (never an inherited one, e.g. a hostile `GIT_DIR`/`GIT_ASKPASS`), and that an arbitrary
+non-Git inherited variable does not pass through either.
+
+**Documented residual limitation**: `PATH` itself is still allowlisted through — Node's
+`execFileSync("git", ...)` (with `shell:false`) resolves the executable via a `PATH` search, and
+Node has no built-in "resolve to an absolute path first" primitive. A hostile `PATH` entry earlier
+than the real `git` binary is not defended against here. This is the same bare-command invocation
+pattern already used by every other Git-invoking script in this repository
+(`scripts/dev/publication-builder.mjs`, `scripts/dev/project-consistency.mjs`,
+`scripts/dev/project-context.mjs`) — none of them pin an absolute binary path either. Closing it for
+this one compiler alone, without a repository-wide policy change, would be a false sense of security
+rather than an actual boundary; the realistic threat model here (a trusted local developer machine
+or CI runner that already controls its own `PATH`) is the same one every other script in this
+repository already relies on.
 
 ## Git query availability
 
@@ -191,9 +219,16 @@ exist and when the lookup itself genuinely fails (corrupt repo, Git internal err
 outcome that cannot distinguish "no baseline exists, fall back or report none" from "the lookup
 failed, fail closed." `for-each-ref` instead exits `0` with **empty output** when a ref legitimately
 does not exist, and only exits non-zero on an actual query failure, so the two cases are
-distinguishable: a legitimate absence contributes only the existing `BASELINE_UNRESOLVABLE` warning
-(once neither ref resolves), while a genuine lookup failure raises the dedicated
-`BASELINE_REF_LOOKUP_UNAVAILABLE` error (`valid: false`).
+distinguishable. `resolveRefForEachRef` (`scripts/dev/project-context-pack.mjs`) additionally
+requires a non-empty result to be *exactly one* well-formed 40-hex OID line — a genuine command
+failure, malformed output, or more than one matching line are all treated identically as a lookup
+failure, never as a best-effort guess or as "legitimately absent." A legitimate absence (empty,
+successful output) contributes only the existing `BASELINE_UNRESOLVABLE` warning (once neither ref
+resolves), while any lookup failure — command failure or malformed/ambiguous output alike — raises
+the dedicated `BASELINE_REF_LOOKUP_UNAVAILABLE` error (`valid: false`), and the fallback from
+`refs/heads/main` to `refs/remotes/origin/main` only ever happens once local `main`'s absence has
+been positively confirmed this way, never merely because its lookup command exited non-zero for an
+unspecified reason.
 
 ## Snapshot consistency fence
 
