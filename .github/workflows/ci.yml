@@ -57,6 +57,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Project context pack tests
+        run: npm run test:context-pack
+
       - name: Project consistency tests
         run: npm run test:project-consistency
 

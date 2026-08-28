@@ -58,7 +58,10 @@ bare greeting ("hello") with no stated task — not only when the message names 
 - Do not read the full git history by default.
 - Do not use GitHub to rediscover local repository content.
 - Run `npm run context` (compact by default, ~25-40 lines; add `-- --full` only when the detailed
-  state-file dump is actually needed).
+  state-file dump is actually needed), and `npm run context:pack` (the machine-readable
+  `ProjectContextPack` — see `docs/development/PROJECT_CONTINUITY.md`). The pack is a **derived
+  snapshot**, not an authority source: it must never be trusted over live Git or its owning source
+  documents, and it never authorizes execution on its own.
 - `.project/CURRENT_TASK.md`'s Required Context is the primary read set — read it. Don't re-read,
   in full, whatever `npm run context`'s compact output already summarized (branch, HEAD, dirty
   state, main delta, and the active task's ID/Objective/Status) unless the task needs more than

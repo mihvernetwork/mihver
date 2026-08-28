@@ -244,3 +244,7 @@ Entries above this line are unmodified, per this log's append-only policy.
   not assumed. Contract suite at this commit: **85/85**, confirmed by running `npm test` directly
   against `main`. No prior entry in this log recorded an approval decision for this merge; this
   entry records only the independently-verified merge fact, not a reconstructed human quote.
+- 2026-08-28 — Human authorized `PROJECT-CONTINUITY-V1A-CONTEXT-PACK`: create a deterministic,
+  zero-network, read-only, derived ProjectContextPack that never grants execution or publication
+  authority. PR #34 is the human-review vehicle; merge remains human-only. —
+  `docs/development/PROJECT_CONTINUITY.md`
