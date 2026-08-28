@@ -58,6 +58,9 @@ RequirementSpec machine schema: IMPLEMENTED (M0 Step 03B) — owner: `schemas/m0
 `docs/contracts/REQUIREMENT_SPEC_SCHEMA_MAPPING.md`
 MIHVER Brain adapter / retrieval runtime: NOT IMPLEMENTED (observable: no adapter code in this repo)
 Contract suite (`npm test`): 170/170 (observable: `npm test`'s own output)
+ProjectContextPack v1 (deterministic, zero-network, derived repository/task-state snapshot):
+IMPLEMENTED (Project Continuity V1A) — owner: `docs/development/PROJECT_CONTINUITY.md`,
+`schemas/dev/project-context-pack.schema.json`. Tooling: `npm run context:pack`.
 
 Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
 checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
@@ -307,6 +310,14 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   - Contract suite at merged head: **170/170** (148 at this task's own initial completion — 85
     pre-existing plus 63 new `RequirementSpec` fixtures — plus 22 more added by the subsequent
     human-review-fixes round above).
+- **Project Continuity V1A** — deterministic, zero-network, read-only, derived `ProjectContextPack`
+  v1 for fast session-state reconstruction (`npm run context:pack`), plus two governance amendments
+  to `docs/development/AGENT_POLICY.md` (mandatory Codex Implementer delegation above a fixed size
+  threshold; unconditional independent Codex Verifier delegation). Merged via PR #34, squash commit
+  `dbdb4f7049d2a73728038f1c98efc47ddfee3727`. Produced `docs/development/PROJECT_CONTINUITY.md`,
+  `schemas/dev/project-context-pack.schema.json`, `scripts/dev/project-context-pack.mjs`,
+  `scripts/dev/canonical-json.mjs`, `tests/dev/project-context-pack.test.mjs`; extended
+  `docs/development/AGENT_POLICY.md`.
 
 ## Open Items
 
@@ -331,3 +342,11 @@ checkpoint above) — its completion does not, by itself, authorize the next tas
 This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out
 branch, if any.
+
+**Project Continuity V1A is frozen** (see the checkpoint above, PR #34, squash commit
+`dbdb4f7049d2a73728038f1c98efc47ddfee3727`). Recommended next task:
+`PROJECT-CONTINUITY-V1B-RUN-BUNDLE`. **This is a recommendation only — it requires a separate,
+explicit human authorization before starting**, exactly like every other next-task pointer in this
+section; freezing V1A does not itself authorize V1B, autonomous task selection, a task queue,
+Decision Council/three-agent voting, scheduled autonomous reporting, LLM execution authority, or
+Publication Broker provisioning/activation.
