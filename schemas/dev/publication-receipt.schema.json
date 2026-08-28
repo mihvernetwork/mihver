@@ -17,9 +17,26 @@
       "additionalProperties": false,
       "required": ["remote_name", "owner", "name"],
       "properties": {
-        "remote_name": { "type": "string", "minLength": 1 },
-        "owner": { "type": "string", "minLength": 1 },
-        "name": { "type": "string", "minLength": 1 }
+        "remote_name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!-)(?!.*[/\\\\~^:?*\\[@])[\\x21-\\x7E]+$",
+          "description": "A literal git remote identifier: every character must be printable ASCII (U+0021-U+007E, so no whitespace/control character, no DEL, and -- unlike a negated-range approach -- correctly excluding every non-ASCII code point including astral ones such as emoji, since JSON Schema regex engines are Unicode-code-point-aware and a negated upper-bound range like [^...-\\uFFFF] does not exclude a code point above U+FFFF), no path separator, no ref-like special character anywhere in the value, and must not start with '-'. See Closeout Pack A.2.1, Work Package C. Mirrored by internal/repoidentity.ValidateRemoteName; a shared parity matrix (including astral cases) is checked by both tests/dev/publication-remote-name-parity.test.mjs and internal/repoidentity/repoidentity_test.go's remoteNameParityMatrix."
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 39,
+          "pattern": "^[A-Za-z0-9]([A-Za-z0-9]|-(?!-))*[A-Za-z0-9]$|^[A-Za-z0-9]$",
+          "description": "1-39 ASCII alphanumeric/hyphen characters, begins and ends with an alphanumeric character, no consecutive hyphens. Mirrored by internal/repoidentity.ValidateOwner."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^(?!\\.+$)[A-Za-z0-9._-]+$",
+          "description": "1-100 ASCII alphanumeric/dot/underscore/hyphen characters; not exactly '.' or '..'; not composed only of '.' characters. Mirrored by internal/repoidentity.ValidateName."
+        }
       }
     },
     "branch": { "type": "string", "minLength": 1 },

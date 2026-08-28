@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/publication-broker-request.schema.json",
+  "title": "MIHVER Publication Broker Client Request (wire shape)",
+  "description": "Machine-readable shape of the single message the unprivileged Publication Broker client Unix socket accepts (tools/publication-broker/internal/server.packageWireRequest is the canonical Go implementation). Carries the four PublicationPackage components base64-encoded so they survive JSON transport unmodified; the Broker re-derives the REQUEST DIGEST from the decoded raw bytes -- this wire envelope itself carries no digest field, since trusting a client-supplied digest would defeat the point of recomputing it. See docs/development/PUBLICATION_BROKER.md's 'PublicationPackage / Request Digest' section for the semantic recipe, and schemas/dev/publication-envelope.schema.json, schemas/dev/publication-receipt.schema.json, and schemas/dev/publication-package-manifest.schema.json for the shape of the three JSON components once decoded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["envelope_b64", "receipt_b64", "bundle_b64", "manifest_b64"],
+  "properties": {
+    "envelope_b64": { "type": "string", "minLength": 1, "description": "Base64 (standard encoding) of the exact raw PublicationEnvelope JSON bytes." },
+    "receipt_b64": { "type": "string", "minLength": 1, "description": "Base64 (standard encoding) of the exact raw PublicationReceipt JSON bytes." },
+    "bundle_b64": { "type": "string", "minLength": 1, "description": "Base64 (standard encoding) of the exact raw self-contained Git bundle bytes." },
+    "manifest_b64": { "type": "string", "minLength": 1, "description": "Base64 (standard encoding) of the exact raw publication-package-manifest.schema.json JSON bytes." }
+  }
+}

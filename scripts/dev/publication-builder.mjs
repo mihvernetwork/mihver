@@ -7,8 +7,8 @@
 //
 // This module NEVER pushes, NEVER calls an authenticated GitHub API, NEVER creates/modifies/merges
 // a PR, NEVER reads GitHub credentials, and NEVER invokes `gh auth token` or switches identity. Those
-// remote effects belong only to the future privileged Publication Broker (V3.1-B), which this task
-// does not implement -- see docs/development/CODEX_ROLES.md's "Future Publication Broker Interface".
+// remote effects belong only to the privileged Publication Broker (V3.1-B, tools/publication-broker/;
+// source implemented but NOT provisioned/activated) -- see docs/development/PUBLICATION_BROKER.md.
 //
 // Every git invocation below uses execFileSync with an explicit argument array (no shell, no string
 // interpolation) so no path or message value is ever concatenated into a shell command line.

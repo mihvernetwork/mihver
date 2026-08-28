@@ -1,0 +1,107 @@
+name: MIHVER CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  project-validation:
+    name: Project validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Establish local main baseline
+        shell: bash
+        run: |
+          remote_main="$(git rev-parse --verify refs/remotes/origin/main)"
+
+          if ! git show-ref --verify --quiet refs/heads/main; then
+            git branch --no-track main "$remote_main"
+          fi
+
+          test "$(git rev-parse refs/heads/main)" = "$remote_main"
+          git merge-base HEAD refs/heads/main >/dev/null
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publication remote name parity
+        run: npm run test:publication-remote-name-parity
+
+      - name: Publication builder tests
+        run: npm run test:publication-builder
+
+      - name: Test
+        run: npm test
+
+      - name: Project consistency tests
+        run: npm run test:project-consistency
+
+      - name: Project consistency check
+        run: npm run check:project-consistency
+
+  publication-broker:
+    name: Publication Broker
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: tools/publication-broker/go.mod
+          cache: false
+
+      - name: Build
+        working-directory: tools/publication-broker
+        run: go build ./...
+
+      - name: Test
+        working-directory: tools/publication-broker
+        run: go test ./...
+
+      - name: Test (race)
+        working-directory: tools/publication-broker
+        run: go test -race ./...
+
+      - name: Vet
+        working-directory: tools/publication-broker
+        run: go vet ./...
+
+      - name: Check formatting
+        working-directory: tools/publication-broker
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not gofmt-formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+          echo "All files are gofmt-formatted."
