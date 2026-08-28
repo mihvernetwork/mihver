@@ -56,12 +56,18 @@ At a high level, a pack contains:
   status, and Required Context paths.
 - **Review gate** — whether `.project/REVIEW_STATE.md`'s "Latest Review" matches the active task's
   branch *and* Task ID exactly (otherwise historical, never the current gate).
-- **STOP state** — whether `.project/STOP` exists, and its hash if so. The pack never modifies or
-  removes `STOP`.
+- **STOP state** — whether a filesystem node exists at `.project/STOP`, and its hash if it is a
+  safe regular file. Determined via `lstat` semantics through the same bounded safe-read primitive
+  every source uses (see "Path-safe source reads" below), never via a plain existence check —
+  see "Unsafe STOP nodes" below for exactly what counts as present-but-unsafe. The pack never
+  modifies or removes `STOP`.
 - **Source manifest** — for every core authority/navigation source and every active-task Required
   Context path: presence, path-safety result, byte length, working-tree SHA-256, the Git blob OID
   at HEAD (or `null` when not represented there), and a state (`CLEAN`/`MODIFIED`/`UNTRACKED`/
-  `MISSING`/`UNSAFE`). **Never full file contents.**
+  `MISSING`/`UNSAFE`/`UNKNOWN`). **Never full file contents.** `UNKNOWN` means a Git query needed to
+  classify this source failed, or a "clean" claim's HEAD blob identity could not be independently
+  established or matched — see "Git query availability" below; an `UNKNOWN` source can never
+  coexist with `executionEligible: true`.
 - **Validity** — a `valid`/`executionEligible` pair (see "Why the pack cannot authorize execution"
   below) plus structured `errors`/`warnings`.
 
@@ -91,16 +97,27 @@ contextHash =
 ```
 
 `canonicalJson` is `scripts/dev/canonical-json.mjs`'s deterministic serializer (recursively
-key-sorted objects, order-preserving arrays, strict JSON string escaping; see that file's own
-header for its precise, narrower-than-full-RFC-8785 compatibility statement). The domain-separation
-prefix stops a `ProjectContextPack` hash from ever colliding with a canonical-JSON hash computed for
-an unrelated purpose. No clock-dependent field, random ID, process ID, or temporary path
-participates in the pack or its hash — two consecutive runs against unchanged repository state
-produce byte-identical compact output and an identical `contextHash`; `--pretty` changes only
-presentation whitespace. A one-byte change to any manifested source changes that source's own hash
-and, transitively, `contextHash`. A pack is invalidated (i.e., should be treated as stale and
-recompiled) the moment HEAD, the working tree, or any manifested source changes underneath it —
-there is no cache-invalidation signal beyond "recompile and compare."
+key-sorted objects, order-preserving arrays, strict JSON string escaping). It matches RFC 8785's
+(JSON Canonicalization Scheme, "JCS") UTF-16 code-unit key ordering and ECMAScript number-to-string
+formatting. **JCS does not normalize Unicode** — RFC 8785 has no NFC/NFD/NFKC/NFKD step at all; it
+instead requires valid Unicode input and preserves valid strings exactly as supplied, which is
+exactly what this serializer does: no normalization is performed or implied, and two
+Unicode-equivalent-but-differently-normalized strings are never treated as canonically identical.
+"Valid Unicode input" is enforced by rejecting any string or object key containing a lone
+(unpaired) UTF-16 surrogate code unit, which cannot be re-encoded as well-formed text. The
+serializer also rejects own symbol-keyed properties, accessor (getter/setter) properties, and an
+array with an extraneous own property outside its dense index range — every case where a value
+would otherwise be silently omitted or evaluated rather than data the caller can see was rejected.
+See that file's own header for the complete, precise compatibility statement.
+
+The domain-separation prefix stops a `ProjectContextPack` hash from ever colliding with a
+canonical-JSON hash computed for an unrelated purpose. No clock-dependent field, random ID, process
+ID, or temporary path participates in the pack or its hash — two consecutive runs against unchanged
+repository state produce byte-identical compact output and an identical `contextHash`; `--pretty`
+changes only presentation whitespace. A one-byte change to any manifested source changes that
+source's own hash and, transitively, `contextHash`. A pack is invalidated (i.e., should be treated
+as stale and recompiled) the moment HEAD, the working tree, or any manifested source changes
+underneath it — there is no cache-invalidation signal beyond "recompile and compare."
 
 ## Zero-network / read-only behavior
 
@@ -110,6 +127,98 @@ fetch/socket call of any kind. Every Git invocation uses `execFileSync` with an 
 array — never an interpolated shell command string. `tests/dev/project-context-pack.test.mjs`
 mechanically checks (by source inspection and by diffing repository state before/after
 compilation) that this holds.
+
+## Git query availability
+
+Every Git query this compiler makes can fail independently of what it is asking about, and a
+failed query is never collapsed into the same representation as "the query succeeded and found
+nothing" (an empty result, `null`, or `[]`). A failure produces a dedicated, stable
+`validity.errors[].code` instead — for example `BRANCH_STATE_UNAVAILABLE` (branch/detached state),
+`MERGE_BASE_UNAVAILABLE`, `HISTORY_COUNTS_UNAVAILABLE` (ahead/behind), `CHANGED_PATHS_UNAVAILABLE`,
+`WORKING_TREE_STATUS_UNAVAILABLE` (the repository-wide status query), and, per source,
+`SOURCE_STATE_UNDETERMINABLE` (an `ls-files`/per-path `status` query failed) or
+`SOURCE_HEAD_BLOB_UNDETERMINABLE` (a source `git status` reports as unmodified, but its HEAD blob
+identity either could not be established or does not match a blob hash independently computed from
+the exact bytes this compiler already read — see "Clean-source/HEAD-blob binding" below). Any such
+error makes `validity.valid: false`, which makes `executionEligible: false` — none of these
+conditions can ever coexist with `executionEligible: true`. Production Git calls always run through
+`execFileSync("git", args, { shell: false, ... })`; `tests/dev/project-context-pack.test.mjs`
+deterministically injects a failure for an exact Git argument array (via an
+execFileSync-compatible test double, matching `scripts/dev/publication-builder.mjs`'s existing
+`execFileSyncImpl` convention) to exercise every one of these fail-closed paths without a shell and
+without needing to actually corrupt a fixture repository.
+
+### Clean-source/HEAD-blob binding
+
+A source is reported `CLEAN` only after independently binding that claim to the exact bytes this
+compiler already read for it: the compiler computes a Git blob SHA-1 directly from those bytes
+(the same `blob <len>\0<content>` hashing scheme Git itself uses) and requires it to equal the
+source's own `headBlobOid` (from `git rev-parse --verify HEAD:<path>`). If that OID is unavailable
+or disagrees, the source is reported `UNKNOWN`, not `CLEAN` — `git status`'s "no diff" claim alone
+is never trusted on its own for the CLEAN classification.
+
+## Snapshot consistency fence
+
+The compiler observes HEAD and a normalized working-tree status once at the very start of
+compilation and once again immediately before the pack is finalized. Two observations compare
+equal only when *both* the start and end queries succeeded and produced the same value; any query
+failure at either point — even a query that fails identically at both ends — is treated as
+"changed," never as "confirmed unchanged" (a repeated failure is unresolved, not evidence of
+stability). Whenever the two observations don't compare equal, compilation reports
+`REPOSITORY_CHANGED_DURING_COMPILATION`, an error (so `valid: false`, `executionEligible: false`). **This is a bounded consistency fence that detects an externally
+observed change, not a filesystem transaction or lock.** It cannot prevent a change from happening
+during compilation, and a change occurring entirely within the (typically sub-second) window
+between the two observations, in a way that leaves both observations looking identical (e.g. a
+change immediately reverted), is not detectable by this mechanism. Do not read it as a stronger
+guarantee than that.
+
+## Path-safe source reads
+
+Every source read (core authority sources, active-task Required Context entries, and
+`.project/STOP`) goes through one bounded, read-only primitive
+(`safeReadSource` in `scripts/dev/project-context-pack.mjs`): after structural and lexical path
+checks, it opens the target with `O_NOFOLLOW` where the platform supports it (macOS/Linux), `fstat`s
+the resulting file descriptor to require a regular file, and reads from that *same* descriptor —
+so the bytes hashed are guaranteed to be exactly what `fstat` validated for the file's final path
+component. A dangling symlink, a symlink to an existing file, a directory, or any non-ENOENT
+open/lstat/realpath/read failure is `UNSAFE`, never silently treated as `SAFE` or `MISSING` — only
+a true `ENOENT` is `MISSING`.
+
+**Documented residual limitation**: Node's public `fs` module has no `openat`-relative-to-a-
+directory-descriptor primitive, so the realpath-based ancestor-containment check (does this path,
+once every symlink is resolved, still land inside the repository root?) and the `O_NOFOLLOW` open
+of the final component are still two separate syscalls. An ancestor directory replaced with a
+symlink in the narrow window between those two syscalls is not caught by this function. This is a
+real, acknowledged gap under an adversarial concurrent-local-attacker model — do not claim it is
+fully closed. It requires an attacker already able to mutate the repository's filesystem
+concurrently with compilation, and the worst case is that its byte content is hashed/summarized
+into the pack (this compiler never executes anything it reads).
+
+## Unsafe STOP nodes
+
+`.project/STOP` is read through the same `safeReadSource` primitive as every other source, so
+`existsSync`-style presence checking is never used for it. A safe regular file yields
+`stop.present: true` with its SHA-256; any other node — a dangling symlink, a symlink to an
+existing target, a directory, or an unreadable/unsafe node — also yields `stop.present: true`, but
+with `sha256: null`, plus a `STOP_NODE_UNSAFE` validity error (so `valid: false`,
+`executionEligible: false` in addition to the ordinary `STOP_PRESENT` warning that already blocks
+eligibility whenever `STOP` is present at all). Only a true `ENOENT` — no filesystem node at that
+path — is `stop.present: false`.
+
+## Degraded output and error sanitization
+
+Whenever compilation cannot proceed safely — the requested repository root does not exist, or an
+unexpected internal exception is thrown anywhere in the compiler — a fixed, statically-constructed
+degraded pack is returned instead of throwing: `validity.valid: false`,
+`validity.executionEligible: false`, `repository.executionBlocked: true`, and exactly one
+structured error with the stable code `INTERNAL_COMPILATION_ERROR` and a fixed message. This
+degraded pack is built directly (never by recursively calling the same schema-validating,
+potentially-throwing finalize path a normal pack goes through) so it cannot itself fail the way it
+exists to recover from. It never contains a raw exception message, a stack trace, or any
+caller-supplied path (including an absolute `--repo` argument) — that detail, if any, is written to
+stderr only, never into the emitted pack. Because the degraded pack's shape is entirely static, it
+is fully deterministic: two independent runs that both hit this path produce byte-identical output
+and an identical `contextHash`.
 
 ## Fresh-session bootstrap
 
@@ -146,15 +255,17 @@ put it: an explicit human decision.
 
 ## Relationship to the future task queue, run bundle, human report, and Decision Council
 
-This task (`PROJECT-CONTINUITY-V1A-CONTEXT-PACK`) implements only the ContextPack itself. It does
+This task (`PROJECT-CONTINUITY-V1A-CONTEXT-PACK`, hardened by
+`PROJECT-CONTINUITY-V1A-PR34-FINAL-HARDENING`) implements only the ContextPack itself. It does
 **not** implement, and does not authorize implementing without a further explicit human task, any
 of: a task queue or workflow engine, an autonomy/Decision Council voting or quorum mechanism, a run
 bundle or append-only run-directory format, a scheduled human report generator, or any execution
-authority. The next authorized Project Continuity task,
-`PROJECT-CONTINUITY-V1B-RUN-BUNDLE`, is expected to cover typed autonomy task records, append-only
-immutable run directories/bundles, execution/verification evidence manifests, and decision-ready
-human merge reports — building on this pack as an input, not superseding it. No task before V1B is
-authorized to implement any of that.
+authority. `PROJECT-CONTINUITY-V1B-RUN-BUNDLE` is the **recommended** next Project Continuity task
+— not yet authorized — expected, once a human explicitly authorizes it after V1A itself is merged
+and frozen, to cover typed autonomy task records, append-only immutable run directories/bundles,
+execution/verification evidence manifests, and decision-ready human merge reports, building on this
+pack as an input, not superseding it. No task before that explicit authorization exists is
+authorized to implement any of it.
 
 ## V1A limitations
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// MIHVER ProjectContextPack v1 compiler (Project Continuity V1A).
+// MIHVER ProjectContextPack v1 compiler (Project Continuity V1A, hardened per
+// PROJECT-CONTINUITY-V1A-PR34-FINAL-HARDENING).
 //
 // Produces a compact, deterministic, machine-readable snapshot derived from MIHVER's existing
 // authoritative repository state (live Git + the owning .project/docs artifacts), so a fresh
@@ -11,7 +12,8 @@
 //   2. The owning repository artifact/document
 //   3. This derived ProjectContextPack
 //   4. Session/chat summaries
-// See docs/development/PROJECT_CONTINUITY.md for the full contract.
+// See docs/development/PROJECT_CONTINUITY.md for the full contract, including the documented
+// residual limitations of the consistency fence and the path-safe-read primitive below.
 //
 // Hard invariants:
 //   - Read-only. This module performs no filesystem write and no Git mutation (no fetch, pull,
@@ -19,22 +21,51 @@
 //   - Zero network / zero external service. No LLM, no GitHub API, no HTTP/HTTPS/fetch/socket call.
 //   - Every Git invocation uses execFileSync with an explicit argument array -- never an
 //     interpolated shell command string (mirrors scripts/dev/publication-builder.mjs's convention).
+//     The production default is always `execFileSync("git", args, { shell:false, ... })`; tests may
+//     inject a different execFileSync-compatible implementation via `options.execFileSyncImpl`
+//     (same convention as scripts/dev/publication-builder.mjs) to deterministically fail an exact
+//     Git argument array without invoking a real shell.
 //   - No clock-dependent field participates in the pack or its contextHash.
-//   - The compiler fails closed when a required authority source cannot be read or safely
-//     resolved -- see "Validity" below.
+//   - The compiler fails closed when a required authority source, or any authority-relevant Git
+//     query, cannot be read/observed safely -- see "Validity" below. An "empty successful result"
+//     (e.g. no working-tree changes) is always distinguished from "the query itself failed" via a
+//     dedicated stable error code -- never collapsed into the same `null`/`[]`/`""` representation.
+//   - A bounded start/end consistency fence detects (not prevents) a HEAD or working-tree change
+//     that happens during compilation -- see compileProjectContextPack's use of `observeGitState`.
+//     This is NOT a filesystem transaction/lock; it only detects an externally observed change
+//     between two points in time.
+//   - Source reads go through `safeReadSource`, a single bounded read-only primitive (classify,
+//     then open with O_NOFOLLOW where supported, fstat, and read from the SAME file descriptor) so
+//     the bytes hashed are guaranteed to be the bytes fstat validated for the FINAL path component.
+//     This does not close every possible race: Node's public fs API has no `openat`-relative-to-a-
+//     directory-descriptor primitive, so an ancestor directory swapped between this function's own
+//     realpath containment check and its open() call is a residual, documented limitation -- see
+//     PROJECT_CONTINUITY.md.
 //
-// Exit code contract (CLI only; compileProjectContextPack() itself never calls process.exit):
+// Exit code contract (CLI only; compileProjectContextPack() itself never calls process.exit and
+// never throws -- every failure mode, including a genuinely unexpected internal exception, is
+// caught and converted into a schema-valid, deterministic, valid:false degraded pack):
 //   0 - pack compiled, validity.valid === true (may still have executionEligible === false)
 //   1 - CLI usage error (unrecognized option) -- no pack is emitted on stdout
 //   2 - pack compiled (or a degraded internal-error fallback pack), validity.valid === false
 //
 // Without --pretty: exactly one compact JSON document on stdout, followed by one newline, and
 // nothing else on stdout. With --pretty: one stable pretty-printed JSON document, followed by one
-// newline. Human-readable diagnostics, if any, go to stderr only.
+// newline. Human-readable diagnostics, if any (including internal exception detail -- see the
+// degraded-pack contract below), go to stderr only, NEVER into the emitted pack itself.
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
+import {
+  closeSync,
+  constants as fsConstants,
+  existsSync,
+  fstatSync,
+  lstatSync,
+  openSync,
+  readFileSync,
+  realpathSync,
+} from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -46,6 +77,7 @@ export const SCHEMA_VERSION = "1.0.0";
 export const COMPILER_NAME = "project-context-pack.mjs";
 export const COMPILER_VERSION = "1.0.0";
 export const CONTEXT_HASH_DOMAIN = "MIHVER:ProjectContextPack:v1\0";
+export const SCHEMA_URI = "https://mihver.network/schemas/dev/project-context-pack.schema.json";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 export const DEFAULT_REPO_ROOT = resolve(__dirname, "..", "..");
@@ -60,8 +92,8 @@ function getValidator() {
   return cachedValidator;
 }
 
-// Core authority/navigation sources every pack manifests (see PROJECT-CONTINUITY-V1A-CONTEXT-PACK
-// task, "3.G. Source manifest"). Order here is irrelevant -- the manifest is sorted by path.
+// Core authority/navigation sources every pack manifests. Order here is irrelevant -- the manifest
+// is sorted by path in the emitted pack.
 const CORE_SOURCES = [
   "CLAUDE.md",
   "ROADMAP.md",
@@ -81,6 +113,15 @@ function sha256Hex(bufferOrString) {
   return createHash("sha256").update(bufferOrString).digest("hex");
 }
 
+// Computes a Git blob object's SHA-1 OID directly from raw bytes already in memory -- the exact
+// `blob <len>\0<content>` hashing scheme Git itself uses for `git hash-object`/tree blob entries.
+// Lets compileSourceEntry bind a "clean" claim to the exact bytes it already read (see Finding 4 /
+// SOURCE_HEAD_BLOB_UNDETERMINABLE) instead of trusting `git status`'s "no diff" claim alone.
+function gitBlobSha1Hex(buf) {
+  const header = Buffer.from(`blob ${buf.length}\0`, "utf8");
+  return createHash("sha1").update(Buffer.concat([header, buf])).digest("hex");
+}
+
 function sortUnique(list) {
   return Array.from(new Set(list)).sort();
 }
@@ -91,21 +132,30 @@ function truncate(text, maxLen) {
 
 // --- Git access (read-only, execFileSync with an argument array only) --------------------------
 
-function tryGit(repoRoot, args) {
-  try {
-    const out = execFileSync("git", args, {
-      cwd: repoRoot,
-      encoding: "utf8",
-      shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    // Trim only trailing newline(s) -- NOT a full trim(), which would strip the leading space of
-    // `git status --porcelain`'s first line for any entry whose status code starts with a space
-    // (e.g. " M path"), corrupting that entry's parsed path.
-    return { ok: true, out: out.replace(/\r?\n+$/, "") };
-  } catch {
-    return { ok: false, out: null };
-  }
+// Builds a `tryGit(repoRoot, args)` function bound to a specific execFileSync-compatible
+// implementation. The production default (see compileProjectContextPack) always binds the real
+// `execFileSync`; tests bind a fake implementation that inspects `args` and throws for an exact
+// argument array, deterministically simulating "this Git query is unavailable" without a shell.
+function buildTryGit(execFileSyncImpl) {
+  return function tryGit(repoRoot, args) {
+    try {
+      const out = execFileSyncImpl("git", args, {
+        cwd: repoRoot,
+        encoding: "utf8",
+        shell: false,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      // Trim only trailing newline(s) -- NOT a full trim(), which would strip the leading space of
+      // `git status --porcelain`'s first line for any entry whose status code starts with a space
+      // (e.g. " M path"), corrupting that entry's parsed path.
+      return { ok: true, out: String(out).replace(/\r?\n+$/, "") };
+    } catch {
+      // Deliberately collapses every failure mode (nonzero exit, missing binary, thrown test
+      // double) into ok:false/out:null -- never into an empty-string/[] result, so callers can
+      // always distinguish "the query legitimately found nothing" from "the query failed."
+      return { ok: false, out: null };
+    }
+  };
 }
 
 // --- Markdown section parsing (mirrors scripts/dev/project-context.mjs's conventions) ----------
@@ -175,11 +225,11 @@ function extractBulletPaths(lines) {
   return paths;
 }
 
-// --- Path safety (mirrors scripts/dev/publication-builder.mjs's isSafeRelativePath /
-// resolvesInsideRepo pattern; extended with a realpath containment check so a symlinked ancestor
-// directory can't smuggle an otherwise "safe-looking" path outside the repository). -------------
+// --- Path safety: structural (string-only) checks, and the bounded safe-read primitive ---------
 
-function classifyPathSafety(repoRoot, relPathRaw) {
+// Purely lexical checks on the declared path string -- no filesystem access. Mirrors
+// scripts/dev/publication-builder.mjs's isSafeRelativePath pattern.
+function classifyPathSafetyStructural(relPathRaw) {
   if (typeof relPathRaw !== "string" || relPathRaw.length === 0) return "UNSAFE_INVALID";
   if (relPathRaw.includes("\0") || relPathRaw.includes("\n")) return "UNSAFE_INVALID";
   if (isAbsolute(relPathRaw) || relPathRaw.startsWith("/") || relPathRaw.includes("\\")) {
@@ -187,84 +237,160 @@ function classifyPathSafety(repoRoot, relPathRaw) {
   }
   const segments = relPathRaw.split("/");
   if (segments.some((s) => s === ".." || s === "")) return "UNSAFE_TRAVERSAL";
-
-  const repoRootResolved = resolve(repoRoot);
-  const abs = resolve(repoRootResolved, relPathRaw);
-  const rel = relative(repoRootResolved, abs);
-  if (rel === "" || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return "UNSAFE_ESCAPES_REPO";
-
-  try {
-    const st = lstatSync(abs);
-    if (st.isSymbolicLink()) return "UNSAFE_SYMLINK";
-    if (!st.isFile()) return "UNSAFE_NOT_REGULAR_FILE";
-    const realAbs = realpathSync(abs);
-    const realRepoRoot = realpathSync(repoRootResolved);
-    const realRel = relative(realRepoRoot, realAbs);
-    if (realRel.startsWith(`..${sep}`) || isAbsolute(realRel)) return "UNSAFE_SYMLINK";
-  } catch {
-    // Does not exist on disk: structurally safe as a path, just absent (MISSING, not UNSAFE).
-  }
-  return "SAFE";
+  return "STRUCTURALLY_SAFE";
 }
 
-function isUnsafe(safety) {
+function isUnsafeSafety(safety) {
   return safety !== "SAFE";
+}
+
+const NOFOLLOW = fsConstants.O_NOFOLLOW ?? 0;
+
+// The single bounded, read-only primitive every source read in this compiler goes through
+// (core authority sources, active-task Required Context entries, and .project/STOP). Returns
+// exactly one of:
+//   { outcome: "MISSING" }                     -- true ENOENT only
+//   { outcome: "UNSAFE", reason: <safety code> } -- anything else that isn't a safe regular file
+//   { outcome: "OK", buf: <Buffer> }             -- the exact bytes read from one open fd
+//
+// Sequence: (1) structural checks on the path string; (2) an initial lstat + realpath containment
+// check (rejects an absolute-escaping path via a symlinked ancestor directory); (3) open the path
+// with O_NOFOLLOW (rejects a symlink at the FINAL path component -- ELOOP) where the platform
+// supports it; (4) fstat the resulting file descriptor and require a regular file; (5) read from
+// that SAME descriptor. Steps 3-5 operate on one fd, so the bytes returned are guaranteed to be
+// exactly what fstat validated for the final path component -- there is no second, path-based
+// re-open that a symlink swap between "check" and "read" could redirect.
+//
+// Residual limitation (documented, not silently claimed closed): Node's public `fs` module has no
+// `openat`-relative-to-a-directory-descriptor API, so step (2)'s realpath containment check and
+// step (3)'s open() are still two separate syscalls under the hood -- an ancestor directory
+// replaced with a symlink in the narrow window between them is not caught by this function. This
+// is a real, acknowledged gap in an adversarial concurrent-attacker model; it is not exploitable by
+// the content of any file this compiler reads (which never executes anything), only by what byte
+// content ends up hashed/summarized into the pack.
+function safeReadSource(repoRoot, relPath) {
+  const structural = classifyPathSafetyStructural(relPath);
+  if (structural !== "STRUCTURALLY_SAFE") return { outcome: "UNSAFE", reason: structural };
+
+  const repoRootResolved = resolve(repoRoot);
+  const abs = resolve(repoRootResolved, relPath);
+  const rel = relative(repoRootResolved, abs);
+  if (rel === "" || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+    return { outcome: "UNSAFE", reason: "UNSAFE_ESCAPES_REPO" };
+  }
+
+  let lst;
+  try {
+    lst = lstatSync(abs);
+  } catch (err) {
+    if (err && err.code === "ENOENT") return { outcome: "MISSING" };
+    return { outcome: "UNSAFE", reason: "UNSAFE_LSTAT_FAILED" };
+  }
+  if (lst.isSymbolicLink()) return { outcome: "UNSAFE", reason: "UNSAFE_SYMLINK" };
+  if (!lst.isFile()) return { outcome: "UNSAFE", reason: "UNSAFE_NOT_REGULAR_FILE" };
+
+  let realAbs;
+  let realRepoRoot;
+  try {
+    realAbs = realpathSync(abs);
+    realRepoRoot = realpathSync(repoRootResolved);
+  } catch {
+    return { outcome: "UNSAFE", reason: "UNSAFE_REALPATH_FAILED" };
+  }
+  const realRel = relative(realRepoRoot, realAbs);
+  if (realRel.startsWith(`..${sep}`) || isAbsolute(realRel)) {
+    return { outcome: "UNSAFE", reason: "UNSAFE_SYMLINK" };
+  }
+
+  let fd;
+  try {
+    fd = openSync(abs, fsConstants.O_RDONLY | NOFOLLOW);
+  } catch (err) {
+    if (err && err.code === "ENOENT") return { outcome: "MISSING" };
+    if (err && err.code === "ELOOP") return { outcome: "UNSAFE", reason: "UNSAFE_SYMLINK" };
+    return { outcome: "UNSAFE", reason: "UNSAFE_OPEN_FAILED" };
+  }
+  try {
+    const st = fstatSync(fd);
+    if (!st.isFile()) return { outcome: "UNSAFE", reason: "UNSAFE_NOT_REGULAR_FILE" };
+    const buf = readFileSync(fd);
+    return { outcome: "OK", buf };
+  } catch {
+    return { outcome: "UNSAFE", reason: "UNSAFE_READ_FAILED" };
+  } finally {
+    try {
+      closeSync(fd);
+    } catch {
+      // Nothing further to do if closing an already-troubled fd itself fails.
+    }
+  }
 }
 
 // --- Source manifest entry compilation ----------------------------------------------------------
 
-// Returns a source manifest entry. Reads the file's bytes at most once (`__textContent` carries
-// the decoded UTF-8 text for present/safe entries so callers that need to interpret this source
-// -- compileProjectInterpretation/compileActiveTask/compileReview -- reuse the exact same bytes
-// this entry's own hash was computed from, rather than re-reading the file a second time and
-// risking a torn read against a concurrent external modification. `__textContent` is stripped
-// before the entry is placed in the pack's `sources` array (see compileProjectContextPack).
-function compileSourceEntry(repoRoot, relPath, role, required) {
-  const safety = classifyPathSafety(repoRoot, relPath);
+// Returns a source manifest entry, plus two internal-only fields stripped before the entry is
+// placed in the pack's public `sources` array (see compileProjectContextPack):
+//   __textContent  -- the decoded UTF-8 text for present/safe entries, so callers that need to
+//                      interpret this source (compileProjectInterpretation/compileActiveTask/
+//                      compileReview) reuse the EXACT bytes this entry's own hash was computed
+//                      from via safeReadSource's single fd read, instead of an independent second
+//                      read that could observe a torn/changed version.
+//   __unknownReason -- the specific stable error code compileValidity should raise when
+//                      state === "UNKNOWN" (SOURCE_STATE_UNDETERMINABLE for an ls-files/status
+//                      query failure, SOURCE_HEAD_BLOB_UNDETERMINABLE when a "clean" claim's Git
+//                      blob identity could not be established or did not match).
+function compileSourceEntry(repoRoot, relPath, role, required, tryGit) {
   const entry = {
     path: relPath,
     role,
     required,
     present: false,
-    safety,
+    safety: "UNSAFE_INVALID",
     byteLength: null,
     workingTreeSha256: null,
     headBlobOid: null,
     state: "UNSAFE",
     __textContent: null,
+    __unknownReason: null,
   };
 
-  if (isUnsafe(safety)) return entry;
+  const read = safeReadSource(repoRoot, relPath);
 
-  const abs = join(repoRoot, relPath);
-  let present = false;
-  let buf = null;
-  try {
-    buf = readFileSync(abs);
-    present = true;
-    entry.byteLength = buf.length;
-    entry.workingTreeSha256 = sha256Hex(buf);
-    entry.__textContent = buf.toString("utf8");
-  } catch {
-    present = false;
+  if (read.outcome === "UNSAFE") {
+    entry.safety = read.reason;
+    entry.state = "UNSAFE";
+    return entry;
   }
-  entry.present = present;
+
+  entry.safety = "SAFE";
+
+  if (read.outcome === "MISSING") {
+    entry.present = false;
+    entry.state = "MISSING";
+    // Still worth knowing whether a now-deleted file was tracked at HEAD -- best-effort only,
+    // never required for MISSING classification itself.
+    const headBlob = tryGit(repoRoot, ["rev-parse", "--verify", `HEAD:${relPath}`]);
+    entry.headBlobOid = headBlob.ok && /^[0-9a-f]{40}$/.test(headBlob.out) ? headBlob.out : null;
+    return entry;
+  }
+
+  // read.outcome === "OK"
+  const buf = read.buf;
+  entry.present = true;
+  entry.byteLength = buf.length;
+  entry.workingTreeSha256 = sha256Hex(buf);
+  entry.__textContent = buf.toString("utf8");
 
   const headBlob = tryGit(repoRoot, ["rev-parse", "--verify", `HEAD:${relPath}`]);
   entry.headBlobOid = headBlob.ok && /^[0-9a-f]{40}$/.test(headBlob.out) ? headBlob.out : null;
 
-  if (!present) {
-    entry.state = "MISSING";
-    return entry;
-  }
-
   const tracked = tryGit(repoRoot, ["ls-files", "--", relPath]);
   if (!tracked.ok) {
     entry.state = "UNKNOWN";
+    entry.__unknownReason = "SOURCE_STATE_UNDETERMINABLE";
     return entry;
   }
-  const isTracked = tracked.out.length > 0;
-  if (!isTracked) {
+  if (tracked.out.length === 0) {
     entry.state = "UNTRACKED";
     return entry;
   }
@@ -272,18 +398,89 @@ function compileSourceEntry(repoRoot, relPath, role, required) {
   const statusForPath = tryGit(repoRoot, ["status", "--porcelain", "--", relPath]);
   if (!statusForPath.ok) {
     entry.state = "UNKNOWN";
+    entry.__unknownReason = "SOURCE_STATE_UNDETERMINABLE";
     return entry;
   }
-  const isModified = statusForPath.out.length > 0;
-  entry.state = isModified ? "MODIFIED" : "CLEAN";
+  if (statusForPath.out.length > 0) {
+    entry.state = "MODIFIED";
+    return entry;
+  }
+
+  // Candidate CLEAN: `git status` sees no diff. Before trusting that claim, independently bind it
+  // to the exact bytes already read -- fail closed (state UNKNOWN) if the HEAD blob identity
+  // cannot be established at all, or if it disagrees with the blob hash computed directly from
+  // those bytes (Finding 4's clean-source/HEAD-blob binding).
+  if (!entry.headBlobOid) {
+    entry.state = "UNKNOWN";
+    entry.__unknownReason = "SOURCE_HEAD_BLOB_UNDETERMINABLE";
+    return entry;
+  }
+  const localBlobSha1 = gitBlobSha1Hex(buf);
+  if (localBlobSha1 !== entry.headBlobOid) {
+    entry.state = "UNKNOWN";
+    entry.__unknownReason = "SOURCE_HEAD_BLOB_UNDETERMINABLE";
+    return entry;
+  }
+
+  entry.state = "CLEAN";
   return entry;
+}
+
+// --- .project/STOP -----------------------------------------------------------------------------
+
+// Uses the same bounded safe-read primitive as every other source -- so a dangling symlink,
+// symlink-to-existing-target, directory, or unreadable node at .project/STOP is never silently
+// treated as "absent" (which existsSync-based presence checks conflate with ENOENT). Only a true
+// ENOENT is `present:false`; every other non-regular-file/unreadable outcome is `present:true`
+// with a null hash and a stable validity error (see compileValidity's STOP_NODE_UNSAFE).
+function compileStop(repoRoot) {
+  const read = safeReadSource(repoRoot, ".project/STOP");
+  if (read.outcome === "MISSING") return { present: false, sha256: null, unsafeReason: null };
+  if (read.outcome === "UNSAFE") return { present: true, sha256: null, unsafeReason: read.reason };
+  return { present: true, sha256: sha256Hex(read.buf), unsafeReason: null };
 }
 
 // --- Repository snapshot -------------------------------------------------------------------------
 
-function compileRepositorySnapshot(repoRoot) {
+// Observes just the two cheapest, most change-sensitive facts (HEAD OID and normalized working-
+// tree status) -- used both for the main repository snapshot and, unchanged, for the start/end
+// consistency fence in compileProjectContextPack. `ok:false` on either sub-observation is treated
+// as "changed" by the fence (see REPOSITORY_CHANGED_DURING_COMPILATION), never as a silent match.
+function observeGitState(repoRoot, tryGit) {
+  const headResult = tryGit(repoRoot, ["rev-parse", "HEAD"]);
+  const statusResult = tryGit(repoRoot, ["status", "--porcelain"]);
+  const headOk = headResult.ok && /^[0-9a-f]{40}$/.test(headResult.out);
+  return {
+    headOk,
+    head: headOk ? headResult.out : null,
+    statusOk: statusResult.ok,
+    // Sorted so two logically-identical status snapshots always compare equal even if Git ever
+    // changed its own internal ordering between the two observations.
+    normalizedStatus: statusResult.ok
+      ? statusResult.out.split("\n").filter(Boolean).sort().join("\n")
+      : null,
+  };
+}
+
+// A query that failed on EITHER observation -- even if it also failed identically on the other --
+// is treated as "changed" (fail closed), never as "the two observations agree." Two observations
+// only ever compare equal when BOTH sides' queries succeeded and produced the same values -- a
+// repeated failure is unresolved, not confirmed-unchanged, and must not be silently waved through.
+function gitStateEqual(a, b) {
+  if (!a.headOk || !b.headOk || !a.statusOk || !b.statusOk) return false;
+  return a.head === b.head && a.normalizedStatus === b.normalizedStatus;
+}
+
+function compileRepositorySnapshot(repoRoot, tryGit, errors) {
   const branchResult = tryGit(repoRoot, ["branch", "--show-current"]);
   const headResult = tryGit(repoRoot, ["rev-parse", "HEAD"]);
+
+  if (!branchResult.ok) {
+    errors.push({
+      code: "BRANCH_STATE_UNAVAILABLE",
+      message: "git branch --show-current failed unexpectedly -- branch/detached state could not be determined.",
+    });
+  }
 
   const headOk = headResult.ok && /^[0-9a-f]{40}$/.test(headResult.out);
   const head = headOk ? headResult.out : null;
@@ -313,19 +510,34 @@ function compileRepositorySnapshot(repoRoot) {
 
   if (head && baselineOid) {
     const mb = tryGit(repoRoot, ["merge-base", "HEAD", baselineOid]);
-    mergeBase = mb.ok && /^[0-9a-f]{40}$/.test(mb.out) ? mb.out : null;
+    if (!mb.ok || !/^[0-9a-f]{40}$/.test(mb.out)) {
+      errors.push({
+        code: "MERGE_BASE_UNAVAILABLE",
+        message: "git merge-base failed unexpectedly even though HEAD and a baseline are both resolvable.",
+      });
+    } else {
+      mergeBase = mb.out;
+    }
 
     const counts = tryGit(repoRoot, ["rev-list", "--left-right", "--count", `${baselineOid}...HEAD`]);
-    if (counts.ok) {
-      const parts = counts.out.split(/\s+/).filter(Boolean);
-      if (parts.length === 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])) {
-        behind = Number(parts[0]);
-        ahead = Number(parts[1]);
-      }
+    const parts = counts.ok ? counts.out.split(/\s+/).filter(Boolean) : [];
+    if (!counts.ok || parts.length !== 2 || !/^\d+$/.test(parts[0]) || !/^\d+$/.test(parts[1])) {
+      errors.push({
+        code: "HISTORY_COUNTS_UNAVAILABLE",
+        message: "git rev-list --left-right --count failed or returned an unparseable result.",
+      });
+    } else {
+      behind = Number(parts[0]);
+      ahead = Number(parts[1]);
     }
 
     const diffNames = tryGit(repoRoot, ["diff", "--name-only", `${baselineOid}...HEAD`]);
-    if (diffNames.ok && diffNames.out.length > 0) {
+    if (!diffNames.ok) {
+      errors.push({
+        code: "CHANGED_PATHS_UNAVAILABLE",
+        message: "git diff --name-only failed unexpectedly even though HEAD and a baseline are both resolvable.",
+      });
+    } else if (diffNames.out.length > 0) {
       changedPaths = sortUnique(diffNames.out.split("\n").filter(Boolean));
     }
   }
@@ -336,8 +548,14 @@ function compileRepositorySnapshot(repoRoot) {
     .map((line) => ({ status: line.slice(0, 2), path: line.slice(3) }))
     .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   // Fail closed rather than silently reporting "clean" when the status query itself failed --
-  // see compileValidity's WORKING_TREE_STATUS_UNAVAILABLE error.
+  // see the WORKING_TREE_STATUS_UNAVAILABLE error pushed below.
   const clean = statusResult.ok && entries.length === 0;
+  if (!statusResult.ok) {
+    errors.push({
+      code: "WORKING_TREE_STATUS_UNAVAILABLE",
+      message: "git status --porcelain failed unexpectedly -- working-tree cleanliness could not be determined.",
+    });
+  }
 
   return {
     detached,
@@ -357,7 +575,7 @@ function compileRepositorySnapshot(repoRoot) {
 
 // --- Project / active task / review sections ------------------------------------------------------
 
-function compileProjectInterpretation(_repoRoot, sourcesByPath) {
+function compileProjectInterpretation(sourcesByPath) {
   const projectStateEntry = sourcesByPath.get(".project/PROJECT_STATE.md");
   // Reuse the exact bytes compileSourceEntry already hashed -- never re-read the file, which
   // could observe a different (torn) version if it changed mid-compilation.
@@ -373,7 +591,7 @@ function compileProjectInterpretation(_repoRoot, sourcesByPath) {
   };
 }
 
-function compileActiveTask(_repoRoot, branch, detached, sourcesByPath, warnings) {
+function compileActiveTask(branch, detached, sourcesByPath, warnings) {
   const entry = sourcesByPath.get(".project/CURRENT_TASK.md");
   const exists = Boolean(entry && entry.present && entry.safety === "SAFE");
   // Reuse the exact bytes compileSourceEntry already hashed (see that function's own comment).
@@ -410,7 +628,7 @@ function compileActiveTask(_repoRoot, branch, detached, sourcesByPath, warnings)
   return { active: true, declaredBranch, taskId, objective, status, requiredContext };
 }
 
-function compileReview(_repoRoot, branch, activeTask, sourcesByPath) {
+function compileReview(branch, activeTask, sourcesByPath) {
   const entry = sourcesByPath.get(".project/REVIEW_STATE.md");
   const exists = Boolean(entry && entry.present && entry.safety === "SAFE");
   // Reuse the exact bytes compileSourceEntry already hashed (see that function's own comment).
@@ -438,18 +656,20 @@ function compileValidity({
   activeTask,
   review,
   stop,
-  sources,
+  internalSources,
   requiredContextEntries,
+  repositoryChangedDuringCompilation,
+  repositoryErrors,
 }) {
-  const errors = [];
+  const errors = [...repositoryErrors];
   const warnings = [];
 
   if (!repository.head) {
     errors.push({ code: "HEAD_UNRESOLVABLE", message: "git rev-parse HEAD did not resolve to a 40-hex commit OID." });
   }
 
-  for (const src of sources) {
-    if (src.required && isUnsafe(src.safety)) {
+  for (const src of internalSources) {
+    if (src.required && isUnsafeSafety(src.safety)) {
       errors.push({
         code: `UNSAFE_REQUIRED_SOURCE_${src.safety}`,
         message: `Required authority source "${src.path}" is unsafe (${src.safety}).`,
@@ -462,10 +682,17 @@ function compileValidity({
         path: src.path,
       });
     }
+    if (src.state === "UNKNOWN" && src.__unknownReason) {
+      errors.push({
+        code: src.__unknownReason,
+        message: `Could not determine a trustworthy state for "${src.path}" (${src.__unknownReason}).`,
+        path: src.path,
+      });
+    }
   }
 
   for (const rc of requiredContextEntries) {
-    if (isUnsafe(rc.safety)) {
+    if (isUnsafeSafety(rc.safety)) {
       errors.push({
         code: `UNSAFE_REQUIRED_CONTEXT_${rc.safety}`,
         message: `Active task Required Context path "${rc.path}" is unsafe (${rc.safety}).`,
@@ -493,29 +720,18 @@ function compileValidity({
 
   if (stop.present) {
     warnings.push({ code: "STOP_PRESENT", message: ".project/STOP is present." });
+    if (stop.unsafeReason) {
+      errors.push({
+        code: "STOP_NODE_UNSAFE",
+        message: `.project/STOP is present but is not a safe regular file (${stop.unsafeReason}) -- treated as blocking regardless.`,
+      });
+    }
   }
 
   if (!activeTask.active) {
     warnings.push({
       code: "NO_ACTIVE_TASK",
       message: "No task is active for the current branch (detached HEAD, no CURRENT_TASK.md, or a branch mismatch) -- nothing is authorized to execute here.",
-    });
-  }
-
-  for (const src of sources) {
-    if (src.state === "UNKNOWN") {
-      errors.push({
-        code: "SOURCE_STATE_UNDETERMINABLE",
-        message: `Could not determine the tracked/modified state of "${src.path}" -- a required Git query failed unexpectedly.`,
-        path: src.path,
-      });
-    }
-  }
-
-  if (repository.workingTreeStatusUnavailable) {
-    errors.push({
-      code: "WORKING_TREE_STATUS_UNAVAILABLE",
-      message: "git status --porcelain failed unexpectedly -- working-tree cleanliness could not be determined.",
     });
   }
 
@@ -535,15 +751,31 @@ function compileValidity({
     });
   }
 
+  if (repositoryChangedDuringCompilation) {
+    errors.push({
+      code: "REPOSITORY_CHANGED_DURING_COMPILATION",
+      message:
+        "HEAD or the working tree changed between the start and end of compilation -- this is a " +
+        "consistency fence that detects an observed change, not a filesystem transaction/lock.",
+    });
+  }
+
+  const hasUnknownSource = internalSources.some((s) => s.state === "UNKNOWN");
+
   const valid = errors.length === 0;
   const executionEligible =
     valid &&
     Boolean(repository.head) &&
     Boolean(repository.baseline.oid) &&
+    Boolean(repository.mergeBase) &&
+    repository.ahead !== null &&
+    repository.behind !== null &&
     repository.workingTree.clean &&
+    !repository.workingTreeStatusUnavailable &&
     !stop.present &&
     !contradictory &&
     activeTask.active &&
+    !hasUnknownSource &&
     !warnings.some((w) => w.code === "REQUIRED_SOURCE_MISSING" || w.code === "REQUIRED_CONTEXT_MISSING");
 
   return { valid, executionEligible, errors, warnings };
@@ -559,22 +791,28 @@ export function computeContextHash(packWithoutContextHash) {
   return `sha256:${hash.digest("hex")}`;
 }
 
-function finalizePack(packWithoutContextHash) {
-  const contextHash = computeContextHash(packWithoutContextHash);
-  const pack = { ...packWithoutContextHash, contextHash };
-  const validate = getValidator();
-  if (!validate(pack)) {
-    const detail = (validate.errors || []).map((e) => `${e.instancePath || "/"} ${e.message}`).join("; ");
-    throw new Error(`internal: compiled ProjectContextPack failed self-validation against its own schema: ${detail}`);
-  }
-  return pack;
+function attachContextHash(packWithoutContextHash) {
+  return { ...packWithoutContextHash, contextHash: computeContextHash(packWithoutContextHash) };
 }
 
-// --- Degraded fallback pack (used only when compilation hits an unexpected internal error) -------
+// Diagnostics only -- NEVER written into the pack itself (see the degraded-pack contract above).
+function logInternalError(detail) {
+  process.stderr.write(`project-context-pack: internal error: ${detail}\n`);
+}
 
-function degradedPack(message) {
+// --- Degraded fallback pack ------------------------------------------------------------------------
+//
+// Used whenever compilation cannot proceed safely: the repository root does not exist, an
+// unexpected internal exception was thrown, or (defensively) the normally-compiled pack somehow
+// failed its own schema self-validation. Deliberately built WITHOUT going through the normal
+// schema-validating finalize path (finalizePack) -- a degraded pack must be correct by
+// construction and must never recursively risk the same failure it exists to recover from. Fully
+// static and deterministic: no caller-supplied text (including an absolute --repo path) and no
+// raw exception message is ever included -- only a fixed, stable code/message pair. Exception
+// detail goes to stderr via logInternalError, never into the returned object.
+function buildDegradedPack() {
   const body = {
-    $schema: "https://mihver.network/schemas/dev/project-context-pack.schema.json",
+    $schema: SCHEMA_URI,
     kind: "ProjectContextPack",
     schemaVersion: SCHEMA_VERSION,
     compiler: { name: COMPILER_NAME, version: COMPILER_VERSION },
@@ -588,6 +826,7 @@ function degradedPack(message) {
       behind: null,
       workingTree: { clean: false, entries: [] },
       changedPaths: [],
+      workingTreeStatusUnavailable: true,
       executionBlocked: true,
     },
     project: {
@@ -603,74 +842,108 @@ function degradedPack(message) {
     validity: {
       valid: false,
       executionEligible: false,
-      errors: [{ code: "INTERNAL_COMPILATION_ERROR", message: String(message) }],
+      errors: [
+        {
+          code: "INTERNAL_COMPILATION_ERROR",
+          message: "Pack compilation failed and a safe degraded snapshot was returned instead. See stderr for diagnostic detail.",
+        },
+      ],
       warnings: [],
     },
   };
-  return finalizePack(body);
+  return attachContextHash(body);
+}
+
+// Finalizes a normally-compiled pack: attaches contextHash, then self-validates against the
+// pack's own JSON Schema as a defensive integrity check before returning. On the (expected-never)
+// event that self-validation fails, this does NOT throw or recurse into itself -- it logs the
+// detail to stderr and returns the static degraded pack instead, same as any other internal
+// failure (see compileProjectContextPack's catch block for the other route to buildDegradedPack).
+function finalizePack(packWithoutContextHash) {
+  const pack = attachContextHash(packWithoutContextHash);
+  const validate = getValidator();
+  if (!validate(pack)) {
+    const detail = (validate.errors || []).map((e) => `${e.instancePath || "/"} ${e.message}`).join("; ");
+    logInternalError(`compiled pack failed self-validation against its own schema: ${detail}`);
+    return buildDegradedPack();
+  }
+  return pack;
 }
 
 // --- Public compiler API ----------------------------------------------------------------------------
 
-export function compileProjectContextPack(repoRoot, _options = {}) {
+export function compileProjectContextPack(repoRoot, options = {}) {
   try {
-    if (!existsSync(repoRoot)) {
-      // Deliberately does not include the caller-supplied path itself in the emitted pack -- an
-      // operator-supplied --repo value could be an arbitrary local path (e.g. under a home or
-      // temp directory) that PROJECT_CONTINUITY.md's privacy rules say this artifact must not echo.
-      return degradedPack("the requested repository root does not exist");
+    // Test-only seam: deterministically exercises the "unexpected internal exception" degraded-
+    // pack path without needing to actually corrupt filesystem/Git state. Never set in production.
+    if (options.__forceInternalErrorForTest) {
+      throw new Error("forced internal error (test-only seam)");
     }
 
-    const repository = compileRepositorySnapshot(repoRoot);
+    if (!existsSync(repoRoot)) {
+      // Deliberately does not include the caller-supplied path itself anywhere in the emitted
+      // pack -- an operator-supplied --repo value could be an arbitrary local path (e.g. under a
+      // home or temp directory) that PROJECT_CONTINUITY.md's privacy rules say this artifact must
+      // not echo. See buildDegradedPack's own fixed, stable code/message.
+      return buildDegradedPack();
+    }
 
-    const coreEntries = CORE_SOURCES.map((p) => compileSourceEntry(repoRoot, p, "CORE_AUTHORITY", true));
+    const tryGit = buildTryGit(options.execFileSyncImpl ?? execFileSync);
+
+    // Start-of-compilation observation for the bounded consistency fence (Finding 4). This is a
+    // change-detection fence, not a filesystem transaction/lock -- see this file's header comment
+    // and PROJECT_CONTINUITY.md for the honest scope of what it does and does not guarantee.
+    const startState = observeGitState(repoRoot, tryGit);
+
+    const repositoryErrors = [];
+    const repository = compileRepositorySnapshot(repoRoot, tryGit, repositoryErrors);
+
+    const coreEntries = CORE_SOURCES.map((p) => compileSourceEntry(repoRoot, p, "CORE_AUTHORITY", true, tryGit));
     const sourcesByPath = new Map(coreEntries.map((e) => [e.path, e]));
 
     const warnings = [];
-    const activeTask = compileActiveTask(repoRoot, repository.branch, repository.detached, sourcesByPath, warnings);
-    const review = compileReview(repoRoot, repository.branch, activeTask, sourcesByPath);
+    const activeTask = compileActiveTask(repository.branch, repository.detached, sourcesByPath, warnings);
+    const review = compileReview(repository.branch, activeTask, sourcesByPath);
 
     const requiredContextEntries = activeTask.requiredContext.map((p) =>
-      compileSourceEntry(repoRoot, p, "TASK_REQUIRED_CONTEXT", true)
+      compileSourceEntry(repoRoot, p, "TASK_REQUIRED_CONTEXT", true, tryGit)
     );
     for (const rc of requiredContextEntries) {
       if (!sourcesByPath.has(rc.path)) sourcesByPath.set(rc.path, rc);
     }
 
-    const stopSafety = classifyPathSafety(repoRoot, ".project/STOP");
-    let stop = { present: false, sha256: null };
-    if (!isUnsafe(stopSafety)) {
-      try {
-        const buf = readFileSync(join(repoRoot, ".project/STOP"));
-        stop = { present: true, sha256: sha256Hex(buf) };
-      } catch {
-        stop = { present: false, sha256: null };
-      }
-    } else if (existsSync(join(repoRoot, ".project/STOP"))) {
-      // Present but unreadable as a safe regular file (e.g. a symlink) -- still report presence.
-      stop = { present: true, sha256: null };
-    }
+    const stop = compileStop(repoRoot);
 
-    const project = compileProjectInterpretation(repoRoot, sourcesByPath);
+    const project = compileProjectInterpretation(sourcesByPath);
 
-    const sources = Array.from(sourcesByPath.values())
-      .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-      .map(({ __textContent, ...publicFields }) => publicFields);
+    const internalSources = Array.from(sourcesByPath.values()).sort((a, b) =>
+      a.path < b.path ? -1 : a.path > b.path ? 1 : 0
+    );
+    const sources = internalSources.map(({ __textContent, __unknownReason, ...publicFields }) => publicFields);
+
+    // End-of-compilation observation, compared against the start-of-compilation one. Any
+    // discrepancy -- including one side's query failing while the other succeeded -- is treated
+    // as "changed" (fail closed), never silently ignored.
+    const endState = observeGitState(repoRoot, tryGit);
+    const repositoryChangedDuringCompilation = !gitStateEqual(startState, endState);
 
     const validity = compileValidity({
       repository,
       activeTask,
       review,
       stop,
-      sources,
+      internalSources,
       requiredContextEntries,
+      repositoryChangedDuringCompilation,
+      repositoryErrors,
     });
     validity.warnings = [...warnings, ...validity.warnings].sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
+    validity.errors = [...validity.errors].sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
 
     repository.executionBlocked = !validity.executionEligible;
 
     const packWithoutContextHash = {
-      $schema: "https://mihver.network/schemas/dev/project-context-pack.schema.json",
+      $schema: SCHEMA_URI,
       kind: "ProjectContextPack",
       schemaVersion: SCHEMA_VERSION,
       compiler: { name: COMPILER_NAME, version: COMPILER_VERSION },
@@ -678,14 +951,15 @@ export function compileProjectContextPack(repoRoot, _options = {}) {
       project,
       activeTask,
       review,
-      stop,
+      stop: { present: stop.present, sha256: stop.sha256 },
       sources,
       validity,
     };
 
     return finalizePack(packWithoutContextHash);
   } catch (err) {
-    return degradedPack(err && err.message ? err.message : String(err));
+    logInternalError(err && err.stack ? err.stack : String(err));
+    return buildDegradedPack();
   }
 }
 

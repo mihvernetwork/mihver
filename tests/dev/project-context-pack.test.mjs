@@ -11,6 +11,7 @@ import {
   readFileSync,
   rmSync,
   symlinkSync,
+  chmodSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -735,6 +736,548 @@ test("CLI exits 2 and still emits a schema-valid pack when validity.valid is fal
   assert.equal(pack.validity.valid, false);
   const validate = loadValidator();
   assert.equal(validate(pack), true, JSON.stringify(validate.errors));
+});
+
+// =====================================================================================================
+// PROJECT-CONTINUITY-V1A-PR34-FINAL-HARDENING regression tests
+// =====================================================================================================
+
+function makeFailingExec(matchFn) {
+  return (cmd, args, opts) => {
+    if (matchFn(args)) throw new Error("simulated git failure (test-injected)");
+    return execFileSync(cmd, args, opts);
+  };
+}
+
+function isGlobalStatus(args) {
+  return args[0] === "status" && args.length === 2;
+}
+
+// --- Finding 1: degraded pack -----------------------------------------------------------------------
+
+test("F1: nonexistent --repo path produces a schema-valid, deterministic degraded pack; exit 2; JSON-only stdout", () => {
+  const badPath = "/tmp/mihver-context-pack-does-not-exist";
+  let stdout1;
+  let status1;
+  try {
+    stdout1 = execFileSync("node", [CLI_PATH, "--repo", badPath], { encoding: "utf8" });
+    status1 = 0;
+  } catch (err) {
+    stdout1 = err.stdout;
+    status1 = err.status;
+  }
+  assert.equal(status1, 2);
+  assert.ok(stdout1.endsWith("\n"));
+  const pack1 = JSON.parse(stdout1.slice(0, -1));
+  assert.equal(pack1.validity.valid, false);
+  assert.equal(pack1.validity.executionEligible, false);
+  assert.equal(pack1.repository.executionBlocked, true);
+  assert.equal(pack1.repository.workingTreeStatusUnavailable, true);
+  const validate = loadValidator();
+  assert.equal(validate(pack1), true, JSON.stringify(validate.errors));
+
+  // The caller-supplied absolute path must not appear anywhere in the serialized output.
+  assert.ok(!stdout1.includes(badPath));
+  assert.ok(!stdout1.includes("does-not-exist"));
+
+  // Deterministic: a second, independent run produces byte-identical output and contextHash.
+  let stdout2;
+  try {
+    stdout2 = execFileSync("node", [CLI_PATH, "--repo", badPath], { encoding: "utf8" });
+  } catch (err) {
+    stdout2 = err.stdout;
+  }
+  assert.equal(stdout1, stdout2);
+  const pack2 = JSON.parse(stdout2.slice(0, -1));
+  assert.equal(pack1.contextHash, pack2.contextHash);
+});
+
+test("F1: an injected internal compilation failure returns the same safe degraded shape instead of throwing", () => {
+  const pack = compileProjectContextPack(DEFAULT_REPO_ROOT, { __forceInternalErrorForTest: true });
+  assert.equal(pack.validity.valid, false);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.equal(pack.repository.executionBlocked, true);
+  assert.deepEqual(pack.validity.errors, [
+    {
+      code: "INTERNAL_COMPILATION_ERROR",
+      message: "Pack compilation failed and a safe degraded snapshot was returned instead. See stderr for diagnostic detail.",
+    },
+  ]);
+  const validate = loadValidator();
+  assert.equal(validate(pack), true, JSON.stringify(validate.errors));
+  // Same deterministic degraded shape as the nonexistent-repo case.
+  const nonexistentPack = compileProjectContextPack("/tmp/mihver-context-pack-does-not-exist");
+  const { contextHash: h1, ...body1 } = pack;
+  const { contextHash: h2, ...body2 } = nonexistentPack;
+  assert.deepEqual(body1, body2);
+  assert.equal(h1, h2);
+});
+
+// --- Finding 2: STOP fail-closed ----------------------------------------------------------------------
+
+test("F2: a committed dangling .project/STOP symlink is present, unsafe, and blocks execution", () => {
+  const { root } = standardFixture("f2-dangling-stop", { taskBranch: "main" });
+  symlinkSync("nonexistent-target", join(root, ".project", "STOP"));
+  git(root, ["add", ".project/STOP"]);
+  commitAll(root, "add dangling STOP symlink");
+
+  const pack = compileProjectContextPack(root);
+  assert.equal(pack.stop.present, true);
+  assert.equal(pack.stop.sha256, null);
+  assert.equal(pack.validity.valid, false);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "STOP_NODE_UNSAFE"));
+});
+
+test("F2: a .project/STOP that is a directory is present, unsafe, and blocks execution", () => {
+  const { root } = standardFixture("f2-dir-stop", { taskBranch: "main" });
+  mkdirSync(join(root, ".project", "STOP"));
+  writeFileSync(join(root, ".project", "STOP", "placeholder.txt"), "x\n");
+  const pack = compileProjectContextPack(root);
+  assert.equal(pack.stop.present, true);
+  assert.equal(pack.stop.sha256, null);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "STOP_NODE_UNSAFE"));
+});
+
+test("F2: a safe regular .project/STOP file reports present:true with a hash and still blocks execution", () => {
+  const { root } = standardFixture("f2-regular-stop", { taskBranch: "main" });
+  writeFileSync(join(root, ".project", "STOP"), "halt\n");
+  const pack = compileProjectContextPack(root);
+  assert.equal(pack.stop.present, true);
+  assert.ok(pack.stop.sha256);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.ok(!pack.validity.errors.some((e) => e.code === "STOP_NODE_UNSAFE"));
+});
+
+test("F2: no .project/STOP node at all (true ENOENT) reports present:false", () => {
+  const { root } = standardFixture("f2-absent-stop", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root);
+  assert.equal(pack.stop.present, false);
+  assert.equal(pack.stop.sha256, null);
+});
+
+// --- Finding 3: injected Git-observation failures fail closed ------------------------------------------
+
+test("F3: branch query failure yields BRANCH_STATE_UNAVAILABLE and blocks executionEligible", () => {
+  const { root } = standardFixture("f3-branch", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec((args) => args[0] === "branch"),
+  });
+  assert.equal(pack.validity.valid, false);
+  assert.equal(pack.validity.executionEligible, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "BRANCH_STATE_UNAVAILABLE"));
+});
+
+test("F3: merge-base failure (HEAD and baseline both resolvable) yields MERGE_BASE_UNAVAILABLE", () => {
+  const { root } = standardFixture("f3-mergebase", { taskBranch: "feature/f3-mergebase" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec((args) => args[0] === "merge-base"),
+  });
+  assert.equal(pack.repository.mergeBase, null);
+  assert.equal(pack.validity.valid, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "MERGE_BASE_UNAVAILABLE"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("F3: ahead/behind (rev-list) failure yields HISTORY_COUNTS_UNAVAILABLE, not a silent 0/0", () => {
+  const { root } = standardFixture("f3-revlist", { taskBranch: "feature/f3-revlist" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec((args) => args[0] === "rev-list"),
+  });
+  assert.equal(pack.repository.ahead, null);
+  assert.equal(pack.repository.behind, null);
+  assert.ok(pack.validity.errors.some((e) => e.code === "HISTORY_COUNTS_UNAVAILABLE"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("F3: changed-path diff failure yields CHANGED_PATHS_UNAVAILABLE, not a silent empty list", () => {
+  const { root } = standardFixture("f3-diff", { taskBranch: "feature/f3-diff" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec((args) => args[0] === "diff" && args.includes("--name-only")),
+  });
+  assert.deepEqual(pack.repository.changedPaths, []);
+  assert.ok(pack.validity.errors.some((e) => e.code === "CHANGED_PATHS_UNAVAILABLE"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("F3: global working-tree status failure yields WORKING_TREE_STATUS_UNAVAILABLE, not a silent clean:true", () => {
+  const { root } = standardFixture("f3-globalstatus", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec(isGlobalStatus),
+  });
+  assert.equal(pack.repository.workingTreeStatusUnavailable, true);
+  assert.equal(pack.repository.workingTree.clean, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "WORKING_TREE_STATUS_UNAVAILABLE"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("F3: source ls-files failure yields state UNKNOWN + SOURCE_STATE_UNDETERMINABLE, not silent UNTRACKED", () => {
+  const { root } = standardFixture("f3-lsfiles", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec((args) => args[0] === "ls-files"),
+  });
+  const entry = pack.sources.find((s) => s.path === "CLAUDE.md");
+  assert.equal(entry.state, "UNKNOWN");
+  assert.ok(pack.validity.errors.some((e) => e.code === "SOURCE_STATE_UNDETERMINABLE" && e.path === "CLAUDE.md"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("F3: source per-path status failure yields state UNKNOWN + SOURCE_STATE_UNDETERMINABLE, not silent CLEAN", () => {
+  const { root } = standardFixture("f3-pathstatus", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec((args) => args[0] === "status" && args.length > 2),
+  });
+  const entry = pack.sources.find((s) => s.path === "CLAUDE.md");
+  assert.equal(entry.state, "UNKNOWN");
+  assert.ok(pack.validity.errors.some((e) => e.code === "SOURCE_STATE_UNDETERMINABLE" && e.path === "CLAUDE.md"));
+});
+
+test("F3: a clean tracked source whose HEAD blob identity cannot be established fails closed (UNKNOWN)", () => {
+  const { root } = standardFixture("f3-blobunavailable", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec(
+      (args) => args[0] === "rev-parse" && args[1] === "--verify" && args[2] === "HEAD:CLAUDE.md"
+    ),
+  });
+  const entry = pack.sources.find((s) => s.path === "CLAUDE.md");
+  assert.equal(entry.state, "UNKNOWN");
+  assert.equal(entry.headBlobOid, null);
+  assert.ok(pack.validity.errors.some((e) => e.code === "SOURCE_HEAD_BLOB_UNDETERMINABLE" && e.path === "CLAUDE.md"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("F3: a clean tracked source whose HEAD blob OID disagrees with its own content hash fails closed (UNKNOWN)", () => {
+  const { root } = standardFixture("f3-blobmismatch", { taskBranch: "main" });
+  const fakeOid = "f".repeat(40);
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (args[0] === "rev-parse" && args[1] === "--verify" && args[2] === "HEAD:CLAUDE.md") {
+        return `${fakeOid}\n`;
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  const entry = pack.sources.find((s) => s.path === "CLAUDE.md");
+  assert.equal(entry.state, "UNKNOWN");
+  assert.equal(entry.headBlobOid, fakeOid);
+  assert.ok(pack.validity.errors.some((e) => e.code === "SOURCE_HEAD_BLOB_UNDETERMINABLE" && e.path === "CLAUDE.md"));
+});
+
+// --- Finding 4: snapshot consistency fence --------------------------------------------------------
+
+test("F4: HEAD changing between the start and end of compilation fails closed (REPOSITORY_CHANGED_DURING_COMPILATION)", () => {
+  const { root } = standardFixture("f4-head-change", { taskBranch: "main" });
+  const fakeHead = "a".repeat(40);
+  let call = 0;
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (args[0] === "rev-parse" && args.length === 2 && args[1] === "HEAD") {
+        call += 1;
+        if (call === 1) return execFileSync(cmd, args, opts); // start-of-compilation observation: real
+        return `${fakeHead}\n`; // every later observation (repository snapshot, end-of-compilation): fake
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.equal(pack.validity.valid, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("F4: working-tree status changing between the start and end of compilation fails closed (REPOSITORY_CHANGED_DURING_COMPILATION)", () => {
+  const { root } = standardFixture("f4-status-change", { taskBranch: "main" });
+  let call = 0;
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (isGlobalStatus(args)) {
+        call += 1;
+        if (call <= 2) return "\n"; // start observation + repository-snapshot observation: clean
+        return " M fake-changed-file.txt\n"; // end-of-compilation observation: dirty
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.equal(pack.validity.valid, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION"));
+});
+
+test("F4: an unchanged repository across start/end observation never raises REPOSITORY_CHANGED_DURING_COMPILATION", () => {
+  const { root } = standardFixture("f4-unchanged", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root);
+  assert.ok(!pack.validity.errors.some((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION"));
+});
+
+test("F4: the start-of-compilation HEAD observation failing (even though the end observation succeeds) fails closed", () => {
+  const { root } = standardFixture("f4-start-head-fails", { taskBranch: "main" });
+  let call = 0;
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (args[0] === "rev-parse" && args.length === 2 && args[1] === "HEAD") {
+        call += 1;
+        if (call === 1) throw new Error("simulated start-of-compilation HEAD query failure");
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.ok(pack.validity.errors.some((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION"));
+});
+
+test("F4: the end-of-compilation status observation failing (even though the start observation succeeded) fails closed", () => {
+  const { root } = standardFixture("f4-end-status-fails", { taskBranch: "main" });
+  let call = 0;
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (isGlobalStatus(args)) {
+        call += 1;
+        // Calls: 1 = start-of-compilation observation, 2 = repository-snapshot's own status call,
+        // 3 = end-of-compilation observation. Only the LAST one fails.
+        if (call === 3) throw new Error("simulated end-of-compilation status query failure");
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.ok(pack.validity.errors.some((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION"));
+});
+
+test("F4: BOTH the start and end status observations failing identically still fails closed, never treated as 'unchanged'", () => {
+  // Regression test for a real finding: comparing two observations for equality must not treat a
+  // query that failed the SAME way at both ends as "confirmed unchanged" -- a repeated failure is
+  // unresolved, not evidence of stability, and must still block the fence.
+  const { root } = standardFixture("f4-both-status-fail", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      if (isGlobalStatus(args)) throw new Error("simulated status query failure (every call)");
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.ok(pack.validity.errors.some((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION"));
+  assert.ok(pack.validity.errors.some((e) => e.code === "WORKING_TREE_STATUS_UNAVAILABLE"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+// --- Finding 5: path-safe source read --------------------------------------------------------------
+
+test("F5: a Required Context path whose final component is a symlink is UNSAFE_SYMLINK, never SAFE", () => {
+  const { root } = standardFixture("f5-final-symlink", {
+    taskBranch: "feature/f5-symlink",
+    requiredContext: ["docs/linked.md"],
+  });
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(join(root, "real-target.md"), "real\n");
+  symlinkSync(join(root, "real-target.md"), join(root, "docs", "linked.md"));
+  const pack = compileProjectContextPack(root);
+  const entry = pack.sources.find((s) => s.path === "docs/linked.md");
+  assert.equal(entry.safety, "UNSAFE_SYMLINK");
+  assert.equal(entry.present, false);
+  assert.equal(entry.state, "UNSAFE");
+});
+
+test("F5: a symlinked ancestor directory that escapes the repository is UNSAFE, never SAFE", () => {
+  const outside = mkdtempSync(join(tmpdir(), "mihver-ctxpack-f5-outside-"));
+  roots.push(outside);
+  writeFileSync(join(outside, "secret.md"), "outside content\n");
+  const { root } = standardFixture("f5-ancestor-escape", {
+    taskBranch: "feature/f5-ancestor",
+    requiredContext: ["escaped-dir/secret.md"],
+  });
+  symlinkSync(outside, join(root, "escaped-dir"));
+  const pack = compileProjectContextPack(root);
+  const entry = pack.sources.find((s) => s.path === "escaped-dir/secret.md");
+  assert.equal(entry.safety, "UNSAFE_SYMLINK");
+  assert.equal(entry.present, false);
+  assert.equal(entry.workingTreeSha256, null);
+});
+
+test("F5: a non-ENOENT open failure (permission denied) is UNSAFE, never silently MISSING or SAFE", () => {
+  const { root } = standardFixture("f5-permission", {
+    taskBranch: "feature/f5-permission",
+    requiredContext: ["docs/no-read.md"],
+  });
+  mkdirSync(join(root, "docs"), { recursive: true });
+  const target = join(root, "docs", "no-read.md");
+  writeFileSync(target, "secret\n");
+  chmodSync(target, 0o000);
+  try {
+    const pack = compileProjectContextPack(root);
+    const entry = pack.sources.find((s) => s.path === "docs/no-read.md");
+    if (process.getuid && process.getuid() === 0) {
+      // Running as root bypasses file permissions entirely -- nothing meaningful to assert.
+      return;
+    }
+    assert.notEqual(entry.state, "MISSING");
+    assert.notEqual(entry.safety, "SAFE");
+    assert.equal(entry.safety, "UNSAFE_OPEN_FAILED");
+  } finally {
+    chmodSync(target, 0o644);
+  }
+});
+
+test("F5: a symlink is rejected even when it points at an otherwise-safe, existing file (identity is checked at the exact path, not the eventual target)", () => {
+  const { root } = standardFixture("f5-identity", {
+    taskBranch: "feature/f5-identity",
+    requiredContext: ["docs/points-to-safe.md"],
+  });
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(join(root, "docs", "actually-safe.md"), "safe content\n");
+  symlinkSync(join(root, "docs", "actually-safe.md"), join(root, "docs", "points-to-safe.md"));
+  const pack = compileProjectContextPack(root);
+  const entry = pack.sources.find((s) => s.path === "docs/points-to-safe.md");
+  // Rejected outright -- the safe-read primitive never "follows through" to evaluate whether the
+  // symlink's eventual target would itself have been safe. See safeReadSource's own documented
+  // residual limitation regarding an ancestor directory swapped between its containment check and
+  // its open() call, which this test does NOT attempt to reproduce (not deterministically
+  // reproducible with stock Node fs -- see PROJECT_CONTINUITY.md).
+  assert.equal(entry.safety, "UNSAFE_SYMLINK");
+});
+
+// --- Finding 6: schema coherence ----------------------------------------------------------------------
+
+function knownValidEligiblePack() {
+  // A hand-assembled pack shaped exactly like a fully clean, execution-eligible snapshot, used only
+  // to mutate one field at a time and confirm the schema's coherence constraints reject the
+  // resulting contradiction. Not produced by the compiler itself (constructing a real
+  // executionEligible:true fixture requires committing every change, which most other tests
+  // deliberately avoid) -- this is a pure schema-negative-test fixture.
+  return {
+    $schema: "https://mihver.network/schemas/dev/project-context-pack.schema.json",
+    kind: "ProjectContextPack",
+    schemaVersion: "1.0.0",
+    compiler: { name: "project-context-pack.mjs", version: "1.0.0" },
+    repository: {
+      detached: false,
+      branch: "main",
+      head: "a".repeat(40),
+      baseline: { ref: "main", oid: "a".repeat(40) },
+      mergeBase: "a".repeat(40),
+      ahead: 0,
+      behind: 0,
+      workingTree: { clean: true, entries: [] },
+      changedPaths: [],
+      workingTreeStatusUnavailable: false,
+      executionBlocked: false,
+    },
+    project: {
+      milestone: "m",
+      latestCheckpoint: "c",
+      nextAuthorizedAction: "n",
+      source: { path: ".project/PROJECT_STATE.md", sha256: "b".repeat(64) },
+    },
+    activeTask: {
+      active: true,
+      declaredBranch: "main",
+      taskId: "T",
+      objective: "o",
+      status: "s",
+      requiredContext: [],
+    },
+    review: { current: true, declaredBranch: "main", declaredTaskId: "T", outcome: "ok" },
+    stop: { present: false, sha256: null },
+    sources: [
+      {
+        path: "CLAUDE.md",
+        role: "CORE_AUTHORITY",
+        required: true,
+        present: true,
+        safety: "SAFE",
+        byteLength: 10,
+        workingTreeSha256: "c".repeat(64),
+        headBlobOid: "d".repeat(40),
+        state: "CLEAN",
+      },
+    ],
+    validity: { valid: true, executionEligible: true, errors: [], warnings: [] },
+  };
+}
+
+function withContextHash(body) {
+  return { ...body, contextHash: computeContextHash(body) };
+}
+
+test("F6: schema-negative -- a known-valid executionEligible pack validates", () => {
+  const pack = withContextHash(knownValidEligiblePack());
+  const validate = loadValidator();
+  assert.equal(validate(pack), true, JSON.stringify(validate.errors));
+});
+
+const SCHEMA_NEGATIVE_MUTATIONS = [
+  ["executionEligible:true requires repository.executionBlocked:false", (p) => { p.repository.executionBlocked = true; }],
+  ["executionEligible:true requires workingTree.clean:true", (p) => { p.repository.workingTree.clean = false; }],
+  ["executionEligible:true requires a non-null baseline.oid", (p) => { p.repository.baseline.oid = null; }],
+  ["executionEligible:true requires a non-null mergeBase", (p) => { p.repository.mergeBase = null; }],
+  ["executionEligible:true requires activeTask.active:true", (p) => { p.activeTask.active = false; }],
+  ["executionEligible:true requires stop.present:false", (p) => { p.stop.present = true; p.stop.sha256 = "e".repeat(64); }],
+  ["executionEligible:true forbids an UNKNOWN source", (p) => { p.sources[0].state = "UNKNOWN"; p.sources[0].headBlobOid = null; }],
+  ["executionBlocked must be consistent with executionEligible (false side)", (p) => {
+    p.validity.executionEligible = false; p.validity.valid = false; p.validity.errors = [{ code: "X", message: "x" }];
+    // executionBlocked left false -- contradicts executionEligible:false requiring executionBlocked:true.
+  }],
+  ["activeTask.active:true requires a non-null declaredBranch", (p) => { p.activeTask.declaredBranch = null; }],
+  ["activeTask.active:true requires a non-null taskId", (p) => { p.activeTask.taskId = null; }],
+  ["workingTreeStatusUnavailable:true requires workingTree.clean:false", (p) => {
+    p.repository.workingTreeStatusUnavailable = true;
+    // clean left true -- contradicts the coherence rule (also breaks executionEligible, but the
+    // workingTreeStatusUnavailable/clean rule itself must independently reject this).
+  }],
+  ["detached:true requires branch:null", (p) => { p.repository.detached = true; }],
+  ["source state CLEAN requires a non-null headBlobOid", (p) => { p.sources[0].headBlobOid = null; }],
+  ["source state MISSING requires present:false", (p) => { p.sources[0].state = "MISSING"; }],
+  ["source state UNSAFE requires safety != SAFE", (p) => { p.sources[0].state = "UNSAFE"; }],
+  ["baseline.oid non-null requires a non-null ref", (p) => { p.repository.baseline.ref = null; }],
+  ["stop.present:false requires sha256:null", (p) => { p.stop.sha256 = "f".repeat(64); }],
+];
+
+for (const [label, mutate] of SCHEMA_NEGATIVE_MUTATIONS) {
+  test(`F6: schema-negative -- ${label}`, () => {
+    const body = knownValidEligiblePack();
+    mutate(body);
+    const pack = withContextHash(body);
+    const validate = loadValidator();
+    assert.equal(validate(pack), false, `expected schema validation to reject: ${label}`);
+  });
+}
+
+// --- Finding 7: canonical JSON Unicode behavior -----------------------------------------------------
+
+test("F7: canonicalizeJson preserves a valid surrogate pair exactly as supplied", () => {
+  const emoji = "😀"; // U+1F600, a valid high+low surrogate pair
+  assert.equal(canonicalizeJson(emoji), JSON.stringify(emoji));
+});
+
+test("F7: canonicalizeJson rejects a lone high surrogate", () => {
+  assert.throws(() => canonicalizeJson("\uD800"), /lone .*surrogate/);
+});
+
+test("F7: canonicalizeJson rejects a lone low surrogate", () => {
+  assert.throws(() => canonicalizeJson("\uDC00"), /lone .*surrogate/);
+});
+
+test("F7: canonicalizeJson rejects a lone surrogate in an object key", () => {
+  assert.throws(() => canonicalizeJson({ ["\uD800"]: 1 }), /lone .*surrogate/);
+});
+
+test("F7: canonicalizeJson does not perform Unicode normalization (NFC-equivalent strings stay distinct)", () => {
+  const nfc = "é"; // é, precomposed
+  const nfd = "é"; // e + combining acute accent, decomposed
+  assert.notEqual(canonicalizeJson(nfc), canonicalizeJson(nfd));
+});
+
+test("F7: canonicalizeJson rejects an own symbol-keyed property", () => {
+  const obj = { a: 1 };
+  obj[Symbol("s")] = 2;
+  assert.throws(() => canonicalizeJson(obj), TypeError);
+});
+
+test("F7: canonicalizeJson rejects an accessor (getter) property instead of silently evaluating it", () => {
+  const obj = {};
+  Object.defineProperty(obj, "a", { get: () => 1, enumerable: true, configurable: true });
+  assert.throws(() => canonicalizeJson(obj), TypeError);
+});
+
+test("F7: canonicalizeJson rejects an array with an extraneous own property outside its index range", () => {
+  const arr = [1, 2, 3];
+  arr.extra = "x";
+  assert.throws(() => canonicalizeJson(arr), TypeError);
 });
 
 // --- cleanup -------------------------------------------------------------------------------------

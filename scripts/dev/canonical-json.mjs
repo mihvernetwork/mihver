@@ -2,15 +2,21 @@
 // string, array (order-preserving), and plain object (recursively key-sorted). Pure function, no
 // filesystem/process/Git/network access.
 //
-// RFC 8785 (JSON Canonicalization Scheme) compatibility, stated precisely rather than claimed in
-// full: for the supported value domain, this implementation sorts object keys by UTF-16 code unit
-// (JavaScript's native `Array#sort` on strings), which matches RFC 8785's required UTF-16
-// code-unit ordering, and serializes finite numbers via `Number#toString`'s shortest round-trip
-// form (through `JSON.stringify`), which matches RFC 8785's ECMAScript-number-to-string
-// requirement. It does NOT perform RFC 8785's separate optional recommendation of Unicode NFC
-// normalization on strings — this implementation serializes string content byte-for-byte as given,
-// with ordinary JSON string escaping only. Do not treat two Unicode-equivalent-but-differently-
-// normalized strings as canonically identical here; they are not.
+// RFC 8785 (JSON Canonicalization Scheme, "JCS") compatibility, stated precisely: for the
+// supported value domain, this implementation sorts object keys by UTF-16 code unit (JavaScript's
+// native `Array#sort` on strings), which matches JCS's required UTF-16 code-unit ordering, and
+// serializes finite numbers via `Number#toString`'s shortest round-trip form (through
+// `JSON.stringify`), which matches JCS's ECMAScript-number-to-string requirement. JCS itself does
+// NOT normalize Unicode (there is no NFC/NFD/NFKC/NFKD step in RFC 8785 at all) -- it instead
+// requires valid Unicode input and preserves valid strings exactly as supplied, which is exactly
+// what this implementation does: string content (and object keys) is serialized byte-for-byte as
+// given, with ordinary JSON string escaping only, no normalization performed or implied. "Valid
+// Unicode input" is enforced here by rejecting any string or object-property-name containing a
+// lone (unpaired) UTF-16 surrogate code unit -- see `hasLoneSurrogate` below -- since a lone
+// surrogate cannot be re-encoded as well-formed UTF-8/UTF-16 text and JCS's own well-formedness
+// requirement excludes it. Two Unicode-equivalent-but-differently-normalized valid strings are
+// never treated as canonically identical here (no normalization is performed); they remain
+// distinct.
 
 export function canonicalizeJson(value) {
   return serialize(value, new Set());
@@ -19,6 +25,36 @@ export function canonicalizeJson(value) {
 function isPlainObject(value) {
   const proto = Object.getPrototypeOf(value);
   return proto === Object.prototype || proto === null;
+}
+
+// True if `str` contains a UTF-16 surrogate code unit not part of a valid high+low surrogate
+// pair -- i.e. text that cannot be re-encoded as well-formed UTF-8/UTF-16. JCS requires valid
+// Unicode input; this is the well-formedness check that enforces that requirement.
+function hasLoneSurrogate(str) {
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = str.charCodeAt(i + 1);
+      if (Number.isNaN(next) || next < 0xdc00 || next > 0xdfff) return true;
+      i += 1; // valid pair consumed
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      return true; // low surrogate not preceded by a consumed high surrogate
+    }
+  }
+  return false;
+}
+
+function assertNoSymbolKeys(value) {
+  if (Object.getOwnPropertySymbols(value).length > 0) {
+    throw new TypeError("canonicalizeJson: own symbol-keyed properties are not supported");
+  }
+}
+
+function assertNotAccessor(value, key) {
+  const desc = Object.getOwnPropertyDescriptor(value, key);
+  if (desc && (desc.get || desc.set)) {
+    throw new TypeError(`canonicalizeJson: accessor property "${String(key)}" is not supported`);
+  }
 }
 
 function serialize(value, seen) {
@@ -35,7 +71,12 @@ function serialize(value, seen) {
     return JSON.stringify(value);
   }
 
-  if (t === "string") return JSON.stringify(value);
+  if (t === "string") {
+    if (hasLoneSurrogate(value)) {
+      throw new TypeError("canonicalizeJson: string contains a lone (unpaired) UTF-16 surrogate -- not valid Unicode");
+    }
+    return JSON.stringify(value);
+  }
 
   if (t === "undefined") throw new TypeError("canonicalizeJson: undefined is not supported");
   if (t === "function") throw new TypeError("canonicalizeJson: functions are not supported");
@@ -48,11 +89,19 @@ function serialize(value, seen) {
 
   if (Array.isArray(value)) {
     if (seen.has(value)) throw new TypeError("canonicalizeJson: cyclic structure detected");
+    assertNoSymbolKeys(value);
     for (let i = 0; i < value.length; i++) {
       if (!Object.prototype.hasOwnProperty.call(value, i)) {
         throw new TypeError("canonicalizeJson: sparse arrays are not supported");
       }
     }
+    const ownKeys = Object.keys(value);
+    if (ownKeys.length !== value.length) {
+      // An extra own enumerable string property beyond the dense index range (e.g. arr.foo = 1)
+      // would otherwise be silently discarded by serializing only via numeric indices below.
+      throw new TypeError("canonicalizeJson: array has an extraneous own property outside its index range");
+    }
+    for (const key of ownKeys) assertNotAccessor(value, key);
     seen.add(value);
     const items = value.map((item) => serialize(item, seen));
     seen.delete(value);
@@ -64,8 +113,15 @@ function serialize(value, seen) {
   }
 
   if (seen.has(value)) throw new TypeError("canonicalizeJson: cyclic structure detected");
-  seen.add(value);
+  assertNoSymbolKeys(value);
   const keys = Object.keys(value).sort();
+  for (const key of keys) {
+    if (hasLoneSurrogate(key)) {
+      throw new TypeError(`canonicalizeJson: object key "${key}" contains a lone (unpaired) UTF-16 surrogate -- not valid Unicode`);
+    }
+    assertNotAccessor(value, key);
+  }
+  seen.add(value);
   const parts = keys.map((key) => `${JSON.stringify(key)}:${serialize(value[key], seen)}`);
   seen.delete(value);
   return `{${parts.join(",")}}`;
