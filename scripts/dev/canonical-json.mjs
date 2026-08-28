@@ -16,7 +16,10 @@
 // surrogate cannot be re-encoded as well-formed UTF-8/UTF-16 text and JCS's own well-formedness
 // requirement excludes it. Two Unicode-equivalent-but-differently-normalized valid strings are
 // never treated as canonically identical here (no normalization is performed); they remain
-// distinct.
+// distinct. A non-enumerable own property (which Object.keys()/for-in never see) is rejected
+// rather than silently omitted -- see assertNoHiddenNonEnumerableProps below -- for the same
+// "never silently discard data outside the declared domain" reason own symbol-keyed properties and
+// accessor properties are also rejected rather than ignored/evaluated.
 
 export function canonicalizeJson(value) {
   return serialize(value, new Set());
@@ -47,6 +50,23 @@ function hasLoneSurrogate(str) {
 function assertNoSymbolKeys(value) {
   if (Object.getOwnPropertySymbols(value).length > 0) {
     throw new TypeError("canonicalizeJson: own symbol-keyed properties are not supported");
+  }
+}
+
+// A non-enumerable own property (e.g. via Object.defineProperty(obj, "k", {enumerable:false, ...}))
+// would otherwise be silently invisible to Object.keys()/for-in and simply omitted from the
+// canonical output -- exactly the "silently discard data outside the declared domain" failure mode
+// this serializer must not have. `excludeNames` lets the array branch ignore "length", which is
+// always a legitimate non-enumerable own property of every array and never hidden data.
+function assertNoHiddenNonEnumerableProps(value, excludeNames) {
+  const allNames = Object.getOwnPropertyNames(value).filter((name) => !excludeNames.includes(name));
+  const enumerableNames = Object.keys(value);
+  if (allNames.length !== enumerableNames.length) {
+    const enumerableSet = new Set(enumerableNames);
+    const hidden = allNames.filter((name) => !enumerableSet.has(name));
+    throw new TypeError(
+      `canonicalizeJson: non-enumerable own propert${hidden.length === 1 ? "y" : "ies"} not supported: ${hidden.join(", ")}`
+    );
   }
 }
 
@@ -90,6 +110,7 @@ function serialize(value, seen) {
   if (Array.isArray(value)) {
     if (seen.has(value)) throw new TypeError("canonicalizeJson: cyclic structure detected");
     assertNoSymbolKeys(value);
+    assertNoHiddenNonEnumerableProps(value, ["length"]);
     for (let i = 0; i < value.length; i++) {
       if (!Object.prototype.hasOwnProperty.call(value, i)) {
         throw new TypeError("canonicalizeJson: sparse arrays are not supported");
@@ -114,6 +135,7 @@ function serialize(value, seen) {
 
   if (seen.has(value)) throw new TypeError("canonicalizeJson: cyclic structure detected");
   assertNoSymbolKeys(value);
+  assertNoHiddenNonEnumerableProps(value, []);
   const keys = Object.keys(value).sort();
   for (const key of keys) {
     if (hasLoneSurrogate(key)) {

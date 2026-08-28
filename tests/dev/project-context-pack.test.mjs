@@ -12,6 +12,7 @@ import {
   rmSync,
   symlinkSync,
   chmodSync,
+  statSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -23,6 +24,7 @@ import {
   compileProjectContextPack,
   computeContextHash,
   DEFAULT_REPO_ROOT,
+  GIT_GLOBAL_ARGS,
 } from "../../scripts/dev/project-context-pack.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -742,15 +744,24 @@ test("CLI exits 2 and still emits a schema-valid pack when validity.valid is fal
 // PROJECT-CONTINUITY-V1A-PR34-FINAL-HARDENING regression tests
 // =====================================================================================================
 
+// Every Git call the compiler makes is now prefixed with GIT_GLOBAL_ARGS (--no-optional-locks,
+// -c core.fsmonitor=) -- see scripts/dev/project-context-pack.mjs. `subArgs` strips that fixed
+// prefix so every matcher below can keep matching on the actual Git subcommand, independent of
+// however many/which global flags the compiler prepends.
+function subArgs(args) {
+  return args.slice(GIT_GLOBAL_ARGS.length);
+}
+
 function makeFailingExec(matchFn) {
   return (cmd, args, opts) => {
-    if (matchFn(args)) throw new Error("simulated git failure (test-injected)");
+    if (matchFn(subArgs(args))) throw new Error("simulated git failure (test-injected)");
     return execFileSync(cmd, args, opts);
   };
 }
 
 function isGlobalStatus(args) {
-  return args[0] === "status" && args.length === 2;
+  const sub = subArgs(args);
+  return sub[0] === "status" && sub.length === 2;
 }
 
 // --- Finding 1: degraded pack -----------------------------------------------------------------------
@@ -904,7 +915,9 @@ test("F3: changed-path diff failure yields CHANGED_PATHS_UNAVAILABLE, not a sile
 test("F3: global working-tree status failure yields WORKING_TREE_STATUS_UNAVAILABLE, not a silent clean:true", () => {
   const { root } = standardFixture("f3-globalstatus", { taskBranch: "main" });
   const pack = compileProjectContextPack(root, {
-    execFileSyncImpl: makeFailingExec(isGlobalStatus),
+    // isGlobalStatus expects RAW (unstripped) args -- see its own definition -- so it is not
+    // passed through makeFailingExec (which already strips the prefix before calling its matchFn).
+    execFileSyncImpl: makeFailingExec((sub) => sub[0] === "status" && sub.length === 2),
   });
   assert.equal(pack.repository.workingTreeStatusUnavailable, true);
   assert.equal(pack.repository.workingTree.clean, false);
@@ -952,7 +965,8 @@ test("F3: a clean tracked source whose HEAD blob OID disagrees with its own cont
   const fakeOid = "f".repeat(40);
   const pack = compileProjectContextPack(root, {
     execFileSyncImpl: (cmd, args, opts) => {
-      if (args[0] === "rev-parse" && args[1] === "--verify" && args[2] === "HEAD:CLAUDE.md") {
+      const sub = subArgs(args);
+      if (sub[0] === "rev-parse" && sub[1] === "--verify" && sub[2] === "HEAD:CLAUDE.md") {
         return `${fakeOid}\n`;
       }
       return execFileSync(cmd, args, opts);
@@ -972,7 +986,8 @@ test("F4: HEAD changing between the start and end of compilation fails closed (R
   let call = 0;
   const pack = compileProjectContextPack(root, {
     execFileSyncImpl: (cmd, args, opts) => {
-      if (args[0] === "rev-parse" && args.length === 2 && args[1] === "HEAD") {
+      const sub = subArgs(args);
+      if (sub[0] === "rev-parse" && sub.length === 2 && sub[1] === "HEAD") {
         call += 1;
         if (call === 1) return execFileSync(cmd, args, opts); // start-of-compilation observation: real
         return `${fakeHead}\n`; // every later observation (repository snapshot, end-of-compilation): fake
@@ -1013,7 +1028,8 @@ test("F4: the start-of-compilation HEAD observation failing (even though the end
   let call = 0;
   const pack = compileProjectContextPack(root, {
     execFileSyncImpl: (cmd, args, opts) => {
-      if (args[0] === "rev-parse" && args.length === 2 && args[1] === "HEAD") {
+      const sub = subArgs(args);
+      if (sub[0] === "rev-parse" && sub.length === 2 && sub[1] === "HEAD") {
         call += 1;
         if (call === 1) throw new Error("simulated start-of-compilation HEAD query failure");
       }
@@ -1278,6 +1294,174 @@ test("F7: canonicalizeJson rejects an array with an extraneous own property outs
   const arr = [1, 2, 3];
   arr.extra = "x";
   assert.throws(() => canonicalizeJson(arr), TypeError);
+});
+
+// =====================================================================================================
+// PROJECT-CONTINUITY-V1A-PR34-GIT-OBSERVATION-BOUNDARY regression tests
+// =====================================================================================================
+
+// --- Finding G1: fsmonitor / optional-lock isolation ------------------------------------------------
+
+test("G1: every Git invocation includes --no-optional-locks and -c core.fsmonitor= (fsmonitor/lock isolation)", () => {
+  const { root } = standardFixture("g1-global-args", { taskBranch: "main" });
+  const seenCalls = [];
+  compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      seenCalls.push(args);
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.ok(seenCalls.length > 0);
+  for (const args of seenCalls) {
+    assert.deepEqual(args.slice(0, GIT_GLOBAL_ARGS.length), GIT_GLOBAL_ARGS);
+  }
+});
+
+test("G2: compiling never updates the on-disk Git index (--no-optional-locks proof)", () => {
+  const { root } = standardFixture("g2-no-index-write", { taskBranch: "main" });
+  const indexPath = join(root, ".git", "index");
+  const before = statSync(indexPath).mtimeMs;
+  compileProjectContextPack(root);
+  compileProjectContextPack(root);
+  const after = statSync(indexPath).mtimeMs;
+  assert.equal(after, before);
+});
+
+// --- Finding G3: inherited GIT_* environment isolation ------------------------------------------------
+
+test("G3: the Git environment passed to execFileSyncImpl has every inherited GIT_* variable stripped", () => {
+  const { root } = standardFixture("g3-env-strip", { taskBranch: "main" });
+  const originalGitDir = process.env.GIT_DIR;
+  process.env.GIT_DIR = "/should/never/be/inherited";
+  let sawEnv = null;
+  try {
+    compileProjectContextPack(root, {
+      execFileSyncImpl: (cmd, args, opts) => {
+        sawEnv = opts.env;
+        return execFileSync(cmd, args, opts);
+      },
+    });
+  } finally {
+    if (originalGitDir === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = originalGitDir;
+  }
+  assert.ok(sawEnv);
+  const gitKeys = Object.keys(sawEnv).filter((k) => k.startsWith("GIT_"));
+  assert.deepEqual(gitKeys, []);
+});
+
+test("G3b: a hostile inherited GIT_DIR does not redirect compilation away from repoRoot", () => {
+  const { root, headOid } = standardFixture("g3-hostile-gitdir", { taskBranch: "main" });
+  const original = process.env.GIT_DIR;
+  process.env.GIT_DIR = "/nonexistent/hostile/path";
+  try {
+    const pack = compileProjectContextPack(root);
+    assert.equal(pack.repository.head, headOid);
+    assert.equal(pack.validity.valid, true);
+  } finally {
+    if (original === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = original;
+  }
+});
+
+// --- Finding G4: branch included in the start/end consistency fence -----------------------------------
+
+test("G4: branch changing between the start and end of compilation fails closed (REPOSITORY_CHANGED_DURING_COMPILATION)", () => {
+  const { root } = standardFixture("g4-branch-change", { taskBranch: "main" });
+  let call = 0;
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: (cmd, args, opts) => {
+      const sub = subArgs(args);
+      if (sub[0] === "branch" && sub[1] === "--show-current") {
+        call += 1;
+        if (call === 1) return execFileSync(cmd, args, opts); // start-of-compilation observation: real
+        return "other-fake-branch\n"; // every later observation: fake, a different branch
+      }
+      return execFileSync(cmd, args, opts);
+    },
+  });
+  assert.ok(pack.validity.errors.some((e) => e.code === "REPOSITORY_CHANGED_DURING_COMPILATION"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+// --- Finding G5: local-main absence vs. lookup failure disambiguation ----------------------------------
+
+test("G5: a for-each-ref lookup failure for refs/heads/main yields BASELINE_REF_LOOKUP_UNAVAILABLE (fails closed), distinct from legitimate absence", () => {
+  const { root } = standardFixture("g5-lookup-fail", { taskBranch: "main" });
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec((sub) => sub[0] === "for-each-ref" && sub.includes("refs/heads/main")),
+  });
+  assert.equal(pack.repository.baseline.oid, null);
+  assert.equal(pack.validity.valid, false);
+  assert.ok(pack.validity.errors.some((e) => e.code === "BASELINE_REF_LOOKUP_UNAVAILABLE"));
+  assert.equal(pack.validity.executionEligible, false);
+});
+
+test("G5b: a for-each-ref lookup failure for refs/remotes/origin/main (with no local main) yields BASELINE_REF_LOOKUP_UNAVAILABLE", () => {
+  const remote = tempRepo("g5b-fail-remote");
+  writeCoreFiles(remote, { taskBranch: "main" });
+  commitAll(remote, "remote seed");
+  const root = tempRepo("g5b-fail-clone");
+  git(root, ["remote", "add", "origin", remote]);
+  git(root, ["fetch", "origin", "-q"]);
+  git(root, ["switch", "-c", "feature/g5b-fail", "origin/main", "-q"]);
+  writeCoreFiles(root, { taskBranch: "feature/g5b-fail" });
+  commitAll(root, "task commit");
+  const pack = compileProjectContextPack(root, {
+    execFileSyncImpl: makeFailingExec(
+      (sub) => sub[0] === "for-each-ref" && sub.includes("refs/remotes/origin/main")
+    ),
+  });
+  assert.equal(pack.repository.baseline.oid, null);
+  assert.ok(pack.validity.errors.some((e) => e.code === "BASELINE_REF_LOOKUP_UNAVAILABLE"));
+  assert.equal(pack.validity.valid, false);
+});
+
+test("G5c: refs/heads/main legitimately absent still correctly falls back to origin/main -- no false BASELINE_REF_LOOKUP_UNAVAILABLE", () => {
+  const remote = tempRepo("g5c-remote");
+  writeCoreFiles(remote, { taskBranch: "main" });
+  const remoteOid = commitAll(remote, "remote seed");
+  const root = tempRepo("g5c-clone");
+  git(root, ["remote", "add", "origin", remote]);
+  git(root, ["fetch", "origin", "-q"]);
+  git(root, ["switch", "-c", "feature/g5c", "origin/main", "-q"]);
+  writeCoreFiles(root, { taskBranch: "feature/g5c" });
+  commitAll(root, "task commit");
+  const pack = compileProjectContextPack(root);
+  assert.equal(pack.repository.baseline.ref, "origin/main");
+  assert.equal(pack.repository.baseline.oid, remoteOid);
+  assert.ok(!pack.validity.errors.some((e) => e.code === "BASELINE_REF_LOOKUP_UNAVAILABLE"));
+});
+
+test("G5d: neither refs/heads/main nor refs/remotes/origin/main existing (both legitimately absent) still just warns BASELINE_UNRESOLVABLE, not a lookup-failure error", () => {
+  const root = tempRepo("g5d-no-baseline");
+  writeCoreFiles(root, { taskBranch: "solo" });
+  git(root, ["checkout", "-b", "solo", "-q"]);
+  commitAll(root, "solo seed");
+  const pack = compileProjectContextPack(root);
+  assert.equal(pack.repository.baseline.ref, null);
+  assert.equal(pack.repository.baseline.oid, null);
+  assert.ok(!pack.validity.errors.some((e) => e.code === "BASELINE_REF_LOOKUP_UNAVAILABLE"));
+  assert.ok(pack.validity.warnings.some((w) => w.code === "BASELINE_UNRESOLVABLE"));
+  assert.equal(pack.validity.valid, true);
+});
+
+// --- Finding G6: canonical-json non-enumerable own properties ------------------------------------------
+
+test("G6: canonicalizeJson rejects a non-enumerable own property on a plain object", () => {
+  const obj = { a: 1 };
+  Object.defineProperty(obj, "hidden", { value: 2, enumerable: false, configurable: true });
+  assert.throws(() => canonicalizeJson(obj), TypeError);
+});
+
+test("G6b: canonicalizeJson rejects a non-enumerable own property on an array (distinct from 'length' itself)", () => {
+  const arr = [1, 2, 3];
+  Object.defineProperty(arr, "hidden", { value: 2, enumerable: false, configurable: true });
+  assert.throws(() => canonicalizeJson(arr), TypeError);
+});
+
+test("G6c: canonicalizeJson accepts an ordinary array -- 'length' is itself a legitimate non-enumerable property", () => {
+  assert.doesNotThrow(() => canonicalizeJson([1, 2, 3]));
 });
 
 // --- cleanup -------------------------------------------------------------------------------------

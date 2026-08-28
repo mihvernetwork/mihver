@@ -132,18 +132,47 @@ function truncate(text, maxLen) {
 
 // --- Git access (read-only, execFileSync with an argument array only) --------------------------
 
+// Global flags prepended to EVERY Git invocation this compiler makes, in this fixed order --
+// exported so tests can deterministically strip them (`args.slice(GIT_GLOBAL_ARGS.length)`)
+// before matching on the actual subcommand:
+//   --no-optional-locks -- `git status`/`git diff`/etc. may otherwise refresh and write back the
+//     on-disk index as a side effect of an ordinary read (a real filesystem write this read-only
+//     compiler must never perform, even incidentally). This flag disables every such optional-lock
+//     write path, not merely "status."
+//   -c core.fsmonitor= -- neutralizes a repo/global/system config's `core.fsmonitor`, which can
+//     otherwise name an ARBITRARY external command Git invokes on ordinary read operations
+//     (status, diff, add) regardless of what this compiler itself asked for. Mirrors
+//     scripts/dev/publication-builder.mjs's identical fsmonitor-neutralization requirement.
+export const GIT_GLOBAL_ARGS = ["--no-optional-locks", "-c", "core.fsmonitor="];
+
+// Every GIT_* environment variable is stripped before spawning Git -- an inherited GIT_DIR,
+// GIT_WORK_TREE, GIT_INDEX_FILE, GIT_CONFIG*, GIT_ASKPASS, GIT_SSH*, etc. from this process's own
+// environment could otherwise silently redirect a "read this repoRoot" call to a different
+// location entirely, or plumb unwanted credential-adjacent behavior into a subprocess this
+// compiler only ever intends to use for local, read-only queries against an explicit `cwd`.
+function buildSanitizedGitEnv() {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith("GIT_")) delete env[key];
+  }
+  return env;
+}
+
 // Builds a `tryGit(repoRoot, args)` function bound to a specific execFileSync-compatible
 // implementation. The production default (see compileProjectContextPack) always binds the real
-// `execFileSync`; tests bind a fake implementation that inspects `args` and throws for an exact
-// argument array, deterministically simulating "this Git query is unavailable" without a shell.
+// `execFileSync`; tests bind a fake implementation that inspects `args` (after stripping
+// GIT_GLOBAL_ARGS) and throws for an exact subcommand argument array, deterministically simulating
+// "this Git query is unavailable" without a shell.
 function buildTryGit(execFileSyncImpl) {
+  const sanitizedEnv = buildSanitizedGitEnv();
   return function tryGit(repoRoot, args) {
     try {
-      const out = execFileSyncImpl("git", args, {
+      const out = execFileSyncImpl("git", [...GIT_GLOBAL_ARGS, ...args], {
         cwd: repoRoot,
         encoding: "utf8",
         shell: false,
         stdio: ["ignore", "pipe", "pipe"],
+        env: sanitizedEnv,
       });
       // Trim only trailing newline(s) -- NOT a full trim(), which would strip the leading space of
       // `git status --porcelain`'s first line for any entry whose status code starts with a space
@@ -156,6 +185,20 @@ function buildTryGit(execFileSyncImpl) {
       return { ok: false, out: null };
     }
   };
+}
+
+// Resolves a fully-qualified ref (e.g. "refs/heads/main") via `git for-each-ref`, which -- unlike
+// `git rev-parse --verify` -- exits 0 with EMPTY output when the ref legitimately does not exist,
+// and only exits non-zero on a genuine query failure. This cleanly distinguishes "the ref is
+// absent" (a normal, expected repository state) from "the lookup itself failed" (fail closed),
+// which `rev-parse --verify`'s single "non-zero exit" outcome cannot: that command exits non-zero
+// for both cases alike.
+function resolveRefForEachRef(repoRoot, tryGit, ref) {
+  const result = tryGit(repoRoot, ["for-each-ref", "--format=%(objectname)", ref]);
+  if (!result.ok) return { failed: true, oid: null };
+  if (result.out.length === 0) return { failed: false, oid: null };
+  const oid = result.out.split("\n")[0];
+  return { failed: false, oid: /^[0-9a-f]{40}$/.test(oid) ? oid : null };
 }
 
 // --- Markdown section parsing (mirrors scripts/dev/project-context.mjs's conventions) ----------
@@ -442,15 +485,21 @@ function compileStop(repoRoot) {
 
 // --- Repository snapshot -------------------------------------------------------------------------
 
-// Observes just the two cheapest, most change-sensitive facts (HEAD OID and normalized working-
-// tree status) -- used both for the main repository snapshot and, unchanged, for the start/end
-// consistency fence in compileProjectContextPack. `ok:false` on either sub-observation is treated
-// as "changed" by the fence (see REPOSITORY_CHANGED_DURING_COMPILATION), never as a silent match.
+// Observes the three cheapest, most change-sensitive facts (branch/detached state, HEAD OID, and
+// normalized working-tree status) -- used both for the main repository snapshot and, unchanged,
+// for the start/end consistency fence in compileProjectContextPack. `ok:false` on any
+// sub-observation is treated as "changed" by the fence (see REPOSITORY_CHANGED_DURING_COMPILATION),
+// never as a silent match. Branch is included specifically because a checkout/detach/re-attach that
+// leaves HEAD pointed at the same commit (e.g. `git symbolic-ref HEAD refs/heads/other` onto an
+// identical commit, or a detach-then-reattach) would otherwise be invisible to a HEAD-only fence.
 function observeGitState(repoRoot, tryGit) {
+  const branchResult = tryGit(repoRoot, ["branch", "--show-current"]);
   const headResult = tryGit(repoRoot, ["rev-parse", "HEAD"]);
   const statusResult = tryGit(repoRoot, ["status", "--porcelain"]);
   const headOk = headResult.ok && /^[0-9a-f]{40}$/.test(headResult.out);
   return {
+    branchOk: branchResult.ok,
+    branchState: branchResult.ok ? branchResult.out : null, // "" means detached, non-empty is the branch name
     headOk,
     head: headOk ? headResult.out : null,
     statusOk: statusResult.ok,
@@ -464,11 +513,12 @@ function observeGitState(repoRoot, tryGit) {
 
 // A query that failed on EITHER observation -- even if it also failed identically on the other --
 // is treated as "changed" (fail closed), never as "the two observations agree." Two observations
-// only ever compare equal when BOTH sides' queries succeeded and produced the same values -- a
-// repeated failure is unresolved, not confirmed-unchanged, and must not be silently waved through.
+// only ever compare equal when EVERY sub-query succeeded on both sides and produced the same
+// values -- a repeated failure is unresolved, not confirmed-unchanged, and must not be silently
+// waved through.
 function gitStateEqual(a, b) {
-  if (!a.headOk || !b.headOk || !a.statusOk || !b.statusOk) return false;
-  return a.head === b.head && a.normalizedStatus === b.normalizedStatus;
+  if (!a.branchOk || !b.branchOk || !a.headOk || !b.headOk || !a.statusOk || !b.statusOk) return false;
+  return a.branchState === b.branchState && a.head === b.head && a.normalizedStatus === b.normalizedStatus;
 }
 
 function compileRepositorySnapshot(repoRoot, tryGit, errors) {
@@ -489,17 +539,31 @@ function compileRepositorySnapshot(repoRoot, tryGit, errors) {
   const detached = branchOk && branchResult.out === "";
   const branch = branchOk && branchResult.out !== "" ? branchResult.out : null;
 
+  // Uses `for-each-ref`, not `rev-parse --verify` -- see resolveRefForEachRef's own comment for
+  // why: it distinguishes "this ref legitimately does not exist" (ok, empty result -- fall back or
+  // report no baseline) from "the lookup itself failed" (fail closed with a dedicated error),
+  // which `rev-parse --verify`'s single non-zero-exit outcome cannot.
   let baselineRef = null;
   let baselineOid = null;
-  const localMain = tryGit(repoRoot, ["rev-parse", "--verify", "refs/heads/main"]);
-  if (localMain.ok && /^[0-9a-f]{40}$/.test(localMain.out)) {
+  const localMain = resolveRefForEachRef(repoRoot, tryGit, "refs/heads/main");
+  if (localMain.failed) {
+    errors.push({
+      code: "BASELINE_REF_LOOKUP_UNAVAILABLE",
+      message: "Looking up refs/heads/main failed unexpectedly (distinct from it legitimately not existing).",
+    });
+  } else if (localMain.oid) {
     baselineRef = "main";
-    baselineOid = localMain.out;
+    baselineOid = localMain.oid;
   } else {
-    const originMain = tryGit(repoRoot, ["rev-parse", "--verify", "refs/remotes/origin/main"]);
-    if (originMain.ok && /^[0-9a-f]{40}$/.test(originMain.out)) {
+    const originMain = resolveRefForEachRef(repoRoot, tryGit, "refs/remotes/origin/main");
+    if (originMain.failed) {
+      errors.push({
+        code: "BASELINE_REF_LOOKUP_UNAVAILABLE",
+        message: "Looking up refs/remotes/origin/main failed unexpectedly (distinct from it legitimately not existing).",
+      });
+    } else if (originMain.oid) {
       baselineRef = "origin/main";
-      baselineOid = originMain.out;
+      baselineOid = originMain.oid;
     }
   }
 

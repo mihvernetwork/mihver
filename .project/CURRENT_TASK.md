@@ -5,16 +5,18 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-PROJECT-CONTINUITY-V1A-PR34-FINAL-HARDENING
+PROJECT-CONTINUITY-V1A-PR34-GIT-OBSERVATION-BOUNDARY
 
 ## Objective
 
-Remediate the material findings from the independent final-tree review of draft PR #34
-(`chore/project-continuity-v1a-context-pack`), hardening `ProjectContextPack` v1's failure paths
-without expanding its scope: the degraded-pack fallback, `.project/STOP` fail-closed detection, Git
-observation failure handling, a bounded start/end consistency fence, path-safe source reads, schema
-cross-field coherence, and canonical JSON Unicode handling. Not authorization for V1B, a task queue,
-Decision Council, autonomous execution, Publication Broker activation, push, PR mutation, or merge.
+Close six further Git-observation-boundary gaps in `ProjectContextPack` v1 identified after
+`PROJECT-CONTINUITY-V1A-PR34-FINAL-HARDENING`: `core.fsmonitor` external-command execution risk
+through the compiler's own Git calls, an optional Git-status index refresh/write, inherited `GIT_*`
+environment redirection, branch omission from the start/end consistency fence, an ambiguity between
+"local `main` legitimately absent" and "the lookup itself failed," and silent omission of
+non-enumerable own properties by the canonical JSON serializer. Not authorization for V1B, a task
+queue, Decision Council, autonomous execution, Publication Broker activation, push, PR mutation, or
+merge.
 
 ## Branch / Base
 
@@ -29,90 +31,55 @@ task — PR #34 targets the same base).
 **Publication:**
 - Local Publication Builder authorized: no.
 - Remote publication: human manual fallback only (unchanged — this task does not touch that).
-- One local commit only, on top of `e502ea9` — never push, never modify PR #34, never merge.
+- One local commit only, on top of `dd58eb6` — never push, never modify PR #34, never mark it
+  ready, never merge. `.project/DECISIONS_LOG.md` deliberately not touched by this task.
 
-**Pre-fix reproduction**: `node scripts/dev/project-context-pack.mjs --repo
-/tmp/mihver-context-pack-does-not-exist` crashed (uncaught `Error: ... failed self-validation ...
-missing required property 'workingTreeStatusUnavailable'`, exit 1) instead of emitting the
-documented degraded JSON contract — confirmed before any code changed.
+**Six findings fixed, all in `scripts/dev/project-context-pack.mjs` unless noted**:
+1. **`core.fsmonitor` isolation** — every Git invocation now prepends `-c core.fsmonitor=`
+   (exported as part of `GIT_GLOBAL_ARGS`), neutralizing a repo/global/system config's
+   `core.fsmonitor` setting, which could otherwise name an arbitrary external command Git invokes
+   on an ordinary read (status/diff/`ls-files`) regardless of what this compiler asked for —
+   mirrors `scripts/dev/publication-builder.mjs`'s existing identical requirement.
+2. **No optional-lock index write** — every Git invocation now also prepends
+   `--no-optional-locks`, so `git status`/`git diff` can no longer refresh-and-write-back the
+   on-disk index as an incidental side effect of a "read." Verified directly: `.git/index`'s own
+   mtime is now unchanged by compilation (it previously could change).
+3. **`GIT_*` environment isolation** — `buildTryGit` now spawns every Git subprocess with a
+   sanitized environment (every inherited `GIT_*` variable stripped: `GIT_DIR`, `GIT_WORK_TREE`,
+   `GIT_INDEX_FILE`, `GIT_CONFIG*`, `GIT_ASKPASS`, `GIT_SSH*`, etc.), so this process's own
+   environment can never redirect a "read this `repoRoot`" call elsewhere.
+4. **Branch in the consistency fence** — `observeGitState`/`gitStateEqual` now also observe
+   branch/detached state at both the start and end of compilation, not just HEAD and working-tree
+   status, so a checkout/re-attach that leaves HEAD on the same commit is no longer invisible to
+   the fence.
+5. **Baseline ref lookup disambiguation** — `refs/heads/main`/`refs/remotes/origin/main`
+   resolution switched from `git rev-parse --verify` (a single "non-zero exit" outcome that cannot
+   distinguish "ref legitimately absent" from "the lookup itself failed") to `git for-each-ref`
+   (exits 0 with empty output when a ref legitimately does not exist, non-zero only on a genuine
+   failure). A genuine lookup failure now raises a new `BASELINE_REF_LOOKUP_UNAVAILABLE` error
+   (`valid: false`), distinct from the pre-existing `BASELINE_UNRESOLVABLE` warning for legitimate
+   absence.
+6. **Canonical JSON non-enumerable properties** — `scripts/dev/canonical-json.mjs` now rejects any
+   non-enumerable own property (which `Object.keys`/`for-in` never see, and would otherwise vanish
+   from the canonical output entirely) on both plain objects and arrays (excluding `length` itself,
+   which is always a legitimate non-enumerable array property).
 
-**Eight findings from PR #34's independent review, all fixed**:
-1. **Degraded pack** — rebuilt as a static, non-recursive fallback (`buildDegradedPack` in
-   `scripts/dev/project-context-pack.mjs`) that never calls the schema-validating finalize path
-   recursively, includes every schema-required field, is deterministic, never contains raw
-   exception text or a caller-supplied path (diagnostics go to stderr only via `logInternalError`),
-   and always exits 2 with a schema-valid pack.
-2. **STOP fail-closed** — `.project/STOP` now goes through the same bounded `safeReadSource`
-   primitive as every other source (`lstat` semantics, never `existsSync`): a dangling symlink,
-   symlink-to-existing-target, directory, or unreadable node is `present:true, sha256:null` plus a
-   new `STOP_NODE_UNSAFE` validity error; only true `ENOENT` is `present:false`.
-3. **Git observation failures** — `tryGit` is now built from an injectable
-   `options.execFileSyncImpl` (production default unchanged: `execFileSync("git", args, {
-   shell:false, ... })`, mirroring `scripts/dev/publication-builder.mjs`'s existing convention).
-   Branch/merge-base/ahead-behind/changed-path/global-status/per-source-ls-files/per-source-status
-   failures each now raise a dedicated stable error code
-   (`BRANCH_STATE_UNAVAILABLE`/`MERGE_BASE_UNAVAILABLE`/`HISTORY_COUNTS_UNAVAILABLE`/
-   `CHANGED_PATHS_UNAVAILABLE`/`WORKING_TREE_STATUS_UNAVAILABLE`/`SOURCE_STATE_UNDETERMINABLE`)
-   instead of silently collapsing into an empty/clean/untracked result. A "clean" source claim is
-   now independently bound to its own already-read bytes via a locally-computed Git blob SHA-1
-   compared against `headBlobOid`; disagreement or unavailability yields `SOURCE_HEAD_BLOB_UNDETERMINABLE`
-   (state `UNKNOWN`) instead of a trusted `CLEAN`.
-4. **Snapshot consistency fence** — HEAD and normalized working-tree status are observed once at
-   the start of compilation and once again before finalization; any observed difference (including
-   one side failing while the other succeeds) raises `REPOSITORY_CHANGED_DURING_COMPILATION`.
-   Documented precisely as a change-detection fence, not a filesystem transaction/lock.
-5. **Path-safe source read** — `classifyPathSafety`+`readFileSync` replaced by one bounded
-   `safeReadSource` primitive: structural/lexical checks, `lstat` + realpath containment, then an
-   `O_NOFOLLOW` open + `fstat` + read from the same descriptor, so the hashed bytes are exactly what
-   `fstat` validated for the final path component. Only true `ENOENT` is `MISSING`; every other
-   non-regular-file/unreadable outcome is `UNSAFE` with a specific new safety code
-   (`UNSAFE_LSTAT_FAILED`/`UNSAFE_REALPATH_FAILED`/`UNSAFE_OPEN_FAILED`/`UNSAFE_READ_FAILED`, plus
-   the existing symlink/not-regular-file/escapes-repo codes). **Documented residual limitation**:
-   Node's public `fs` has no `openat`-relative-to-a-directory-descriptor API, so an ancestor
-   directory swapped between the realpath containment check and the `O_NOFOLLOW` open is not
-   caught — stated honestly in `docs/development/PROJECT_CONTINUITY.md`, not claimed closed.
-6. **Schema coherence** — `$schema` is now an exact `const`; new root/cross-object `if`/`then`
-   constraints require `executionEligible:true` to imply `validity.valid`,
-   `repository.executionBlocked:false`, a clean/available working tree, `activeTask.active`,
-   `stop.present:false`, non-null HEAD/baseline/mergeBase/ahead/behind, and no `UNKNOWN` source;
-   `executionBlocked` is now schema-required to be the logical negation of `executionEligible`;
-   `activeTask.active:true` requires non-null `declaredBranch`/`taskId`;
-   `workingTreeStatusUnavailable:true` requires `workingTree.clean:false`; per-source-state
-   coherence added for `CLEAN`/`MODIFIED`/`UNTRACKED`/`MISSING`/`UNSAFE`.
-7. **Canonical JSON** — `scripts/dev/canonical-json.mjs` now rejects a lone (unpaired) UTF-16
-   surrogate in any string or object key, an own symbol-keyed property, an accessor
-   (getter/setter) property, and an array with an extraneous own property outside its index range.
-   Header corrected: RFC 8785 (JCS) does not normalize Unicode at all (no NFC/NFD step exists in
-   the RFC); it requires valid Unicode input and preserves valid strings exactly as supplied.
-8. **DECISIONS_LOG** — the V1A branch-local entry introduced by `e502ea9` rewritten to a concise
-   durable decision (no reviewer mechanics, test counts, branch name, pending/merged status, or a
-   claim that V1B is already authorized); every entry that existed at the merge-base is untouched.
+**Validation (run directly by Claude, after all fixes)**: `npm ci`; `npm run test:context-pack` —
+103/103 (up from 91, 12 new regression tests); `npm test` — 170/170; `npm run
+test:project-consistency` — 19/19; `npm run check:project-consistency` — 7/7; `npm run
+test:publication-remote-name-parity` — 44/44; `npm run test:publication-builder` — 42/42; Go
+`tools/publication-broker` (`build`/`test`/`test -race`/`vet`/`gofmt -l`) all clean, untouched.
+`git diff --check` clean. `.git/index` mtime confirmed unchanged by compilation (directly, and via
+a new dedicated test). A hostile inherited `GIT_DIR` confirmed not to change compilation's result.
+Real-repository smoke output re-validated against the schema; baseline resolution (`main` @
+`cf0071d...`) confirmed unchanged in behavior for the legitimate case. `git status --short`
+before/after every compiler invocation identical (fixture and real repository) — the compiler
+still performs no filesystem write. Changed files: `scripts/dev/project-context-pack.mjs`,
+`scripts/dev/canonical-json.mjs`, `tests/dev/project-context-pack.test.mjs`,
+`docs/development/PROJECT_CONTINUITY.md` — `.project/DECISIONS_LOG.md` not touched.
 
-**Validation (run directly by Claude, after all fixes, including the one accepted reviewer
-finding below)**: `npm ci`; `npm run context`; `npm run context:pack` / `npm run context:pack --
---pretty` (compact/pretty parse identically, identical `contextHash`, schema-valid, byte-identical
-on a repeated run); `npm run test:context-pack` — 91/91 (up from 40, 51 new regression tests added
-across the eight findings plus one reviewer-found fence gap); `npm test` — 170/170; `npm run
-test:project-consistency` — 19/19; `npm run check:project-consistency` — 7/7 (including
-`decisions-log-append-only-vs-base`); `npm run test:publication-remote-name-parity` — 44/44; `npm
-run test:publication-builder` — 42/42; Go `tools/publication-broker`
-(`build`/`test`/`test -race`/`vet`/`gofmt -l`) all clean, untouched. `git diff --check` clean.
-`git status --short` before/after every compiler invocation identical (fixture and real
-repository) — the compiler still performs no filesystem write. Changed files confined to this
-task's own Allowed Files list.
-
-**Codex delegation**: two fresh, independent, read-only `mcp__codex__codex` reviewers
-(Failure-Path/Determinism and Authority/Filesystem-Safety), run after implementation and local
-validation per this task's own instruction. Both found one real, additional issue: the snapshot
-consistency fence's equality check silently treated a Git query that failed identically at both the
-start and end observation as "confirmed unchanged" rather than "changed" — fixed (`gitStateEqual`
-now requires both sides' queries to have succeeded before comparing values at all). One further
-finding (rewriting `.project/DECISIONS_LOG.md`'s branch-local entry seemingly conflicts with its
-own append-only policy) was adjudicated REJECTED_WITH_REASON: the exact rewrite, including its
-exact wording, was explicitly mandated by this task's own human-authored prompt for content that
-never reached `main` — independently confirmed by `check:project-consistency`'s own
-`decisions-log-append-only-vs-base` check passing cleanly. See `.project/REVIEW_STATE.md` for the full itemized
-findings and Claude's adjudication of each.
+No Codex review was requested by this task's own instructions (unlike the two prior
+`PROJECT-CONTINUITY-V1A-*` tasks on this branch).
 
 ## Required Context
 

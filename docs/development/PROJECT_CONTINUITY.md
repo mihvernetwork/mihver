@@ -105,9 +105,11 @@ exactly what this serializer does: no normalization is performed or implied, and
 Unicode-equivalent-but-differently-normalized strings are never treated as canonically identical.
 "Valid Unicode input" is enforced by rejecting any string or object key containing a lone
 (unpaired) UTF-16 surrogate code unit, which cannot be re-encoded as well-formed text. The
-serializer also rejects own symbol-keyed properties, accessor (getter/setter) properties, and an
-array with an extraneous own property outside its dense index range — every case where a value
-would otherwise be silently omitted or evaluated rather than data the caller can see was rejected.
+serializer also rejects own symbol-keyed properties, non-enumerable own properties (which
+`Object.keys`/`for-in` never see, and would otherwise vanish from the output entirely), accessor
+(getter/setter) properties, and an array with an extraneous own property outside its dense index
+range — every case where a value would otherwise be silently omitted or evaluated rather than data
+the caller can see was rejected.
 See that file's own header for the complete, precise compatibility statement.
 
 The domain-separation prefix stops a `ProjectContextPack` hash from ever colliding with a
@@ -128,6 +130,29 @@ array — never an interpolated shell command string. `tests/dev/project-context
 mechanically checks (by source inspection and by diffing repository state before/after
 compilation) that this holds.
 
+Every Git invocation is additionally isolated on two more axes, both prepended/applied
+automatically and exported as `GIT_GLOBAL_ARGS` (`scripts/dev/project-context-pack.mjs`) so tests
+can deterministically account for them:
+
+- **`--no-optional-locks`** — an ordinary `git status`/`git diff` can otherwise refresh and write
+  back the on-disk index as a side effect of what looks like a pure read; this flag disables that
+  entire class of incidental write, which a genuinely read-only compiler must never perform even
+  unintentionally. `tests/dev/project-context-pack.test.mjs` confirms `.git/index`'s own mtime is
+  unchanged by compilation.
+- **`-c core.fsmonitor=`** — neutralizes a repository/global/system Git config's `core.fsmonitor`
+  setting, which can otherwise name an arbitrary external command Git invokes on ordinary read
+  operations (status, diff, `ls-files`) regardless of what this compiler itself asked for. Mirrors
+  `scripts/dev/publication-builder.mjs`'s identical existing fsmonitor-neutralization requirement.
+
+Every Git subprocess is also spawned with a **sanitized environment**: every inherited `GIT_*`
+variable (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`, `GIT_CONFIG*`, `GIT_ASKPASS`, `GIT_SSH*`,
+etc.) is stripped before spawning, so this process's own environment can never silently redirect a
+"read this `repoRoot`" call to a different location, or plumb unwanted credential-adjacent
+behavior into a subprocess this compiler only ever uses for local, read-only queries against an
+explicit `cwd`. `tests/dev/project-context-pack.test.mjs` confirms both that the sanitized
+environment object contains no `GIT_*` key, and that a hostile inherited `GIT_DIR` does not change
+compilation's result.
+
 ## Git query availability
 
 Every Git query this compiler makes can fail independently of what it is asking about, and a
@@ -139,7 +164,8 @@ nothing" (an empty result, `null`, or `[]`). A failure produces a dedicated, sta
 `SOURCE_STATE_UNDETERMINABLE` (an `ls-files`/per-path `status` query failed) or
 `SOURCE_HEAD_BLOB_UNDETERMINABLE` (a source `git status` reports as unmodified, but its HEAD blob
 identity either could not be established or does not match a blob hash independently computed from
-the exact bytes this compiler already read — see "Clean-source/HEAD-blob binding" below). Any such
+the exact bytes this compiler already read — see "Clean-source/HEAD-blob binding" below), and
+`BASELINE_REF_LOOKUP_UNAVAILABLE` (see "Baseline ref lookup" below). Any such
 error makes `validity.valid: false`, which makes `executionEligible: false` — none of these
 conditions can ever coexist with `executionEligible: true`. Production Git calls always run through
 `execFileSync("git", args, { shell: false, ... })`; `tests/dev/project-context-pack.test.mjs`
@@ -157,11 +183,27 @@ source's own `headBlobOid` (from `git rev-parse --verify HEAD:<path>`). If that 
 or disagrees, the source is reported `UNKNOWN`, not `CLEAN` — `git status`'s "no diff" claim alone
 is never trusted on its own for the CLEAN classification.
 
+### Baseline ref lookup
+
+`refs/heads/main` and `refs/remotes/origin/main` are resolved via `git for-each-ref`, not
+`git rev-parse --verify`. `rev-parse --verify` exits non-zero both when a ref legitimately does not
+exist and when the lookup itself genuinely fails (corrupt repo, Git internal error, etc.) — a single
+outcome that cannot distinguish "no baseline exists, fall back or report none" from "the lookup
+failed, fail closed." `for-each-ref` instead exits `0` with **empty output** when a ref legitimately
+does not exist, and only exits non-zero on an actual query failure, so the two cases are
+distinguishable: a legitimate absence contributes only the existing `BASELINE_UNRESOLVABLE` warning
+(once neither ref resolves), while a genuine lookup failure raises the dedicated
+`BASELINE_REF_LOOKUP_UNAVAILABLE` error (`valid: false`).
+
 ## Snapshot consistency fence
 
-The compiler observes HEAD and a normalized working-tree status once at the very start of
-compilation and once again immediately before the pack is finalized. Two observations compare
-equal only when *both* the start and end queries succeeded and produced the same value; any query
+The compiler observes branch/detached state, HEAD, and a normalized working-tree status once at the
+very start of compilation and once again immediately before the pack is finalized. Branch state is
+included specifically so a checkout/detach/re-attach that leaves HEAD pointed at the same commit
+(e.g. re-attaching HEAD to a branch via `git symbolic-ref` without moving the commit, or a
+detach-then-reattach) is not invisible to a HEAD-only fence. Two observations compare
+equal only when *every* one of the start and end queries succeeded and produced the same value; any
+query
 failure at either point — even a query that fails identically at both ends — is treated as
 "changed," never as "confirmed unchanged" (a repeated failure is unresolved, not evidence of
 stability). Whenever the two observations don't compare equal, compilation reports
