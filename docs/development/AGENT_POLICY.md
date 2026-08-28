@@ -176,19 +176,28 @@ UNDERSTAND → DECOMPOSE → DELEGATE → ADJUDICATE → INTEGRATE → AUTHORIZE
   scoped.
 - **Decompose** substantial bounded work into pieces a single Codex role can execute reliably (see
   "When to Delegate to Codex" below).
-- **Delegate** is the *preferred default* for routine operations that map cleanly onto a role:
-  repository inspection → Scout, implementation → Implementer, tests/diff verification → Verifier,
-  adversarial review → Reviewer. Branch/commit/push/PR are not a Codex role at all — see "Git &
-  Branch Workflow" below. Concretely: if the work
-  involves editing more than a small, isolated handful of lines in files Claude has not already
-  fully read this task, running a test/build/validation command, or producing an independent
-  judgment on work Claude itself authored, route it to the matching role rather than doing it
-  directly — these are the routine cases the table above exists for. Direct Claude action remains
-  possible when the work is a single trivial lookup, a one-line fix in a file already fully read
-  this task, or dispatching a worker would clearly cost more than it returns — but when Claude does
-  substantial role-mapped work directly instead of delegating it, the task's own report names which
-  exception applied, rather than silently skipping delegation. Delegation must add value, not
-  simulate activity.
+- **Delegate** is *mandatory*, not merely preferred, for implementation work above a fixed size:
+  once a task's expected new/changed implementation code exceeds **~150 lines, or touches more than
+  2 implementation files**, the actual code-writing goes to a Codex Implementer — Claude does not
+  write it directly. This threshold is deliberately mechanical, not a judgment call: subjective
+  reasoning such as "this is a single coherent, tightly-coupled unit" or "dispatching a worker would
+  cost more than it returns" is **not** grounds to skip Implementer delegation once the threshold is
+  crossed. (Confirmed pattern needing this hard rule:
+  `PROJECT-CONTINUITY-V1A-CONTEXT-PACK`/`-PR34-FINAL-HARDENING`/`-PR34-GIT-OBSERVATION-BOUNDARY`
+  wrote a ~750-line compiler, a JSON Schema, and a 700+-line test file directly across three
+  consecutive tasks, each time reasoning its way past delegation — the user had to intervene
+  explicitly to correct it. A subjective "is this worth delegating" test predictably gets talked
+  past under time/complexity pressure; a fixed numeric threshold does not.) The only way past this
+  threshold is an explicit, task-prompt-level human authorization to implement directly — never
+  Claude's own after-the-fact judgment that an exception applied. Below the threshold, or for
+  repository inspection (Scout), tests/diff verification (Verifier), and adversarial review
+  (Reviewer)-shaped work of any size, the existing routing table below still applies as the
+  preferred default. **Crossing the delegation threshold does not move review or `git commit` to
+  Codex** — those remain exclusively Claude's, per "Codex Responsibilities" below and "Git & Branch
+  Workflow"; only the bulk code-writing itself is what must move to an Implementer call. Delegation
+  must add value, not simulate activity — but for implementation work above the threshold, "value"
+  is definitionally present: keeping Claude's own context/token usage from growing unboundedly on
+  routine bulk-writing that a bounded Implementer contract handles just as well.
 - **Adjudicate** every worker's output as a claim to check, never a finding to relay — see
   [REVIEW_PROTOCOL.md](./REVIEW_PROTOCOL.md). Reject unsupported or out-of-scope *material*
   recommendations explicitly, not silently — "material" means it would change what gets built,
@@ -235,8 +244,9 @@ and live.
 
 Do not spawn a Codex worker merely to simulate parallelism or thoroughness. If a task is a single
 trivial lookup, or something Claude can do directly with equal reliability and less overhead, do it
-directly — see "Claude Responsibilities" above for when direct action is the exception, not the
-default.
+directly. This does **not** override "Claude Responsibilities" above's hard, mechanical Implementer
+threshold (~150 lines / 2+ implementation files) — below that threshold direct action is the normal
+case; at or above it, delegation to Implementer is mandatory, not a judgment call.
 
 **A Claude `Agent`/subagent never satisfies a task requirement that explicitly requires Codex** — this
 is not a naming technicality: a Claude `general-purpose` (or any other non-Codex) subagent performing
