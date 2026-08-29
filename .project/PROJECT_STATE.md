@@ -65,6 +65,13 @@ MIHVER Run Bundle v1 (deterministic, typed, auditable run record — `TaskRecord
 `EvidenceManifest`, `RunManifest`, a deterministic bundle writer/compiler, and a human review
 report renderer — built on `ProjectContextPack` v1 as pure input): IMPLEMENTED (Project Continuity
 V1B) — owner: `docs/development/RUN_BUNDLE.md`.
+Decision Council V1A kernel + simulator (pure, non-LLM deterministic reducer/event-sourced state
+machine plus deterministic fake-agent fixture helpers, proving the Rotating Proposer + Two
+Independent Reviewers + Exact-Candidate Quorum protocol only — no real LLM/provider/MCP/tool/shell/
+Publication Broker connection, no Shadow Council, no execution gateway): IMPLEMENTED — owner:
+`docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`. `ADR-0005`'s own `## Status` field remains
+**Proposed** — this checkpoint records the deterministic kernel/simulator implementation only and
+does not move the ADR's Status.
 
 Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
 checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
@@ -327,6 +334,18 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   deterministic bundle writer/compiler, and a human review report renderer. Merged via PR #36,
   squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`. Full semantic/architectural detail is
   authoritative in `docs/development/RUN_BUNDLE.md` — not reproduced here.
+- **Decision Council V1A — kernel + simulator.** First deterministic Decision Council foundation: a
+  pure, non-LLM kernel (`scripts/dev/decision-council-kernel.mjs`) plus a deterministic fake-agent
+  simulator (`scripts/dev/decision-council-simulator.mjs`) proving the council protocol (Rotating
+  Proposer + Two Independent Reviewers + Exact-Candidate Quorum) defined in the new
+  `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`, with its schema at
+  `schemas/dev/decision-council.schema.json`. Merged via PR #38, squash commit
+  `2e9a0e88ad8b74bc11afc0fcac8db704f74690d0`. **Foundation-only**: no real LLM/provider/MCP/tool/
+  shell/Publication Broker connection, no Shadow Council, no execution gateway — defines and proves
+  the protocol only. **`ADR-0005`'s own `## Status` field remains Proposed as merged** — this
+  checkpoint does not change it; full semantic/architectural detail is authoritative in
+  `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` itself, not reproduced here. No follow-on task —
+  Shadow Council or otherwise — is recommended or authorized by this checkpoint.
 
 ## Open Items
 
@@ -353,9 +372,11 @@ See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the curr
 branch, if any.
 
 **Project Continuity V1A is frozen** (see the checkpoint above, PR #34, squash commit
-`dbdb4f7049d2a73728038f1c98efc47ddfee3727`), and **Project Continuity V1B is frozen** (see the
-checkpoint above, PR #36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`). None
-automatically. No follow-on task — V1C, Decision Council, autonomous task selection/execution, or
-Publication Broker provisioning/activation included — is recommended or authorized by either
-checkpoint; any follow-on task requires its own separate, explicit human authorization, exactly
-like every other next-task pointer in this section.
+`dbdb4f7049d2a73728038f1c98efc47ddfee3727`), **Project Continuity V1B is frozen** (see the
+checkpoint above, PR #36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`), and
+**Decision Council V1A (kernel + simulator) is frozen** (see the checkpoint above, PR #38, squash
+commit `2e9a0e88ad8b74bc11afc0fcac8db704f74690d0`; `ADR-0005` remains **Proposed**). None
+automatically. No follow-on task — V1C, Shadow Council, ADR-0005 acceptance, autonomous task
+selection/execution, or Publication Broker provisioning/activation included — is recommended or
+authorized by any of these checkpoints; any follow-on task requires its own separate, explicit
+human authorization, exactly like every other next-task pointer in this section.
