@@ -72,6 +72,12 @@ Publication Broker connection, no Shadow Council, no execution gateway): IMPLEME
 `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`. `ADR-0005`'s own `## Status` field remains
 **Proposed** — this checkpoint records the deterministic kernel/simulator implementation only and
 does not move the ADR's Status.
+Shadow Council V1A advisory CLI harness (three independently-spawned provider CLI child processes —
+OpenAI/Anthropic/Google — acting as advisory-only council seats feeding the unmodified Decision
+Council V1A kernel; no direct provider API/SDK integration): IMPLEMENTED and frozen — owner:
+`docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`, `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`.
+`ADR-0005`'s own `## Status` field remains **Proposed** — this checkpoint does not change it. All
+Shadow Council output is advisory only and grants no execution, publication, or merge authority.
 
 Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
 checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
@@ -346,6 +352,17 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   checkpoint does not change it; full semantic/architectural detail is authoritative in
   `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` itself, not reproduced here. No follow-on task —
   Shadow Council or otherwise — is recommended or authorized by this checkpoint.
+- **Shadow Council V1A — advisory CLI harness.** A real, provider-CLI-backed Shadow Council
+  (`codex`/`claude`/`agy` as three independently-spawned council seats) feeding the frozen,
+  unmodified Decision Council V1A kernel, with no direct provider API/SDK/HTTP integration. Merged
+  via PR #41, squash commit `45077da5300bc56492e26f041fb88583dd5f0085`. Authoritative pointers:
+  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md` (exercise record) and the finalized Run Bundle
+  under `.project/run-bundles/shadow-council-v1a-cli-harness-remediated/`, both merged by PR #41.
+  **`ADR-0005`'s own `## Status` field remains Proposed as merged** — this checkpoint does not
+  change it. All Shadow Council output is advisory only: no `DecisionRecord` produced by it grants
+  or implies execution, publication, merge, or autonomous task-transition authority. No follow-on
+  task — ADR-0005 acceptance or execution integration — is recommended or authorized by this
+  checkpoint.
 
 ## Open Items
 
@@ -373,10 +390,12 @@ branch, if any.
 
 **Project Continuity V1A is frozen** (see the checkpoint above, PR #34, squash commit
 `dbdb4f7049d2a73728038f1c98efc47ddfee3727`), **Project Continuity V1B is frozen** (see the
-checkpoint above, PR #36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`), and
+checkpoint above, PR #36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`),
 **Decision Council V1A (kernel + simulator) is frozen** (see the checkpoint above, PR #38, squash
-commit `2e9a0e88ad8b74bc11afc0fcac8db704f74690d0`; `ADR-0005` remains **Proposed**). None
-automatically. No follow-on task — V1C, Shadow Council, ADR-0005 acceptance, autonomous task
+commit `2e9a0e88ad8b74bc11afc0fcac8db704f74690d0`; `ADR-0005` remains **Proposed**), and
+**Shadow Council V1A (advisory CLI harness) is frozen** (see the checkpoint above, PR #41, squash
+commit `45077da5300bc56492e26f041fb88583dd5f0085`; `ADR-0005` remains **Proposed**). None
+automatically. No follow-on task — V1C, ADR-0005 acceptance, execution integration, autonomous task
 selection/execution, or Publication Broker provisioning/activation included — is recommended or
 authorized by any of these checkpoints; any follow-on task requires its own separate, explicit
 human authorization, exactly like every other next-task pointer in this section.
