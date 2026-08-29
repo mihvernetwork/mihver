@@ -1,0 +1,238 @@
+{
+  "exerciseId": "shadow-exercise-remediated-r1-1",
+  "riskClass": "R1",
+  "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+  "proposerSeatId": "seat-openai",
+  "contextHash": "sha256:77112af6e80b65e313913a970f6853c9cf4de5b1b94df28db78740f0b7981430",
+  "repositoryHead": "2fae893d89c8debded14fb7ba23adfcad2055133",
+  "decisionQuestion": "Shadow Council governance-mechanics fixture (R1, non-authoritative): should MIHVER's future internal documentation style guidance prefer the Oxford comma? This exercise tests council mechanics only; its result does not change any real MIHVER document, decide this task/branch's merge, or authorize any action.",
+  "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583",
+  "decisionRecord": {
+    "decisionRequestId": "shadow-exercise-remediated-r1-1",
+    "taskId": "SHADOW-COUNCIL-V1A-LIFECYCLE-REMEDIATION",
+    "riskClass": "R1",
+    "contextHash": "sha256:77112af6e80b65e313913a970f6853c9cf4de5b1b94df28db78740f0b7981430",
+    "repositoryHead": "2fae893d89c8debded14fb7ba23adfcad2055133",
+    "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+    "state": "DECIDED",
+    "disposition": "COUNCIL_APPROVED",
+    "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583",
+    "proposerSeatId": "seat-openai",
+    "votes": [
+      {
+        "seatId": "seat-openai",
+        "voteValue": "APPROVE",
+        "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583"
+      },
+      {
+        "seatId": "seat-anthropic",
+        "voteValue": "APPROVE",
+        "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583"
+      },
+      {
+        "seatId": "seat-google",
+        "voteValue": "APPROVE",
+        "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583"
+      }
+    ],
+    "quorumDetail": {
+      "ruleset": "R1",
+      "reason": null,
+      "approvals": 3,
+      "distinctProviderModelFamilies": 3
+    },
+    "reasonCode": "R1_QUORUM_MET",
+    "recordHash": "sha256:090171b1beca5d8f46fe089d3f29829b431a2c898ac10ce9e976a0fe888f503a"
+  },
+  "primaryCallCount": 4,
+  "attestations": [
+    {
+      "attestationHash": "sha256:953e2194c7b4bd153bd07cb59456b6e1ab0218fdc804d421ecb8824476a06f9a",
+      "seatId": "seat-openai",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "provider": "openai",
+      "requestedModelId": "gpt-5.6-sol",
+      "cliExecutableRealpath": "/Users/ev/.codex/packages/standalone/releases/0.149.0-aarch64-apple-darwin/bin/codex",
+      "cliVersion": "codex-cli 0.149.0",
+      "childProcessId": 0,
+      "invocationConfigHash": "sha256:a5bf4794a5f7e8b6984d4cff92d2e9ff956246d622d553a8d92c5a88a1209722",
+      "packetHash": "sha256:8b78aa23ed917cde5b2745ccb72429cab71a34a50c75e47c8dcc415130cab977",
+      "outputHash": "sha256:2063e9c6edf6e37974e703f5e4fe53a0eea8b39c649dfe3272df21c5c5649d36",
+      "exitCode": 0,
+      "text": "{\"summary\":\"Prefer the Oxford comma in future internal documentation style guidance for clarity and consistency.\",\"payload\":{\"recommendation\":\"prefer\",\"scope\":\"future internal documentation style guidance\",\"rationale\":\"It reduces ambiguity in lists and provides a simple, consistent editorial rule.\",\"authority\":\"non-authoritative fixture only\",\"action_authorized\":false}}",
+      "reportedModelId": null,
+      "modelUsage": {},
+      "providerSessionId": "01a04f5c-3fe7-7e81-b0d6-4a0b91438764",
+      "observedToolUsage": [],
+      "usageMetadata": {
+        "input_tokens": 14156,
+        "cached_input_tokens": 9984,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 94,
+        "reasoning_output_tokens": 24
+      },
+      "cliExecutableContentHash": null,
+      "residualTrustLimitation": "One parent harness process controls all three child-process launches; this attestation demonstrates local runtime/process separation between seat adapters only, not cryptographic provider non-collusion."
+    },
+    {
+      "attestationHash": "sha256:da24d3e692514b976acd6b7f059576d3015a890ad98a410eef5b33a3455aecfe",
+      "seatId": "seat-openai",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "provider": "openai",
+      "requestedModelId": "gpt-5.6-sol",
+      "cliExecutableRealpath": "/Users/ev/.codex/packages/standalone/releases/0.149.0-aarch64-apple-darwin/bin/codex",
+      "cliVersion": "codex-cli 0.149.0",
+      "childProcessId": 0,
+      "invocationConfigHash": "sha256:2031acd37a46d2869e75b6adaf25b2e72d7f2e270bdd316cd67e15df02a1c971",
+      "packetHash": "sha256:727c2f294e65d8e4dd184cc8e25a4e11b9bd98440afec6419c5a1df8c1db5c21",
+      "outputHash": "sha256:41606afb427804750b96366d59bfd901e52fa720c7fbc91b23d7b3cbec63c86f",
+      "exitCode": 0,
+      "text": "{\"voteValue\":\"APPROVE\"}",
+      "reportedModelId": null,
+      "modelUsage": {},
+      "providerSessionId": "01a04f5c-5cef-75c2-9234-7bad0157a3fa",
+      "observedToolUsage": [],
+      "usageMetadata": {
+        "input_tokens": 14343,
+        "cached_input_tokens": 9984,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 12,
+        "reasoning_output_tokens": 0
+      },
+      "cliExecutableContentHash": null,
+      "residualTrustLimitation": "One parent harness process controls all three child-process launches; this attestation demonstrates local runtime/process separation between seat adapters only, not cryptographic provider non-collusion."
+    },
+    {
+      "attestationHash": "sha256:7aab22c93d6a6bb41a640c93da0268130d92a04d50b92d49385ea5d3dea17705",
+      "seatId": "seat-anthropic",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "provider": "anthropic",
+      "requestedModelId": "claude-opus-5",
+      "cliExecutableRealpath": "/Users/ev/.local/share/claude/versions/2.1.251",
+      "cliVersion": "2.1.251 (Claude Code)",
+      "childProcessId": 0,
+      "invocationConfigHash": "sha256:728082a7ebcef57e030596cf183b45b19cc55a28d453aee59af35164a62bb44a",
+      "packetHash": "sha256:69b7423079a580ca7c5b65b2ca46aa58d294f075f654065af0353d0ca553aa31",
+      "outputHash": "sha256:0364821470285acbc8fd15f53152429a239ca2a5da1e96279f7c344848883ed3",
+      "exitCode": 0,
+      "text": "{\"voteValue\":\"APPROVE\"}",
+      "reportedModelId": "claude-opus-5",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1307,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001382,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 404,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 6730,
+          "webSearchRequests": 0,
+          "costUSD": 0.07740999999999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-opus-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "providerSessionId": "29c88acf-0a08-49a3-9368-67090309ac35",
+      "observedToolUsage": [],
+      "usageMetadata": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 6730,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 404,
+        "output_tokens_details": {
+          "thinking_tokens": 387
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 6730,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 404,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 6730,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 6730
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "cliExecutableContentHash": null,
+      "residualTrustLimitation": "One parent harness process controls all three child-process launches; this attestation demonstrates local runtime/process separation between seat adapters only, not cryptographic provider non-collusion."
+    },
+    {
+      "attestationHash": "sha256:f8429b32795466f8adea0e95cc6c0cf9aa928cb3184a05e019c5d9206517a62c",
+      "seatId": "seat-google",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "provider": "google",
+      "requestedModelId": "gemini-3.7-flash-medium",
+      "cliExecutableRealpath": "/Users/ev/.local/bin/agy",
+      "cliVersion": "1.1.22",
+      "childProcessId": 0,
+      "invocationConfigHash": "sha256:812e37bb1f7d4e1830d14402735a2a6c2bbfd566295426b136bce10a5ab4ee27",
+      "packetHash": "sha256:9d445ac3f30840616023cf264b6fceb9d6c724d1f6345bca74154c60a788960e",
+      "outputHash": "sha256:7add9b31ae659a0a14e73f8be2d1c79dbdd6277e3be1020c13d1d07854c8ae49",
+      "exitCode": 0,
+      "text": "{\"voteValue\":\"APPROVE\"}\n",
+      "reportedModelId": null,
+      "modelUsage": {},
+      "providerSessionId": "d47d58c3-6187-40ee-bfd5-7d7ad113c6a3",
+      "observedToolUsage": [],
+      "usageMetadata": {
+        "input_tokens": 14895,
+        "output_tokens": 485,
+        "thinking_tokens": 478,
+        "cache_read_tokens": 0,
+        "total_tokens": 15380
+      },
+      "cliExecutableContentHash": null,
+      "residualTrustLimitation": "One parent harness process controls all three child-process launches; this attestation demonstrates local runtime/process separation between seat adapters only, not cryptographic provider non-collusion."
+    }
+  ],
+  "votes": [
+    {
+      "decisionRequestId": "shadow-exercise-remediated-r1-1",
+      "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583",
+      "seatId": "seat-openai",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "voteValue": "APPROVE"
+    },
+    {
+      "decisionRequestId": "shadow-exercise-remediated-r1-1",
+      "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583",
+      "seatId": "seat-anthropic",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "voteValue": "APPROVE"
+    },
+    {
+      "decisionRequestId": "shadow-exercise-remediated-r1-1",
+      "candidateHash": "sha256:b7df378ac69e96534a9abd661749af741e3c1008838dd2c2cd4fb6ff602a8583",
+      "seatId": "seat-google",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "voteValue": "APPROVE"
+    }
+  ]
+}

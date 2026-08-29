@@ -20,7 +20,11 @@
     "test:context-pack": "node tests/dev/project-context-pack.test.mjs",
     "run-bundle": "node scripts/dev/run-bundle.mjs",
     "run-bundle-report": "node scripts/dev/run-bundle-report.mjs",
-    "test:run-bundle": "node tests/dev/run-bundle.test.mjs"
+    "test:run-bundle": "node tests/dev/run-bundle.test.mjs",
+    "test:shadow-council-packet": "node tests/dev/shadow-council-packet.test.mjs",
+    "test:shadow-council-attestation": "node tests/dev/shadow-council-attestation.test.mjs",
+    "test:shadow-council-cli-transport": "node tests/dev/shadow-council-cli-transport.test.mjs",
+    "test:shadow-council-harness": "node tests/dev/shadow-council-harness.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";import {buildProposalPacket,buildVotePacket} from "../../scripts/dev/shadow-council-packet.mjs";
+let p=0,f=0;const test=(n,fn)=>{try{fn();p++;console.log(`PASS: ${n}`)}catch(e){f++;console.error(`FAIL: ${n}\n${e.stack}`)}};
+const b={councilEpochId:"e",seatId:"seat-openai",riskClass:"R1",taskId:"t",decisionRequestId:"d",contextHash:`sha256:${"1".repeat(64)}`,repositoryHead:"2".repeat(40),decisionQuestion:"Q?",evidence:["E"]};
+const proposal={summary:"S",payload:{x:1}};const c0={decisionRequestId:"d",taskId:"t",riskClass:"R1",contextHash:b.contextHash,repositoryHead:b.repositoryHead,councilEpochId:"e",proposerSeatId:"seat-openai",candidateOrdinal:0,proposalContent:proposal};
+import {computeCandidateHash} from "../../scripts/dev/decision-council-kernel.mjs";const c={...c0,candidateHash:computeCandidateHash(c0)};
+test("deterministic and sensitive",()=>{assert.equal(buildProposalPacket(b).packetHash,buildProposalPacket(b).packetHash);assert.notEqual(buildProposalPacket(b).packetHash,buildProposalPacket({...b,decisionQuestion:"X"}).packetHash)});
+test("evidence bound",()=>assert.throws(()=>buildProposalPacket({...b,evidence:Array(21).fill("x")})));
+test("candidate binding",()=>assert.throws(()=>buildVotePacket({...b,candidateHash:`sha256:${"0".repeat(64)}`,candidateDecision:c}),/CANDIDATE_HASH_MISMATCH/));
+test("candidate exact shape",()=>assert.throws(()=>buildVotePacket({...b,candidateHash:c.candidateHash,candidateDecision:{...c,extra:1}}),/INVALID_CANDIDATE/));
+test("packet shape",()=>assert.deepEqual(Object.keys(buildProposalPacket(b).outputContract),["artifact","requiredFields","jsonOnly"]));console.log(`shadow-council-packet: ${p} passed, ${f} failed`);if(f)process.exitCode=1;
