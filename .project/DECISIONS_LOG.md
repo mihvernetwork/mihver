@@ -259,3 +259,9 @@ Entries above this line are unmodified, per this log's append-only policy.
   `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s own `## Status` field remains **Proposed** —
   this freeze does not change it. No Shadow Council or other follow-on task is authorized by this
   entry. — `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`
+- 2026-08-29 — Shadow Council V1A (advisory CLI harness) accepted and frozen: PR #41 merged to
+  `main`, squash commit `45077da5300bc56492e26f041fb88583dd5f0085`.
+  `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s own `## Status` field remains **Proposed** —
+  this freeze does not change it; all Shadow Council output remains advisory only. No ADR-0005
+  acceptance or execution-integration follow-on task is authorized by this entry. —
+  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
