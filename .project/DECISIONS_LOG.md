@@ -265,3 +265,8 @@ Entries above this line are unmodified, per this log's append-only policy.
   this freeze does not change it; all Shadow Council output remains advisory only. No ADR-0005
   acceptance or execution-integration follow-on task is authorized by this entry. —
   `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
+- 2026-08-30 — Human authorized `ADR-0005-ACCEPTANCE`: `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s
+  own `## Status` field moved **Proposed → Accepted**, on frozen evidence basis PR #38/#39
+  (Decision Council V1A kernel/simulator), PR #40 (Acceptance Gate definition), PR #41 (real Shadow
+  Council V1A evidence), and PR #42 (Shadow Council V1A freeze). Acceptance authorizes no
+  execution, publication, merge, or autonomy capability. — `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`

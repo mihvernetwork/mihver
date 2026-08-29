@@ -5,65 +5,70 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-SHADOW-COUNCIL-V1A-FREEZE-CLOSEOUT
+ADR-0005-ACCEPTANCE
 
 ## Objective
 
-Freeze the already-merged Shadow Council V1A advisory CLI harness checkpoint (PR #41, squash commit
-`45077da5300bc56492e26f041fb88583dd5f0085`) into durable project state. State reconciliation only:
-records that the checkpoint exists and is frozen, with pointers to its owning artifacts. Does not
-modify the Shadow Council implementation, schemas, tests, exercise evidence, the finalized Run
-Bundle, ADR-0005, the Decision Council kernel, or any policy document. Does not make any provider/
-model calls. Does not start ADR-0005 acceptance or execution integration.
+Change `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s `## Status` field from Proposed to
+Accepted, but only if the ADR's own seven-item Acceptance Gate is independently re-evaluated
+against the frozen evidence now on `main` and every criterion is satisfied. Makes the smallest
+possible ADR-0005 acceptance change based entirely on already-frozen evidence: no new Shadow
+Council exercise, no real provider/model call, no implementation work. Does not authorize execution
+integration, bounded autonomy, Publication Broker activation, DecisionRecord-triggered actions, new
+Shadow Council provider/model calls, protocol redesign, or any new implementation capability.
 
 ## Branch / Base
 
-Branch: `chore/shadow-council-v1a-freeze-closeout`.
-Base: `main` at `45077da5300bc56492e26f041fb88583dd5f0085` (PR #41's squash-merge commit).
+Branch: `docs/adr-0005-acceptance`.
+Base: `main` at `f0fa9acddabc59de9e7ed6301496dc233e470d67` (PR #42's squash-merge commit).
 
 ## Status
 
 **Complete, pending human review.**
 
-**Changes made (exactly the 4 authorized primary state files):**
-- `.project/PROJECT_STATE.md` — added a compact, pointer-oriented Shadow Council V1A capability
-  snapshot bullet and a matching "Frozen Steps / Checkpoints" entry (PR #41, squash commit
-  `45077da5300bc56492e26f041fb88583dd5f0085`, pointing to
-  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md` and `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`
-  as authoritative, and to the finalized Run Bundle already merged by PR #41 under
-  `.project/run-bundles/shadow-council-v1a-cli-harness-remediated/`), plus one line added to the
-  "Next Authorized Action" closing summary. No exercise/test narrative, no hash, no reviewer
-  mechanics duplicated — `ADR-0005`'s Status is explicitly recorded as remaining **Proposed**, and
-  Shadow Council output is explicitly recorded as advisory-only, granting no execution/publication/
-  merge authority.
-- `.project/DECISIONS_LOG.md` — appended exactly one entry (pure append, no prior entry edited):
-  Shadow Council V1A merged/frozen, PR #41, squash commit
-  `45077da5300bc56492e26f041fb88583dd5f0085`, pointer to
-  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`. No provider-call detail, reviewer mechanics,
-  hash, process-incident narrative, or test-command narrative included.
-- `.project/CURRENT_TASK.md` (this file) — replaces the stale `SHADOW-COUNCIL-V1A-LIFECYCLE-
-  REMEDIATION` branch-scoped state (that task's own branch, `feat/shadow-council-v1a-cli-harness-remediated`,
-  is a different, already-merged branch; its content here would be stale/inapplicable to this
-  branch per `AGENT_POLICY.md`'s Operational State Scope) with this freeze-closeout task's own
-  record.
-- `.project/REVIEW_STATE.md` — same replacement, for this task's own review/verification record.
-- **Not modified** (per this task's explicit scope): the Shadow Council implementation/schemas/
-  tests/exercise document/Run Bundle (all already merged and frozen by PR #41, confirmed zero-diff
-  against `main` below), `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` (Status confirmed still
-  literally `Proposed`), `scripts/dev/decision-council-kernel.mjs`,
-  `scripts/dev/decision-council-simulator.mjs`, any other policy document.
+**Gate re-evaluation (before any edit):** a fresh, independent Codex Reviewer read
+`docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s actual current Acceptance Gate text and
+independently evaluated each of its seven criteria against the real frozen evidence (kernel/
+simulator test reruns, the real exercise files, the finalized Run Bundle, and
+`shadow-council-harness.mjs`/`shadow-council-attestation.mjs` directly) — not merely trusting
+`CURRENT_TASK.md`/`PROJECT_STATE.md` summaries. **All seven criteria: `SATISFIED_BY_FROZEN_EVIDENCE`.**
+The Reviewer also independently judged the known R1/R2 `contextHash` difference to remain an
+operational/evaluation limitation, not a protocol-integrity failure. Full detail in
+`.project/REVIEW_STATE.md`.
 
-**The prior research-fork process incident** (recorded historically in the now-superseded
-`SHADOW-COUNCIL-V1A-LIFECYCLE-REMEDIATION` task's `REVIEW_STATE.md` entry, itself merged into
-`main`'s history via PR #41) remains historical review context only. Per this task's own
-instruction, it is not promoted into `PROJECT_STATE.md` or `DECISIONS_LOG.md` — neither file
-mentions it.
+**Changes made:**
+- `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` — changed only `## Status` (`Proposed` →
+  `Accepted`) and added one "Acceptance note" paragraph immediately after it, following the
+  `ADR-0004` precedent. The note is pointer-first (cites PR #38/#39/#40/#41/#42 and
+  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`, does not duplicate evidence), records the
+  `contextHash` drift as a disclosed operational limitation, records residual trust limitations as
+  residual (not cryptographic proof), and explicitly states Acceptance authorizes no execution,
+  publication, merge, or autonomy capability. No other line in the ADR (Context, Decision, Future
+  Work, Acceptance Gate text itself) was touched — confirmed via `git diff main` showing a single
+  additive hunk.
+- `.project/PROJECT_STATE.md` — added an `ADR-0005 (Decision Council Protocol): ACCEPTED` line to
+  the ADR status list (matching the existing ADR-0002/0003/0004 pattern), corrected the two
+  "current capability snapshot" mentions of `ADR-0005`'s Status (Decision Council V1A and Shadow
+  Council V1A capability facts) from "remains Proposed" to "is now Accepted", added one compact
+  "ADR-0005 Acceptance" Frozen Steps checkpoint pointing to the ADR as semantic authority (no
+  duplication of the seven criteria), and updated the "Next Authorized Action" closing summary.
+  Did **not** rewrite the historical PR #38/#41 checkpoint narratives (which correctly state
+  "remains Proposed as merged" — true at that historical merge time) — preserved verbatim, per this
+  task's own instruction to preserve the Shadow Council V1A frozen checkpoint.
+- `.project/DECISIONS_LOG.md` — appended exactly one entry (pure append, no prior line edited):
+  ADR-0005 Accepted, task `ADR-0005-ACCEPTANCE`, frozen evidence basis PR #38/#39/#40/#41/#42,
+  pointer to the ADR document. No review-session mechanics, hashes, or long evidence narrative.
+- `.project/CURRENT_TASK.md` (this file) / `.project/REVIEW_STATE.md` — task record.
+- **Not modified**: Shadow Council implementation/schemas/tests/exercise document/Run Bundle,
+  Decision Council kernel/simulator/schema, `docs/development/CONTEXT_INDEX.md` (no topic-owner
+  change — a Status flip alone is not one), any other policy document.
 
 **No provider/model call was made in this task.**
 
 ## Required Context
 
+- `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` (now Accepted; read its own Acceptance note and
+  Acceptance Gate directly)
 - `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
-- `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`
 - `.project/REVIEW_STATE.md`'s Latest Review section (this task)
 - `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`
