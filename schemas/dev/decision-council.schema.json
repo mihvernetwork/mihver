@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/decision-council.schema.json",
+  "title": "MIHVER Decision Council V1A",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {},
+  "$defs": {
+    "SeatIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["seatId", "provider", "modelFamily", "modelId", "councilEpochId"],
+      "properties": {
+        "seatId": { "type": "string", "minLength": 1 },
+        "provider": { "type": "string", "minLength": 1 },
+        "modelFamily": { "type": "string", "minLength": 1 },
+        "modelId": { "type": "string", "minLength": 1 },
+        "councilEpochId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "CouncilConfig": {
+      "type": "object", "additionalProperties": false,
+      "required": ["epochId", "seats"],
+      "properties": {
+        "epochId": { "type": "string", "minLength": 1 },
+        "seats": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/SeatIdentity" } }
+      }
+    },
+    "DecisionRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decisionRequestId", "taskId", "riskClass", "contextHash", "repositoryHead", "councilEpochId", "rotationOrdinal"],
+      "properties": {
+        "decisionRequestId": { "type": "string", "minLength": 1 },
+        "taskId": { "type": "string", "minLength": 1 },
+        "riskClass": { "enum": ["R0", "R1", "R2", "R3", "R4"] },
+        "contextHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "repositoryHead": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "councilEpochId": { "type": "string", "minLength": 1 },
+        "rotationOrdinal": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "ProposalCommitment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decisionRequestId", "seatId", "councilEpochId", "commitmentHash"],
+      "properties": {
+        "decisionRequestId": { "type": "string", "minLength": 1 },
+        "seatId": { "type": "string", "minLength": 1 },
+        "councilEpochId": { "type": "string", "minLength": 1 },
+        "commitmentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "ProposalContent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["summary", "payload"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1 },
+        "payload": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "AgentProposal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decisionRequestId", "seatId", "councilEpochId", "proposalContent"],
+      "properties": {
+        "decisionRequestId": { "type": "string", "minLength": 1 },
+        "seatId": { "type": "string", "minLength": 1 },
+        "councilEpochId": { "type": "string", "minLength": 1 },
+        "proposalContent": { "$ref": "#/$defs/ProposalContent" }
+      }
+    },
+    "CandidateDecision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decisionRequestId", "taskId", "riskClass", "contextHash", "repositoryHead", "councilEpochId", "proposerSeatId", "candidateOrdinal", "proposalContent", "candidateHash"],
+      "properties": {
+        "decisionRequestId": { "type": "string", "minLength": 1 },
+        "taskId": { "type": "string", "minLength": 1 },
+        "riskClass": { "enum": ["R0", "R1", "R2", "R3", "R4"] },
+        "contextHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "repositoryHead": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "councilEpochId": { "type": "string", "minLength": 1 },
+        "proposerSeatId": { "type": "string", "minLength": 1 },
+        "candidateOrdinal": { "type": "integer", "minimum": 0 },
+        "proposalContent": { "$ref": "#/$defs/ProposalContent" },
+        "candidateHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "AgentVote": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decisionRequestId", "candidateHash", "seatId", "councilEpochId", "voteValue"],
+      "properties": {
+        "decisionRequestId": { "type": "string", "minLength": 1 },
+        "candidateHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "seatId": { "type": "string", "minLength": 1 },
+        "councilEpochId": { "type": "string", "minLength": 1 },
+        "voteValue": { "enum": ["APPROVE", "REJECT", "ABSTAIN"] }
+      }
+    },
+    "DecisionRecordVote": {
+      "type": "object", "additionalProperties": false,
+      "required": ["seatId", "voteValue", "candidateHash"],
+      "properties": {
+        "seatId": { "type": "string", "minLength": 1 },
+        "voteValue": { "enum": ["APPROVE", "REJECT", "ABSTAIN", "MISSING"] },
+        "candidateHash": { "type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "QuorumDetail": {
+      "type": "object", "additionalProperties": true,
+      "required": ["ruleset", "reason"],
+      "properties": {
+        "ruleset": { "type": "string", "minLength": 1 },
+        "reason": { "type": ["string", "null"] }
+      }
+    },
+    "DecisionRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decisionRequestId", "taskId", "riskClass", "contextHash", "repositoryHead", "councilEpochId", "state", "disposition", "candidateHash", "proposerSeatId", "votes", "quorumDetail", "reasonCode", "recordHash"],
+      "properties": {
+        "decisionRequestId": { "type": "string", "minLength": 1 },
+        "taskId": { "type": "string", "minLength": 1 },
+        "riskClass": { "enum": ["R0", "R1", "R2", "R3", "R4"] },
+        "contextHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "repositoryHead": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "councilEpochId": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["COUNCIL_NOT_REQUIRED", "DECIDED", "NO_QUORUM", "DENIED"] },
+        "disposition": { "enum": ["COUNCIL_NOT_REQUIRED", "COUNCIL_APPROVED", "HUMAN_APPROVAL_REQUIRED", "NO_QUORUM", "DENIED"] },
+        "candidateHash": { "type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$" },
+        "proposerSeatId": { "type": ["string", "null"], "minLength": 1 },
+        "votes": { "type": "array", "items": { "$ref": "#/$defs/DecisionRecordVote" } },
+        "quorumDetail": { "$ref": "#/$defs/QuorumDetail" },
+        "reasonCode": { "type": "string", "minLength": 1 },
+        "recordHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

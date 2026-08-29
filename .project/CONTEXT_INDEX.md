@@ -49,6 +49,8 @@ that's a gap in the index, not license to guess; search deliberately, and consid
 | Run Bundle v1 (deterministic, typed, auditable run record built on ProjectContextPack v1; TaskRecord, EvidenceManifest, RunManifest, hash/append-only/finalization rules, authority boundary) | `docs/development/RUN_BUNDLE.md` |
 | Run Bundle v1 writer/compiler + report renderer + schemas + tests | `scripts/dev/run-bundle.mjs` (`npm run run-bundle`), `scripts/dev/run-bundle-report.mjs` (`npm run run-bundle-report`), `schemas/dev/task-record.schema.json`, `schemas/dev/evidence-manifest.schema.json`, `schemas/dev/run-manifest.schema.json`, `tests/dev/run-bundle.test.mjs` (`npm run test:run-bundle`) |
 | System-wide roadmap (navigational / non-authoritative — see its own source-of-truth priority order) | `ROADMAP.md` |
+| Decision Council V1A protocol: topology, state machine, commitment/reveal, candidate hashing, vote binding, R0–R4 quorum, authority boundary (Proposed) | `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` |
+| Decision Council V1A kernel + fake-agent simulator + schema + tests | `scripts/dev/decision-council-kernel.mjs`, `scripts/dev/decision-council-simulator.mjs`, `schemas/dev/decision-council.schema.json`, `tests/dev/decision-council-kernel.test.mjs` (`npm run test:decision-council-kernel`), `tests/dev/decision-council-simulator.test.mjs` (`npm run test:decision-council-simulator`) |
 
 ## Not covered here
 

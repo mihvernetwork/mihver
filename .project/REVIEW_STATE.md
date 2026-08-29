@@ -15,57 +15,72 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: PROJECT-CONTINUITY-V1B-FREEZE-CLOSEOUT
-Branch: `chore/project-continuity-v1b-freeze-closeout`
+Task: DECISION-COUNCIL-V1A-KERNEL-SIMULATOR
+Branch: `feat/decision-council-v1a-kernel-simulator`
 Target: main
 Publication:
-- Local Publication Builder authorized: yes, per this task's own explicit instruction, gated on
-  verification passing and the freeze review verdict being READY TO FREEZE (both met — see below)
+- Local Publication Builder authorized: yes, per this task's own explicit instruction ("prepare
+  exactly one local commit through the repository publication flow"), gated on verification passing
+  and review findings being adjudicated (both met — see below)
 - remote publication: human manual fallback only (unchanged by this task)
-- one local commit, subject `chore: freeze project continuity v1b`, no push, no PR mutation, no
-  merge, no follow-on task started
+- one local commit, subject `feat: add deterministic decision council kernel`, no push, no PR
+  mutation, no merge, no Shadow Council or other follow-on task started
 
-State closeout only: this task records the already-merged Project Continuity V1B checkpoint (PR
-#36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`) as frozen in
-`.project/PROJECT_STATE.md`, appends one durable entry to `.project/DECISIONS_LOG.md`, and updates
-`.project/CURRENT_TASK.md`/this file. It does not modify or redo the V1B implementation and does
-not start V1C, Decision Council, autonomy, executor, or any other follow-on task.
+Foundation-only: this task defines and proves the Decision Council protocol (typed artifacts, pure
+deterministic kernel, fake-agent simulator) — no real LLM/provider/MCP/tool/shell/Publication
+Broker connection, no execution gateway, no Shadow Council. See `.project/CURRENT_TASK.md` for the
+full file-by-file change list and Codex-role thread IDs.
 
 **Reviewer** (`mcp__codex__codex`, fresh/independent, read-only sandbox, thread
-`01a04b10-60f7-7e53-ac42-4d5906f0cc5e`). Verdict: **READY TO FREEZE**. Independently confirmed
-commit `8fad9198460b80d28894a821feaa44df4e9b982f` is `main`'s tip and PR #36's squash commit, and
-that its V1B artifacts/capability match `docs/development/RUN_BUNDLE.md`; confirmed the closeout
-diff touches only `PROJECT_STATE.md`/`CURRENT_TASK.md`/`DECISIONS_LOG.md` (`REVIEW_STATE.md`
-untouched at review time, as expected — updated after review); confirmed `PROJECT_STATE.md` stays
-pointer-oriented (no `RUN_BUNDLE.md` semantics duplicated); confirmed the `DECISIONS_LOG.md` entry
-is append-only and durable-only; confirmed `CURRENT_TASK.md` is correctly branch-scoped to this
-task; confirmed no follow-on capability or authorization is introduced. One **MINOR**, explicitly
-non-blocking: suggested rewording the "None automatically." fragment in `PROJECT_STATE.md`'s "Next
-Authorized Action" for flow. Adjudicated by Claude: not applied — this task's own prompt requires
-"Next Authorized Action" to remain effectively "None automatically. Project Continuity V1B is
-frozen. Any follow-on task requires separate explicit human authorization," which the current
-wording already satisfies; the suggested rewording would depart from that required phrasing for a
-purely stylistic, non-blocking preference.
+`01a04b3a-0720-7f21-9e2b-d0f9479d1c2a`, authored none of the material under review). Verdict as
+reported: "CHANGES REQUIRED — one MAJOR protocol identity flaw," plus 39 PASS items (full ADR read;
+3-seat topology; orchestrator/council separation; canonical-JSON reuse; domain-separated hashing;
+candidate full-meaning binding; exact-candidate vote binding; commitment-before-reveal; FSM
+invalid-transition handling; R0–R4 quorum math incl. diversity/proposer-exclusion/human-approval-
+required; context/HEAD/epoch freshness checks; malformed-artifact handling; determinism boundary
+(no clock/randomness/network/filesystem/env); no execution gateway; Non-Goals respected; 36/36 tests
+passing at review time). The one MAJOR finding: the kernel cannot detect a single caller submitting
+well-formed artifacts under multiple different `seatId`s, since no cryptographic signing/channel
+binding authenticates that a submitted artifact truly originated from a process distinct from any
+other seat's.
 
-**Verifier** (`mcp__codex__codex`, two fresh sessions). First pass (read-only sandbox, thread
-`01a04b12-7dc1-7e71-a2b3-00dd8c853080`): `npm run context` PASS, `npm run context:pack` PASS,
-`npm run check:project-consistency` PASS (7/7), `git diff --check` PASS, changed-file-set PASS
-(only the 3 already-modified `.project/` files), `DECISIONS_LOG.md` append-only PASS, no
-V1B-owner/implementation-artifact diff PASS (`docs/development/RUN_BUNDLE.md`,
-`scripts/dev/run-bundle.mjs`, `scripts/dev/run-bundle-report.mjs`,
-`schemas/dev/task-record.schema.json`, `schemas/dev/evidence-manifest.schema.json`,
-`schemas/dev/run-manifest.schema.json` all zero-diff). `npm run test:project-consistency` and
-`npm run test:context-pack` could not complete in that sandbox — their fixture setup calls
-`fs.mkdtemp` outside the repo, which the read-only sandbox blocks; the resulting elevated-permission
-prompts went unanswered. Second pass, `workspace-write` sandbox (thread
-`01a04b16-265d-73a1-a298-6160116ec4fe`), re-ran exactly those two: `npm run test:project-consistency`
-PASS (19/19 test groups), `npm run test:context-pack` PASS (115/115); working tree reconfirmed to
-contain only the three already-modified `.project/` files, no stray fixture debris left behind.
-Combined result: **ALL CHECKS PASS**.
+**Adjudicated by Claude — finding's required code/design change REJECTED, its documentation-
+precision point ACCEPTED.** The task's own text explicitly disclaims exactly the property the
+finding wants proven for V1A: "Do not claim this proves real-world provider independence. It
+proves only the typed protocol invariant that Shadow Council will later have to attest." No
+signing/authentication primitive is specified anywhere in the task; adding one now would be
+Shadow-Council-shaped work the task's Non-Goals explicitly exclude, and the task's Stopping Rule
+forbids speculative hardening beyond what's reproducibly required. What "duplicate seat masquerading
+as another reviewer" means under the task's own IDENTITY/INDEPENDENCE framing — registering two
+`CouncilConfig` seats with an identical (`provider`,`modelFamily`,`modelId`) triple under different
+`seatId` labels — is correctly rejected (`DUPLICATE_SEAT_IDENTITY`, kernel-test-covered, and in the
+Reviewer's own PASS list). Applied fix: tightened `ADR-0005`'s "Risks" section so it no longer reads
+as claiming more anti-masquerading protection than the design provides (wording-only; no schema/
+kernel/simulator/test change). This adjudication, and the reasoning above, is recorded here per
+`REVIEW_PROTOCOL.md`'s "reject unsupported material recommendations explicitly, not silently."
 
-**Adjudication**: freeze review READY TO FREEZE, verification all-pass, no unresolved findings.
+Two smaller gaps found during **Claude's own direct review** (prior to dispatching the independent
+Verifier/Reviewer, per `AGENT_POLICY.md`'s "Claude independently re-verifies"): `DECISION_REQUEST_MISMATCH`
+and `PROPOSER_ROLE_VIOLATION` were both implemented in the kernel but had zero test coverage, despite
+both being explicitly named required reject-behaviors in the task's IDENTITY/INDEPENDENCE section.
+Sent back to the same Implementer thread (a revision of its own prior output, not an independent
+verification role) for two precise, bounded test additions before the independent Verifier/Reviewer
+ran; confirmed fixed by inspection and independently reconfirmed passing by the Verifier below.
+
+**Verifier** (`mcp__codex__codex`, fresh/independent session, `workspace-write` sandbox, thread
+`01a04b39-9b4a-7731-9b4b-a78dea6bb0c4`, never a continuation of the Implementer's own thread):
+`node tests/dev/decision-council-kernel.test.mjs` — **18 passed, 0 failed**; `node tests/dev/decision-council-simulator.test.mjs`
+— **18 passed, 0 failed**; `npm run check:project-consistency` — **7/7 PASS**; `npm test`
+(`tests/contracts/validate-contracts.mjs`) — **170 fixtures PASS** (this task's new schema is not
+wired into that validator, matching existing repository convention for every other
+`schemas/dev/*.schema.json`, which is validated by its own dedicated test file instead); `git status
+--short` showed exactly the 6 new files plus modified `package.json`; `git diff --stat package.json`
+showed exactly the 2 added script lines. **ALL CHECKS PASS.**
+
+**Adjudication**: implementation complete and independently verified; one Reviewer MAJOR finding
+adjudicated and rejected with explicit task-text justification (documentation precision fix applied
+instead); two Claude-found test-coverage gaps fixed and reconfirmed; no unresolved blocking finding.
 Proceeding to the one authorized local commit via the Local Publication Builder.
 
-**Human review is the next gate** — this task does not authorize a push, PR, or merge. No follow-on
-task (V1C, Decision Council, autonomous execution, or any other next step) is authorized by this
-task.
+**Human review is the next gate** — this task does not authorize a push, PR, or merge, and does not
+start Shadow Council or any other follow-on task.
