@@ -1,0 +1,202 @@
+{
+  "exerciseId": "shadow-exercise-remediated-r2-1",
+  "riskClass": "R2",
+  "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+  "proposerSeatId": "seat-anthropic",
+  "contextHash": "sha256:d2c9228d2b64439cf3233f3e296cd75cbc120a429d8ce929139ad77503d15d07",
+  "repositoryHead": "2fae893d89c8debded14fb7ba23adfcad2055133",
+  "decisionQuestion": "Shadow Council governance-mechanics fixture (R2, non-authoritative): should MIHVER's future internal documentation style guidance recommend wrapping prose at 100 columns under docs/development/? This exercise tests council mechanics only; its result does not change any real MIHVER document, decide this task/branch's merge, or authorize any action.",
+  "candidateHash": "sha256:09da78279a1d2a3ffb3c97926cbbdbfd7b95f7c442b6fa783118a917753c4fb6",
+  "decisionRecord": {
+    "decisionRequestId": "shadow-exercise-remediated-r2-1",
+    "taskId": "SHADOW-COUNCIL-V1A-LIFECYCLE-REMEDIATION",
+    "riskClass": "R2",
+    "contextHash": "sha256:d2c9228d2b64439cf3233f3e296cd75cbc120a429d8ce929139ad77503d15d07",
+    "repositoryHead": "2fae893d89c8debded14fb7ba23adfcad2055133",
+    "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+    "state": "DECIDED",
+    "disposition": "COUNCIL_APPROVED",
+    "candidateHash": "sha256:09da78279a1d2a3ffb3c97926cbbdbfd7b95f7c442b6fa783118a917753c4fb6",
+    "proposerSeatId": "seat-anthropic",
+    "votes": [
+      {
+        "seatId": "seat-openai",
+        "voteValue": "APPROVE",
+        "candidateHash": "sha256:09da78279a1d2a3ffb3c97926cbbdbfd7b95f7c442b6fa783118a917753c4fb6"
+      },
+      {
+        "seatId": "seat-anthropic",
+        "voteValue": "MISSING",
+        "candidateHash": null
+      },
+      {
+        "seatId": "seat-google",
+        "voteValue": "APPROVE",
+        "candidateHash": "sha256:09da78279a1d2a3ffb3c97926cbbdbfd7b95f7c442b6fa783118a917753c4fb6"
+      }
+    ],
+    "quorumDetail": {
+      "ruleset": "R2",
+      "reason": null,
+      "reviewerApprovals": 2
+    },
+    "reasonCode": "R2_QUORUM_MET",
+    "recordHash": "sha256:a64c60c0ebd7412331fb8df0219cc2cc5d4e60c3673240fee1842623c00a198a"
+  },
+  "primaryCallCount": 3,
+  "attestations": [
+    {
+      "attestationHash": "sha256:fe80287513cfa4b839aa59a6f881b3847d4cee0e2d0667459578f0d8fc8bea7f",
+      "seatId": "seat-anthropic",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "provider": "anthropic",
+      "requestedModelId": "claude-opus-5",
+      "cliExecutableRealpath": "/Users/ev/.local/share/claude/versions/2.1.251",
+      "cliVersion": "2.1.251 (Claude Code)",
+      "childProcessId": 0,
+      "invocationConfigHash": "sha256:a5dba17c3daea9385650742d711476f2364d1594a7f48c993def5174caf1766c",
+      "packetHash": "sha256:a463e0d22e94c9b200bfb5badb43a0ba6f4e562b71eb24503fea7e7a608c42c7",
+      "outputHash": "sha256:6009318303673247f868c86a635a5687dc055891f9fbacb45024ac83eff1c354",
+      "exitCode": 0,
+      "text": "{\"summary\":\"Advisory (non-authoritative, R2 fixture): recommend AGAINST a 100-column hard-wrap rule for prose under docs/development/; instead recommend one-sentence-per-line (semantic line breaks) with no enforced column limit, plus a lint rule that only forbids re-wrapping churn.\",\"payload\":{\"question\":\"Should MIHVER internal documentation style guidance recommend wrapping prose at 100 columns under docs/development/?\",\"position\":\"reject_as_stated_with_counterproposal\",\"recommendation\":\"Do not adopt a fixed 100-column hard wrap for prose. Adopt semantic line breaks (one sentence or clause per line) for Markdown prose, leave hard wrapping unenforced, and keep a 100-column soft guide only for code blocks, tables, and CLI transcripts where horizontal overflow degrades rendering.\",\"rationale\":[{\"id\":\"R1\",\"claim\":\"Fixed-column hard wraps degrade diff quality: a single word insertion reflows an entire paragraph, producing large diffs that obscure the real edit during review.\",\"weight\":\"high\"},{\"id\":\"R2\",\"claim\":\"Semantic line breaks preserve the reviewability benefit of short lines (one logical unit per diff hunk) without reflow churn, and render identically in Markdown.\",\"weight\":\"high\"},{\"id\":\"R3\",\"claim\":\"Modern editors, web renderers, and code-forge diff views all soft-wrap; the original justification for hard wrapping (fixed-width terminals, plain-text mail) does not apply to docs/development/ consumption paths.\",\"weight\":\"medium\"},{\"id\":\"R4\",\"claim\":\"A column rule is only as good as its enforcement; enforcing it mechanically on prose fights with URLs, long identifiers, and inline code spans, generating recurring exception noise.\",\"weight\":\"medium\"},{\"id\":\"R5\",\"claim\":\"Code blocks and tables are the genuine overflow risk and are better served by a targeted limit than by a blanket prose rule.\",\"weight\":\"medium\"}],\"counterproposal\":{\"guidance_text\":\"Prose in docs/development/ is not hard-wrapped to a fixed column. Start a new line at sentence boundaries, and optionally at major clause boundaries. Do not reflow paragraphs you are not otherwise editing. Fenced code blocks, tables, and terminal transcripts should stay within 100 columns where practical.\",\"enforcement\":\"Advisory in the style guide; optionally add a markdownlint config that disables MD013 (line-length) for prose and, if tooling permits, applies a 100-column check to fenced blocks only.\",\"migration\":\"No bulk reflow of existing documents. Apply to new and substantially edited files only, to avoid a history-wide churn commit.\"},\"conditions_that_would_flip_this\":[\"MIHVER docs/development/ is consumed primarily through fixed-width, non-soft-wrapping tooling (e.g., generated man pages or a plain-text distribution artifact).\",\"An existing repo-wide convention already hard-wraps at 100 columns and is consistently enforced, in which case consistency cost may outweigh diff-churn cost.\"],\"open_evidence_gaps\":[\"No evidence was supplied with the prompt: current MIHVER style guide contents, existing markdownlint/prettier config, and actual line-length distribution under docs/development/ were not available.\",\"Unknown whether any downstream renderer imposes a width constraint.\"],\"anticipated_dissent\":{\"strongest_opposing_argument\":\"A hard numeric limit is unambiguous and mechanically checkable, whereas 'semantic line breaks' is a judgment call that reviewers will apply inconsistently.\",\"response\":\"Accepted as a real cost; mitigated by stating the default rule as 'one sentence per line', which is nearly as mechanical, and by declining to gate CI on prose formatting at all.\"},\"confidence\":0.72,\"authority\":\"non-authoritative advisory proposal; changes no MIHVER document, does not decide merge of this task/branch, and authorizes no action\",\"round\":\"R2\"}}",
+      "reportedModelId": "claude-opus-5",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1018,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001088,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-opus-5": {
+          "inputTokens": 2,
+          "outputTokens": 1931,
+          "cacheReadInputTokens": 1393,
+          "cacheCreationInputTokens": 4900,
+          "webSearchRequests": 0,
+          "costUSD": 0.0979815,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-opus-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "providerSessionId": "f55a375e-be5a-401e-b6a5-b69840cfe9a4",
+      "observedToolUsage": [],
+      "usageMetadata": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 4900,
+        "cache_read_input_tokens": 1393,
+        "output_tokens": 1931,
+        "output_tokens_details": {
+          "thinking_tokens": 576
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 4900,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1931,
+            "cache_read_input_tokens": 1393,
+            "cache_creation_input_tokens": 4900,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 4900
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "cliExecutableContentHash": null,
+      "residualTrustLimitation": "One parent harness process controls all three child-process launches; this attestation demonstrates local runtime/process separation between seat adapters only, not cryptographic provider non-collusion."
+    },
+    {
+      "attestationHash": "sha256:8b55ab78efb01a4c3ed2ccc12214d35a445bb4abc263f7c032aa9ce2f28dde22",
+      "seatId": "seat-openai",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "provider": "openai",
+      "requestedModelId": "gpt-5.6-sol",
+      "cliExecutableRealpath": "/Users/ev/.codex/packages/standalone/releases/0.149.0-aarch64-apple-darwin/bin/codex",
+      "cliVersion": "codex-cli 0.149.0",
+      "childProcessId": 0,
+      "invocationConfigHash": "sha256:01c333e65622b2e4c0e6db7080ce8891009f4448f4aded9dbe405c3fa5e98ff7",
+      "packetHash": "sha256:172d5ac645e4feb011606257e1ced648d94df97e4fa48c454c9c7751070b82d6",
+      "outputHash": "sha256:8b6045901042385872ceb268b24b0186d0ab0868ac8403addda247dc23cd701e",
+      "exitCode": 0,
+      "text": "{\"voteValue\":\"APPROVE\"}",
+      "reportedModelId": null,
+      "modelUsage": {},
+      "providerSessionId": "01a04f5e-f6da-73f3-a591-25bc9b7752db",
+      "observedToolUsage": [],
+      "usageMetadata": {
+        "input_tokens": 15067,
+        "cached_input_tokens": 9984,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 12,
+        "reasoning_output_tokens": 0
+      },
+      "cliExecutableContentHash": null,
+      "residualTrustLimitation": "One parent harness process controls all three child-process launches; this attestation demonstrates local runtime/process separation between seat adapters only, not cryptographic provider non-collusion."
+    },
+    {
+      "attestationHash": "sha256:d0467e1ed444a4485f29c53d5d17607714d5150f424807cf4ace12a6c3122c0b",
+      "seatId": "seat-google",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "provider": "google",
+      "requestedModelId": "gemini-3.7-flash-medium",
+      "cliExecutableRealpath": "/Users/ev/.local/bin/agy",
+      "cliVersion": "1.1.22",
+      "childProcessId": 0,
+      "invocationConfigHash": "sha256:c3186b120cc57891562b065a6b664769b5e12f1b147b85bf059e8365d3bee9cc",
+      "packetHash": "sha256:8f3cc3776649666615d4c2c721838ed93cb11e468ba1f41b6384f1087e6b203c",
+      "outputHash": "sha256:87a263f458198f4559d77209cc4d04c5fee6d36fb314971d0376fa6fcfe89ffe",
+      "exitCode": 0,
+      "text": "{\"voteValue\":\"APPROVE\"}\n",
+      "reportedModelId": null,
+      "modelUsage": {},
+      "providerSessionId": "55e6645c-1f27-4225-b8af-127f296270d6",
+      "observedToolUsage": [],
+      "usageMetadata": {
+        "input_tokens": 15667,
+        "output_tokens": 520,
+        "thinking_tokens": 513,
+        "cache_read_tokens": 0,
+        "total_tokens": 16187
+      },
+      "cliExecutableContentHash": null,
+      "residualTrustLimitation": "One parent harness process controls all three child-process launches; this attestation demonstrates local runtime/process separation between seat adapters only, not cryptographic provider non-collusion."
+    }
+  ],
+  "votes": [
+    {
+      "decisionRequestId": "shadow-exercise-remediated-r2-1",
+      "candidateHash": "sha256:09da78279a1d2a3ffb3c97926cbbdbfd7b95f7c442b6fa783118a917753c4fb6",
+      "seatId": "seat-openai",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "voteValue": "APPROVE"
+    },
+    {
+      "decisionRequestId": "shadow-exercise-remediated-r2-1",
+      "candidateHash": "sha256:09da78279a1d2a3ffb3c97926cbbdbfd7b95f7c442b6fa783118a917753c4fb6",
+      "seatId": "seat-google",
+      "councilEpochId": "shadow-council-v1a-remediated-epoch-1",
+      "voteValue": "APPROVE"
+    }
+  ]
+}
