@@ -449,3 +449,88 @@ behavior to match R2's stricter rule (or vice versa) — exactly the kind of sco
   Relationship" section — it does not modify `RUN_BUNDLE.md` itself).
 - Whatever later phase actually authorizes council output to gate an action — an `ExecutionEnvelope`
   or equivalent — which this ADR explicitly does not define or imply.
+
+## Acceptance Gate
+
+**This ADR's Status is Proposed as of this writing, and this section does not change that.** It
+defines, in advance, the evidence a *future* task must produce before a Status: Proposed → Accepted
+change for this ADR can even be considered — mirroring `ADR-0002`'s and `ADR-0004`'s own precedent of
+stating an Acceptance Gate explicitly rather than leaving "when is this Accepted" ambiguous.
+`ADR-0005`'s own Acceptance decision, if and when its gate is met, remains a later, separate, explicit
+human decision under the criteria below — writing this section is not that decision, and satisfying
+every criterion here does not itself flip Status; it only makes the ADR *eligible* for that later,
+separate human decision.
+
+**None of the seven criteria below is satisfied by work completed as of this writing.** V1A's kernel
+and simulator (frozen, PR #38) prove the protocol is internally sound against deterministic,
+non-adversarial-collusion fixtures; they do not, and were never claimed to, exercise a real
+provider-backed seat, so criteria 2–7 below require evidence that does not yet exist and cannot be
+produced retroactively from the V1A kernel/simulator work alone.
+
+This ADR becomes eligible for a Status: Accepted decision only once **all seven** of the following
+are demonstrated, together, by a separately-authorized future task (a "Shadow Council exercise"):
+
+1. **V1A remains frozen and green.** The Decision Council V1A kernel/simulator checkpoint (owned by
+   this ADR, frozen per `.project/PROJECT_STATE.md`) is still frozen at the time of the exercise, and
+   its full deterministic/adversarial test suite (`npm run test:decision-council-kernel`, `npm run
+   test:decision-council-simulator`) still passes unmodified.
+2. **A real Shadow Council exercise has actually run.** A separately-authorized Shadow Council task
+   has exercised this exact protocol — the same kernel, the same five typed artifacts
+   (`ProposalCommitment`, `AgentProposal`, `AgentVote`, `CandidateDecision`, `DecisionRecord`) — with
+   **three real, provider-backed council seats** (not the fake-agent simulator), producing genuine
+   `DecisionRecord`s from that exercise.
+3. **Seat/provider origin attestation at the adapter/runtime boundary is demonstrated.** The Shadow
+   Council exercise demonstrates a concrete mechanism — outside the kernel itself, at the
+   adapter/runtime layer that produces each seat's artifacts — by which real seat/provider origin can
+   be attested sufficiently to prevent one logical producer (one process, one credential, one
+   underlying model instance) from silently satisfying multiple seats' identities in the same
+   session. This closes the specific gap this ADR's own "Risks" section names ("the kernel has no
+   channel to authenticate that a submitted artifact actually originated from a process distinct from
+   any other seat's") — the closure must exist and be demonstrated at the adapter/runtime boundary,
+   not merely asserted.
+4. **Representative R1 and R2 decisions traverse the protocol unmodified.** At least one
+   representative R1 decision and at least one representative R2 decision, run through the exercise,
+   successfully traverse the exact existing `commitment → reveal → candidate freeze → vote →
+   DecisionRecord` sequence end-to-end, reaching a terminal state, **without** any redesign of the
+   kernel's state machine, hashing recipes, or R0–R4 quorum semantics as defined in this ADR.
+5. **Council artifacts bind into the existing Run Bundle audit model without a semantic change.** A
+   `DecisionRecord` produced by the exercise is shown to bind into `RUN_BUNDLE.md`'s existing typed
+   evidence model as a genuine evidence kind, without altering `DecisionRecord`'s own fields or
+   meaning as defined in this ADR to make that binding work.
+6. **Shadow execution remained advisory only, for the whole exercise.** Across the entire exercise, no
+   council result (a `DecisionRecord`, a quorum outcome, a disposition) directly caused any repository
+   mutation, publication action, merge, tool execution, or autonomous task execution — every such
+   action in the exercise, if any occurred at all, was performed (or authorized) by a human or by
+   Claude under the repository's existing, unrelated authority rules, never triggered by the council
+   result itself.
+7. **At least one independent adversarial review of the real exercise finds no protocol-level redesign
+   requirement.** A fresh, independent reviewer (a Codex Reviewer or equivalent, per
+   `docs/development/CODEX_ROLES.md`, uninvolved in running the exercise) reviews the real Shadow
+   Council exercise's artifacts and conduct, and finds no finding that requires changing the council
+   topology, the candidate/vote binding rules, the risk/quorum semantics, the authority boundary, or
+   the meaning of any core typed artifact this ADR defines. A finding that requires only an
+   operational/adapter-level fix (see below) does not itself fail this criterion.
+
+**What does not block acceptance.** Unresolved operational or provider-adapter issues discovered
+during the exercise — flaky provider latency, adapter retry/error handling, credential/deployment
+mechanics, seat-provisioning tooling, or similar — may remain open without blocking a Status: Accepted
+decision, **provided** resolving them does not itself require changing the protocol this ADR defines
+(the topology, the state machine, the hashing/binding recipes, the quorum rules, or the authority
+boundary). Operational rough edges are expected and are not, by themselves, evidence the protocol is
+unsound.
+
+**What is a protocol redesign blocker.** Conversely, any evidence from the exercise that the council
+topology (3 seats, Rotating Proposer + Two Independent Reviewers), the candidate/vote binding rules
+(commitment-before-reveal, exact-candidate hashing, vote-to-`candidateHash` binding), the risk/quorum
+semantics (R0–R4 as defined), the authority boundary (`DecisionRecord` carries no execution/
+publication/merge authority), or the meaning of any core typed artifact (`ProposalCommitment`,
+`AgentProposal`, `CandidateDecision`, `AgentVote`, `DecisionRecord`) needs to change **is** a blocker —
+Status cannot move to Accepted until any such redesign is itself proposed, reviewed, and resolved
+(which may require amending or superseding this ADR, not merely patching around the finding).
+
+**What is explicitly not a prerequisite.** Publication Broker activation/provisioning and any bounded
+autonomous execution capability are **not** prerequisites for this ADR's acceptance. This Acceptance
+Gate concerns only the Decision Council protocol's own soundness under real, provider-backed,
+adversarially-reviewed use — not whether MIHVER has yet authorized anything to *act* on a council
+result. Criterion 6 above requires that nothing acted on a council result during the exercise itself;
+it does not require that acting on one ever become authorized as a condition of this ADR's Status.
