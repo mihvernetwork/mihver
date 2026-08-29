@@ -254,3 +254,8 @@ Entries above this line are unmodified, per this log's append-only policy.
 - 2026-08-29 — Project Continuity V1B accepted and frozen: PR #36 merged to `main`, squash commit
   `8fad9198460b80d28894a821feaa44df4e9b982f`, establishing the deterministic Run Bundle v1
   foundation. — `docs/development/RUN_BUNDLE.md`
+- 2026-08-29 — Decision Council V1A (deterministic kernel + simulator) accepted and frozen: PR #38
+  merged to `main`, squash commit `2e9a0e88ad8b74bc11afc0fcac8db704f74690d0`.
+  `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s own `## Status` field remains **Proposed** —
+  this freeze does not change it. No Shadow Council or other follow-on task is authorized by this
+  entry. — `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`
