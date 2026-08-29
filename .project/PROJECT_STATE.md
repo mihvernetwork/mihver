@@ -61,6 +61,10 @@ Contract suite (`npm test`): 170/170 (observable: `npm test`'s own output)
 ProjectContextPack v1 (deterministic, zero-network, derived repository/task-state snapshot):
 IMPLEMENTED (Project Continuity V1A) — owner: `docs/development/PROJECT_CONTINUITY.md`,
 `schemas/dev/project-context-pack.schema.json`. Tooling: `npm run context:pack`.
+MIHVER Run Bundle v1 (deterministic, typed, auditable run record — `TaskRecord`,
+`EvidenceManifest`, `RunManifest`, a deterministic bundle writer/compiler, and a human review
+report renderer — built on `ProjectContextPack` v1 as pure input): IMPLEMENTED (Project Continuity
+V1B) — owner: `docs/development/RUN_BUNDLE.md`.
 
 Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
 checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
@@ -318,6 +322,11 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   `schemas/dev/project-context-pack.schema.json`, `scripts/dev/project-context-pack.mjs`,
   `scripts/dev/canonical-json.mjs`, `tests/dev/project-context-pack.test.mjs`; extended
   `docs/development/AGENT_POLICY.md`.
+- **Project Continuity V1B** — deterministic, typed, auditable Run Bundle foundation, built on
+  `ProjectContextPack` v1 as pure input: `TaskRecord`, `EvidenceManifest`, `RunManifest`, a
+  deterministic bundle writer/compiler, and a human review report renderer. Merged via PR #36,
+  squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`. Full semantic/architectural detail is
+  authoritative in `docs/development/RUN_BUNDLE.md` — not reproduced here.
 
 ## Open Items
 
@@ -344,9 +353,9 @@ See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the curr
 branch, if any.
 
 **Project Continuity V1A is frozen** (see the checkpoint above, PR #34, squash commit
-`dbdb4f7049d2a73728038f1c98efc47ddfee3727`). Recommended next task:
-`PROJECT-CONTINUITY-V1B-RUN-BUNDLE`. **This is a recommendation only — it requires a separate,
-explicit human authorization before starting**, exactly like every other next-task pointer in this
-section; freezing V1A does not itself authorize V1B, autonomous task selection, a task queue,
-Decision Council/three-agent voting, scheduled autonomous reporting, LLM execution authority, or
-Publication Broker provisioning/activation.
+`dbdb4f7049d2a73728038f1c98efc47ddfee3727`), and **Project Continuity V1B is frozen** (see the
+checkpoint above, PR #36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`). None
+automatically. No follow-on task — V1C, Decision Council, autonomous task selection/execution, or
+Publication Broker provisioning/activation included — is recommended or authorized by either
+checkpoint; any follow-on task requires its own separate, explicit human authorization, exactly
+like every other next-task pointer in this section.

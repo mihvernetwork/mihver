@@ -15,57 +15,57 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: PROJECT-CONTINUITY-V1B-RUN-BUNDLE
-Branch: `feat/project-continuity-v1b-run-bundle`
+Task: PROJECT-CONTINUITY-V1B-FREEZE-CLOSEOUT
+Branch: `chore/project-continuity-v1b-freeze-closeout`
 Target: main
 Publication:
-- Local Publication Builder authorized: yes, per this task's own explicit instruction (authorized
-  once the repository lifecycle gates for this task are complete — met)
+- Local Publication Builder authorized: yes, per this task's own explicit instruction, gated on
+  verification passing and the freeze review verdict being READY TO FREEZE (both met — see below)
 - remote publication: human manual fallback only (unchanged by this task)
-- one local commit, no push, no PR mutation, no merge, no V1B follow-on started
+- one local commit, subject `chore: freeze project continuity v1b`, no push, no PR mutation, no
+  merge, no follow-on task started
 
-New subsystem: a deterministic, typed, auditable Run Bundle record (`TaskRecord`, `EvidenceManifest`,
-`RunManifest`, a writer/compiler, and a human report renderer) built on `ProjectContextPack` v1 as
-pure input. See `.project/CURRENT_TASK.md` for the full architecture/implementation/review record;
-summarized here.
+State closeout only: this task records the already-merged Project Continuity V1B checkpoint (PR
+#36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`) as frozen in
+`.project/PROJECT_STATE.md`, appends one durable entry to `.project/DECISIONS_LOG.md`, and updates
+`.project/CURRENT_TASK.md`/this file. It does not modify or redo the V1B implementation and does
+not start V1C, Decision Council, autonomy, executor, or any other follow-on task.
 
-**Reviewer** (`mcp__codex__codex`, fresh/independent, thread
-`01a04ad0-844d-7c03-9989-15389b631f0b`, spanning both rounds). Round 1 verdict: **REJECT** — 5 MAJOR
-+ 1 MINOR, all independently re-traced by Claude and ACCEPTED:
-- MAJOR: append path never cross-checked re-read document bytes against the manifest's own
-  reference content hashes (only self-hashes) — exploitable for `evidence-manifest.json`. Also:
-  `runId`/ContextPack binding/repository identity were silently rebuildable on every append with no
-  check against the existing bundle, violating the core "binds to the exact ProjectContextPack used"
-  invariant. Fixed: reference-hash cross-checks added; `RUN_IDENTITY_IMMUTABLE` hard-rejects any
-  append changing those three fields. New tests RB14/RB15.
-- MAJOR: the report renderer never schema-validated, only hash-checked — a hash-consistent-but-
-  schema-invalid document would still render. Fixed: reuses the writer's exported validators to
-  schema-validate all three documents before reading any field. New test RB16.
-- MAJOR (adjudicated, narrowed scope): TOCTOU on the `--out` directory's parent components matches
-  this repository's own existing precedent for the identical class of gap in
-  `project-context-pack.mjs`'s `safeReadSource` — resolved by honest "Documented residual
-  limitation" disclosure (matching that precedent's tone) plus one narrow point-in-time recheck
-  immediately before the write phase, not a full directory-descriptor rewrite.
-- MAJOR (adjudicated, narrowed scope): non-atomic three-file write — substantially mitigated once
-  the reference-hash fix lands (any subsequent reader fails closed on inconsistency, never silently
-  trusts it); resolved by one documentation sentence, not transactional-directory-swap machinery.
-- MAJOR: code density/style inconsistent with repository convention, directly correlated with the
-  first finding being hard to spot. Fixed: rewritten to match
-  `project-context-pack.mjs`/`publication-builder.mjs`'s convention.
-- MINOR: discriminated-union cross-kind field rejection was untested. Fixed: new test RB17.
-Round 2 (post-fix) verdict: **RESOLVED**, one residual MINOR (a doc section didn't mention the new
-schema-validation step) — fixed directly by Claude, re-confirmed **RESOLVED**.
+**Reviewer** (`mcp__codex__codex`, fresh/independent, read-only sandbox, thread
+`01a04b10-60f7-7e53-ac42-4d5906f0cc5e`). Verdict: **READY TO FREEZE**. Independently confirmed
+commit `8fad9198460b80d28894a821feaa44df4e9b982f` is `main`'s tip and PR #36's squash commit, and
+that its V1B artifacts/capability match `docs/development/RUN_BUNDLE.md`; confirmed the closeout
+diff touches only `PROJECT_STATE.md`/`CURRENT_TASK.md`/`DECISIONS_LOG.md` (`REVIEW_STATE.md`
+untouched at review time, as expected — updated after review); confirmed `PROJECT_STATE.md` stays
+pointer-oriented (no `RUN_BUNDLE.md` semantics duplicated); confirmed the `DECISIONS_LOG.md` entry
+is append-only and durable-only; confirmed `CURRENT_TASK.md` is correctly branch-scoped to this
+task; confirmed no follow-on capability or authorization is introduced. One **MINOR**, explicitly
+non-blocking: suggested rewording the "None automatically." fragment in `PROJECT_STATE.md`'s "Next
+Authorized Action" for flow. Adjudicated by Claude: not applied — this task's own prompt requires
+"Next Authorized Action" to remain effectively "None automatically. Project Continuity V1B is
+frozen. Any follow-on task requires separate explicit human authorization," which the current
+wording already satisfies; the suggested rewording would depart from that required phrasing for a
+purely stylistic, non-blocking preference.
 
-**Verifier** (`mcp__codex__codex`, three fresh full sessions): `npm run test:run-bundle` — 13/13
-then 17/17 after the fix round; `npm test` — 170/170 throughout; `npm run test:context-pack` —
-115/115 (`project-context-pack.mjs` confirmed unchanged); `npm run test:publication-builder` —
-42/42 (`publication-builder.mjs` confirmed unchanged); `npm run check:project-consistency` — 7/7;
-`npm run test:project-consistency` — 19/19; `git diff --check` clean throughout. Real end-to-end CLI
-smoke tests against this actual repository (outside the test harness) confirmed correct
-`RUN_IDENTITY_IMMUTABLE` refusal on a mismatched append, correct finalize/report/re-write-refusal
-lifecycle, and correct symlink refusal (macOS `/tmp` itself).
+**Verifier** (`mcp__codex__codex`, two fresh sessions). First pass (read-only sandbox, thread
+`01a04b12-7dc1-7e71-a2b3-00dd8c853080`): `npm run context` PASS, `npm run context:pack` PASS,
+`npm run check:project-consistency` PASS (7/7), `git diff --check` PASS, changed-file-set PASS
+(only the 3 already-modified `.project/` files), `DECISIONS_LOG.md` append-only PASS, no
+V1B-owner/implementation-artifact diff PASS (`docs/development/RUN_BUNDLE.md`,
+`scripts/dev/run-bundle.mjs`, `scripts/dev/run-bundle-report.mjs`,
+`schemas/dev/task-record.schema.json`, `schemas/dev/evidence-manifest.schema.json`,
+`schemas/dev/run-manifest.schema.json` all zero-diff). `npm run test:project-consistency` and
+`npm run test:context-pack` could not complete in that sandbox — their fixture setup calls
+`fs.mkdtemp` outside the repo, which the read-only sandbox blocks; the resulting elevated-permission
+prompts went unanswered. Second pass, `workspace-write` sandbox (thread
+`01a04b16-265d-73a1-a298-6160116ec4fe`), re-ran exactly those two: `npm run test:project-consistency`
+PASS (19/19 test groups), `npm run test:context-pack` PASS (115/115); working tree reconfirmed to
+contain only the three already-modified `.project/` files, no stray fixture debris left behind.
+Combined result: **ALL CHECKS PASS**.
 
-**Human review is the next gate** — this task does not authorize a push, PR, or merge. See
-`.project/PROJECT_STATE.md`'s "Next Authorized Action" once a human has reviewed this; no V1B
-follow-on (V1C, Decision Council, autonomous execution, or any other next step) is authorized by
-this task.
+**Adjudication**: freeze review READY TO FREEZE, verification all-pass, no unresolved findings.
+Proceeding to the one authorized local commit via the Local Publication Builder.
+
+**Human review is the next gate** — this task does not authorize a push, PR, or merge. No follow-on
+task (V1C, Decision Council, autonomous execution, or any other next step) is authorized by this
+task.
