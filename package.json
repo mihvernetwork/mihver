@@ -15,7 +15,10 @@
     "test:publication-broker": "cd tools/publication-broker && go test ./...",
     "test:publication-remote-name-parity": "node tests/dev/publication-remote-name-parity.test.mjs",
     "context:pack": "node scripts/dev/project-context-pack.mjs",
-    "test:context-pack": "node tests/dev/project-context-pack.test.mjs"
+    "test:context-pack": "node tests/dev/project-context-pack.test.mjs",
+    "run-bundle": "node scripts/dev/run-bundle.mjs",
+    "run-bundle-report": "node scripts/dev/run-bundle-report.mjs",
+    "test:run-bundle": "node tests/dev/run-bundle.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/evidence-manifest.schema.json",
+  "title": "MIHVER EvidenceManifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence", "evidenceManifestHash"],
+  "properties": {
+    "evidence": { "type": "array", "maxItems": 100000, "items": { "$ref": "#/$defs/evidence" } },
+    "evidenceManifestHash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "producer": {
+      "type": "object", "additionalProperties": false, "required": ["role", "tool", "threadId"],
+      "properties": {
+        "role": { "enum": ["CLAUDE", "SCOUT", "IMPLEMENTER", "VERIFIER", "REVIEWER"] },
+        "tool": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "threadId": { "type": ["string", "null"], "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidenceId", "kind", "producedBy", "summary"],
+      "properties": {
+        "evidenceId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "kind": { "enum": ["ARTIFACT", "EXECUTION", "VERIFICATION", "REVIEW"] },
+        "producedBy": { "$ref": "#/$defs/producer" },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "sourcePath": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "contentHash": { "$ref": "#/$defs/hash" },
+        "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "action": { "enum": ["present", "deletion"] },
+        "command": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "exitCode": { "type": "integer" },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "verdict": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$", "maxLength": 200 },
+        "findingsCount": { "type": "integer", "minimum": 0 },
+        "blockerCount": { "type": "integer", "minimum": 0 }
+      },
+      "dependentRequired": { "sourcePath": ["contentHash"], "contentHash": ["sourcePath"] },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "ARTIFACT" } } }, "then": { "required": ["path", "action"], "properties": { "path": true, "action": true, "command": false, "exitCode": false, "passed": false, "failed": false, "verdict": false, "findingsCount": false, "blockerCount": false } } },
+        { "if": { "properties": { "kind": { "const": "EXECUTION" } } }, "then": { "required": ["command", "exitCode"], "properties": { "command": true, "exitCode": true, "path": false, "action": false, "passed": false, "failed": false, "verdict": false, "findingsCount": false, "blockerCount": false } } },
+        { "if": { "properties": { "kind": { "const": "VERIFICATION" } } }, "then": { "required": ["command", "passed", "failed"], "properties": { "command": true, "passed": true, "failed": true, "path": false, "action": false, "exitCode": false, "verdict": false, "findingsCount": false, "blockerCount": false } } },
+        { "if": { "properties": { "kind": { "const": "REVIEW" } } }, "then": { "required": ["verdict", "findingsCount", "blockerCount"], "properties": { "verdict": true, "findingsCount": true, "blockerCount": true, "path": false, "action": false, "command": false, "exitCode": false, "passed": false, "failed": false } } }
+      ]
+    }
+  }
+}
