@@ -46,6 +46,8 @@ that's a gap in the index, not license to guess; search deliberately, and consid
 | ProjectContextPack v1 (derived, machine-readable session-bootstrap snapshot; contract, hash rules, authority precedence) | `docs/development/PROJECT_CONTINUITY.md` |
 | ProjectContextPack v1 compiler + canonical JSON serializer + schema + tests | `scripts/dev/project-context-pack.mjs` (`npm run context:pack`), `scripts/dev/canonical-json.mjs`, `schemas/dev/project-context-pack.schema.json`, `tests/dev/project-context-pack.test.mjs` (`npm run test:context-pack`) |
 | Night Runner (deterministic task orchestration) | `docs/development/NIGHT_RUNNER.md` |
+| Run Bundle v1 (deterministic, typed, auditable run record built on ProjectContextPack v1; TaskRecord, EvidenceManifest, RunManifest, hash/append-only/finalization rules, authority boundary) | `docs/development/RUN_BUNDLE.md` |
+| Run Bundle v1 writer/compiler + report renderer + schemas + tests | `scripts/dev/run-bundle.mjs` (`npm run run-bundle`), `scripts/dev/run-bundle-report.mjs` (`npm run run-bundle-report`), `schemas/dev/task-record.schema.json`, `schemas/dev/evidence-manifest.schema.json`, `schemas/dev/run-manifest.schema.json`, `tests/dev/run-bundle.test.mjs` (`npm run test:run-bundle`) |
 | System-wide roadmap (navigational / non-authoritative — see its own source-of-truth priority order) | `ROADMAP.md` |
 
 ## Not covered here

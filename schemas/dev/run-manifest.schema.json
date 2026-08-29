@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/run-manifest.schema.json",
+  "title": "MIHVER RunManifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runId", "status", "repository", "contextPackBinding", "taskRecordRef", "evidenceManifestRef", "artifacts", "finalizedAt", "manifestHash"],
+  "properties": {
+    "runId": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "status": { "enum": ["OPEN", "FINALIZED"] },
+    "repository": { "type": "object", "additionalProperties": false, "required": ["remoteName", "owner", "name"], "properties": { "remoteName": { "type": "string", "minLength": 1 }, "owner": { "type": "string", "minLength": 1 }, "name": { "type": "string", "minLength": 1 } } },
+    "contextPackBinding": { "type": "object", "additionalProperties": false, "required": ["contextHash", "head", "branch", "detached"], "properties": { "contextHash": { "$ref": "#/$defs/hash" }, "head": { "type": "string", "pattern": "^[0-9a-f]{40}$" }, "branch": { "type": ["string", "null"], "minLength": 1 }, "detached": { "type": "boolean" } } },
+    "taskRecordRef": { "$ref": "#/$defs/ref" },
+    "evidenceManifestRef": { "$ref": "#/$defs/ref" },
+    "artifacts": { "type": "array", "maxItems": 100000, "items": { "type": "object", "additionalProperties": false, "required": ["path", "contentHash"], "properties": { "path": { "type": "string", "minLength": 1, "maxLength": 4096 }, "contentHash": { "$ref": "#/$defs/hash" } } } },
+    "finalizedAt": { "type": ["string", "null"], "format": "date-time" },
+    "manifestHash": { "$ref": "#/$defs/hash" }
+  },
+  "allOf": [
+    { "if": { "properties": { "status": { "const": "OPEN" } } }, "then": { "properties": { "finalizedAt": { "const": null } } } },
+    { "if": { "properties": { "status": { "const": "FINALIZED" } } }, "then": { "properties": { "finalizedAt": { "type": "string" } } } }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "ref": { "type": "object", "additionalProperties": false, "required": ["path", "contentHash"], "properties": { "path": { "type": "string", "minLength": 1, "maxLength": 4096 }, "contentHash": { "$ref": "#/$defs/hash" } } }
+  }
+}

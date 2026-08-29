@@ -15,49 +15,57 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: PROJECT-CONTINUITY-V1A-FREEZE-CLOSEOUT
-Branch: `chore/project-continuity-v1a-freeze-closeout`
+Task: PROJECT-CONTINUITY-V1B-RUN-BUNDLE
+Branch: `feat/project-continuity-v1b-run-bundle`
 Target: main
 Publication:
-- Local Publication Builder authorized: yes (human-authorized local publication only)
+- Local Publication Builder authorized: yes, per this task's own explicit instruction (authorized
+  once the repository lifecycle gates for this task are complete — met)
 - remote publication: human manual fallback only (unchanged by this task)
-- no push, no PR mutation, no merge, no V1B
+- one local commit, no push, no PR mutation, no merge, no V1B follow-on started
 
-Pure `.project/` state closeout: records the already-merged Project Continuity V1A (PR #34, squash
-commit `dbdb4f7049d2a73728038f1c98efc47ddfee3727`) as a frozen checkpoint. No semantic contract,
-ADR, foundation, policy, schema, compiler, or test file touched.
-
-**Scout** (`mcp__codex__codex`, thread `01a04a86-6d2c-7283-bad2-4e2e9e8d24ab`): confirmed starting
-state (`main` @ `dbdb4f7`, clean, matches the given base exactly), that `dbdb4f7` is a single-parent
-squash-style commit referencing PR #34, that no freeze-closeout branch pre-existed, and that
-`ROADMAP.md` has no stale Project-Continuity current-state claim (so it was correctly left
-untouched).
+New subsystem: a deterministic, typed, auditable Run Bundle record (`TaskRecord`, `EvidenceManifest`,
+`RunManifest`, a writer/compiler, and a human report renderer) built on `ProjectContextPack` v1 as
+pure input. See `.project/CURRENT_TASK.md` for the full architecture/implementation/review record;
+summarized here.
 
 **Reviewer** (`mcp__codex__codex`, fresh/independent, thread
-`01a04a88-e7d2-7dc2-9dd9-a5de85e97a50`), reviewing the V1A checkpoint at `dbdb4f7` plus this closeout
-diff. Initial verdict: **NOT READY TO FREEZE**, one finding, ACCEPTED and fixed:
-- MAJOR: `.project/PROJECT_STATE.md`'s new checkpoint entry restated semantic/behavioral detail
-  already owned by `docs/development/PROJECT_CONTINUITY.md` (filter-driver detection mechanism, an
-  authority-boundary sentence) rather than pointing to it — a partial second semantic definition,
-  contrary to this task's own instruction and the file's own header rule. Fixed: rewritten to match
-  the file's existing "Night Runner"/"Project Context Bootstrap" checkpoint style (description,
-  PR/commit, "Produced &lt;artifacts&gt;", nothing else). Re-checked by the same Reviewer post-fix:
-  **VERDICT: READY TO FREEZE** — all seven PASS items reconfirmed.
-- Confirmed clean: PR #34 merge SHA and V1A artifacts agree (all claimed files present at `dbdb4f7`;
-  both governance amendments independently confirmed in `docs/development/AGENT_POLICY.md` at that
-  commit); `DECISIONS_LOG.md` append-only/durable-only; `CURRENT_TASK.md` branch-scoped correctly,
-  does not claim this closeout PR itself is merged; no V1B implementation/authorization introduced;
-  no file outside `.project/` touched.
+`01a04ad0-844d-7c03-9989-15389b631f0b`, spanning both rounds). Round 1 verdict: **REJECT** — 5 MAJOR
++ 1 MINOR, all independently re-traced by Claude and ACCEPTED:
+- MAJOR: append path never cross-checked re-read document bytes against the manifest's own
+  reference content hashes (only self-hashes) — exploitable for `evidence-manifest.json`. Also:
+  `runId`/ContextPack binding/repository identity were silently rebuildable on every append with no
+  check against the existing bundle, violating the core "binds to the exact ProjectContextPack used"
+  invariant. Fixed: reference-hash cross-checks added; `RUN_IDENTITY_IMMUTABLE` hard-rejects any
+  append changing those three fields. New tests RB14/RB15.
+- MAJOR: the report renderer never schema-validated, only hash-checked — a hash-consistent-but-
+  schema-invalid document would still render. Fixed: reuses the writer's exported validators to
+  schema-validate all three documents before reading any field. New test RB16.
+- MAJOR (adjudicated, narrowed scope): TOCTOU on the `--out` directory's parent components matches
+  this repository's own existing precedent for the identical class of gap in
+  `project-context-pack.mjs`'s `safeReadSource` — resolved by honest "Documented residual
+  limitation" disclosure (matching that precedent's tone) plus one narrow point-in-time recheck
+  immediately before the write phase, not a full directory-descriptor rewrite.
+- MAJOR (adjudicated, narrowed scope): non-atomic three-file write — substantially mitigated once
+  the reference-hash fix lands (any subsequent reader fails closed on inconsistency, never silently
+  trusts it); resolved by one documentation sentence, not transactional-directory-swap machinery.
+- MAJOR: code density/style inconsistent with repository convention, directly correlated with the
+  first finding being hard to spot. Fixed: rewritten to match
+  `project-context-pack.mjs`/`publication-builder.mjs`'s convention.
+- MINOR: discriminated-union cross-kind field rejection was untested. Fixed: new test RB17.
+Round 2 (post-fix) verdict: **RESOLVED**, one residual MINOR (a doc section didn't mention the new
+schema-validation step) — fixed directly by Claude, re-confirmed **RESOLVED**.
 
-**Verifier** (`mcp__codex__codex`, three fresh full sessions — before the Reviewer's fix, and twice
-after, none a `codex-reply` continuation): `npm run context`/`npm run context:pack` report
-branch/HEAD/active-task correctly, schema-valid, `validity.valid: true`; `npm run
-test:project-consistency` — 19/19; `npm run check:project-consistency` — 7/7; `git diff --check`
-clean; changed-files scope confined to exactly `.project/CURRENT_TASK.md`,
-`.project/DECISIONS_LOG.md`, `.project/PROJECT_STATE.md`; `DECISIONS_LOG.md` diff confirmed a pure
-append (3 lines added, 0 pre-existing changed) both before and after the Reviewer's fix.
+**Verifier** (`mcp__codex__codex`, three fresh full sessions): `npm run test:run-bundle` — 13/13
+then 17/17 after the fix round; `npm test` — 170/170 throughout; `npm run test:context-pack` —
+115/115 (`project-context-pack.mjs` confirmed unchanged); `npm run test:publication-builder` —
+42/42 (`publication-builder.mjs` confirmed unchanged); `npm run check:project-consistency` — 7/7;
+`npm run test:project-consistency` — 19/19; `git diff --check` clean throughout. Real end-to-end CLI
+smoke tests against this actual repository (outside the test harness) confirmed correct
+`RUN_IDENTITY_IMMUTABLE` refusal on a mismatched append, correct finalize/report/re-write-refusal
+lifecycle, and correct symlink refusal (macOS `/tmp` itself).
 
-**Human review is the next gate for merging this freeze-closeout branch** — this task does not
-authorize a push, PR, or merge. See `.project/PROJECT_STATE.md`'s "Next Authorized Action":
-`PROJECT-CONTINUITY-V1B-RUN-BUNDLE` is recommended, not authorized — requires its own separate,
-explicit human authorization.
+**Human review is the next gate** — this task does not authorize a push, PR, or merge. See
+`.project/PROJECT_STATE.md`'s "Next Authorized Action" once a human has reviewed this; no V1B
+follow-on (V1C, Decision Council, autonomous execution, or any other next step) is authorized by
+this task.
