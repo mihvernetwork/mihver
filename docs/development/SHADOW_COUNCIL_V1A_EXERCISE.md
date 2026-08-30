@@ -354,6 +354,55 @@ durable copy is Run Bundle evidence, not an authorization signal: persisting it 
 publication, merge, or autonomous task-transition authority, exactly as for every other evidence kind
 in this harness.
 
+### Exercise 6 — `authorization-ledger-v1c-r3-arch-decision-6` (real R3, V6, `NO_QUORUM`)
+
+The first real R3 architecture exercise run after PR #53, and the first to exercise its durable
+terminal-`DecisionRecord` path on live provider output rather than test fixtures.
+
+- Base branch: `main` @ `f004daa516e87e9e11dfe87023deb4e0302d3e47`
+- Task branch: `decision/authorization-ledger-v1c-r3-architecture-v6`
+- Council epoch: `authorization-ledger-v1c-r3-arch-decision-6-epoch-1`
+- `contextHash`: `sha256:690c3a14648c7f30705de901aa982eefc077cba1f75130f7420b87437e8f49da`
+- `repositoryHead`: `f004daa516e87e9e11dfe87023deb4e0302d3e47`
+- Proposer: **`seat-google`** — `rotationOrdinal: 5`, fixed as a caller-controlled `DecisionRequest`
+  parameter before any provider invocation and resolved by the frozen kernel's own
+  `CouncilConfig.seats[rotationOrdinal % 3]` formula over the standing seat ordering
+  `[seat-openai, seat-anthropic, seat-google]`. This is the first exercise in which `seat-google`
+  proposed. No durable cross-run rotation registry exists and none was introduced.
+- `candidateHash`: `sha256:c5d16bea3806ff0d10b7e092f8d2240d14d68b9461aeb44c206bf7fcb2fafb90`
+- Votes: `seat-openai` REJECT, `seat-anthropic` APPROVE, `seat-google` APPROVE — 2/3. R3 requires
+  exactly 3/3, so `DecisionRecord.state`/`disposition` are `NO_QUORUM`/`NO_QUORUM`,
+  `quorumDetail {ruleset: "R3", approvals: 2}`, `reasonCode: R3_INSUFFICIENT_APPROVALS`,
+  `recordHash: sha256:67dc108473f16037fd7dcf3f73f6fe6293e816d197f8930847a75478e64b92f5`
+- Real primary-model calls: **4** (1 proposal + 3 votes), all admitted, 0 rejected, 0 retried, 0
+  substituted, 0 repaired. No `ShadowSeatInvocationFailure` artifact was produced.
+- Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v6/`, `FINALIZED`,
+  12 artifacts (4 packets, 4 attestations, 3 vote assessments, 1 `DecisionRecord`).
+
+`seat-openai`'s REJECT was structurally valid and grounded in the packet's own evidence: the packet
+required seventeen explicitly answered YES/NO matrix questions, and the candidate's `yesNoMatrix`
+supplied fifteen keys, collapsing the three distinct "CAN CODEX?" questions (grant issuance, ADMIN
+UID-policy modification, `stopEpoch` increment) into one ambiguous key. `seat-anthropic` noted the
+same collapse but judged it cosmetic and voted APPROVE. Both rationales are durably persisted; this
+record does not adjudicate between them, and rationale remains advisory evidence with no effect on
+quorum, `candidateHash`, or `recordHash`. The candidate is permanently closed for R3.
+
+**Durable `DecisionRecord` persistence confirmed on a real run.** The terminal record was
+independently re-verified against its terminal session and written as canonical JSON evidence bound
+into the `EvidenceManifest` *before* the Run Bundle was `FINALIZED`: exactly one
+`shadow-decision-record:` entry, raw-byte `contentHash
+sha256:3383112e5b0aabed9445f04b4625898902faba6a9a9d16783779e7ab0b95d2dd`, `recordHash`
+independently recomputable via the frozen kernel's `computeDecisionRecordHash`. This closes, in
+practice rather than in fixtures, the `EVIDENCE_BLOCKER` half of V5's `HUMAN_R3_PREAUTH_NOT_READY`
+finding. Note that the durability path is exercised identically for a `NO_QUORUM` terminal outcome
+as for a `DECIDED` one — persistence is bound to reaching a terminal kernel state, not to approval.
+
+A fresh, independent, read-only Codex Verifier returned `DECISION_EVIDENCE_VALID` across 14 criteria,
+having independently recomputed the candidate hash, `recordHash`, all three `assessmentHash` values,
+the run/evidence/task-record manifest hashes and all 12 evidence raw-byte hashes, and having
+confirmed both adversarial lost-ack traces are provable from the exact frozen candidate text. This
+exercise grants no execution, publication, merge, or V1C implementation authority.
+
 ## Residual trust limitations
 
 - One parent harness process (the Claude Code orchestrator, on this machine) controlled all three

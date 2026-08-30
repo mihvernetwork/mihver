@@ -15,55 +15,77 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: authorization-ledger-v1c-r3-arch-decision-5
-Branch: `decision/authorization-ledger-v1c-r3-architecture-v5`
+Task: authorization-ledger-v1c-r3-arch-decision-6
+Branch: `decision/authorization-ledger-v1c-r3-architecture-v6`
 Target: main
 Publication:
 - Local Publication Builder authorized: **yes**, per this task's own "if DECISION_EVIDENCE_VALID,
   create exactly one local evidence commit" instruction — subject
-  `chore: record v1c r3 architecture decision v5 evidence`. No push, no PR, no merge.
+  `chore: record v1c r3 architecture decision v6`. No push, no PR, no merge.
 - remote publication: human manual fallback only (unchanged)
 
-**Real 3-seat Shadow Council R3 exercise** for `authorization-ledger-v1c-r3-arch-decision-5`: one
-frozen candidate (`candidateHash sha256:9bc6b4c3c63ffa02563d936557bfaced13e6f6251f7c0084bbd3abc01805a063`,
-proposer `seat-openai`, `rotationOrdinal 0`), materially revised from V4
-(`sha256:0e63ea1a...246175c`, closed after valid REJECT) to fix both of its named blockers:
-(1) stopEpoch now specified as SQLite `INTEGER` bounded `0..9007199254740991`
-(`Number.MAX_SAFE_INTEGER`) with an explicit `CHECK` constraint, no BigInt/old+1/wraparound/reset/
-float coercion, fail-closed `STOP_EPOCH_EXHAUSTED` at the ceiling; (2) authorization now an exact
-`authenticatedPeerUid` (from kernel `SO_PEERCRED`) checked against a root-owned, non-model-writable
-UID allowlist, with socket/group permissions serving only as reachability.
+**Real 3-seat Shadow Council R3 exercise** for `authorization-ledger-v1c-r3-arch-decision-6`, base
+`main @ f004daa516e87e9e11dfe87023deb4e0302d3e47`. Exactly one frozen candidate
+(`candidateHash sha256:c5d16bea3806ff0d10b7e092f8d2240d14d68b9461aeb44c206bf7fcb2fafb90`),
+`councilEpochId authorization-ledger-v1c-r3-arch-decision-6-epoch-1`,
+`contextHash sha256:690c3a14648c7f30705de901aa982eefc077cba1f75130f7420b87437e8f49da`.
 
-**All three seats voted APPROVE** (seat-openai, seat-anthropic, seat-google), each citing both
-fixes as decisive. `exerciseOutcome`: 3/3 APPROVE.
+**Proposer rotation.** No durable cross-run rotation state exists — the V5 audit established that,
+and this task does not invent one. `rotationOrdinal = 5` was fixed as a caller-controlled
+`DecisionRequest` parameter before any provider invocation, under the task-local deterministic rule
+"architecture decision version N → `rotationOrdinal = N - 1`". No seat was hard-coded: the frozen
+ADR-0005 kernel computed `expectedProposerSeatId = CouncilConfig.seats[5 % 3].seatId`. Seat ordering
+`[0] seat-openai, [1] seat-anthropic, [2] seat-google` ⇒ kernel-derived proposer **`seat-google`**
+— the first exercise in which `seat-google` has proposed.
 
-**Fresh Verifier** (`mcp__codex__codex`, read-only): first pass `DECISION_EVIDENCE_INVALID` over
-two findings (unpersisted `rotationOrdinal`; no `repositoryHead` field inside attestation JSON). A
-second, independent, fresh read-only adjudicator confirmed both `VERIFIER_CRITERIA_DEFECT`: neither
-field is ever persisted by this harness's evidence model in any run, including the already-merged,
-human-reviewed V3/V4 bundles; repository-head integrity is established transitively via the
-packet's hashed `repositoryHead`, which every attestation binds to through `packetHash`. Final
-verdict: **`DECISION_EVIDENCE_VALID`**.
+**Candidate materially fixes V5's `MATERIAL_ARCHITECTURE_BLOCKER`.** Durable privileged
+`admin_operation_journal` keyed `(authenticated_peer_uid, operation_kind, admin_operation_id)`;
+domain-separated (`MIHVER_V1C_ADMIN_OP_V1`) `requestHash` binding peer UID + operation kind +
+`adminOperationId` + `expectedStopEpoch`; epoch write + journal insert + audit append committed
+atomically inside one `BEGIN IMMEDIATE`. Dual protection discharges both required lost-ack traces:
+same-ID retry replays the stored `N+1` without a second mutation; a new operation ID carrying a
+stale `expectedStopEpoch = N` fails closed with `STALE_EXPECTED_STOP_EPOCH`. No path reaches `N+2`.
+Same-ID/different-payload fails closed with `IDEMPOTENCY_KEY_REUSE`. V5's accepted baseline
+(safe-integer `stopEpoch` domain `0..9007199254740991` with SQLite `CHECK`, exact-UID `SO_PEERCRED`
+authorization, trusted `CouncilEpochRegistry`, exact-bound R3 grant, consume-once, zero production
+effect consumers, no Execution Gateway) is preserved intact.
 
-**Outcome: `COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`.** Council-evidence-only; zero V1C
-implementation, zero execution or publication authority, zero Council rerun. Human must separately
-and explicitly authorize the exact candidateHash above before any V1C implementation task begins.
+**Votes: 2/3 — `seat-openai` REJECT, `seat-anthropic` APPROVE, `seat-google` APPROVE.** R3 requires
+exactly 3/3, so the frozen kernel returned `NO_QUORUM` / `NO_QUORUM`,
+`reasonCode R3_INSUFFICIENT_APPROVALS`, `quorumDetail {ruleset: R3, approvals: 2}`,
+`recordHash sha256:67dc108473f16037fd7dcf3f73f6fe6293e816d197f8930847a75478e64b92f5`.
 
-Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/` (`run-manifest.json`
-status `FINALIZED`).
+`seat-openai`'s REJECT is valid and evidence-grounded, not a harness or contract failure: the packet
+required seventeen explicitly answered YES/NO matrix questions; the candidate's `yesNoMatrix`
+carries fifteen keys, collapsing the three distinct "CAN CODEX?" questions (grant issuance, ADMIN
+UID-policy modification, `stopEpoch` increment) into one ambiguous key and omitting two required
+answers. `seat-anthropic` independently identified the same collapse, judging it cosmetic rather
+than a trust-boundary defect, and voted APPROVE. Both readings are recorded; the kernel's outcome
+stands on the votes, not on adjudicating between them. The rationale is advisory evidence only and
+had no effect on quorum, `candidateHash`, or `recordHash`.
 
-**Human pre-authorization audit (read-only, later, narrow closure task
-`AUTHORIZATION-LEDGER-V1C-V5-PREAUTH-CLOSURE`): `HUMAN_R3_PREAUTH_NOT_READY`.** Council approval
-(3/3 APPROVE) and human pre-authorization are distinct gates; this finding is not a Council
-rejection. Blockers: (1) `MATERIAL_ARCHITECTURE_BLOCKER` — `stopEpoch` increment retry/idempotency
-under-specified (lost-ack counterexample: commit N+1, ack lost, retry, no operation identity /
-idempotency key / expected-epoch CAS preventing a spurious N+2); (2) `EVIDENCE_BLOCKER` — the
-terminal `DecisionRecord` formed in memory was not durably persisted by
-`runShadowExerciseWithDurableEvidence`. Clear/nonblocking: UID authorization CLEAR; proposer
-rotation NONBLOCKING_PROCEDURAL_FINDING; `CouncilQuorumProof` NOT_REQUIRED_FOR_THIS_GATE; Run
-Bundle integrity CLEAR.
+**`DecisionRecord` durability gate (PR #53) — SATISFIED, first real-exercise proof.** The terminal
+record was independently re-verified against its terminal session, then durably written and bound
+into the `EvidenceManifest` *before* `FINALIZED`: exactly one `shadow-decision-record:` entry at
+`evidence/shadow-decision-record-3383112e5b0aabed9445f04b4625898902faba6a9a9d16783779e7ab0b95d2dd.json`,
+raw-byte `contentHash sha256:3383112e...d2dd`, `recordHash` independently recomputable. V5's
+`EVIDENCE_BLOCKER` is closed in practice.
 
-**CandidateDisposition: `SUPERSEDED_PENDING_MATERIAL_REVISION`** for `candidateHash
-sha256:9bc6b4c3c63ffa02563d936557bfaced13e6f6251f7c0084bbd3abc01805a063` — Council-approved but
-**not** implementation-authorized. No Council rerun, no provider calls, no V1C implementation, no
-human approval performed by this closure. Finalized Run Bundle unmodified.
+**Fresh Verifier** (`mcp__codex__codex`, read-only, independent, thread
+`01a05435-2773-76d2-a0a6-957b8c4b337a`): all three reviewer packets embed a byte-identical
+12,289-byte `candidateDecision`; independently recomputed the candidate hash, `recordHash`, all
+three `assessmentHash` values, the run/evidence/task-record manifest hashes, and all 12 evidence
+raw-byte hashes; confirmed both adversarial lost-ack traces provable from the exact candidate text;
+confirmed 4 admitted attestations with zero rejected attestations, zero
+`ShadowSeatInvocationFailure` artifacts, and no retry; confirmed V3/V4/V5 bundles untouched and no
+implementation on this branch. **Verdict: `DECISION_EVIDENCE_VALID`** (14/14 criteria PASS, both
+traces PASS).
+
+**Outcome: `NO_QUORUM`.** Evidence-only exercise; zero V1C implementation, zero execution or
+publication authority, zero Council rerun, zero human approval. `candidateHash
+sha256:c5d16bea3806ff0d10b7e092f8d2240d14d68b9461aeb44c206bf7fcb2fafb90` is **permanently closed for
+R3** and must never be re-voted, cosmetically renamed, or resubmitted. Any future attempt requires a
+materially new candidate with a distinct `candidateHash`.
+
+Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v6/` (`run-manifest.json`
+status `FINALIZED`, `manifestHash sha256:5bb995c9...e477`, 12 artifacts).
