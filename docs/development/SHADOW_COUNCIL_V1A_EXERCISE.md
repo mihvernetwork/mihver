@@ -265,6 +265,47 @@ deliberately provoke a provider to misbehave).
   negative path remains proven only by the deterministic test suite, per this task's own instruction
   not to deliberately prompt a provider to misbehave.
 
+### Exercise 5 — reviewer-output reliability hardening (`SHADOW-COUNCIL-REVIEWER-OUTPUT-RELIABILITY-V1`)
+
+The real 3-seat R3 architecture exercises for the V1C Authorization Ledger design
+(`authorization-ledger-v1c-r3-architecture-v3` and `-v4`, see
+`.project/run-bundles/authorization-ledger-v1c-r3-architecture-v3/` and `-v4/`) both independently
+exposed the same repeated reviewer-output failure: `seat-anthropic` returned a structurally valid,
+exact-shape reviewer response (`voteValue` + `rationale`), but its `rationale` exceeded the
+1200-character hard acceptance ceiling enforced in
+`scripts/dev/shadow-council-vote-assessment.mjs`. `ASSESSMENT_VALIDATION` correctly failed closed
+both times, and the durable per-stage invocation-failure evidence worked exactly as designed in both
+cases — no vote was fabricated, no output was repaired, and no retry occurred. V4 additionally
+carried an outer task-level instruction suggesting a rationale of at most ~900 characters, but that
+instruction was never rendered into the real seat packet/prompt (`renderPacketPrompt` only ever
+built the reviewer prompt from `packet.decisionQuestion` and `packet.evidence`), so the model never
+actually saw any length guidance beyond the bare "at most 1200 characters" ceiling itself.
+
+This task (`SHADOW-COUNCIL-REVIEWER-OUTPUT-RELIABILITY-V1`) strengthens the canonical reviewer
+prompt rendered by `renderPacketPrompt` in `scripts/dev/shadow-council-packet.mjs` to add an explicit
+generation-budget instruction — target roughly 500 characters, generate no more than 600 characters —
+with per-`voteValue` guidance on what counts as concise decisive content (APPROVE: the decisive
+reason plus at most one caveat; REJECT: at most two decisive blockers; ABSTAIN: the decisive
+information/authority deficiency only). The existing 1200-character / 4096-UTF-8-byte hard acceptance
+ceiling is **unchanged** and remains independently enforced by the parser/builder — the generation
+budget is advisory prompt guidance only, not a new acceptance rule. Rationale remains advisory
+evidence: it has zero effect on `voteValue`, quorum, `candidateHash`, or `DecisionRecord.recordHash`,
+and no historical Council decision (including V3's REJECT or V4's failure) is reinterpreted by this
+task.
+
+A single harmless, real, reviewer-contract-compliance smoke was then run (fallback shape: 1 proposer
+call + 3 reviewer calls, no retries, no provider substitution) against a synthetic frozen candidate
+with a deliberately non-trivial, multi-trade-off decision question, so reviewers had to prioritize
+decisive grounds rather than reply "looks good." All three seats produced valid strict two-field JSON
+on the first call: `seat-anthropic` APPROVE at 587 characters, `seat-openai` APPROVE at 475
+characters, `seat-google` APPROVE at 345 characters — all comfortably under the new ~600-character
+generation budget and far under the unchanged 1200-character hard ceiling. This is the first time
+`seat-anthropic` has passed a real reviewer invocation on its first call after two consecutive
+real-exercise failures. Evidence is persisted and finalized at
+`.project/run-bundles/shadow-council-reviewer-output-reliability-v1-smoke/`. This smoke is evidence
+of reviewer-output reliability only; it is not a Council architecture decision and grants zero
+execution or V1C implementation authority.
+
 ## Advisory-only confirmation
 
 Nothing in this exercise, this harness, or its two `DecisionRecord`s grants execution, publication,
