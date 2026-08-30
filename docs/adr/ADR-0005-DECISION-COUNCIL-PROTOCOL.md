@@ -467,6 +467,25 @@ behavior to match R2's stricter rule (or vice versa) — exactly the kind of sco
 
 ## Future Work
 
+### V1B quorum-proof sidecar amendment
+
+V1B adds an independently verifiable sidecar without changing the Accepted V1A kernel or its
+schemas. A council epoch registry entry binds an established `CouncilConfig` to
+`sha256("MIHVER:DecisionCouncil:CouncilConfig:v1\0" + canonicalizeJson(councilConfig))` as a trust
+anchor. A `CouncilQuorumProof` embeds the full request, raw accepted votes, council configuration,
+that trusted configuration hash, and the unchanged V1A `DecisionRecord.recordHash`. Its own hash is
+`sha256("MIHVER:DecisionCouncil:CouncilQuorumProof:v1\0" + canonicalizeJson(proof minus proofHash))`.
+The independent verifier consults the registry, checks every binding and hash, projects raw votes
+into the V1A three-seat `MISSING` representation, and independently recomputes R1/R2/R3 quorum.
+Only a fully valid `CONTEMPORANEOUS` proof is eligible as authorization evidence; historical V1A
+records without proofs and typed `RECONSTRUCTED` proofs remain ineligible. V1B provides no legacy
+reconstruction or fabrication path.
+
+The hash graph is deliberately non-circular: `CouncilConfig -> councilConfigHash ->
+CouncilQuorumProof -> decisionRecordHash <- DecisionRecord.recordHash`. A `DecisionRecord`, and
+anything covered by its `recordHash`, **MUST NEVER** contain or reference a proof hash or any field
+of `CouncilQuorumProof`. The proof references the record; the record never references the proof.
+
 - Shadow Council: real provider-backed seats producing these exact typed artifacts, run in parallel
   with Claude's own judgment, not yet gating any action.
 - A `RUN_BUNDLE.md` extension point that formally accepts a `DecisionRecord` as a typed evidence

@@ -75,6 +75,14 @@ Publication Broker connection, no Shadow Council, no execution gateway): IMPLEME
 **Accepted** (see the ADR-0005 line above and the "ADR-0005 Acceptance" checkpoint below for the
 frozen evidence basis) — Acceptance validates this protocol foundation and grants no execution,
 publication, merge, or autonomy authority of any kind.
+Decision Council Quorum Proof V1B sidecar (`CouncilQuorumProof` + `CouncilEpochRegistry`, deterministic
+compiler/verifier, letting a downstream verifier independently recompute R1/R2/R3 quorum from raw
+`CouncilConfig`/votes rather than trusting a `DecisionRecord`'s self-consistency; frozen V1A kernel/
+schema unmodified): IMPLEMENTED — owner: `scripts/dev/council-quorum-proof.mjs`, ADR-0005's own
+"Future Work" V1B addition, `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md`'s "V1B Amendment"
+subsection (Proposed, unchanged). This task exists because independent Authorization re-verification
+exposed a real persistence/provenance gap in V1A `DecisionRecord`s; it grants no execution authority
+and does not mark ADR-0006 Accepted.
 Shadow Council V1A advisory CLI harness (three independently-spawned provider CLI child processes —
 OpenAI/Anthropic/Google — acting as advisory-only council seats feeding the unmodified Decision
 Council V1A kernel; no direct provider API/SDK integration): IMPLEMENTED and frozen — owner:
