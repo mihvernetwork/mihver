@@ -27,6 +27,7 @@ ADRs and against `ROADMAP.md`'s equivalent navigation summary.
 - ADR-0003 (Requirement Derivation Model): PROPOSED — owner: `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`
 - ADR-0004 (Memory Context Authority Boundary): ACCEPTED — owner: `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`
 - ADR-0005 (Decision Council Protocol): ACCEPTED — owner: `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`
+- ADR-0006 (Decision Authorization Boundary): PROPOSED — owner: `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md`
 
 Dependency A/B/C/D and the `DECISION_OPTION` historical-source gate — status tokens only below; these
 are several distinct facts with different semantic owners, not one umbrella-owned group:
@@ -377,6 +378,16 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   validates the Decision Council protocol foundation only: it does **not** authorize execution
   integration, bounded autonomy, Publication Broker activation, any council→tool/action path, or
   any new implementation capability — all remain separate, explicitly human-authorized future work.
+
+- **ADR-0006 — Decision Authorization Boundary (V1A Design).** Design-only ADR (`Status: Proposed`)
+  defining an `AuthorizationEnvelope`/`AuthorizationGrant` boundary between an Accepted ADR-0005
+  `DecisionRecord` and any hypothetical future Execution Gateway — a deterministic policy-evaluation
+  algorithm, replay/staleness/STOP-fencing semantics, and exact-bound human-approval binding for R3,
+  with a global `stopEpoch` kill-switch concept this ADR is the first to own. No code, schema file, or
+  executor exists; ADR-0005 and its kernel/simulator/schema/Shadow Council evidence remain
+  byte-identical and unmodified. Grants no execution, publication, bounded-autonomy, or Claude/Codex
+  action authority of any kind. See the ADR's own Non-Goals and Staged Implementation Plan (V1B/V1C/
+  V1D, each separately authorized) for what remains explicitly unauthorized.
 
 ## Open Items
 

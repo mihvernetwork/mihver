@@ -15,86 +15,116 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: ADR-0005-ACCEPTANCE
-Branch: `docs/adr-0005-acceptance`
+Task: DECISION-AUTHORIZATION-BOUNDARY-V1A-DESIGN
+Branch: `docs/decision-authorization-boundary-v1a-design`
 Target: main
 Publication:
-- Local Publication Builder authorized: **yes** — gate re-evaluation found all 7 criteria
-  `SATISFIED_BY_FROZEN_EVIDENCE`, post-edit Reviewer verdict `READY_TO_ACCEPT`, Verifier
-  `ALL CHECKS PASS`, and PR #42 merge-post main CI confirmed `SUCCESS` (see below). Exactly one
-  local commit prepared, subject `docs: accept decision council protocol`.
+- Local Publication Builder authorized: **yes**, per this task's own explicit "Prepare one local
+  commit only if review finds the design coherent" instruction — exactly one local commit, subject
+  `docs: define decision authorization boundary`. No push, no PR, no merge (task-forbidden).
 - remote publication: human manual fallback only (unchanged by this task)
 
-**Gate re-evaluation Reviewer** (`mcp__codex__codex`, fresh, read-only, independent, thread
-`01a04fcc-96ee-7e83-a01d-4e1d9544281c`, run BEFORE any ADR edit): read
-`docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s actual current Acceptance Gate text directly;
-reran `decision-council-kernel.test.mjs`/`decision-council-simulator.test.mjs` (18/18 each);
-independently recomputed both candidate hashes and both record hashes from the real exercise files
-(matched); confirmed three distinct real provider CLIs each produced at least one `exitCode: 0`
-attestation; read `shadow-council-attestation.mjs`'s registry/admission logic and every
-attestation's `residualTrustLimitation` field; confirmed the finalized Run Bundle's
-`evidence-manifest.json` binds both exercise files as `ARTIFACT` evidence via `sourcePath`+
-`contentHash` and `run-manifest.json.status` is `FINALIZED`; read `shadow-council-harness.mjs` end
-to end and found no artifact-to-execution path; independently re-confirmed (reading the historical
-commit-`45077da...` version of `REVIEW_STATE.md` directly, not the current superseded version) that
-the post-exercise adversarial review found no `PROTOCOL_REDESIGN_BLOCKER`, and formed its own
-independent agreement. **All seven criteria: `SATISFIED_BY_FROZEN_EVIDENCE`.** Independently judged
-the R1/R2 `contextHash` difference (shared `repositoryHead`) an operational/evaluation limitation,
-not a protocol-integrity failure — each session's own request/candidate/votes/record bind
-consistently to its own context, no vote or record crossed contexts. Local Git independently
-confirmed PR #38/#41/#42 merge SHAs; GitHub network access was unavailable in that sandbox, so it
-did not substitute state-file prose for the unreachable remote check (Claude confirmed this
-separately below).
+This is a **design-only** task: no code, script, or schema file was created; `docs/adr/ADR-0005-
+DECISION-COUNCIL-PROTOCOL.md`, the Decision Council kernel/simulator/schema/tests, and the Shadow
+Council V1A exercise/evidence are all confirmed byte-identical to `main` (Verifier, below).
 
-**ADR-0005 edit**: `## Status` changed `Proposed` → `Accepted`; one "Acceptance note" paragraph
-added immediately after, following the `ADR-0004` precedent — pointer-first, citing PR #38/#39/#40/
-#41/#42, disclosing the `contextHash` drift and residual trust limitations as limitations (not
-cryptographic proof), and explicitly stating Acceptance authorizes no execution/publication/merge/
-autonomy capability. `git diff main -- docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` confirmed a
-single additive hunk — no other ADR content touched.
+**Round 1 — four parallel, independent, fresh Codex Reviewers (`mcp__codex__codex`, read-only),
+one per required adversarial axis**, against the first complete draft of
+`docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md`:
 
-**Post-edit Reviewer** (`mcp__codex__codex`, fresh, read-only, independent, thread
-`01a04fd2-2e12-77e3-ab59-b810001f6f9f`, had not evaluated the gate itself — reviewed the actual
-edits): confirmed the ADR diff is a single additive hunk (`Proposed`→`Accepted` plus one Acceptance
-note, Acceptance Gate text itself byte-identical), the note accurately reflects frozen evidence
-without fabrication and correctly discloses the `contextHash` drift and residual trust limitations
-as limitations (not proof), no criterion weakened/reworded, `## Future Work` unchanged, zero diff
-under `scripts/dev/` and all Shadow Council/kernel/simulator/schema paths, `DECISIONS_LOG.md` a
-pure EOF append with no prohibited content, and exactly the 5 expected files changed. One initial
-finding (item 7: `PROJECT_STATE.md`'s new checkpoint cites the PR #41/#42 squash-commit SHAs) was
-raised against an overly strict instruction of Claude's own verification prompt ("NOT include
-hashes", without the qualification that this file's own pre-existing checkpoint-identity convention
-— every entry names its PR + squash SHA — is not the "evidence duplication" the task instruction
-actually meant to exclude). Claude pointed to the pre-existing Decision Council V1A / Shadow
-Council V1A checkpoints in the same file as precedent; the Reviewer independently confirmed the
-distinction and revised to PASS. **Final verdict: `READY_TO_ACCEPT`, 9/9 points pass.**
+- **Axis A (authority escalation / confused deputy)**, thread `01a0504c-d443-7a60-b1af-f7d5912d0cda`:
+  verdict REJECT. 2 BLOCKER + 2 MAJOR. Root finding: `evaluateAuthorization`/`checkAndConsume` as
+  drafted trusted a caller-supplied `DecisionRecord`/envelope's own claimed fields (disposition,
+  scope, hash) instead of independently verifying them; `TaskRecord` lookup was tautological
+  (equality-checked against a caller-supplied `TaskRecord`); the admin/client privilege split was
+  asserted, not structurally specified.
+- **Axis B (replay / stale context / STOP fencing)**, thread `01a0504e-0d57-71a3-b2d9-ddd350313584`:
+  verdict REJECT. 3 BLOCKER + 2 MAJOR. Root finding: caller-chosen/random `authorizationId` let the
+  same decision be wrapped in multiple separately-consumable envelopes; consumption-time freshness
+  and `stopEpoch` fencing were not actually linearized against concurrent bumps; `expiresAt` was
+  defined but never checked; grant creation didn't tie `boundStopEpoch` to the envelope it approved.
+- **Axis C (human-approval binding / R3 bypass)**, thread `01a0504f-db1b-7ec1-aa1e-bdaf710b7b84`:
+  verdict REJECT. 1 BLOCKER + 2 MAJOR. Root finding: `checkAndConsume` never recomputed
+  `envelopeHash`/disposition from the canonical `DecisionRecord`, so a submitted envelope's own
+  (falsifiable) claims of `POLICY_SATISFIED`/an approved hash were trusted directly; `expiresAt`
+  unchecked; `approverIdentity` had no eligibility/authentication policy.
+- **Axis D (DecisionRecord → execution separation)**, thread `01a05051-1336-7db2-b056-55bac0bc6e81`:
+  verdict FAIL. 1 BLOCKER + 1 MAJOR. Findings: `ALLOW_ONCE` is a genuine positive authorization fact
+  (this ADR's own thesis language overclaimed otherwise) and V1C, once built, would already hold the
+  authorization side a future Gateway needs; the ADR's claim that a future Gateway "would construct a
+  `PublicationEnvelope`" established a new, unauthorized producer relationship into the existing
+  Publication Protocol (`CODEX_ROLES.md` names Claude as the sole producer, "never a worker").
 
-**Verifier** (`mcp__codex__codex`, fresh, `workspace-write`, independent, thread
-`01a04fd3-caf1-7770-9c50-2e8e88f2bd11`, never a continuation of the Reviewer's thread): `npm run
-context`, `context:pack` (valid, 0 errors), `test:project-consistency` (19/19),
-`check:project-consistency` (7/7), `test:decision-council-kernel` (18/18),
-`test:decision-council-simulator` (18/18), `test:run-bundle` (17/17), `git diff --check` (clean);
-directly read `## Status` → `Accepted`, cross-checked against the recorded seven-criteria findings;
-confirmed the ADR diff is Status-plus-one-note only (topology/quorum/FSM/hash-domain/candidate-vote-
-binding/`DecisionRecord` meaning untouched); confirmed Shadow Council and Decision Council
-kernel/simulator/schema paths zero-diff vs `main`; confirmed no provider/model call possible from
-this task's diff; confirmed the new ADR/state text explicitly denies execution/publication/merge/
-autonomy/Publication-Broker/council→action authority; confirmed `DECISIONS_LOG.md` is a pure EOF
-append. **15/16 checks PASS**; item 16 (remote PR #42/CI confirmation) could not run in the
-Verifier's own network-restricted sandbox — honestly flagged as `NOT VERIFIED — NETWORK LIMITATION`
-rather than assumed (it also caught a typo in Claude's own verification-prompt SHA, unrelated to
-the actual repository state).
+**Claude's adjudication (Round 1):** all findings accepted as valid; none required changing frozen
+ADR-0005 (no `PROTOCOL-BOUNDARY BLOCKER` was raised by any of the four). Fixes applied directly to
+the ADR: added a mandatory, privileged "Independent Re-Verification" step (`independentlyRederive`)
+that re-derives the canonical `DecisionRecord`/`TaskRecord` (hash-verified) and re-runs
+`evaluateAuthorization` itself rather than trusting a submitted envelope's fields; made
+`authorizationId` a deterministic function of `(decisionRequestId, recordHash)`; added a global
+reader-writer-lock fencing model for `stopEpoch` vs. consumption; added an `expiresAt` check inside
+the atomic consumption section; tied `AuthorizationGrant.boundStopEpoch` to the recomputed envelope
+at creation time; specified `approverIdentity` as captured non-spoofably by the admin path's own
+authentication mechanism, not caller-asserted; made the admin/client disjoint-type separation a
+normative V1C requirement; softened the "no capability grant of any kind" thesis to an honest
+comparison with the already-accepted Publication Broker source-implemented-not-activated precedent,
+and added a V1C exit-gate requirement (no consumer of the Ledger may exist until V1D is separately
+authorized); removed the unauthorized `PublicationEnvelope`-construction claim, replacing it with an
+explicit non-decision.
 
-**Claude's own direct confirmation of PR #42 merge-post CI** (this session has network access; run
-twice — once before branching, once again just before publication): `gh pr view 42 --json state,
-mergeCommit` returned `state: MERGED`, `mergeCommit.oid: f0fa9acddabc59de9e7ed6301496dc233e470d67`.
-`gh api repos/mihvernetwork/mihver/commits/f0fa9ac.../check-runs` returned 2 check runs
-("Publication Broker", "Project validation"), both `status: completed`, `conclusion: success`; the
-overall check-suite `status: completed`, `conclusion: success`. **PR #42 merge-post CI: SUCCESS**,
-independently confirmed twice.
+**Round 2 — one fresh, independent Codex Reviewer** (`mcp__codex__codex`, read-only, no memory of
+Round 1), thread `01a0505a-8463-79f1-8eca-53deb4edd9f1`, re-attacking the corrected design
+specifically to check whether the Round 1 fixes actually held: verdict BLOCKER. 1 BLOCKER + 1 MAJOR
++ 1 MINOR. Root finding: the fix's own concurrency gate was keyed on the submitted (untrusted)
+`authorizationId`, not the independently-derived canonical one — two concurrent submissions with
+different fabricated IDs could each acquire a different gate and both reach `ALLOW_ONCE` before
+either marked the ledger. Also: the grant-creation invariant was specified only in prose, without
+the same reader-writer-lock rigor consumption itself has; the field-mismatch ordering was described
+as a forensic/causal claim rather than a diagnostic-precedence one.
 
-**Human review is the next gate.** This task's local publication commit is prepared but not
-pushed; no PR is touched or created; no merge occurs; ADR-0005's Status is now **Accepted** but this
-does not, by itself, authorize execution integration, bounded autonomy, Publication Broker
-activation, or any council→tool/action path — all remain separate, explicitly human-authorized
-future work.
+**Claude's adjudication (Round 2):** all three findings accepted as valid. Fixed by splitting
+re-derivation into an ungated `resolveCanonicalRecord` (pure read, produces the trustworthy
+canonical `authorizationId`) that runs *before* the gate is acquired, with the gate itself now keyed
+on that canonical value, never the submission's claim; grant creation's rule now explicitly requires
+holding the shared/reader form of the same global `stopEpoch` lock across re-derivation, epoch
+comparison, and durable persistence; the field-mismatch ordering is now described as "diagnostic
+precedence," not causal classification.
+
+**Claude's own additional self-review**, applied directly (not a separate Codex round, given
+diminishing marginal value after two independent adversarial rounds; named here rather than hidden):
+found and fixed a dangling section cross-reference ("see 'Two Kinds of Staleness' below," a heading
+that was never actually written); found and fixed a correctness bug where the schema proposal listed
+`EXPIRED_BY_DRIFT`/`REVOKED_BY_STOP_EPOCH`/`CONSUMED` as legal values of the envelope's own
+`disposition` field, which would have broken the hash-immutability the whole design depends on
+(`envelopeHash` covers `disposition`; mutating it post-construction would silently invalidate any
+already-issued `AuthorizationGrant`) — corrected so `disposition` is fixed at construction to exactly
+two values, and the State Machine diagram is now explicitly described as the Ledger's own tracked
+lifecycle for an `authorizationId`, not a mutation of the immutable envelope; found and fixed a
+malformed bullet in "Alternatives Considered" (a missing bullet marker/title had silently merged two
+alternatives into one) and two literal duplicated bullets in "Open Questions" (an editing artifact
+from an earlier insertion).
+
+**Residual, honestly flagged**: after these self-driven fixes, no third independent Codex Reviewer
+round was run against the exact final text — two independent adversarial rounds already converged
+toward decreasing severity (Round 1: multiple BLOCKERs across all four axes; Round 2: one BLOCKER,
+found and fixed), and this is a design document, not executable code, so the marginal value of a
+third round was judged not to outweigh the cost. This is Claude's own technical judgment call, named
+explicitly rather than silently assumed away — a human reviewer may reasonably want one more pass
+before treating the design as final.
+
+**Verifier** (`mcp__codex__codex`, fresh, read-only, independent, thread
+`01a0505f-aba2-7723-aaa9-8690ff8c0225`, no design opinion, deterministic checks only): **11/11
+checks PASS.** `git diff main --check` clean; `git diff main -- docs/adr/ADR-0005-DECISION-COUNCIL-
+PROTOCOL.md` empty; `git diff main --` over the Decision Council kernel/simulator/schema/tests empty;
+Shadow Council exercise + finalized run bundle
+(`.project/run-bundles/shadow-council-v1a-cli-harness-remediated/`) empty; `PUBLICATION_BROKER.md`/
+`CODEX_ROLES.md`/`AGENT_POLICY.md`/`publication-builder.mjs`/`tools/publication-broker/` all empty;
+only 4 Markdown files changed/added (`docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md` new;
+`.project/CURRENT_TASK.md`, `.project/PROJECT_STATE.md`, `.project/CONTEXT_INDEX.md` modified) — no
+executable, script, or schema file added anywhere; direct text inspection confirmed no runnable-code
+claim or execution instruction anywhere in the ADR; `npm run check:project-consistency` 7/7 PASS;
+`npm run context` confirmed clean bootstrap-visible state matching this record.
+
+**Human review is the next gate.** This task's local publication commit (once prepared) is not
+pushed; no PR is touched or created; no merge occurs. Nothing in this task activates execution,
+bounded autonomy, Publication Broker provisioning, or any council→tool/action path — all remain
+separate, explicitly human-authorized future work, exactly as the ADR's own "Non-Goals" states.
