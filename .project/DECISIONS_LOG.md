@@ -286,3 +286,27 @@ Entries above this line are unmodified, per this log's append-only policy.
   Council rerun, no provider calls, no V1C implementation, no human approval performed. The
   finalized Run Bundle under `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/`
   was not modified. — `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
+- 2026-08-30 — `AUTHORIZATION-LEDGER-V1C-R3-ARCHITECTURE-DECISION-V6`: real 3-seat Shadow Council R3
+  architecture exercise on `main @ f004daa5`, one frozen candidate (`candidateHash
+  sha256:c5d16bea3806ff0d10b7e092f8d2240d14d68b9461aeb44c206bf7fcb2fafb90`, `councilEpochId
+  authorization-ledger-v1c-r3-arch-decision-6-epoch-1`). `rotationOrdinal = 5` was fixed before any
+  provider call and the frozen ADR-0005 kernel derived the proposer from
+  `CouncilConfig.seats[5 % 3]` — **`seat-google`**, its first time proposing; no seat was
+  hard-coded and no durable cross-run rotation state is claimed to exist. The candidate materially
+  fixes V5's `MATERIAL_ARCHITECTURE_BLOCKER` via a durable privileged `admin_operation_journal`
+  keyed `(authenticated_peer_uid, operation_kind, admin_operation_id)`, a domain-separated
+  `requestHash`, and an expected-epoch CAS, all committed atomically with the epoch write and audit
+  append — both lost-ack traces provably cannot reach `N+2`. **Votes 2/3** (`seat-openai` REJECT,
+  `seat-anthropic` APPROVE, `seat-google` APPROVE); R3 requires exactly 3/3, so the kernel returned
+  **`NO_QUORUM`** (`reasonCode R3_INSUFFICIENT_APPROVALS`, `recordHash
+  sha256:67dc108473f16037fd7dcf3f73f6fe6293e816d197f8930847a75478e64b92f5`). The REJECT is valid and
+  evidence-grounded: the candidate's `yesNoMatrix` answers 15 of the 17 required questions,
+  collapsing the three distinct "CAN CODEX?" questions into one. This run is also the first real
+  exercise to satisfy the PR #53 durability gate — exactly one terminal `DecisionRecord` durably
+  persisted and `EvidenceManifest`-bound before `FINALIZED` — closing V5's `EVIDENCE_BLOCKER` in
+  practice. Fresh read-only Codex Verifier: **`DECISION_EVIDENCE_VALID`** (14/14, both traces PASS).
+  `candidateHash sha256:c5d16bea...b2fafb90` is **permanently closed for R3**; any future attempt
+  needs a materially new candidate. No retry, no second candidate, no V1C implementation, no
+  execution or publication authority, no human approval. —
+  `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v6/`, `.project/CURRENT_TASK.md`,
+  `.project/REVIEW_STATE.md`, `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
