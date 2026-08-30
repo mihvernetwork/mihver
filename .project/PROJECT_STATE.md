@@ -108,6 +108,21 @@ lost rationale was not fabricated. This modifies `scripts/dev/shadow-council-pac
 `scripts/dev/shadow-council-harness.mjs` (previously noted below as "frozen" for the V1A harness's
 own protocol-exercise purpose) only to add this advisory evidence layer — the underlying seat
 cohort/attestation/CLI-transport modules and the R1/R2 exercise record remain unchanged.
+Shadow Council invocation-failure evidence V1 (`ShadowSeatInvocationFailure` — a Shadow-Council-only
+advisory artifact, plus synchronous harness hooks, persisting durable per-stage evidence for a real
+seat invocation — packet built, attestation admitted/rejected, assessment built, or a classified
+failure — incrementally to an OPEN Run Bundle as it happens, not only after a successful exercise
+return; zero effect on ADR-0005 quorum/`DecisionRecord`, frozen kernel/schema/`CouncilQuorumProof`/
+Authorization Loop untouched): IMPLEMENTED — owner: `scripts/dev/shadow-council-invocation-failure.mjs`,
+`scripts/dev/shadow-council-run-bundle-evidence.mjs`, `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`'s
+"Durable invocation-failure evidence" / "Exercise 4" sections. Added after a real R3 architecture
+exercise attempt (`authorization-ledger-v1c-r3-arch-decision-2`) hit `MALFORMED_SEAT_OUTPUT`
+mid-voting and lost all forensic evidence because the prior evidence writer only persisted data after
+a fully successful return; that failed attempt's outcome (`COUNCIL_EVIDENCE_BLOCKER`) is unchanged
+and not reinterpreted, and which seat/stage/reason caused it is not reconstructed — that information
+was exactly what was lost. This modifies `scripts/dev/shadow-council-harness.mjs` again (see the V1B
+entry above for the same "frozen for protocol-exercise purposes, extended only for advisory evidence"
+caveat) only to add hooks; the V1C architecture Council decision itself was not rerun by this task.
 Shadow Council V1A advisory CLI harness (three independently-spawned provider CLI child processes —
 OpenAI/Anthropic/Google — acting as advisory-only council seats feeding the unmodified Decision
 Council V1A kernel; no direct provider API/SDK integration): IMPLEMENTED and frozen — owner:

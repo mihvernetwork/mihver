@@ -171,6 +171,20 @@ Authorization-Ledger-V1C-architecture exercise also remains historical: it ended
 lost. This document does not invent or imply what that rationale was. That evidence gap is exactly
 why durable `ShadowVoteAssessment` evidence and Run Bundle binding were added.
 
+## Incremental failure-path evidence
+
+PR #47 added durable rationale evidence. A subsequent real V1C R3 exercise attempt (V2) hit
+`MALFORMED_SEAT_OUTPUT` and exposed that failure-path evidence was not durable.
+`SHADOW-COUNCIL-FAILURE-EVIDENCE-V1` therefore adds durable, incrementally written
+`ShadowSeatInvocationFailure` evidence, together with the packet, attestation, and assessment
+artifacts completed before a failure, so a future failed exercise is forensically diagnosable. The
+failed V1C attempt is not reconstructed or reinterpreted: the lost evidence does not establish
+which seat failed or why, and this record does not invent either fact.
+
+Incremental writes leave the Run Bundle `OPEN` unless the caller explicitly requests finalization.
+An OPEN bundle can accept later diagnostic evidence, but its `TaskRecord` is immutable: an initial
+`IN_PROGRESS` disposition cannot later be changed to `BLOCKED` in the same bundle.
+
 ## Exercise 3 — `shadow-vote-rationale-smoke-1` (R1 smoke test, all 3 seats vote, rationale contract)
 
 Real, bounded smoke exercise for `SHADOW-COUNCIL-VOTE-RATIONALE-V1B`, proving the new
@@ -201,6 +215,55 @@ substitution.
   those files with no live process required — the exact gap this task exists to close.
 - This exercise's success criterion was durable `{voteValue, rationale, assessmentHash,
   attestation/output binding}` evidence per seat, not a particular vote outcome.
+
+## Durable invocation-failure evidence (`SHADOW-COUNCIL-FAILURE-EVIDENCE-V1`)
+
+PR #47 (above) landed rationale evidence for successful votes. A subsequent real R3 V1C-architecture
+exercise attempt (`authorization-ledger-v1c-r3-arch-decision-2`, V2) then hit `MALFORMED_SEAT_OUTPUT`
+mid-voting when a real seat's response didn't parse into `{voteValue, rationale}` — and because the
+evidence writer only persisted data after the whole exercise returned successfully, that entire
+exercise's forensic evidence (which seat failed, at what stage, why structurally) was silently lost.
+**That failed exercise attempt is not reconstructed or reinterpreted here** — this document does not
+claim to know which seat failed, at what stage, or why; that is exactly the information that was
+lost, before this capability existed.
+
+This task (`SHADOW-COUNCIL-FAILURE-EVIDENCE-V1`) adds a Shadow-Council-only, advisory
+`ShadowSeatInvocationFailure` artifact (`scripts/dev/shadow-council-invocation-failure.mjs`) plus
+synchronous harness hooks (`onPacketBuilt`/`onAttestationAdmitted`/`onAttestationRejected`/
+`onAssessmentBuilt`/`onInvocationFailure`) so every stage of a real seat invocation — packet built,
+attestation admitted or rejected, assessment built, or a classified failure (`SPAWN`,
+`INVOCATION_CONFIG`, `PROVIDER_ENVELOPE_PARSE`, `ATTESTATION_BUILD`, `ADMISSION`,
+`SHADOW_RESPONSE_JSON_PARSE`, `SHADOW_RESPONSE_SHAPE`, `ASSESSMENT_VALIDATION`, `VOTE_DERIVATION`,
+`KERNEL_EVENT`, or `RUN_POSTCONDITION`) — is durably written to a Run Bundle as it happens, not only
+after a successful return. A failed exercise's Run Bundle stays `OPEN` (never finalized) and preserves
+every already-completed seat's evidence up to the point of failure; no `DecisionRecord` is ever
+fabricated for an incomplete/failed exercise. Raw provider stdout/stderr text is never persisted —
+only hashes and byte lengths — matching the existing rationale-evidence discipline of never
+persisting hidden reasoning or arbitrary raw model output.
+
+### Exercise 4 — `shadow-failure-evidence-smoke-1` (R1 smoke test, durable invocation journal)
+
+Real, bounded smoke exercise proving the new durable per-stage evidence journal works end-to-end on
+NORMAL, successful responses from all three real CLI adapters (the negative/failure path is proven
+deterministically with injected fixtures in the test suite — this smoke exercise does not
+deliberately provoke a provider to misbehave).
+
+- Base branch: `main` @ `1803198...` (`feat/shadow-council-failure-evidence-v1`)
+- Council epoch: `shadow-council-failure-evidence-smoke-epoch-1`
+- `repositoryHead`: `18031989a895a6a85b1b34a9867247a680da9176`
+- Decision question (advisory-only, harmless synthetic fixture): whether MIHVER's internal Markdown
+  style guidance should prefer the Oxford comma in prose lists.
+- Proposer (`rotationOrdinal: 0`): `seat-openai`
+- `candidateHash`: `sha256:8be2de7d8e5dbfc5402f8b3f1e0ef329f847db9cf5b9e7ac56350109c12b38f5`
+- Votes: `seat-openai` APPROVE, `seat-anthropic` APPROVE, `seat-google` APPROVE — `DECIDED` /
+  `COUNCIL_APPROVED`, `recordHash`: `sha256:4c5ddc5171cc1383f6f60e4b4832e47d762173ed75aa059dde7f3a8f3f0c22c5`
+- Every real seat call produced durable, per-hook evidence exactly as designed: 11 evidence entries
+  total (4 packets and 4 attestations — the proposer seat has both a proposal and a vote
+  packet/attestation — plus 3 vote assessments), all written incrementally and finalized into a
+  Run Bundle at `.project/run-bundles/shadow-council-failure-evidence-v1-smoke/`. No invocation
+  failure occurred, so no `ShadowSeatInvocationFailure` evidence was produced by this exercise — the
+  negative path remains proven only by the deterministic test suite, per this task's own instruction
+  not to deliberately prompt a provider to misbehave.
 
 ## Advisory-only confirmation
 

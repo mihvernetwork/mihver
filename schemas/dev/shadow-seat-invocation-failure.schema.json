@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/shadow-seat-invocation-failure.schema.json",
+  "title": "ShadowSeatInvocationFailure v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["failureHash", "decisionRequestId", "councilEpochId", "seatId", "provider", "requestedModelId", "invocationRole", "candidateHash", "stage", "errorCode", "details", "packetHash", "invocationConfigHash", "stdoutHash", "stderrHash", "stdoutByteLength", "stderrByteLength", "outputHash", "attestationHash", "assessmentFailure"],
+  "properties": {
+    "failureHash": { "$ref": "#/$defs/hash" },
+    "decisionRequestId": { "$ref": "#/$defs/id" },
+    "councilEpochId": { "$ref": "#/$defs/id" },
+    "seatId": { "$ref": "#/$defs/id" },
+    "provider": { "$ref": "#/$defs/id" },
+    "requestedModelId": { "$ref": "#/$defs/id" },
+    "invocationRole": { "enum": ["PROPOSER", "VOTER"] },
+    "candidateHash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "stage": { "enum": ["INVOCATION_CONFIG", "SPAWN", "PROVIDER_ENVELOPE_PARSE", "ATTESTATION_BUILD", "ADMISSION", "SHADOW_RESPONSE_JSON_PARSE", "SHADOW_RESPONSE_SHAPE", "ASSESSMENT_VALIDATION", "VOTE_DERIVATION", "KERNEL_EVENT", "RUN_POSTCONDITION"] },
+    "errorCode": { "type": "string", "minLength": 1 },
+    "details": { "type": "object" },
+    "packetHash": { "$ref": "#/$defs/hashOrNull" },
+    "invocationConfigHash": { "$ref": "#/$defs/hashOrNull" },
+    "stdoutHash": { "$ref": "#/$defs/hashOrNull" },
+    "stderrHash": { "$ref": "#/$defs/hashOrNull" },
+    "stdoutByteLength": { "$ref": "#/$defs/nonNegativeIntegerOrNull" },
+    "stderrByteLength": { "$ref": "#/$defs/nonNegativeIntegerOrNull" },
+    "outputHash": { "$ref": "#/$defs/hashOrNull" },
+    "attestationHash": { "$ref": "#/$defs/hashOrNull" },
+    "assessmentFailure": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["errorCode", "details"],
+          "properties": {
+            "errorCode": { "type": "string", "minLength": 1 },
+            "details": { "type": "object" }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "invocationRole": { "const": "PROPOSER" } }, "required": ["invocationRole"] },
+      "then": { "properties": { "candidateHash": { "type": "null" } } },
+      "else": { "properties": { "candidateHash": { "$ref": "#/$defs/hash" } } }
+    }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "hashOrNull": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "id": { "type": "string", "minLength": 1 },
+    "nonNegativeIntegerOrNull": { "anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }] }
+  }
+}

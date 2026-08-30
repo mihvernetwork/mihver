@@ -15,6 +15,53 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
+Task: SHADOW-COUNCIL-FAILURE-EVIDENCE-V1
+Branch: `feat/shadow-council-failure-evidence-v1`
+Target: main
+Publication:
+- Local Publication Builder authorized: **yes**, per this task's own "if all gates pass, create
+  exactly one local publication commit" instruction — one local commit, subject
+  `feat: persist shadow council failure evidence`. No push, no PR, no merge.
+- remote publication: human manual fallback only (unchanged)
+
+**Phase 0 Scout** (`mcp__codex__codex`, read-only): mapped every throw site in the real Shadow
+Council call path and confirmed a clean advisory sidecar fully satisfies the task with zero changes
+to ADR-0005/`CouncilQuorumProof`/Authorization Loop, and that Run Bundle's existing OPEN/incremental
+model already honestly represents a partial/failed exercise — no
+`RUN_BUNDLE_FAILURE_REPRESENTABILITY_BLOCKER`.
+
+**Implementation** (3 sequential workstreams, 1 remediation round): A (`ShadowSeatInvocationFailure`
+artifact), B (harness hooks classifying every throw site precisely, public API unchanged), C
+(`runShadowExerciseWithDurableEvidence` — incremental, synchronous, per-stage Run Bundle writes).
+
+**Four-axis adversarial review**: Axis A (protocol contamination) and Axis D (output safety) both
+`APPROVED_FOR_INTEGRATION` with no changes. Axis B (evidence durability) found and fixed: a failed
+exercise could still be finalized if the caller passed `finalize:true`; a throwing caller-supplied
+`onInvocationFailure` hook could mask the original harness error. Axis C (forensic usefulness) found
+and fixed: missing `provider`/`requestedModelId`; indistinguishable `SHADOW_RESPONSE_SHAPE` details;
+an unjoinable pre-admission attestation reference; `INVOCATION_CONFIG` failures misclassified as
+`SPAWN`; available hash/length metadata nulled out at `FINALIZE`/`KERNEL_EVENT`/`RUN_POSTCONDITION`.
+
+No finding at any point required changing ADR-0005/`CouncilQuorumProof`/Authorization Loop semantics
+— `PROTOCOL_SEMANTICS_BLOCKER` was never triggered.
+
+**Final Verifier**: confirmed ADR-0005/kernel/schema, `CouncilQuorumProof`/schema, Authorization Loop,
+`shadow-council-vote-assessment.mjs`, and `shadow-council-packet.mjs`/`shadow-council-cli-transport.mjs`
+all byte-identical to `main`; rationale-invariance test unmodified/passing; failed-exercise durable
+evidence proven; no execution/publication authority; `git diff --check` clean. Sandbox-only `EPERM`
+failures independently re-confirmed green in this session's own shell.
+
+**Real bounded smoke exercise** (`shadow-failure-evidence-smoke-1`, R1, all 3 real seats, no
+misbehavior deliberately provoked): proved the durable per-stage journal on the normal success path —
+11 evidence entries written incrementally, bundle correctly finalized after a genuine 3/3
+`COUNCIL_APPROVED` result. The negative/failure path remains proven only by the deterministic test
+suite. The historical `authorization-ledger-v1c-r3-arch-decision-2` `COUNCIL_EVIDENCE_BLOCKER` was
+not rerun, reinterpreted, or retroactively explained.
+
+---
+
+**Prior task — historical, preserved as-is, not rewritten:**
+
 Task: SHADOW-COUNCIL-VOTE-RATIONALE-V1B
 Branch: `feat/shadow-council-vote-rationale-v1b`
 Target: main
