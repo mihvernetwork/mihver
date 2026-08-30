@@ -148,6 +148,60 @@ not merely trusted from the harness's own printed summary. A grep for credential
   results, and the final per-criterion adjudication (criterion 5 depends on the Run Bundle actually
   existing, which this finalization task produces after this document was first drafted).
 
+## Advisory rationale evidence and Run Bundle integration
+
+`AgentVote` remains the normative ADR-0005 quorum artifact, completely unchanged. A
+`ShadowVoteAssessment` and its rationale are Shadow-Council-only **ADVISORY** evidence. They never
+influence quorum, `candidateHash`, `DecisionRecord.recordHash`, risk classification, or
+authorization eligibility. This separation is mechanically demonstrated by the harness tests: two
+runs with identical votes and different rationale text produce byte-identical `DecisionRecord`s.
+
+The rationale is a concise decision-grounds string, explicitly **not chain-of-thought**. A caller
+may persist each assessment as canonical JSON under a Run Bundle's `evidence/` directory and bind
+the file through an `EvidenceManifest` entry with `kind: "ARTIFACT"`, `action: "present"`, `path`,
+`sourcePath`, and the raw-file-byte `contentHash`. That content hash is distinct from the
+domain-separated `assessmentHash`. Human operators may inspect this persisted advisory evidence
+after the fact to diagnose a `NO_QUORUM`, `REJECT`, or `ABSTAIN` outcome; inspection does not give
+the rationale any normative or authorization effect.
+
+The two real R1/R2 exercises recorded above predate this capability and remain historical exactly
+as originally recorded; their rationales are not retroactively reconstructed. The later real R3
+Authorization-Ledger-V1C-architecture exercise also remains historical: it ended `NO_QUORUM`, and
+`seat-openai`'s rationale for its `REJECT` vote was never durably recorded and is irrecoverably
+lost. This document does not invent or imply what that rationale was. That evidence gap is exactly
+why durable `ShadowVoteAssessment` evidence and Run Bundle binding were added.
+
+## Exercise 3 — `shadow-vote-rationale-smoke-1` (R1 smoke test, all 3 seats vote, rationale contract)
+
+Real, bounded smoke exercise for `SHADOW-COUNCIL-VOTE-RATIONALE-V1B`, proving the new
+`{voteValue, rationale}` reviewer contract works end-to-end with all three real CLI adapters and
+produces durable rationale evidence — not a V1C architecture retry, no semantic retry, no provider
+substitution.
+
+- Base branch: `main` @ `2c87a5780e81e832d9074dd2b74401b8a0caf2e6`
+- Task branch: `feat/shadow-council-vote-rationale-v1b`
+- Council epoch: `shadow-council-vote-rationale-smoke-epoch-1`
+- `contextHash`: `sha256:9170696138d2126f8048ff8a22b44dd4256c1c36a55161a5fed7425c51d17f72`
+- `repositoryHead`: `2c87a5780e81e832d9074dd2b74401b8a0caf2e6`
+- Decision question (advisory-only, harmless synthetic fixture, explicitly framed as having zero
+  effect on any real MIHVER document/merge/repository action): whether MIHVER's internal Markdown
+  style guidance should prefer sentence-case or title-case headings.
+- Proposer (`rotationOrdinal: 0`, deterministic): `seat-openai`
+- `candidateHash`: `sha256:8a4710dc1b3fe1b5161ae25d5fdb0a299df553c2f33a2eb896e05a2c2c905cbe`
+- Votes: `seat-openai` APPROVE, `seat-anthropic` APPROVE, `seat-google` APPROVE — `DECIDED` /
+  `COUNCIL_APPROVED`, `recordHash`: `sha256:c6e7d8252da9a08a17c0f33643e533aec881a85cc9ff18fd37ac265648e3b1d9`
+- Every one of the three real reviewer calls returned a valid `{voteValue, rationale}` JSON payload
+  on the first attempt — no provider violated the new contract, so no
+  `PROVIDER_RESPONSE_CONTRACT_BLOCKER` occurred. Each seat's `ShadowVoteAssessment` (concise,
+  on-topic decision grounds, none resembling chain-of-thought) was durably persisted as canonical
+  JSON evidence and bound into a finalized Run Bundle at
+  `.project/run-bundles/shadow-council-vote-rationale-v1b-smoke/` (`evidence-manifest.json`,
+  `run-manifest.json`, `task-record.json`, plus one evidence file per seat under `evidence/`) via
+  `runShadowExerciseWithEvidence`. The persisted rationale for each seat is readable directly from
+  those files with no live process required — the exact gap this task exists to close.
+- This exercise's success criterion was durable `{voteValue, rationale, assessmentHash,
+  attestation/output binding}` evidence per seat, not a particular vote outcome.
+
 ## Advisory-only confirmation
 
 Nothing in this exercise, this harness, or its two `DecisionRecord`s grants execution, publication,

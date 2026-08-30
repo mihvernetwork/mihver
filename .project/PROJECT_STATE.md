@@ -95,6 +95,19 @@ capability of any kind): IMPLEMENTED — owner: `scripts/dev/authorization-binde
 execution authority and does not mark it Accepted). Demonstrated via
 `scripts/dev/authorization-loop-demonstration.mjs`; evidence at
 `.project/run-bundles/authorization-loop-v1a-demonstration/`.
+Shadow Council vote-rationale evidence V1B (`ShadowVoteAssessment` — a Shadow-Council-only advisory
+`{voteValue, rationale}` sidecar added on top of the frozen Shadow Council V1A harness/packet
+modules, so a future REJECT/ABSTAIN is durably diagnosable; rationale has zero effect on ADR-0005
+quorum/`DecisionRecord`/`recordHash`, proven by test; frozen kernel/schema untouched): IMPLEMENTED —
+owner: `scripts/dev/shadow-council-vote-assessment.mjs`, `scripts/dev/shadow-council-run-bundle-evidence.mjs`,
+`docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`'s "Advisory rationale evidence and Run Bundle
+integration" / "Exercise 3" sections. Added after a real R3 exercise
+(`AUTHORIZATION-LEDGER-V1C-R3-ARCHITECTURE-DECISION`, `NO_QUORUM`) exposed that a rejecting seat's
+rationale was irrecoverably lost; the historical `NO_QUORUM` exercise was not reinterpreted and the
+lost rationale was not fabricated. This modifies `scripts/dev/shadow-council-packet.mjs` and
+`scripts/dev/shadow-council-harness.mjs` (previously noted below as "frozen" for the V1A harness's
+own protocol-exercise purpose) only to add this advisory evidence layer — the underlying seat
+cohort/attestation/CLI-transport modules and the R1/R2 exercise record remain unchanged.
 Shadow Council V1A advisory CLI harness (three independently-spawned provider CLI child processes —
 OpenAI/Anthropic/Google — acting as advisory-only council seats feeding the unmodified Decision
 Council V1A kernel; no direct provider API/SDK integration): IMPLEMENTED and frozen — owner:

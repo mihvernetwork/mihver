@@ -15,6 +15,63 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
+Task: SHADOW-COUNCIL-VOTE-RATIONALE-V1B
+Branch: `feat/shadow-council-vote-rationale-v1b`
+Target: main
+Publication:
+- Local Publication Builder authorized: **yes**, per this task's own "if all gates pass, create
+  exactly one local publication commit" instruction — one local commit, subject
+  `feat: persist shadow council vote rationale`. No push, no PR, no merge.
+- remote publication: human manual fallback only (unchanged)
+
+**Phase 0 Scout** (`mcp__codex__codex`, read-only): confirmed a clean Shadow-Council-only sidecar
+(zero changes to ADR-0005's frozen `AgentVote`/`DecisionRecord`/kernel/schema) fully satisfies every
+task requirement — no `PROTOCOL_SEMANTICS_BLOCKER`.
+
+**Implementation** (3 workstreams, disjoint files, workspace-write, 1 remediation round after
+review): A (packet contract + `ShadowVoteAssessment` module), B (harness wiring: assessment
+construction + `deriveAgentVote` projection into the frozen `AgentVote`), C (Run Bundle evidence
+persistence wrapper `runShadowExerciseWithEvidence`).
+
+**Four-axis adversarial review** (fresh, read-only Reviewers):
+- Axis A (protocol contamination): `APPROVED_FOR_INTEGRATION`.
+- Axis B (evidence integrity): found `deriveAgentVote` didn't verify `assessmentHash` before
+  projecting — a tampered assessment could still yield a kernel-valid vote. **Fixed**: verification
+  now happens first, throwing `ASSESSMENT_HASH_MISMATCH` on mismatch. This is a hardening fix
+  entirely inside the new sidecar module; it does not touch ADR-0005.
+- Axis C (forensic usability): found the actual point of the task wasn't wired — the evidence-writer
+  helper existed but nothing in the real exercise path called it, so rationale would still be lost
+  by default. **Fixed** by workstream C's wrapper actually persisting every assessment.
+- Axis D (prompt/output safety): minor wording ("hidden reasoning") and test-coverage
+  (UTF-8-byte-limit case) gaps found and fixed.
+
+**Exact-final Reviewer**: `READY_FOR_FINAL_VERIFICATION` after one more test-coverage fix (the
+end-to-end durable-evidence test only covered APPROVE; extended to prove REJECT/ABSTAIN rationale
+survives a real, finalized Run Bundle read back from disk).
+
+No finding at any point required changing ADR-0005 quorum/`AgentVote`/`DecisionRecord` semantics —
+`PROTOCOL_SEMANTICS_BLOCKER` was never triggered.
+
+**Final Verifier**: confirmed ADR-0005/kernel/schema, `council-quorum-proof.mjs`/schema, the
+Authorization Loop (Binder/Ledger/Loop), and `run-bundle.mjs` all byte-identical to `main`; rationale
+invariance proven; fail-closed malformed-rationale tests present and green; no execution/publication
+authority; no real provider calls during deterministic tests; `git diff --check` clean. Two suites'
+sandbox-only `EPERM` failures were independently re-run and confirmed green in this session's own
+shell.
+
+**Real bounded smoke exercise** (`shadow-vote-rationale-smoke-1`, R1, 1 proposal + 3 real votes, no
+semantic retry, no provider substitution): every real provider satisfied the new
+`{voteValue,rationale}` contract on the first attempt (no `PROVIDER_RESPONSE_CONTRACT_BLOCKER`); 3/3
+APPROVE on a harmless synthetic question; every seat's rationale durably persisted and bound into a
+finalized Run Bundle at `.project/run-bundles/shadow-council-vote-rationale-v1b-smoke/`, read back
+from disk with no live process required. See `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`'s new
+"Exercise 3" section — the historical R3 `NO_QUORUM` exercise recorded there was not reinterpreted
+and `seat-openai`'s lost rationale was not fabricated.
+
+---
+
+**Prior task — historical, preserved as-is, not rewritten:**
+
 Task: AUTHORIZATION-LOOP-FOUNDATION-V1A (resumed)
 Branch: `feat/authorization-loop-foundation-v1a`
 Target: main

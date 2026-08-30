@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/shadow-vote-assessment.schema.json",
+  "title": "ShadowVoteAssessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["assessmentHash", "decisionRequestId", "candidateHash", "seatId", "councilEpochId", "packetHash", "outputHash", "attestationHash", "voteValue", "rationale"],
+  "properties": {
+    "assessmentHash": { "$ref": "#/$defs/hash" },
+    "decisionRequestId": { "$ref": "#/$defs/id" },
+    "candidateHash": { "$ref": "#/$defs/hash" },
+    "seatId": { "$ref": "#/$defs/id" },
+    "councilEpochId": { "$ref": "#/$defs/id" },
+    "packetHash": { "$ref": "#/$defs/hash" },
+    "outputHash": { "$ref": "#/$defs/hash" },
+    "attestationHash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "voteValue": { "enum": ["APPROVE", "REJECT", "ABSTAIN"] },
+    "rationale": { "type": "string", "minLength": 1, "maxLength": 1200, "pattern": "\\S" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "id": { "type": "string", "minLength": 1 }
+  }
+}
