@@ -15,77 +15,101 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: authorization-ledger-v1c-r3-arch-decision-6
-Branch: `decision/authorization-ledger-v1c-r3-architecture-v6`
+Task: authorization-ledger-v1c-r3-arch-decision-7
+Branch: `decision/authorization-ledger-v1c-r3-architecture-v7`
 Target: main
 Publication:
-- Local Publication Builder authorized: **yes**, per this task's own "if DECISION_EVIDENCE_VALID,
-  create exactly one local evidence commit" instruction — subject
-  `chore: record v1c r3 architecture decision v6`. No push, no PR, no merge.
+- Local Publication Builder authorized: **yes**, per this task's own "if evidence is valid, create
+  exactly one local evidence commit" instruction — subject
+  `chore: record v1c r3 architecture decision v7`. No push, no PR, no merge.
 - remote publication: human manual fallback only (unchanged)
 
-**Real 3-seat Shadow Council R3 exercise** for `authorization-ledger-v1c-r3-arch-decision-6`, base
-`main @ f004daa516e87e9e11dfe87023deb4e0302d3e47`. Exactly one frozen candidate
-(`candidateHash sha256:c5d16bea3806ff0d10b7e092f8d2240d14d68b9461aeb44c206bf7fcb2fafb90`),
-`councilEpochId authorization-ledger-v1c-r3-arch-decision-6-epoch-1`,
-`contextHash sha256:690c3a14648c7f30705de901aa982eefc077cba1f75130f7420b87437e8f49da`.
+**Real 3-seat Shadow Council R3 exercise** for `authorization-ledger-v1c-r3-arch-decision-7`, base
+`main @ 2e42febe088e5e6bdff61431cd964dd2a3f2fcd8`. Exactly one frozen candidate
+(`candidateHash sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`),
+`councilEpochId authorization-ledger-v1c-r3-arch-decision-7-epoch-1`,
+`contextHash sha256:7999f772b587226da8637577de934985076bd4404a90c5aa17ce90685c4f1452`.
 
-**Proposer rotation.** No durable cross-run rotation state exists — the V5 audit established that,
-and this task does not invent one. `rotationOrdinal = 5` was fixed as a caller-controlled
-`DecisionRequest` parameter before any provider invocation, under the task-local deterministic rule
-"architecture decision version N → `rotationOrdinal = N - 1`". No seat was hard-coded: the frozen
-ADR-0005 kernel computed `expectedProposerSeatId = CouncilConfig.seats[5 % 3].seatId`. Seat ordering
-`[0] seat-openai, [1] seat-anthropic, [2] seat-google` ⇒ kernel-derived proposer **`seat-google`**
-— the first exercise in which `seat-google` has proposed.
+**Proposer rotation.** No durable cross-run rotation state exists; this task does not invent one.
+`rotationOrdinal = 6` was fixed as a caller-controlled `DecisionRequest` parameter before any
+provider invocation, under the same task-local deterministic rule "architecture decision version N →
+`rotationOrdinal = N - 1`". No seat was hard-coded: the frozen ADR-0005 kernel computed
+`expectedProposerSeatId = CouncilConfig.seats[6 % 3].seatId`. Seat ordering `[0] seat-openai,
+[1] seat-anthropic, [2] seat-google` ⇒ kernel-derived proposer **`seat-openai`**.
 
-**Candidate materially fixes V5's `MATERIAL_ARCHITECTURE_BLOCKER`.** Durable privileged
-`admin_operation_journal` keyed `(authenticated_peer_uid, operation_kind, admin_operation_id)`;
-domain-separated (`MIHVER_V1C_ADMIN_OP_V1`) `requestHash` binding peer UID + operation kind +
-`adminOperationId` + `expectedStopEpoch`; epoch write + journal insert + audit append committed
-atomically inside one `BEGIN IMMEDIATE`. Dual protection discharges both required lost-ack traces:
-same-ID retry replays the stored `N+1` without a second mutation; a new operation ID carrying a
-stale `expectedStopEpoch = N` fails closed with `STALE_EXPECTED_STOP_EPOCH`. No path reaches `N+2`.
-Same-ID/different-payload fails closed with `IDEMPOTENCY_KEY_REUSE`. V5's accepted baseline
-(safe-integer `stopEpoch` domain `0..9007199254740991` with SQLite `CHECK`, exact-UID `SO_PEERCRED`
-authorization, trusted `CouncilEpochRegistry`, exact-bound R3 grant, consume-once, zero production
-effect consumers, no Execution Gateway) is preserved intact.
+**V7 is a narrow successor to V6, not a redesign.** V6's substantive architecture was sound and is
+reproduced unchanged; V6 failed R3 quorum for exactly one reason, and V7's sole material revision
+addresses exactly that reason. V6's `yesNoMatrix` answered 15 of the 17 required questions,
+collapsing the distinct Claude/Codex questions into shared keys. V7's proposer packet therefore
+carried a hard structural contract — `yesNoMatrix` MUST be an array of exactly 17 objects, ids
+`Q01`..`Q17` each used once, `question` reproduced verbatim, `answer` exactly `NO`, with
+`Q01`/`Q02`, `Q03`/`Q04` and `Q08`/`Q09` named as deliberately near-identical CLAUDE-vs-CODEX pairs
+requiring two separate entries each. The frozen candidate answers **17/17**.
 
-**Votes: 2/3 — `seat-openai` REJECT, `seat-anthropic` APPROVE, `seat-google` APPROVE.** R3 requires
-exactly 3/3, so the frozen kernel returned `NO_QUORUM` / `NO_QUORUM`,
-`reasonCode R3_INSUFFICIENT_APPROVALS`, `quorumDetail {ruleset: R3, approvals: 2}`,
-`recordHash sha256:67dc108473f16037fd7dcf3f73f6fe6293e816d197f8930847a75478e64b92f5`.
+**Two mechanical matrix gates, both before any vote.** A *pre-provider* gate asserted, before the
+proposer was invoked at all, that each of the 17 canonical questions appears in the constructed
+decision question/evidence exactly once (17/17 PASS). A *post-freeze, pre-vote* gate was interposed
+on the kernel's `FREEZE_CANDIDATE` transition via `applyEventImpl`, so a non-conforming frozen
+candidate would have returned `CANDIDATE_CONSTRUCTION_BLOCKER` and durable failure evidence without
+spending a single voter invocation. The frozen candidate passed: 17 entries, ids `Q01`..`Q17` each
+once, all `question` strings verbatim and pairwise distinct, all 17 answers exactly `NO`, no
+collapsed Claude/Codex entry, no duplicate standing in for a missing entry. The frozen candidate was
+never edited, repaired, or re-prompted.
 
-`seat-openai`'s REJECT is valid and evidence-grounded, not a harness or contract failure: the packet
-required seventeen explicitly answered YES/NO matrix questions; the candidate's `yesNoMatrix`
-carries fifteen keys, collapsing the three distinct "CAN CODEX?" questions (grant issuance, ADMIN
-UID-policy modification, `stopEpoch` increment) into one ambiguous key and omitting two required
-answers. `seat-anthropic` independently identified the same collapse, judging it cosmetic rather
-than a trust-boundary defect, and voted APPROVE. Both readings are recorded; the kernel's outcome
-stands on the votes, not on adjudicating between them. The rationale is advisory evidence only and
-had no effect on quorum, `candidateHash`, or `recordHash`.
+**Architecture preserved from V6.** Dedicated `authledgerd` daemon and `mihver-ledger` OS identity;
+separate ADMIN/CLIENT Unix-domain sockets with permissions as reachability only; `SO_PEERCRED` UID
+as authenticated identity; root-owned exact-UID allowlist as authorization; privileged SQLite/WAL
+state; trusted `CouncilEpochRegistry` with canonical evidence import and re-validation; safe-integer
+`stopEpoch` domain `0..9007199254740991` with SQLite `INTEGER` `CHECK` and `STOP_EPOCH_EXHAUSTED` at
+the maximum; durable `admin_operation_journal` keyed
+`(authenticatedPeerUid, operationKind, adminOperationId)`; domain-separated `requestHash`
+(`MIHVER/AUTHLEDGERD/ADMIN/INCREMENT_STOP_EPOCH/REQUEST/V1C\0`) binding peer UID + operation kind +
+`adminOperationId` + `expectedStopEpoch`; epoch write + journal insert + audit append in one
+`BEGIN IMMEDIATE` commit boundary; expected-epoch CAS; exact-bound R3 `AuthorizationGrant`; dormant
+consume-once state; Publication Broker structurally separate. Both required lost-ack traces are
+discharged: same-ID retry replays the stored `N+1` with no second mutation and no second audit
+mutation event, and a new operation ID carrying a stale `expectedStopEpoch = N` fails closed with
+`STALE_EXPECTED_STOP_EPOCH`. Neither path reaches `N+2`. Same-ID/different-request fails closed with
+`IDEMPOTENCY_KEY_REUSE`. Operation-result lookup is Option A: an ADMIN-socket, `SO_PEERCRED`-scoped,
+strictly read-only `getAdminOperationResult(operationKind, adminOperationId)`.
 
-**`DecisionRecord` durability gate (PR #53) — SATISFIED, first real-exercise proof.** The terminal
-record was independently re-verified against its terminal session, then durably written and bound
-into the `EvidenceManifest` *before* `FINALIZED`: exactly one `shadow-decision-record:` entry at
-`evidence/shadow-decision-record-3383112e5b0aabed9445f04b4625898902faba6a9a9d16783779e7ab0b95d2dd.json`,
-raw-byte `contentHash sha256:3383112e...d2dd`, `recordHash` independently recomputable. V5's
-`EVIDENCE_BLOCKER` is closed in practice.
+**Votes: 3/3 — `seat-openai` APPROVE, `seat-anthropic` APPROVE, `seat-google` APPROVE.** R3 requires
+exactly 3/3, so the frozen kernel returned `DECIDED` / `HUMAN_APPROVAL_REQUIRED`,
+`reasonCode R3_QUORUM_MET`, `quorumDetail {ruleset: R3, approvals: 3}`,
+`recordHash sha256:d16ae65b429648dd9e016bdb417895a881a12e2226c5c20f164a238f9c81bb21`. All three
+rationales identify the 17/17 uncollapsed matrix as the decisive change and confirm V6's
+architecture is preserved; `seat-anthropic` records one residual documentation-level caveat
+(consume-once duplicate handling does not name the stored record field returned) that it judged not
+to reopen a trust boundary. Rationale is advisory evidence only and had no effect on quorum,
+`candidateHash`, or `recordHash`.
+
+**`DecisionRecord` durability gate (PR #53) — SATISFIED.** The terminal record was independently
+re-verified against its terminal session, then durably written and bound into the `EvidenceManifest`
+*before* `FINALIZED`: exactly one `shadow-decision-record:` entry at
+`evidence/shadow-decision-record-5ac292de1187d29e9d7e2d6d4921ce1e94b41c4332aa10abefa36de3ba37d87f.json`,
+raw-byte `contentHash sha256:5ac292de...d87f`, `recordHash` independently recomputable.
 
 **Fresh Verifier** (`mcp__codex__codex`, read-only, independent, thread
-`01a05435-2773-76d2-a0a6-957b8c4b337a`): all three reviewer packets embed a byte-identical
-12,289-byte `candidateDecision`; independently recomputed the candidate hash, `recordHash`, all
-three `assessmentHash` values, the run/evidence/task-record manifest hashes, and all 12 evidence
-raw-byte hashes; confirmed both adversarial lost-ack traces provable from the exact candidate text;
-confirmed 4 admitted attestations with zero rejected attestations, zero
-`ShadowSeatInvocationFailure` artifacts, and no retry; confirmed V3/V4/V5 bundles untouched and no
-implementation on this branch. **Verdict: `DECISION_EVIDENCE_VALID`** (14/14 criteria PASS, both
-traces PASS).
+`01a0545e-ad5f-7cb2-8135-61ef2fd3cb15`): independently recomputed the `candidateHash`, `recordHash`,
+all three `assessmentHash` values, the run/evidence/task-record manifest hashes and all 12 evidence
+raw-byte hashes; confirmed the candidate is distinct from both V5 and V6; confirmed 17 distinct
+matrix entries all answering `NO` with the three Claude/Codex pairs uncollapsed; confirmed both
+adversarial lost-ack traces provable from the exact frozen candidate text; confirmed the three
+reviewer packets embed a canonically identical `candidateDecision`; confirmed 4 admitted
+attestations, 0 rejected attestations, 0 `ShadowSeatInvocationFailure` artifacts and no retry;
+confirmed V3/V4/V5/V6 and `arch-decision-2` bundles untouched and no V1C implementation on this
+branch. **Verdict: `DECISION_EVIDENCE_VALID`** (18/18 criteria A–R PASS).
 
-**Outcome: `NO_QUORUM`.** Evidence-only exercise; zero V1C implementation, zero execution or
-publication authority, zero Council rerun, zero human approval. `candidateHash
-sha256:c5d16bea3806ff0d10b7e092f8d2240d14d68b9461aeb44c206bf7fcb2fafb90` is **permanently closed for
-R3** and must never be re-voted, cosmetically renamed, or resubmitted. Any future attempt requires a
-materially new candidate with a distinct `candidateHash`.
+**Outcome: `COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`.** Council approval — even 3/3 —
+grants **zero** implementation, execution, or publication authority. No `authledgerd`, no SQLite
+production state, no sockets, no grants, no consume activation, no Publication Broker change, no
+Execution Gateway, no push, no PR, no merge, no human approval. A **fresh human pre-authorization
+audit of the exact `candidateHash sha256:c072d996...f0f8`** remains mandatory before any V1C
+implementation task may be authorized. V1D remains a separate future ADR/task/risk gate.
 
-Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v6/` (`run-manifest.json`
-status `FINALIZED`, `manifestHash sha256:5bb995c9...e477`, 12 artifacts).
+Closed predecessors, never to be re-voted or resubmitted:
+`sha256:9bc6b4c3...05a063` (V5, `SUPERSEDED_PENDING_MATERIAL_REVISION`) and
+`sha256:c5d16bea...2fafb90` (V6, `NO_QUORUM`, permanently closed for R3).
+
+Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v7/` (`run-manifest.json`
+status `FINALIZED`, `manifestHash sha256:0b48c8b7...e6de`, 12 artifacts).

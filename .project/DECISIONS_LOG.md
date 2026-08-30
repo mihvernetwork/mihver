@@ -310,3 +310,38 @@ Entries above this line are unmodified, per this log's append-only policy.
   execution or publication authority, no human approval. —
   `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v6/`, `.project/CURRENT_TASK.md`,
   `.project/REVIEW_STATE.md`, `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
+- 2026-08-30 — `AUTHORIZATION-LEDGER-V1C-R3-ARCHITECTURE-DECISION-V7`: real 3-seat Shadow Council R3
+  architecture exercise on `main @ 2e42febe`, one frozen candidate (`candidateHash
+  sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`, `councilEpochId
+  authorization-ledger-v1c-r3-arch-decision-7-epoch-1`). `rotationOrdinal = 6` was fixed before any
+  provider call and the frozen ADR-0005 kernel derived the proposer from
+  `CouncilConfig.seats[6 % 3]` — **`seat-openai`**; no seat was hard-coded, no rotation registry was
+  changed, and no durable cross-run rotation state is claimed to exist. V7 is a **narrow successor
+  to V6, not a redesign**: V6's substantive architecture is reproduced unchanged (dedicated
+  `authledgerd`/`mihver-ledger`, ADMIN/CLIENT socket split with reachability-only permissions,
+  `SO_PEERCRED` authentication + root-owned exact-UID authorization, privileged SQLite/WAL state,
+  trusted `CouncilEpochRegistry`, safe-integer `stopEpoch` domain, durable `admin_operation_journal`
+  keyed `(authenticatedPeerUid, operationKind, adminOperationId)`, domain-separated `requestHash`,
+  expected-epoch CAS, one `BEGIN IMMEDIATE` commit boundary, exact-bound R3 `AuthorizationGrant`,
+  dormant consume-once, zero production effect consumers, no Execution Gateway). The **sole**
+  material revision is the defect that actually caused V6's `NO_QUORUM`: the mandatory `yesNoMatrix`
+  now answers **17 of 17** questions as 17 independently represented entries, with the
+  Claude-vs-Codex pairs (`Q01`/`Q02`, `Q03`/`Q04`, `Q08`/`Q09`) uncollapsed and every answer exactly
+  `NO`. Two mechanical gates enforced this ahead of any vote: a pre-provider gate asserting all 17
+  questions are separately represented in the constructed packet (17/17 PASS, before the proposer
+  was invoked), and a post-freeze/pre-vote gate interposed on `FREEZE_CANDIDATE` via the harness's
+  `applyEventImpl` seam, which would have returned `CANDIDATE_CONSTRUCTION_BLOCKER` with zero voter
+  invocations had the frozen candidate not conformed. **Votes 3/3 APPROVE** (`seat-openai`,
+  `seat-anthropic`, `seat-google`); R3 requires exactly 3/3, so the kernel returned **`DECIDED` /
+  `HUMAN_APPROVAL_REQUIRED`** (`reasonCode R3_QUORUM_MET`, `recordHash
+  sha256:d16ae65b429648dd9e016bdb417895a881a12e2226c5c20f164a238f9c81bb21`), durably persisted and
+  `EvidenceManifest`-bound before `FINALIZED`. Fresh read-only Codex Verifier:
+  **`DECISION_EVIDENCE_VALID`** (18/18 criteria A–R PASS). Outcome:
+  **`COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`** — a fresh human pre-authorization audit of
+  the exact `candidateHash sha256:c072d996...4671f0f8` is still mandatory. No retry, no second
+  candidate, no provider or model substitution, no V1C implementation, no execution or publication
+  authority, no human approval. V5 (`sha256:9bc6b4c3...1805a063`) and V6
+  (`sha256:c5d16bea...b2fafb90`) remain permanently closed; the V3/V4/V5/V6 Run Bundles were not
+  modified. — `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v7/`,
+  `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`,
+  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`

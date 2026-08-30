@@ -403,6 +403,85 @@ the run/evidence/task-record manifest hashes and all 12 evidence raw-byte hashes
 confirmed both adversarial lost-ack traces are provable from the exact frozen candidate text. This
 exercise grants no execution, publication, merge, or V1C implementation authority.
 
+### Exercise 7 — `authorization-ledger-v1c-r3-arch-decision-7` (real R3, V7, `DECIDED`)
+
+The first real R3 architecture exercise to reach `DECIDED` — a narrow successor to V6 that
+deliberately preserves V6's substantive architecture and revises only the defect that actually cost
+V6 its quorum.
+
+- Base branch: `main` @ `2e42febe088e5e6bdff61431cd964dd2a3f2fcd8` (PR #54 merged at this exact SHA;
+  merge-post CI SUCCESS on both `Publication Broker` and `Project validation`)
+- Task branch: `decision/authorization-ledger-v1c-r3-architecture-v7`
+- Council epoch: `authorization-ledger-v1c-r3-arch-decision-7-epoch-1`
+- `contextHash`: `sha256:7999f772b587226da8637577de934985076bd4404a90c5aa17ce90685c4f1452`
+- `repositoryHead`: `2e42febe088e5e6bdff61431cd964dd2a3f2fcd8`
+- Proposer: **`seat-openai`** — `rotationOrdinal: 6`, fixed as a caller-controlled `DecisionRequest`
+  parameter before any provider invocation and resolved by the frozen kernel's own
+  `CouncilConfig.seats[rotationOrdinal % 3]` formula over the standing seat ordering
+  `[seat-openai, seat-anthropic, seat-google]`. No durable cross-run rotation registry exists and
+  none was introduced.
+- `candidateHash`: `sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`
+- Votes: `seat-openai` APPROVE, `seat-anthropic` APPROVE, `seat-google` APPROVE — 3/3. R3 requires
+  exactly 3/3, so `DecisionRecord.state`/`disposition` are `DECIDED`/`HUMAN_APPROVAL_REQUIRED`,
+  `quorumDetail {ruleset: "R3", approvals: 3}`, `reasonCode: R3_QUORUM_MET`,
+  `recordHash: sha256:d16ae65b429648dd9e016bdb417895a881a12e2226c5c20f164a238f9c81bb21`
+- Real primary-model calls: **4** (1 proposal + 3 votes), all admitted, 0 rejected, 0 retried, 0
+  substituted, 0 repaired. No `ShadowSeatInvocationFailure` artifact was produced.
+- Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v7/`, `FINALIZED`,
+  `manifestHash sha256:0b48c8b7f9c72443d60e078b25f957903140c1742acdfcf5a3b5e85c5923e6de`,
+  12 artifacts (4 packets, 4 attestations, 3 vote assessments, 1 `DecisionRecord`).
+
+**Candidate construction was gated mechanically, twice, ahead of any vote.** V6's `NO_QUORUM` was a
+candidate-*construction* failure — its `yesNoMatrix` answered 15 of 17 required questions, collapsing
+the distinct Claude and Codex questions into shared keys — so V7 replaced the prose instruction with
+a structural contract and two mechanical assertions:
+
+1. **Pre-provider gate.** Before the proposer CLI was invoked at all, the driver asserted that each
+   of the 17 canonical questions appears verbatim, exactly once, in the constructed decision
+   question and evidence set. Result 17/17 PASS. A failure here would have stopped the run with
+   `CANDIDATE_CONSTRUCTION_BLOCKER` having spent zero provider budget.
+2. **Post-freeze, pre-vote gate.** Interposed on the kernel's `FREEZE_CANDIDATE` transition through
+   the harness's existing `applyEventImpl` seam — so it inspects the *frozen* candidate but runs
+   before the first voter packet is built. It asserts `yesNoMatrix` is an array of exactly 17
+   entries, ids `Q01`..`Q17` each used once, each entry carrying exactly `id`/`question`/`answer`,
+   each `question` matching the required text verbatim under whitespace/case normalization only (no
+   fuzzy or substring matching), all 17 question strings pairwise distinct, and all 17 answers
+   exactly `NO`. Result PASS. A failure would have produced a durable `ShadowSeatInvocationFailure`
+   artifact and stopped with zero voter invocations.
+
+The gates are assertions, not repairs: the frozen candidate was never edited, re-prompted, or
+regenerated, and the packet's structural contract named `Q01`/`Q02`, `Q03`/`Q04` and `Q08`/`Q09`
+explicitly as deliberately near-identical CLAUDE-vs-CODEX pairs requiring two separate entries each.
+This is a reusable pattern for any decision whose acceptance criteria are mechanically checkable:
+state the contract structurally, assert it before spending reviewer budget, and let the frozen
+candidate stand or fall on its own.
+
+All three seats identified the 17/17 uncollapsed matrix as the decisive change and confirmed V6's
+architecture is preserved. `seat-anthropic` recorded one residual documentation-level caveat — the
+consume-once duplicate-handling text does not name the stored record field returned to a duplicate
+consumer — and judged it not to reopen a trust boundary. Rationale remains advisory evidence with no
+effect on quorum, `candidateHash`, or `recordHash`.
+
+The terminal record was independently re-verified against its terminal session and written as
+canonical JSON evidence bound into the `EvidenceManifest` *before* the Run Bundle was `FINALIZED`:
+exactly one `shadow-decision-record:` entry, raw-byte `contentHash
+sha256:5ac292de1187d29e9d7e2d6d4921ce1e94b41c4332aa10abefa36de3ba37d87f`, `recordHash`
+independently recomputable via the frozen kernel's `computeDecisionRecordHash`.
+
+A fresh, independent, read-only Codex Verifier returned `DECISION_EVIDENCE_VALID` across 18 criteria
+(A–R), having independently recomputed the `candidateHash`, `recordHash`, all three
+`assessmentHash` values, the run/evidence/task-record manifest hashes and all 12 evidence raw-byte
+hashes; confirmed the candidate is distinct from both closed predecessors; confirmed the 17 distinct
+matrix entries and the three uncollapsed Claude/Codex pairs; confirmed both adversarial lost-ack
+traces are provable from the exact frozen candidate text; and confirmed the V3/V4/V5/V6 bundles are
+untouched with no V1C implementation on this branch.
+
+**A 3/3 Council approval is not implementation authority.** The terminal disposition is
+`HUMAN_APPROVAL_REQUIRED` by construction of the R3 ruleset, and the task-level outcome is
+`COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`. This exercise grants no execution, publication,
+merge, or V1C implementation authority; a fresh human pre-authorization audit of the exact
+`candidateHash` remains mandatory.
+
 ## Residual trust limitations
 
 - One parent harness process (the Claude Code orchestrator, on this machine) controlled all three
