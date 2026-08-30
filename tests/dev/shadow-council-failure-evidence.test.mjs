@@ -93,10 +93,15 @@ try {
   const successOpts = options("success", { ...fixture(successfulAnswers), hooks: successCaptured.hooks });
   const success = runShadowExerciseWithDurableEvidence(fresh("success-decision"), successOpts);
   assert.equal(success.assessments.length, 3);
-  assert.equal(success.evidence.length, 11); // proposer packet/attestation + 3 packet/attestation/assessment sets
-  assert.equal(readManifest(successOpts.out).evidence.length, 11);
+  // proposer packet/attestation + 3 packet/attestation/assessment sets + 1 terminal DecisionRecord
+  assert.equal(success.evidence.length, 12);
+  assert.equal(readManifest(successOpts.out).evidence.length, 12);
+  const decisionRecordEntry = success.evidence.find((entry) => entry.evidenceId.startsWith("shadow-decision-record:"));
+  assert.ok(decisionRecordEntry, "expected a persisted shadow-decision-record evidence entry");
+  assert.deepEqual(JSON.parse(readFileSync(decisionRecordEntry.sourcePath, "utf8")), success.decisionRecord);
   assert.deepEqual(
-    success.evidence.map((entry) => JSON.parse(readFileSync(entry.sourcePath, "utf8"))),
+    success.evidence.filter((entry) => entry !== decisionRecordEntry)
+      .map((entry) => JSON.parse(readFileSync(entry.sourcePath, "utf8"))),
     successCaptured.values
   );
   for (const assessment of success.assessments) {

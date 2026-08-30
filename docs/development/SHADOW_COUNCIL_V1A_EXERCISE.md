@@ -316,6 +316,44 @@ typed evidence value, not a self-executing instruction — see `scripts/dev/deci
 **Proposed**. This exercise does not decide whether `SHADOW-COUNCIL-V1A-CLI-HARNESS` or
 `SHADOW-COUNCIL-V1A-LIFECYCLE-REMEDIATION` should be merged.
 
+## Durable DecisionRecord persistence (`SHADOW-COUNCIL-DECISION-RECORD-PERSISTENCE-V1`)
+
+The V5 human pre-authorization audit (`.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/`)
+exposed that a successful terminal Council run's `DecisionRecord` — the object `getDecisionRecord()`
+returns from the frozen kernel once a session reaches a terminal state — was previously returned only
+in memory by `runShadowExercise()`/`runShadowExerciseWithDurableEvidence()` and never persisted as
+`EvidenceManifest` evidence before the Run Bundle was `FINALIZED`. A finalized bundle could therefore
+contain packets, attestations, and vote assessments but no durable terminal `DecisionRecord` — one of
+V5's two disclosed blockers (`HUMAN_R3_PREAUTH_NOT_READY`). This task fixes only that gap for future
+exercises; V5 itself is historical evidence and is not reconstructed or reinterpreted.
+
+`runShadowExerciseWithDurableEvidence()` (`scripts/dev/shadow-council-run-bundle-evidence.mjs`) now,
+for every exercise that reaches a terminal `DecisionRecord`:
+
+1. independently re-verifies the record against the terminal session that produced it — recomputing
+   `recordHash` via the kernel's own exported `computeDecisionRecordHash()`, and, for `DECIDED`/
+   `NO_QUORUM` outcomes, independently rebuilding and verifying a `CouncilQuorumProof` via the
+   existing, frozen `buildCouncilQuorumProof()`/`verifyCouncilQuorumProof()` exports
+   (`scripts/dev/council-quorum-proof.mjs`) — so a self-consistent but substituted record (one whose
+   `recordHash` was freshly recomputed over forged content) is still rejected;
+2. writes the exact canonical JSON bytes of that `DecisionRecord` as a new `ARTIFACT` evidence entry
+   (`shadow-decision-record:<recordHash>`, mirroring the existing packet/attestation/assessment
+   evidence pattern) and appends it to the still-`OPEN` bundle's `EvidenceManifest`;
+3. only then finalizes the Run Bundle.
+
+If verification or the durable write/append fails, the bundle is never finalized, already-written
+incremental evidence is preserved, and the bundle remains `OPEN`/partial — the same fail-closed
+behavior the `SHADOW-COUNCIL-FAILURE-EVIDENCE-V1` incremental-evidence work already guarantees for
+pre-terminal aborts. A run that throws before a terminal `DecisionRecord` exists (malformed seat
+output, invocation failure, admission failure, etc.) still correctly persists no `DecisionRecord` —
+that absence is the correct partial-bundle behavior, not a regression.
+
+`DecisionRecord` remains ADR-0005's sole normative terminal Council artifact; this task does not
+change its schema, field set, or hashing recipe, and does not introduce a competing artifact. This
+durable copy is Run Bundle evidence, not an authorization signal: persisting it grants no execution,
+publication, merge, or autonomous task-transition authority, exactly as for every other evidence kind
+in this harness.
+
 ## Residual trust limitations
 
 - One parent harness process (the Claude Code orchestrator, on this machine) controlled all three

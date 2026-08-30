@@ -4,9 +4,52 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { canonicalizeJson } from "./canonical-json.mjs";
+import {
+  buildCouncilQuorumProof,
+  makeRegistryEntry,
+  verifyCouncilQuorumProof,
+} from "./council-quorum-proof.mjs";
+import { computeDecisionRecordHash } from "./decision-council-kernel.mjs";
 import { computeContentHash, writeRunBundle } from "./run-bundle.mjs";
 import { runShadowExercise } from "./shadow-council-harness.mjs";
 import { verifyInvocationFailureHash } from "./shadow-council-invocation-failure.mjs";
+
+const TERMINAL_RECORD_STATES = new Set(["COUNCIL_NOT_REQUIRED", "DECIDED", "NO_QUORUM", "DENIED"]);
+const VOTED_TERMINAL_STATES = new Set(["DECIDED", "NO_QUORUM"]);
+
+// Independently re-derives the ADR-0005 DecisionRecord identity from the terminal session that
+// produced it, rather than trusting the kernel's own return value. Fails closed on any mismatch.
+//
+// For DECIDED/NO_QUORUM outcomes this reuses the existing, frozen CouncilQuorumProof machinery
+// (council-quorum-proof.mjs) to independently recompute quorum/state/disposition/quorumDetail/
+// reasonCode and re-verify request/candidate/proposer/vote bindings, rather than duplicating the
+// kernel's private quorum ruleset in this evidence-layer adapter.
+function verifyDecisionRecordAgainstSession(record, session) {
+  const { recordHash, ...withoutHash } = record;
+  if (!/^sha256:[0-9a-f]{64}$/.test(recordHash)) throw new Error("DECISION_RECORD_HASH_MALFORMED");
+  if (computeDecisionRecordHash(withoutHash) !== recordHash) throw new Error("DECISION_RECORD_HASH_MISMATCH");
+  if (!TERMINAL_RECORD_STATES.has(record.state)) throw new Error("DECISION_RECORD_STATE_INVALID");
+
+  if (!VOTED_TERMINAL_STATES.has(record.state)) return;
+
+  const registryEntry = makeRegistryEntry(session.councilConfig);
+  if (!registryEntry.ok) throw new Error("DECISION_RECORD_COUNCIL_CONFIG_INVALID");
+  const proofResult = buildCouncilQuorumProof({
+    decisionRequest: session.decisionRequest,
+    councilConfig: session.councilConfig,
+    votes: session.votes,
+    decisionRecord: record,
+  });
+  if (!proofResult.ok) throw new Error(`DECISION_RECORD_QUORUM_PROOF_BUILD_FAILED:${proofResult.errorCode}`);
+  const verification = verifyCouncilQuorumProof({
+    proof: proofResult.proof,
+    decisionRecord: record,
+    trustedRegistry: { [registryEntry.entry.councilEpochId]: registryEntry.entry },
+  });
+  if (!verification.authorizationEvidenceEligible) {
+    throw new Error(`DECISION_RECORD_QUORUM_VERIFICATION_FAILED:${verification.errorCode}`);
+  }
+}
 
 const PRODUCER = { role: "REVIEWER", tool: "shadow-council-harness", threadId: null };
 
@@ -36,6 +79,14 @@ export function writeShadowVoteAssessmentEvidence(assessment, evidenceDir) {
     evidenceId: `shadow-vote-assessment:${assessment.assessmentHash}`,
     filenamePrefix: `shadow-vote-assessment-${seatId}`,
     summary: assessment.rationale,
+  });
+}
+
+export function writeShadowDecisionRecordEvidence(decisionRecord, evidenceDir) {
+  return writeCanonicalArtifact(decisionRecord, evidenceDir, {
+    evidenceId: `shadow-decision-record:${decisionRecord.recordHash}`,
+    filenamePrefix: "shadow-decision-record",
+    summary: `Shadow Council terminal DecisionRecord (${decisionRecord.state}/${decisionRecord.disposition}) for ${decisionRecord.decisionRequestId}.`,
   });
 }
 
@@ -124,6 +175,12 @@ export function runShadowExerciseWithDurableEvidence(session, opts) {
   };
 
   const result = runShadowExercise(session, { ...opts, hooks });
+  if (result.decisionRecord) {
+    verifyDecisionRecordAgainstSession(result.decisionRecord, result.session);
+    append(writeShadowDecisionRecordEvidence(result.decisionRecord, opts.evidenceDir));
+  } else if (opts.finalize) {
+    throw new Error("DECISION_RECORD_MISSING_BEFORE_FINALIZE");
+  }
   finalize();
   return { ...result, evidence };
 }
