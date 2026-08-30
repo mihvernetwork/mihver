@@ -83,6 +83,18 @@ schema unmodified): IMPLEMENTED — owner: `scripts/dev/council-quorum-proof.mjs
 subsection (Proposed, unchanged). This task exists because independent Authorization re-verification
 exposed a real persistence/provenance gap in V1A `DecisionRecord`s; it grants no execution authority
 and does not mark ADR-0006 Accepted.
+Authorization Loop Foundation V1A (deterministic, non-LLM, network-free `AuthorizationEnvelope`
+Binder + Ledger Simulator + `FakeExecutor` + verifier, proving the full Decision Council ->
+`CouncilQuorumProof` -> Authorization -> simulated single-use consumption pipeline; both the Binder
+and Ledger independently require and verify real `CouncilQuorumProof` evidence for R1/R2/R3 rather
+than trusting a bare `DecisionRecord`; no real execution/publication/shell/Git/network/provider-CLI
+capability of any kind): IMPLEMENTED — owner: `scripts/dev/authorization-binder.mjs`,
+`scripts/dev/authorization-ledger-simulator.mjs`, `scripts/dev/authorization-loop.mjs`,
+`scripts/dev/fake-executor.mjs`, `docs/development/AUTHORIZATION_LOOP_V1A_DEMONSTRATION.md`,
+`docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md` (Proposed, unchanged — this task grants it no
+execution authority and does not mark it Accepted). Demonstrated via
+`scripts/dev/authorization-loop-demonstration.mjs`; evidence at
+`.project/run-bundles/authorization-loop-v1a-demonstration/`.
 Shadow Council V1A advisory CLI harness (three independently-spawned provider CLI child processes —
 OpenAI/Anthropic/Google — acting as advisory-only council seats feeding the unmodified Decision
 Council V1A kernel; no direct provider API/SDK integration): IMPLEMENTED and frozen — owner:

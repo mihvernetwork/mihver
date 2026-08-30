@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/authorization-grant.schema.json",
+  "title": "MIHVER AuthorizationGrant simulator artifact",
+  "description": "Non-production development-simulator shape for an exact-envelope human authorization grant. Simulator grants are created only by issueGrant after locked canonical re-derivation; this is not a privileged production ledger or admin-path credential.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "grantId", "envelopeHash", "approverIdentity", "boundStopEpoch", "state",
+    "expiresAt", "authorizedAt", "stateChangedAt"
+  ],
+  "properties": {
+    "grantId": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "envelopeHash": { "$ref": "#/$defs/hash" },
+    "approverIdentity": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "boundStopEpoch": { "type": "integer", "minimum": 0 },
+    "state": { "enum": ["AUTHORIZED", "CONSUMED", "REVOKED", "EXPIRED"] },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "authorizedAt": { "type": "string", "format": "date-time" },
+    "stateChangedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/fake-execution-record.schema.json",
+  "title": "MIHVER FakeExecutionReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "kind", "loopRunId", "iteration", "authorizationId", "action", "inputHash", "deterministicResult", "receiptHash"],
+  "properties": {
+    "protocolVersion": { "const": "1.0.0" },
+    "kind": { "const": "FakeExecutionReceipt" },
+    "loopRunId": { "type": "string", "minLength": 1 },
+    "iteration": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "authorizationId": { "type": "string", "minLength": 1 },
+    "action": { "enum": ["FAKE_WRITE_ARTIFACT", "FAKE_COMPUTE", "FAKE_NOOP"] },
+    "inputHash": { "$ref": "#/$defs/hash" },
+    "deterministicResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["simulation", "wouldPerform", "resultHash"],
+      "properties": {
+        "simulation": { "enum": ["FAKE_WRITE_ARTIFACT", "FAKE_COMPUTE", "FAKE_NOOP"] },
+        "wouldPerform": { "enum": ["DESCRIBE_ARTIFACT_WRITE_ONLY", "DESCRIBE_COMPUTATION_ONLY", "NO_OPERATION"] },
+        "resultHash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "receiptHash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } }
+}

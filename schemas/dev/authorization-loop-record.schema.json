@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/authorization-loop-record.schema.json",
+  "title": "MIHVER AuthorizationLoopRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "kind", "loopRunId", "authorizationIds", "requestedMaxIterations", "effectiveMaxIterations", "iterationCount", "outcome", "receipts", "transitionLog"],
+  "properties": {
+    "protocolVersion": { "const": "1.0.0" },
+    "kind": { "const": "AuthorizationLoopRecord" },
+    "loopRunId": { "type": "string", "minLength": 1 },
+    "authorizationIds": { "type": "array", "maxItems": 3, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "requestedMaxIterations": { "type": "integer", "minimum": 1 },
+    "effectiveMaxIterations": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "iterationCount": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "outcome": { "enum": ["COMPLETED", "STOPPED", "AUTHORIZATION_DENIED", "VERIFICATION_FAILED", "MAX_ITERATIONS_REACHED", "INTERNAL_ERROR"] },
+    "receipts": { "type": "array", "maxItems": 3, "items": { "$ref": "./fake-execution-record.schema.json" } },
+    "transitionLog": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["state", "iteration"],
+        "properties": {
+          "state": { "enum": ["CREATED", "OBSERVED", "DECISION_READY", "AUTHORIZATION_EVALUATED", "LEDGER_GATE_EVALUATED", "FAKE_EXECUTED", "VERIFIED", "NEXT_ITERATION", "COMPLETED", "STOPPED", "AUTHORIZATION_DENIED", "VERIFICATION_FAILED", "MAX_ITERATIONS_REACHED", "INTERNAL_ERROR"] },
+          "iteration": { "type": "integer", "minimum": 0, "maximum": 3 }
+        }
+      }
+    },
+    "denial": { "type": ["object", "null"] },
+    "stopIteration": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "verificationErrors": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "remainingIterations": { "type": "integer", "minimum": 1 },
+    "errorStep": { "enum": ["AUTHORIZATION_EVALUATION", "LEDGER_CHECK", "STOP_CHECK", "FAKE_EXECUTION", "VERIFICATION"] },
+    "failedIteration": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "errorMessage": { "type": "string" }
+  }
+}

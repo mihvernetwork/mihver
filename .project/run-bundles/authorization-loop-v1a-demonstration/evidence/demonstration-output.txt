@@ -1,0 +1,78 @@
+AUTHORIZATION LOOP V1A — DETERMINISTIC DEMONSTRATION
+
+SCENARIO 1 — two complete R1 iterations
+  iteration 1 DecisionRecord: DECIDED/COUNCIL_APPROVED
+  CouncilQuorumProof.authorizationEvidenceEligible: true
+  Binder.status: ENVELOPE
+  AuthorizationEnvelope.disposition: POLICY_SATISFIED
+  iteration 2 DecisionRecord: DECIDED/COUNCIL_APPROVED
+  CouncilQuorumProof.authorizationEvidenceEligible: true
+  Binder.status: ENVELOPE
+  AuthorizationEnvelope.disposition: POLICY_SATISFIED
+  iteration 1 Ledger: ALLOW_ONCE/POLICY_SATISFIED
+  iteration 2 Ledger: ALLOW_ONCE/POLICY_SATISFIED
+  loop transition: iteration=0 state=CREATED
+  loop transition: iteration=1 state=OBSERVED
+  loop transition: iteration=1 state=DECISION_READY
+  loop transition: iteration=1 state=AUTHORIZATION_EVALUATED
+  loop transition: iteration=1 state=LEDGER_GATE_EVALUATED
+  loop transition: iteration=1 state=FAKE_EXECUTED
+  loop transition: iteration=1 state=VERIFIED
+  loop transition: iteration=1 state=NEXT_ITERATION
+  loop transition: iteration=2 state=OBSERVED
+  loop transition: iteration=2 state=DECISION_READY
+  loop transition: iteration=2 state=AUTHORIZATION_EVALUATED
+  loop transition: iteration=2 state=LEDGER_GATE_EVALUATED
+  loop transition: iteration=2 state=FAKE_EXECUTED
+  loop transition: iteration=2 state=VERIFIED
+  loop transition: iteration=2 state=NEXT_ITERATION
+  loop transition: iteration=2 state=COMPLETED
+  receipts verified: 2
+
+SCENARIO 2 — STOP epoch fencing
+  CouncilQuorumProof.authorizationEvidenceEligible: true
+  Binder.status: ENVELOPE
+  AuthorizationEnvelope.disposition: POLICY_SATISFIED
+  Ledger currentStopEpoch: 8
+  Ledger: DENY/REVOKED_BY_STOP_EPOCH
+  FakeExecutor: NOT_CALLED
+
+SCENARIO 3 — R3 without a grant
+  CouncilQuorumProof.authorizationEvidenceEligible: true
+  Binder.status: ENVELOPE
+  AuthorizationEnvelope.disposition: PENDING_HUMAN_APPROVAL
+  Ledger: DENY/NO_VALID_GRANT
+  FakeExecutor: NOT_CALLED
+
+SCENARIO 4 — R3 exact-bound grant, execution, and replay denial
+  CouncilQuorumProof.authorizationEvidenceEligible: true
+  Binder.status: ENVELOPE
+  AuthorizationEnvelope.disposition: PENDING_HUMAN_APPROVAL
+  Grant binding: state=AUTHORIZED envelopeHashMatch=true
+  Ledger first consumption: ALLOW_ONCE/POLICY_SATISFIED
+  loop transition: iteration=0 state=CREATED
+  loop transition: iteration=1 state=OBSERVED
+  loop transition: iteration=1 state=DECISION_READY
+  loop transition: iteration=1 state=AUTHORIZATION_EVALUATED
+  loop transition: iteration=1 state=LEDGER_GATE_EVALUATED
+  loop transition: iteration=1 state=FAKE_EXECUTED
+  loop transition: iteration=1 state=VERIFIED
+  loop transition: iteration=1 state=NEXT_ITERATION
+  loop transition: iteration=1 state=COMPLETED
+  Ledger replay: DENY/REPLAY_REJECTED
+
+SCENARIO 5 — BLOCKED task fails before envelope construction
+  CouncilQuorumProof.authorizationEvidenceEligible: true
+  Binder: NO_ENVELOPE/TASK_RECORD_BLOCKED
+  envelope constructed: false
+  FakeExecutor: NOT_CALLED
+
+SCENARIO 6 — R4 hard denial and R1 NO_QUORUM denial
+  R4 DecisionRecord: DENIED/DENIED
+  R4 Binder: NO_ENVELOPE/R4_HARD_DENY
+  NO_QUORUM DecisionRecord: NO_QUORUM/NO_QUORUM
+  NO_QUORUM proof recomputation: met=false
+  NO_QUORUM Binder: NO_ENVELOPE/COUNCIL_GATE_NOT_MET
+  FakeExecutor: NOT_CALLED
+
+DEMONSTRATION COMPLETE — all assertions passed; FakeExecutor only

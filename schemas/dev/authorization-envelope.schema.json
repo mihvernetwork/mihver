@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/authorization-envelope.schema.json",
+  "title": "MIHVER AuthorizationEnvelope V1A",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion", "authorizationId", "decisionRecordRef", "candidateHash", "taskId",
+    "riskClass", "contextHash", "repositoryHead", "councilEpochId", "stopEpoch",
+    "policyVersion", "actionType", "allowedScope", "prohibitedEffects", "humanApproval",
+    "singleUse", "disposition", "envelopeHash"
+  ],
+  "properties": {
+    "protocolVersion": { "const": "1.0.0" },
+    "authorizationId": { "$ref": "#/$defs/hash" },
+    "decisionRecordRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decisionRequestId", "recordHash"],
+      "properties": {
+        "decisionRequestId": { "type": "string", "minLength": 1 },
+        "recordHash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "candidateHash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "taskId": { "type": "string", "minLength": 1 },
+    "riskClass": { "enum": ["R0", "R1", "R2", "R3"] },
+    "contextHash": { "$ref": "#/$defs/hash" },
+    "repositoryHead": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "councilEpochId": { "type": "string", "minLength": 1 },
+    "stopEpoch": { "type": "integer", "minimum": 0 },
+    "policyVersion": { "const": "authorization-policy/v1" },
+    "actionType": { "const": "UNDEFINED_PENDING_EXECUTION_GATEWAY" },
+    "allowedScope": {
+      "type": "array",
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 4096 }
+    },
+    "prohibitedEffects": {
+      "const": [
+        "GIT_PUSH", "GIT_FORCE_PUSH", "PR_CREATE", "PR_MERGE", "MAIN_BRANCH_MUTATION",
+        "PUBLICATION_BROKER_INVOCATION", "CREDENTIAL_ACCESS", "TOOL_EXECUTION",
+        "COUNCIL_SCOPE_SELF_EXPANSION", "EXECUTION_GATEWAY_BYPASS"
+      ]
+    },
+    "humanApproval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "grantRef"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "grantRef": { "const": null }
+      }
+    },
+    "singleUse": { "const": true },
+    "disposition": { "enum": ["PENDING_HUMAN_APPROVAL", "POLICY_SATISFIED"] },
+    "envelopeHash": { "$ref": "#/$defs/hash" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "riskClass": { "const": "R3" } }, "required": ["riskClass"] },
+      "then": {
+        "properties": {
+          "disposition": { "const": "PENDING_HUMAN_APPROVAL" },
+          "humanApproval": { "type": "object", "properties": { "required": { "const": true } } }
+        }
+      },
+      "else": {
+        "properties": {
+          "disposition": { "const": "POLICY_SATISFIED" },
+          "humanApproval": { "type": "object", "properties": { "required": { "const": false } } }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

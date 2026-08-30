@@ -5,119 +5,135 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-DECISION-COUNCIL-QUORUM-PROOF-V1B
+AUTHORIZATION-LOOP-FOUNDATION-V1A (resumed and completed through internal gates)
 
 ## Objective
 
-This task exists because independent re-verification work for the paused
-`AUTHORIZATION-LOOP-FOUNDATION-V1A` task (parked, not resumed here) exposed a real persistence/
-provenance gap: ADR-0005's frozen, Accepted Decision Council V1A `DecisionRecord` self-consistently
-proves its own content (`recordHash`) but does not carry `CouncilConfig` seat identity
-(`provider`/`modelFamily`), so a downstream Authorization verifier cannot independently recompute
-R1 diversity, R2 proposer exclusion, or R3 3-of-3 quorum from a `DecisionRecord` alone — it would
-have to trust the record's self-consistency. A real R2 Shadow Council escalation selected
-architecture Option C (hash-bound `CouncilConfig` + separate quorum proof) to close this gap.
+Prove a deterministic, non-LLM, FakeExecutor-only demonstration of the full pipeline —
+`ProjectContextPack`/`TaskRecord` -> Decision Council `DecisionRecord` -> `CouncilQuorumProof` ->
+Authorization Binder (`AuthorizationEnvelope`) -> Authorization Ledger Simulator (`ALLOW_ONCE`/
+grant/replay/STOP-fencing) -> `FakeExecutor` -> `authorization-verifier` — with Binder and Ledger
+BOTH independently requiring and verifying real `CouncilQuorumProof` evidence (not a bare,
+self-consistent `DecisionRecord`) for R1/R2/R3, per ADR-0006's "V1B Amendment" subsection.
+
+This continuation resumed the task from an interrupted Phase 2 boundary: the preserved 14-file
+implementation (written before `scripts/dev/council-quorum-proof.mjs` existed) was a real
+`PROTOCOL_BOUNDARY_BLOCKER` — it authorized R1/R2/R3 off a bare `DecisionRecord` alone. That blocker
+was resolved by `DECISION-COUNCIL-QUORUM-PROOF-V1B` (PR #45, merged to `main` @ `9fe907a`, this
+branch's base). This session adopted that merged API, re-ran Phase 2 review, then completed Phases
+3-9 without discarding or restarting the preserved implementation, and without returning to the
+human between successful internal gates (per this continuation's own escalation policy — no Council
+escalation was ever triggered; every finding across all review rounds was a routine or
+cross-workstream integration fix).
 
 ## Branch / Base
 
-Branch: `feat/decision-council-quorum-proof-v1b`.
-Base: `main` at `db263af189093759294e57b86fd02af761f69c15` (PR #44, ADR-0006 design).
+Branch: `feat/authorization-loop-foundation-v1a`.
+Base: `main` at `9fe907a87401adae6fe3e4eb443db770dff87678` (PR #45 merged: Decision Council Quorum
+Proof V1B).
 
 ## Status
 
 **Complete, pending human review.**
 
-**Design selected (Scout + independent Reviewer, then a security-focused second Reviewer pass):** a
-single sidecar `CouncilQuorumProof` artifact, plus a `CouncilEpochRegistry` trust anchor, added
-alongside the frozen, unmodified ADR-0005 kernel/schema (`scripts/dev/decision-council-kernel.mjs`,
-`schemas/dev/decision-council.schema.json` — zero diff vs `main`, confirmed). The hash graph is a
-non-circular DAG: `CouncilConfig -> councilConfigHash -> CouncilQuorumProof -> decisionRecordHash <-
-DecisionRecord.recordHash` — the proof references the record; the record never references the proof.
-`DecisionRecord` itself was NOT versioned/mutated (Option A, a `DecisionRecordV2`, was considered and
-rejected as an avoidable, circularity-risking mutation of frozen evidence).
+**Proof-API adoption (fresh Scout, no interface invented):** confirmed the real, merged
+`verifyCouncilQuorumProof({ proof, decisionRecord, trustedRegistry })` signature and mapped it onto
+the existing Binder (`evaluateAuthorization`) and Ledger (`issueGrant`/`checkAndConsume`) gates.
 
-**Implemented (Codex Implementer, then one fix round after axis review):**
-- `scripts/dev/council-quorum-proof.mjs` — `buildCouncilQuorumProof`, `verifyCouncilQuorumProof`,
-  `classifyDecisionRecordEvidence`, `computeCouncilConfigHash`, `computeProofHash`,
-  `makeRegistryEntry`, `lookupTrustedConfigHash`. Pure, deterministic, no network/fs/Date.now/
-  Math.random, reuses `canonicalizeJson`.
-- `schemas/dev/council-quorum-proof.schema.json` — `$ref`s `schemas/dev/decision-council.schema.json`
-  rather than duplicating `CouncilConfig`/`DecisionRequest`/`AgentVote` shapes.
-- `tests/dev/council-quorum-proof.test.mjs` — 25 tests, including the full adversarial matrix (forged
-  provider/modelFamily identity, config substitution, proof attached to a different DecisionRecord,
-  candidateHash/vote substitution, duplicate seat/identity, wrong epoch/proposer, R1/R2/R3 negative
-  cases, unknown proof version, historical-V1-no-proof, reconstructed-mislabeled-as-contemporaneous,
-  one-byte mutations, and a circular-hash-graph regression check).
-- `package.json` — added standalone `test:council-quorum-proof` script (not added to the aggregate
-  `npm test`, matching `test:decision-council-kernel`'s own existing precedent of staying standalone).
+**Boundary-integration remediation (2 parallel Codex Implementers, no council escalation
+required):**
+- **Binder** (`scripts/dev/authorization-binder.mjs`): R1/R2/R3 envelope construction now requires
+  `verifyCouncilQuorumProof(...).authorizationEvidenceEligible === true`; retired its own
+  hand-rolled quorum approximation, keeping only structural/hash/vote-binding checks as
+  defense-in-depth. R0 unaffected (proof not required, by the sidecar's own R1-R3-only design);
+  R4/`NO_QUORUM` still deny with no envelope and no proof needed.
+- **Ledger** (`scripts/dev/authorization-ledger-simulator.mjs`): constructor now takes
+  `councilQuorumProofs` (keyed by the composite `(decisionRequestId, recordHash)` identity — closing
+  a pre-existing silent-overwrite-on-duplicate-`decisionRequestId` gap found during review) plus a
+  `trustedRegistry`; `issueGrant` and `checkAndConsume` EACH independently call
+  `verifyCouncilQuorumProof` themselves inside their existing locked/atomic sections — never
+  trusting that the Binder already checked it, per the Ledger's own "never trust the Binder's
+  conclusion" design principle.
+- **Fake Loop** (`scripts/dev/authorization-loop.mjs`): only needed to thread `fixture.proof`/
+  `fixture.trustedRegistry` through to the Binder call — no authority expansion.
 
-**Fixed after axis review (two real findings):**
-1. Axis A: `DecisionRecord` shape wasn't validated before hashing, so an extra/injected field (e.g.
-   a proof-shaped field) wasn't rejected — added exact-shape validation before any hash comparison in
-   both the builder and verifier.
-2. Axis B: a `decisionRecord.proposerSeatId === null` bypass in the proposer-binding check would have
-   let a forged, correctly-hashed R1/R2/R3 record skip proposer verification — changed to strict
-   equality, no null bypass.
+**Phase 2 review re-entry (4 fresh axis Reviewers, all reaching `APPROVED_FOR_INTEGRATION` after one
+fix round):** two real findings, both fixed — (1) `DecisionRecord`/proof shape gaps in test coverage
+(wrong-record-binding proof, `RECONSTRUCTED`-provenance proof, R1-R3 loop integration case) added;
+(2) confirmed no protocol-semantics blocker anywhere.
 
-**Legacy/compatibility matrix (fail-closed, no reconstruction implemented):**
-- `V1_HISTORICAL_NO_PROOF` — a historical `DecisionRecord` with no proof; never
-  `authorizationEvidenceEligible`, regardless of `recordHash` validity.
-- `V1_PROOF_CAPABLE_CONTEMPORANEOUS` — a `DecisionRecord` + a valid, `CONTEMPORANEOUS`-provenance
-  `CouncilQuorumProof`; eligible iff `verifyCouncilQuorumProof` passes every check.
-- `V1_PROOF_RECONSTRUCTED` — the `provenanceClass: "RECONSTRUCTED"` enum value is defined for future
-  use but no code path in this task ever produces one; if one is ever presented, it is always
-  ineligible even if otherwise fully hash-valid.
-- No fabrication/backfill of provider/model provenance from a bare `DecisionRecord` exists anywhere.
+**Phase 3/4 — deterministic demonstration** (`scripts/dev/authorization-loop-demonstration.mjs`,
+written up in `docs/development/AUTHORIZATION_LOOP_V1A_DEMONSTRATION.md`): all 6 required scenarios
+demonstrated using REAL kernel-produced `DecisionRecord`s and real `CouncilQuorumProof`s (no
+fabricated fixtures) — two full R1 iterations reaching `COMPLETED` with `FAKE_EXECUTED`+`VERIFIED`
+each; STOP-epoch fencing denial; R3 without a grant (`PENDING_HUMAN_APPROVAL`, denied, no execute);
+R3 exact-bound grant + one real consumption + replay denial (`REPLAY_REJECTED`); a `BLOCKED`
+TaskRecord denied before envelope construction; R4 hard denial AND a real-kernel-produced
+`NO_QUORUM` denial. FakeExecutor only — confirmed via direct grep and an extended transitive-import
+test (see Phase 6 below).
 
-**ADR work:**
-- `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` — pure addition under "Future Work" describing the
-  V1B sidecar and its non-circularity rule. Status remains **Accepted**; its Acceptance decision was
-  not reopened; no R0–R4/topology/authority-boundary text was changed (confirmed: diff vs `main` is
-  additions-only).
-- `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md` — one new subsection ("V1B Amendment —
-  Council Quorum Proof Requirement") stating that a future implementation of this design must require
-  and independently verify a `CONTEMPORANEOUS`, fully-eligible `CouncilQuorumProof` wherever the
-  applicable policy needs independently provable council legitimacy, and that a legacy/self-consistent
-  `DecisionRecord` alone is insufficient in that case. Status remains **Proposed**; this task does not
-  mark it Accepted and grants it no execution authority.
+**Phase 5 — Run Bundle evidence**: a finalized bundle at
+`.project/run-bundles/authorization-loop-v1a-demonstration/` (task-record/evidence-manifest/
+run-manifest + `report.md` + a captured full demonstration-output.txt), all self-hashes and content
+hashes independently re-verified. Resynced once after a later wording-only fix changed the
+demonstration script's content hash (output bytes unchanged, verified byte-identical); `npm run
+test:run-bundle`: 17/17.
 
-**Review:** four fresh, independent, read-only Codex Reviewers (axis A hash-graph/versioning, axis B
-quorum-recomputation correctness, axis C legacy/provenance, axis D confused-deputy resistance) each
-gave APPROVE or APPROVE_WITH_CHANGES (two real findings, both fixed — see above); a fifth, fresh,
-exact-final Reviewer then gave `READY_FOR_FINAL_VERIFICATION`. No finding at any point required
-changing actual R1/R2/R3 quorum semantics (no `PROTOCOL_SEMANTICS_BLOCKER` was raised).
+**Phase 6 — four-axis integrated adversarial review**: hash-graph/binding (APPROVED_FOR_INTEGRATION,
+no changes), quorum/replay/fencing (APPROVE_WITH_CHANGES — fixed: removed the Ledger's now-redundant
+hand-rolled quorum approximation; reordered `checkAndConsume`/`issueGrant` so the new proof gate no
+longer masks older-precedence denials like `REPLAY_REJECTED`/stopEpoch revocation/grant expiry),
+effect-isolation (APPROVE_WITH_CHANGES — fixed: extracted `computeTaskRecordHash`/`valueWithoutHash`
+into a new pure module `scripts/dev/canonical-record-hash.mjs` so the Binder/Ledger no longer
+transitively import `run-bundle.mjs`'s fs/child_process-capable code just for a hash helper;
+extended the authority-distance test to walk the transitive import graph; fixed one wording
+overclaim, "real executor" -> "FakeExecutor implementation"), confused-deputy resistance
+(APPROVED_FOR_INTEGRATION, no changes — Ledger never trusts the Binder's conclusion, proof/registry
+are constructor-owned canonical inputs not caller-overridable per request, cross-record proof
+substitution is blocked by both the composite key and the sidecar's own `decisionRecordHash`
+binding). No finding at any point required a change to actual R1/R2/R3 quorum semantics, the council
+topology, or the authority boundary — no `PROTOCOL_SEMANTICS_BLOCKER`/`COUNCIL_ESCALATION_REQUIRED`
+was ever raised.
 
-**Verification:** a fresh, read-only Codex Verifier confirmed: frozen kernel/schema zero-diff;
-ADR-0005 additions-only diff; ADR-0006 Status still Proposed; no `AuthorizationEnvelope`/Ledger/Binder
-implementation copied or resumed; the new sidecar is pure (no network/shell/git/publication/provider
-calls); the new proof test suite and the existing kernel/simulator suites are green; `git diff --check`
-is clean. Shadow Council and ContextPack/Run Bundle/project-consistency/`npm test` failures observed
-in its restricted sandbox were independently re-checked directly in this session and confirmed to be
-**pre-existing environment gaps unrelated to this branch's changes** (`node_modules` is entirely
-absent in this worktree — `ajv`/`ajv-formats` are listed in `package.json` devDependencies but never
-installed; the Shadow Council CLI-transport `mkdtemp EPERM` failures are a sandbox restriction, not a
-code regression) — this branch's diff vs `main` touches no dependency, install, or Shadow Council file.
+**Phase 7 — final Verifier**: confirmed frozen ADR-0005 kernel/schema and the merged
+`council-quorum-proof.mjs`/schema are byte-identical to `main`; ADR-0006 Status still `Proposed`; no
+execution/publication/shell/Git/network/provider-CLI capability anywhere in the new code; the full
+test matrix green (Binder 23, Ledger 22, Loop 13, FakeExecutor 4, kernel 18, simulator 18,
+council-quorum-proof 25, run-bundle 17 — all independently re-run, not just claimed); the
+demonstration's 6 scenarios independently re-run and confirmed; the Run Bundle's hashes independently
+recomputed and matched; `git diff --check` clean. `scripts/dev/run-bundle.mjs`'s own diff (importing
+the extracted pure hash helper) is a same-behavior re-export refactor, confirmed via its own
+unaffected 17/17 test suite and an unchanged public API/hash domain — this file is shared dev
+tooling, not part of ADR-0005's frozen kernel/schema or the merged quorum-proof sidecar.
 
-**Changes made:**
-- New: `scripts/dev/council-quorum-proof.mjs`, `schemas/dev/council-quorum-proof.schema.json`,
-  `tests/dev/council-quorum-proof.test.mjs`.
-- Modified: `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` (Future Work addition only),
-  `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md` (one new subsection), `package.json` (one new
-  standalone test script), `.project/PROJECT_STATE.md`, `.project/CURRENT_TASK.md` (this file).
-- **Not modified**: `scripts/dev/decision-council-kernel.mjs`, `schemas/dev/decision-council.schema.json`
-  (frozen V1A kernel/schema — zero diff vs `main`), any Shadow Council file, any Authorization
-  Loop/Binder/Ledger file, `AUTHORIZATION-LOOP-FOUNDATION-V1A`'s parked worktree/branch (untouched,
-  not resumed), the Publication Broker (source, docs, or schemas), `tools/publication-broker/`.
+**Changes made (this session, on top of the preserved 14 files):**
+- New: `scripts/dev/authorization-loop-demonstration.mjs`, `scripts/dev/canonical-record-hash.mjs`,
+  `docs/development/AUTHORIZATION_LOOP_V1A_DEMONSTRATION.md`,
+  `.project/run-bundles/authorization-loop-v1a-demonstration/` (finalized Run Bundle).
+- Modified (from the preserved baseline): `scripts/dev/authorization-binder.mjs`,
+  `scripts/dev/authorization-ledger-simulator.mjs`, `scripts/dev/authorization-loop.mjs`,
+  `schemas/dev/authorization-ledger-result.schema.json` (new denial-reason enum values),
+  their test files, `scripts/dev/run-bundle.mjs` (pure re-export refactor only).
+- Modified (this task's own record): `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`.
+- **Not modified**: `scripts/dev/decision-council-kernel.mjs`, `schemas/dev/decision-council.schema.json`,
+  `scripts/dev/council-quorum-proof.mjs`, `schemas/dev/council-quorum-proof.schema.json` (all
+  byte-identical to `main`), `scripts/dev/fake-executor.mjs`, `scripts/dev/authorization-verifier.mjs`
+  (unaffected pass-through, zero diff from the preserved baseline), any Publication Broker file,
+  `docs/adr/ADR-0005-...`, `docs/adr/ADR-0006-...` (read, not amended — no new amendment was needed
+  beyond what `DECISION-COUNCIL-QUORUM-PROOF-V1B` already added).
 
-**Zero execution authority added.** No executor exists; the new sidecar only compiles/verifies proof
-artifacts as pure data; no provider/model API call, shell command, Git/network operation, or
-publication-path code was added by the sidecar itself. This session's own work beyond editing these
-files was limited to dispatching read-only or worktree-scoped Codex Scout/Implementer/Reviewer/
-Verifier sessions.
+**Zero execution authority added.** `FakeExecutor` only; no shell/Git mutation/network/Publication
+Broker/provider-CLI invocation/arbitrary filesystem effect exists in the loop's own runtime code; no
+autonomous real task selection; no council->tool/action path. ADR-0006 remains Proposed and is not
+marked Accepted by this task. No R2/R3 real Shadow Council escalation was needed or used in this
+continuation (every finding was resolvable as a routine or cross-workstream integration fix).
 
 ## Required Context
 
-- `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s "Future Work" V1B addition (this task's design
-  summary) and `scripts/dev/council-quorum-proof.mjs` (this task's own output — read directly)
-- `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md`'s "V1B Amendment" subsection
+- `docs/development/AUTHORIZATION_LOOP_V1A_DEMONSTRATION.md` (this task's own demonstration writeup)
+- `.project/run-bundles/authorization-loop-v1a-demonstration/report.md` (evidence)
+- `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s "Future Work" V1B addition,
+  `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md`'s "V1B Amendment" subsection
+- `scripts/dev/authorization-binder.mjs`, `scripts/dev/authorization-ledger-simulator.mjs` (this
+  task's own integration output — read directly)
 - `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`

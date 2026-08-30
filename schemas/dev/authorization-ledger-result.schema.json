@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/authorization-ledger-result.schema.json",
+  "title": "MIHVER authorization ledger simulator result",
+  "description": "Non-production simulator result. ALLOW_ONCE means only that one simulated downstream handoff passed the ledger gate; it is not execution authority and performs no external effect.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "outcome", "reason", "canonicalAuthorizationId", "ledgerDisposition"],
+  "properties": {
+    "protocolVersion": { "const": "1.0.0" },
+    "outcome": { "enum": ["ALLOW_ONCE", "DENY"] },
+    "reason": {
+      "enum": [
+        "POLICY_SATISFIED", "INVALID_ENVELOPE_SHAPE", "DECISION_RECORD_NOT_FOUND",
+        "RECORD_HASH_MISMATCH", "TASK_RECORD_LOOKUP_AMBIGUOUS", "TASK_RECORD_HASH_MISMATCH",
+        "TASK_RECORD_BLOCKED", "R4_HARD_DENY", "COUNCIL_GATE_NOT_MET",
+        "RISK_DISPOSITION_MISMATCH", "CONTEXT_ALREADY_STALE", "REVOKED_BY_STOP_EPOCH",
+        "EXPIRED_BY_DRIFT", "ENVELOPE_RECOMPUTATION_MISMATCH", "REPLAY_REJECTED",
+        "NO_VALID_GRANT", "GRANT_REVOKED_BY_STOP_EPOCH", "GRANT_EXPIRED", "INVALID_NOW", "INVALID_STATE",
+        "UNSUPPORTED_POLICY_VERSION", "INVALID_CURRENT_CONTEXT", "INVALID_STOP_EPOCH"
+      ]
+    },
+    "canonicalAuthorizationId": {
+      "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }]
+    },
+    "ledgerDisposition": {
+      "anyOf": [{ "const": "POLICY_SATISFIED" }, { "type": "null" }]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "outcome": { "const": "ALLOW_ONCE" } }, "required": ["outcome"] },
+      "then": {
+        "properties": {
+          "reason": { "const": "POLICY_SATISFIED" },
+          "canonicalAuthorizationId": { "$ref": "#/$defs/hash" },
+          "ledgerDisposition": { "const": "POLICY_SATISFIED" }
+        }
+      },
+      "else": { "properties": { "ledgerDisposition": { "type": "null" } } }
+    }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}
