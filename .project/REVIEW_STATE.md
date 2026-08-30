@@ -51,3 +51,19 @@ and explicitly authorize the exact candidateHash above before any V1C implementa
 
 Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/` (`run-manifest.json`
 status `FINALIZED`).
+
+**Human pre-authorization audit (read-only, later, narrow closure task
+`AUTHORIZATION-LEDGER-V1C-V5-PREAUTH-CLOSURE`): `HUMAN_R3_PREAUTH_NOT_READY`.** Council approval
+(3/3 APPROVE) and human pre-authorization are distinct gates; this finding is not a Council
+rejection. Blockers: (1) `MATERIAL_ARCHITECTURE_BLOCKER` — `stopEpoch` increment retry/idempotency
+under-specified (lost-ack counterexample: commit N+1, ack lost, retry, no operation identity /
+idempotency key / expected-epoch CAS preventing a spurious N+2); (2) `EVIDENCE_BLOCKER` — the
+terminal `DecisionRecord` formed in memory was not durably persisted by
+`runShadowExerciseWithDurableEvidence`. Clear/nonblocking: UID authorization CLEAR; proposer
+rotation NONBLOCKING_PROCEDURAL_FINDING; `CouncilQuorumProof` NOT_REQUIRED_FOR_THIS_GATE; Run
+Bundle integrity CLEAR.
+
+**CandidateDisposition: `SUPERSEDED_PENDING_MATERIAL_REVISION`** for `candidateHash
+sha256:9bc6b4c3c63ffa02563d936557bfaced13e6f6251f7c0084bbd3abc01805a063` — Council-approved but
+**not** implementation-authorized. No Council rerun, no provider calls, no V1C implementation, no
+human approval performed by this closure. Finalized Run Bundle unmodified.

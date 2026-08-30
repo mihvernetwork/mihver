@@ -66,6 +66,30 @@ assessments — all content-hash-verified).
 or authorized. Human must separately and explicitly authorize the exact candidateHash above before
 any V1C implementation task begins.
 
+**Human pre-authorization audit (read-only, `AUTHORIZATION-LEDGER-V1C-V5-PREAUTH-CLOSURE`):
+`HUMAN_R3_PREAUTH_NOT_READY`.** This is a distinct, later gate from Council approval above — 3/3
+Council `APPROVE` is not human pre-authorization, and this audit finding is not a Council rejection.
+Two blockers, both material:
+
+1. **`MATERIAL_ARCHITECTURE_BLOCKER`** — `stopEpoch` increment retry/idempotency is
+   under-specified. Lost-ack counterexample: commit to epoch `N+1` succeeds, the acknowledgment is
+   lost, the same logical operation is retried, and the candidate provides no operation identity /
+   idempotency key / expected-epoch CAS preventing a spurious further increment to `N+2`.
+2. **`EVIDENCE_BLOCKER`** — the terminal `DecisionRecord` was formed in memory but was not durably
+   persisted by `runShadowExerciseWithDurableEvidence`.
+
+Nonblocking/clear findings from the same audit: UID authorization — CLEAR; proposer rotation —
+`NONBLOCKING_PROCEDURAL_FINDING`; `CouncilQuorumProof` — `NOT_REQUIRED_FOR_THIS_GATE`; Run Bundle
+integrity — CLEAR.
+
+**CandidateDisposition: `SUPERSEDED_PENDING_MATERIAL_REVISION`.** `candidateHash
+sha256:9bc6b4c3c63ffa02563d936557bfaced13e6f6251f7c0084bbd3abc01805a063` remains
+`COUNCIL_APPROVED` (3/3) but is **not** implementation-authorized and must not be treated as such by
+future context. No Council rerun, no provider calls, no V1C implementation, and no human approval
+were performed by the closure task that recorded this finding — it only persisted an
+already-completed read-only audit result. The finalized Run Bundle under
+`.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/` was not modified.
+
 ## Required Context
 
 - `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/` (this task's own evidence —
