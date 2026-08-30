@@ -26,6 +26,7 @@ ADRs and against `ROADMAP.md`'s equivalent navigation summary.
 - ADR-0002 (Epistemic Provenance Model): ACCEPTED — owner: `docs/adr/ADR-0002-EPISTEMIC-PROVENANCE-MODEL.md`
 - ADR-0003 (Requirement Derivation Model): PROPOSED — owner: `docs/adr/ADR-0003-REQUIREMENT-DERIVATION-MODEL.md`
 - ADR-0004 (Memory Context Authority Boundary): ACCEPTED — owner: `docs/adr/ADR-0004-MEMORY-CONTEXT-AUTHORITY-BOUNDARY.md`
+- ADR-0005 (Decision Council Protocol): ACCEPTED — owner: `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`
 
 Dependency A/B/C/D and the `DECISION_OPTION` historical-source gate — status tokens only below; these
 are several distinct facts with different semantic owners, not one umbrella-owned group:
@@ -69,15 +70,17 @@ Decision Council V1A kernel + simulator (pure, non-LLM deterministic reducer/eve
 machine plus deterministic fake-agent fixture helpers, proving the Rotating Proposer + Two
 Independent Reviewers + Exact-Candidate Quorum protocol only — no real LLM/provider/MCP/tool/shell/
 Publication Broker connection, no Shadow Council, no execution gateway): IMPLEMENTED — owner:
-`docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`. `ADR-0005`'s own `## Status` field remains
-**Proposed** — this checkpoint records the deterministic kernel/simulator implementation only and
-does not move the ADR's Status.
+`docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`. `ADR-0005`'s own `## Status` field is now
+**Accepted** (see the ADR-0005 line above and the "ADR-0005 Acceptance" checkpoint below for the
+frozen evidence basis) — Acceptance validates this protocol foundation and grants no execution,
+publication, merge, or autonomy authority of any kind.
 Shadow Council V1A advisory CLI harness (three independently-spawned provider CLI child processes —
 OpenAI/Anthropic/Google — acting as advisory-only council seats feeding the unmodified Decision
 Council V1A kernel; no direct provider API/SDK integration): IMPLEMENTED and frozen — owner:
 `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`, `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`.
-`ADR-0005`'s own `## Status` field remains **Proposed** — this checkpoint does not change it. All
-Shadow Council output is advisory only and grants no execution, publication, or merge authority.
+`ADR-0005`'s own `## Status` field is now **Accepted**, per the frozen real-exercise evidence
+described in the ADR's own Acceptance note. All Shadow Council output remains advisory only and
+grants no execution, publication, or merge authority.
 
 Full semantic detail for every fact above lives in its owning artifact, and full checkpoint-by-
 checkpoint history lives in "Frozen Steps / Checkpoints" below — neither is reproduced here.
@@ -363,6 +366,17 @@ M0 — see [M0_SCOPE.md](../docs/foundation/M0_SCOPE.md). Target: `UserIdea` →
   or implies execution, publication, merge, or autonomous task-transition authority. No follow-on
   task — ADR-0005 acceptance or execution integration — is recommended or authorized by this
   checkpoint.
+- **ADR-0005 Acceptance.** `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`'s own `## Status` field
+  moved **Proposed → Accepted** after its own seven-item Acceptance Gate was independently
+  re-evaluated against frozen `main` evidence and found fully satisfied. Frozen evidence basis:
+  Decision Council V1A kernel/simulator (PR #38, freeze PR #39), the Acceptance Gate definition
+  itself (PR #40), the real Shadow Council V1A evidence (PR #41, squash commit
+  `45077da5300bc56492e26f041fb88583dd5f0085`), and the Shadow Council V1A freeze (PR #42, squash
+  commit `f0fa9acddabc59de9e7ed6301496dc233e470d67`). The ADR's own "Acceptance note" is the
+  semantic authority for this Acceptance — full criteria detail is not reproduced here. Acceptance
+  validates the Decision Council protocol foundation only: it does **not** authorize execution
+  integration, bounded autonomy, Publication Broker activation, any council→tool/action path, or
+  any new implementation capability — all remain separate, explicitly human-authorized future work.
 
 ## Open Items
 
@@ -392,10 +406,11 @@ branch, if any.
 `dbdb4f7049d2a73728038f1c98efc47ddfee3727`), **Project Continuity V1B is frozen** (see the
 checkpoint above, PR #36, squash commit `8fad9198460b80d28894a821feaa44df4e9b982f`),
 **Decision Council V1A (kernel + simulator) is frozen** (see the checkpoint above, PR #38, squash
-commit `2e9a0e88ad8b74bc11afc0fcac8db704f74690d0`; `ADR-0005` remains **Proposed**), and
-**Shadow Council V1A (advisory CLI harness) is frozen** (see the checkpoint above, PR #41, squash
-commit `45077da5300bc56492e26f041fb88583dd5f0085`; `ADR-0005` remains **Proposed**). None
-automatically. No follow-on task — V1C, ADR-0005 acceptance, execution integration, autonomous task
-selection/execution, or Publication Broker provisioning/activation included — is recommended or
-authorized by any of these checkpoints; any follow-on task requires its own separate, explicit
-human authorization, exactly like every other next-task pointer in this section.
+commit `2e9a0e88ad8b74bc11afc0fcac8db704f74690d0`), **Shadow Council V1A (advisory CLI harness) is
+frozen** (see the checkpoint above, PR #41, squash commit
+`45077da5300bc56492e26f041fb88583dd5f0085`), and **`ADR-0005` is now Accepted** (see the "ADR-0005
+Acceptance" checkpoint below). None of this automatically authorizes anything further. No
+follow-on task — V1C, execution integration, autonomous task selection/execution, or Publication
+Broker provisioning/activation included — is recommended or authorized by any of these
+checkpoints; any follow-on task requires its own separate, explicit human authorization, exactly
+like every other next-task pointer in this section.

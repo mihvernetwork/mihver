@@ -2,7 +2,32 @@
 
 ## Status
 
-Proposed
+Accepted
+
+**Acceptance note (this revision):** per this ADR's own "Acceptance Gate" (below), all seven
+criteria have now been independently re-evaluated against frozen evidence on `main` and found
+satisfied. Decision Council V1A's kernel and simulator were implemented and frozen by PR #38 and
+PR #39; the Acceptance Gate itself was defined by PR #40; a separately-authorized real,
+three-seat, provider-CLI-backed Shadow Council exercise (advisory-only, no direct provider API
+integration) was implemented and its evidence merged by PR #41, squash commit
+`45077da5300bc56492e26f041fb88583dd5f0085`; Shadow Council V1A was subsequently frozen by PR #42.
+The authoritative exercise record is `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`; full
+technical detail — including runtime seat/provider-origin attestation and its documented residual
+limits, and the two representative real exercises (R1, R2) that traversed this ADR's existing
+commitment/reveal/candidate-freeze/vote/`DecisionRecord` sequence with no protocol modification —
+lives there and in the finalized Run Bundle it points to, not reproduced here. The two real
+exercises bind two different `ProjectContextPack` `contextHash` values (identical
+`repositoryHead`); this is an explicitly recorded operational/evaluation limitation of running
+paired exercises sequentially against a live working tree, not a protocol-integrity failure.
+Documented residual trust limitations (a single parent process launching all three seats; two of
+three CLIs reporting no per-model confirmation; one CLI exposing no tool-use telemetry) remain
+residual limitations of the current adapter/runtime boundary — they are not, and this Acceptance
+does not claim them to be, cryptographic proof of seat/provider non-collusion. This Status
+transition validates the Decision Council protocol foundation demonstrated by this evidence and
+changes nothing else: **Acceptance does not authorize execution.** It does not make any
+`DecisionRecord` directly actionable, and it does not activate autonomous task selection, bounded
+autonomy, Publication Broker execution, push/PR/merge automation, or any council→tool/action path.
+All such capabilities remain separate, explicitly human-authorized future work.
 
 ## Context
 
