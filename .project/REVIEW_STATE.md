@@ -15,14 +15,29 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: authorization-ledger-v1c-r3-arch-decision-7
+Task: authorization-ledger-v1c-v7-preauth-closure
 Branch: `decision/authorization-ledger-v1c-r3-architecture-v7`
 Target: main
 Publication:
-- Local Publication Builder authorized: **yes**, per this task's own "if evidence is valid, create
-  exactly one local evidence commit" instruction — subject
-  `chore: record v1c r3 architecture decision v7`. No push, no PR, no merge.
+- Local Publication Builder authorized: **yes**, per this closure task's own "create exactly ONE
+  additional local commit" instruction — subject `chore: record v7 preauth blockers`. No push, no
+  PR, no merge. (The preceding commit on this branch, `chore: record v1c r3 architecture decision
+  v7`, recorded the Council run itself.)
 - remote publication: human manual fallback only (unchanged)
+
+## Gate summary — read this before anything below
+
+V7 passed **one** of two independent gates. Do not read the Council result as implementation
+authorization, and do not describe V7 as Council-rejected.
+
+| Gate | Outcome |
+| --- | --- |
+| Council (R3 quorum) | **`COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`** — 3/3 APPROVE; `DecisionRecord` `state DECIDED`, `disposition HUMAN_APPROVAL_REQUIRED`, `reasonCode R3_QUORUM_MET` |
+| Human R3 pre-authorization audit | **`HUMAN_R3_PREAUTH_NOT_READY`** — 2 material architecture blockers + 1 evidence blocker |
+
+**CandidateDisposition: `SUPERSEDED_PENDING_MATERIAL_REVISION`.** Primary next action:
+**`NEW_R3_CANDIDATE_REQUIRED`**. Full blocker detail and the next architectural sequence are in
+[CURRENT_TASK.md](./CURRENT_TASK.md); the Council-run record follows below, unchanged.
 
 **Real 3-seat Shadow Council R3 exercise** for `authorization-ledger-v1c-r3-arch-decision-7`, base
 `main @ 2e42febe088e5e6bdff61431cd964dd2a3f2fcd8`. Exactly one frozen candidate
@@ -113,3 +128,54 @@ Closed predecessors, never to be re-voted or resubmitted:
 
 Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v7/` (`run-manifest.json`
 status `FINALIZED`, `manifestHash sha256:0b48c8b7...e6de`, 12 artifacts).
+
+---
+
+## Second gate — human R3 pre-authorization audit: `HUMAN_R3_PREAUTH_NOT_READY`
+
+Strict read-only pre-authorization audit of the exact
+`candidateHash sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`. Base state
+re-verified mechanically; `candidateHash`, `recordHash` and the Run Bundle `manifestHash` each
+**independently recomputed** from persisted bytes through the frozen ADR-0005 kernel path, never
+taken from a report. Two fresh read-only Codex auditors (`sandbox: read-only`): Auditor A
+(architecture / exact implementability) `01a0546d-d99a-73a2-b776-8323c790f840`; Auditor B (identity
+/ trust / human authorization) `01a0546f-d77e-7863-a91c-3a31f4aeb70c`. Decision/evidence chain
+verified mechanically by Claude — no third auditor needed, **no voting provider invoked, no Council
+rerun**.
+
+The evidence chain is sound; V7 fails on **exact implementability**.
+
+1. **UID policy trust root — `MATERIAL_ARCHITECTURE_BLOCKER`.** The invariant is established but the
+   runtime trust-root contract is not fixed: absolute policy path, trusted parent-directory chain,
+   exact acceptable owner UID/GID, exact acceptable file/directory modes, no-symlink resolution,
+   hard-link policy, fail-closed ownership/mode/path validation, and no model-writable ancestor
+   capable of replacement all remain for a successor candidate to define.
+2. **`AuthorizationGrant` — `MATERIAL_ARCHITECTURE_BLOCKER`.** New R3 security choices are left to
+   implementers: `grantId` generation authority, format/entropy, uniqueness, issuance idempotency
+   across retry/lost ACK; the exact meaning of `issuanceIdentity`; whether V1C supports expiry and
+   its exact semantics; whether V1C supports revocation and its exact authority/state/atomicity;
+   canonical grant identity/hash decision; whether signatures exist and, if a canonical grant hash
+   exists, its exact covered fields/domain; and grant-issuance request identity / `requestHash` /
+   journal semantics. **No wording such as "where supported" may defer an R3 capability decision.**
+3. **`CouncilQuorumProof` — `EVIDENCE_BLOCKER`.** The V7 `DecisionRecord` is durable and valid, and
+   no proof is required for the human R3 gate itself. But `scripts/dev/authorization-binder.mjs`
+   later requires a valid, eligible `CouncilQuorumProof` for R1/R2/R3 authorization evidence, and
+   the V7 bundle cannot legitimately construct one: the contemporaneous run did not durably persist
+   the exact `DecisionRequest` with `rotationOrdinal`, the exact `CouncilConfig`, its exact seat
+   order, or `modelFamily` per seat. **These MUST NOT be reconstructed retroactively for V7, and no
+   `CONTEMPORANEOUS` proof may be manufactured after the run.** Forward repair is required before
+   the next R3 architecture run and must not alter or repair historical V7 evidence.
+
+**Clear / non-blocking:** `MATRIX_CONTRACT_CLEAR` (exact 17/17) · `STOPEPOCH_DOMAIN_CLEAR` ·
+`STOPEPOCH_IDEMPOTENCY_SATISFIED` · `ADMIN_JOURNAL_CLEAR` · `ADMIN_RESULT_LOOKUP_CLEAR` ·
+`CONSUME_ONCE_IMPLEMENTATION_DETAIL_ONLY` · `UID_AUTH_CLEAR` · `COUNCIL_TRUST_CLEAR` ·
+`HUMAN_APPROVAL_BINDING_CLEAR` · `ZERO_EFFECT_CONSUMER_CLEAR` · `SEAT_EVIDENCE_CLEAR` ·
+`DECISION_RECORD_DURABLE` · `RUN_BUNDLE_CLEAR` · `HISTORICAL_INTEGRITY_CLEAR`. Also preserved: no
+retry, no second candidate, no provider or model substitution, no output repair, no implementation,
+no execution authority, no publication authority, **no human approval**.
+
+**Verdict `HUMAN_R3_PREAUTH_NOT_READY`; primary next action `NEW_R3_CANDIDATE_REQUIRED`.** V7's
+`candidateHash sha256:c072d996...4671f0f8` is **`SUPERSEDED_PENDING_MATERIAL_REVISION`** — it joins
+V5 (`sha256:9bc6b4c3...1805a063`) and V6 (`sha256:c5d16bea...b2fafb90`) as not to be resubmitted;
+**V8 must be a new `candidateHash`.** V7's Council decision and Run Bundle remain valid, durable and
+byte-unchanged.
