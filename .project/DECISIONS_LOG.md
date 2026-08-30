@@ -270,3 +270,19 @@ Entries above this line are unmodified, per this log's append-only policy.
   (Decision Council V1A kernel/simulator), PR #40 (Acceptance Gate definition), PR #41 (real Shadow
   Council V1A evidence), and PR #42 (Shadow Council V1A freeze). Acceptance authorizes no
   execution, publication, merge, or autonomy capability. — `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md`
+- 2026-08-30 — `AUTHORIZATION-LEDGER-V1C-V5-PREAUTH-CLOSURE` (narrow, read-only, no new commits to
+  the finalized Run Bundle): persisted the result of an already-completed human pre-authorization
+  audit for `authorization-ledger-v1c-r3-arch-decision-5`'s V5 candidate (`candidateHash
+  sha256:9bc6b4c3c63ffa02563d936557bfaced13e6f6251f7c0084bbd3abc01805a063`, Council `3/3 APPROVE`,
+  `COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`). Audit result: **`HUMAN_R3_PREAUTH_NOT_READY`**
+  — distinct from, and not, a Council rejection. Two material blockers: (1)
+  `MATERIAL_ARCHITECTURE_BLOCKER` — `stopEpoch` increment retry/idempotency under-specified (a
+  lost-ack retry has no operation identity/idempotency key/expected-epoch CAS preventing a spurious
+  further increment); (2) `EVIDENCE_BLOCKER` — the terminal `DecisionRecord` formed in memory was
+  not durably persisted by `runShadowExerciseWithDurableEvidence`. Nonblocking/clear: UID
+  authorization CLEAR; proposer rotation NONBLOCKING_PROCEDURAL_FINDING; `CouncilQuorumProof`
+  NOT_REQUIRED_FOR_THIS_GATE; Run Bundle integrity CLEAR. **CandidateDisposition:
+  `SUPERSEDED_PENDING_MATERIAL_REVISION`** — Council-approved, not implementation-authorized. No
+  Council rerun, no provider calls, no V1C implementation, no human approval performed. The
+  finalized Run Bundle under `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/`
+  was not modified. — `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`

@@ -15,278 +15,55 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: SHADOW-COUNCIL-FAILURE-EVIDENCE-V1
-Branch: `feat/shadow-council-failure-evidence-v1`
+Task: authorization-ledger-v1c-r3-arch-decision-5
+Branch: `decision/authorization-ledger-v1c-r3-architecture-v5`
 Target: main
 Publication:
-- Local Publication Builder authorized: **yes**, per this task's own "if all gates pass, create
-  exactly one local publication commit" instruction — one local commit, subject
-  `feat: persist shadow council failure evidence`. No push, no PR, no merge.
+- Local Publication Builder authorized: **yes**, per this task's own "if DECISION_EVIDENCE_VALID,
+  create exactly one local evidence commit" instruction — subject
+  `chore: record v1c r3 architecture decision v5 evidence`. No push, no PR, no merge.
 - remote publication: human manual fallback only (unchanged)
 
-**Phase 0 Scout** (`mcp__codex__codex`, read-only): mapped every throw site in the real Shadow
-Council call path and confirmed a clean advisory sidecar fully satisfies the task with zero changes
-to ADR-0005/`CouncilQuorumProof`/Authorization Loop, and that Run Bundle's existing OPEN/incremental
-model already honestly represents a partial/failed exercise — no
-`RUN_BUNDLE_FAILURE_REPRESENTABILITY_BLOCKER`.
+**Real 3-seat Shadow Council R3 exercise** for `authorization-ledger-v1c-r3-arch-decision-5`: one
+frozen candidate (`candidateHash sha256:9bc6b4c3c63ffa02563d936557bfaced13e6f6251f7c0084bbd3abc01805a063`,
+proposer `seat-openai`, `rotationOrdinal 0`), materially revised from V4
+(`sha256:0e63ea1a...246175c`, closed after valid REJECT) to fix both of its named blockers:
+(1) stopEpoch now specified as SQLite `INTEGER` bounded `0..9007199254740991`
+(`Number.MAX_SAFE_INTEGER`) with an explicit `CHECK` constraint, no BigInt/old+1/wraparound/reset/
+float coercion, fail-closed `STOP_EPOCH_EXHAUSTED` at the ceiling; (2) authorization now an exact
+`authenticatedPeerUid` (from kernel `SO_PEERCRED`) checked against a root-owned, non-model-writable
+UID allowlist, with socket/group permissions serving only as reachability.
 
-**Implementation** (3 sequential workstreams, 1 remediation round): A (`ShadowSeatInvocationFailure`
-artifact), B (harness hooks classifying every throw site precisely, public API unchanged), C
-(`runShadowExerciseWithDurableEvidence` — incremental, synchronous, per-stage Run Bundle writes).
+**All three seats voted APPROVE** (seat-openai, seat-anthropic, seat-google), each citing both
+fixes as decisive. `exerciseOutcome`: 3/3 APPROVE.
 
-**Four-axis adversarial review**: Axis A (protocol contamination) and Axis D (output safety) both
-`APPROVED_FOR_INTEGRATION` with no changes. Axis B (evidence durability) found and fixed: a failed
-exercise could still be finalized if the caller passed `finalize:true`; a throwing caller-supplied
-`onInvocationFailure` hook could mask the original harness error. Axis C (forensic usefulness) found
-and fixed: missing `provider`/`requestedModelId`; indistinguishable `SHADOW_RESPONSE_SHAPE` details;
-an unjoinable pre-admission attestation reference; `INVOCATION_CONFIG` failures misclassified as
-`SPAWN`; available hash/length metadata nulled out at `FINALIZE`/`KERNEL_EVENT`/`RUN_POSTCONDITION`.
+**Fresh Verifier** (`mcp__codex__codex`, read-only): first pass `DECISION_EVIDENCE_INVALID` over
+two findings (unpersisted `rotationOrdinal`; no `repositoryHead` field inside attestation JSON). A
+second, independent, fresh read-only adjudicator confirmed both `VERIFIER_CRITERIA_DEFECT`: neither
+field is ever persisted by this harness's evidence model in any run, including the already-merged,
+human-reviewed V3/V4 bundles; repository-head integrity is established transitively via the
+packet's hashed `repositoryHead`, which every attestation binds to through `packetHash`. Final
+verdict: **`DECISION_EVIDENCE_VALID`**.
 
-No finding at any point required changing ADR-0005/`CouncilQuorumProof`/Authorization Loop semantics
-— `PROTOCOL_SEMANTICS_BLOCKER` was never triggered.
+**Outcome: `COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`.** Council-evidence-only; zero V1C
+implementation, zero execution or publication authority, zero Council rerun. Human must separately
+and explicitly authorize the exact candidateHash above before any V1C implementation task begins.
 
-**Final Verifier**: confirmed ADR-0005/kernel/schema, `CouncilQuorumProof`/schema, Authorization Loop,
-`shadow-council-vote-assessment.mjs`, and `shadow-council-packet.mjs`/`shadow-council-cli-transport.mjs`
-all byte-identical to `main`; rationale-invariance test unmodified/passing; failed-exercise durable
-evidence proven; no execution/publication authority; `git diff --check` clean. Sandbox-only `EPERM`
-failures independently re-confirmed green in this session's own shell.
+Evidence: `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v5/` (`run-manifest.json`
+status `FINALIZED`).
 
-**Real bounded smoke exercise** (`shadow-failure-evidence-smoke-1`, R1, all 3 real seats, no
-misbehavior deliberately provoked): proved the durable per-stage journal on the normal success path —
-11 evidence entries written incrementally, bundle correctly finalized after a genuine 3/3
-`COUNCIL_APPROVED` result. The negative/failure path remains proven only by the deterministic test
-suite. The historical `authorization-ledger-v1c-r3-arch-decision-2` `COUNCIL_EVIDENCE_BLOCKER` was
-not rerun, reinterpreted, or retroactively explained.
+**Human pre-authorization audit (read-only, later, narrow closure task
+`AUTHORIZATION-LEDGER-V1C-V5-PREAUTH-CLOSURE`): `HUMAN_R3_PREAUTH_NOT_READY`.** Council approval
+(3/3 APPROVE) and human pre-authorization are distinct gates; this finding is not a Council
+rejection. Blockers: (1) `MATERIAL_ARCHITECTURE_BLOCKER` — `stopEpoch` increment retry/idempotency
+under-specified (lost-ack counterexample: commit N+1, ack lost, retry, no operation identity /
+idempotency key / expected-epoch CAS preventing a spurious N+2); (2) `EVIDENCE_BLOCKER` — the
+terminal `DecisionRecord` formed in memory was not durably persisted by
+`runShadowExerciseWithDurableEvidence`. Clear/nonblocking: UID authorization CLEAR; proposer
+rotation NONBLOCKING_PROCEDURAL_FINDING; `CouncilQuorumProof` NOT_REQUIRED_FOR_THIS_GATE; Run
+Bundle integrity CLEAR.
 
----
-
-**Prior task — historical, preserved as-is, not rewritten:**
-
-Task: SHADOW-COUNCIL-VOTE-RATIONALE-V1B
-Branch: `feat/shadow-council-vote-rationale-v1b`
-Target: main
-Publication:
-- Local Publication Builder authorized: **yes**, per this task's own "if all gates pass, create
-  exactly one local publication commit" instruction — one local commit, subject
-  `feat: persist shadow council vote rationale`. No push, no PR, no merge.
-- remote publication: human manual fallback only (unchanged)
-
-**Phase 0 Scout** (`mcp__codex__codex`, read-only): confirmed a clean Shadow-Council-only sidecar
-(zero changes to ADR-0005's frozen `AgentVote`/`DecisionRecord`/kernel/schema) fully satisfies every
-task requirement — no `PROTOCOL_SEMANTICS_BLOCKER`.
-
-**Implementation** (3 workstreams, disjoint files, workspace-write, 1 remediation round after
-review): A (packet contract + `ShadowVoteAssessment` module), B (harness wiring: assessment
-construction + `deriveAgentVote` projection into the frozen `AgentVote`), C (Run Bundle evidence
-persistence wrapper `runShadowExerciseWithEvidence`).
-
-**Four-axis adversarial review** (fresh, read-only Reviewers):
-- Axis A (protocol contamination): `APPROVED_FOR_INTEGRATION`.
-- Axis B (evidence integrity): found `deriveAgentVote` didn't verify `assessmentHash` before
-  projecting — a tampered assessment could still yield a kernel-valid vote. **Fixed**: verification
-  now happens first, throwing `ASSESSMENT_HASH_MISMATCH` on mismatch. This is a hardening fix
-  entirely inside the new sidecar module; it does not touch ADR-0005.
-- Axis C (forensic usability): found the actual point of the task wasn't wired — the evidence-writer
-  helper existed but nothing in the real exercise path called it, so rationale would still be lost
-  by default. **Fixed** by workstream C's wrapper actually persisting every assessment.
-- Axis D (prompt/output safety): minor wording ("hidden reasoning") and test-coverage
-  (UTF-8-byte-limit case) gaps found and fixed.
-
-**Exact-final Reviewer**: `READY_FOR_FINAL_VERIFICATION` after one more test-coverage fix (the
-end-to-end durable-evidence test only covered APPROVE; extended to prove REJECT/ABSTAIN rationale
-survives a real, finalized Run Bundle read back from disk).
-
-No finding at any point required changing ADR-0005 quorum/`AgentVote`/`DecisionRecord` semantics —
-`PROTOCOL_SEMANTICS_BLOCKER` was never triggered.
-
-**Final Verifier**: confirmed ADR-0005/kernel/schema, `council-quorum-proof.mjs`/schema, the
-Authorization Loop (Binder/Ledger/Loop), and `run-bundle.mjs` all byte-identical to `main`; rationale
-invariance proven; fail-closed malformed-rationale tests present and green; no execution/publication
-authority; no real provider calls during deterministic tests; `git diff --check` clean. Two suites'
-sandbox-only `EPERM` failures were independently re-run and confirmed green in this session's own
-shell.
-
-**Real bounded smoke exercise** (`shadow-vote-rationale-smoke-1`, R1, 1 proposal + 3 real votes, no
-semantic retry, no provider substitution): every real provider satisfied the new
-`{voteValue,rationale}` contract on the first attempt (no `PROVIDER_RESPONSE_CONTRACT_BLOCKER`); 3/3
-APPROVE on a harmless synthetic question; every seat's rationale durably persisted and bound into a
-finalized Run Bundle at `.project/run-bundles/shadow-council-vote-rationale-v1b-smoke/`, read back
-from disk with no live process required. See `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`'s new
-"Exercise 3" section — the historical R3 `NO_QUORUM` exercise recorded there was not reinterpreted
-and `seat-openai`'s lost rationale was not fabricated.
-
----
-
-**Prior task — historical, preserved as-is, not rewritten:**
-
-Task: AUTHORIZATION-LOOP-FOUNDATION-V1A (resumed)
-Branch: `feat/authorization-loop-foundation-v1a`
-Target: main
-Publication:
-- Local Publication Builder authorized: **yes**, per this continuation's own "one local publication
-  commit if all gates pass" instruction — one local commit, subject
-  `feat: adopt council quorum proof in authorization loop`. No push, no PR, no merge.
-- remote publication: human manual fallback only (unchanged)
-
-**Proof-API adoption Scout** (`mcp__codex__codex`, read-only): mapped the real, merged
-`verifyCouncilQuorumProof({ proof, decisionRecord, trustedRegistry })` signature onto the existing
-Binder/Ledger; found no council-semantics mismatch.
-
-**Boundary-integration remediation** (2 parallel fresh Codex Implementers, workspace-write, disjoint
-file sets to avoid conflicts): Binder workstream and Ledger workstream, each reporting no council
-escalation required.
-
-**Phase 2 review re-entry** (3 fresh axis Reviewers — Binder/proof eligibility, Ledger independent
-re-derivation/replay/fencing, Fake-loop boundedness): 2× `APPROVE_WITH_CHANGES` (test-coverage gaps
-only — wrong-record-binding proof case, `RECONSTRUCTED`-provenance case, one R1-R3 loop integration
-test), 1× `APPROVED_FOR_INTEGRATION`. One fresh Implementer fix round closed all gaps; re-run
-confirmed green (Binder 23, Loop 13).
-
-**Phase 6 four-axis integrated review** (fresh Reviewers, read-only):
-- Axis 1 (hash graph/binding): `APPROVED_FOR_INTEGRATION`, no changes.
-- Axis 2 (quorum/replay/fencing): `APPROVE_WITH_CHANGES` — Ledger's redundant hand-rolled quorum
-  approximation removed; `checkAndConsume`/`issueGrant` check ordering fixed so the new proof gate
-  no longer masks older-precedence denials (replay, stopEpoch revocation, grant expiry).
-- Axis 3 (effect-isolation/no execution authority): `APPROVE_WITH_CHANGES` — extracted
-  `computeTaskRecordHash`/`valueWithoutHash` into a new pure module
-  (`scripts/dev/canonical-record-hash.mjs`) so Binder/Ledger no longer transitively import
-  `run-bundle.mjs`'s fs/child_process-capable code; extended the authority-distance test to walk the
-  transitive import graph; fixed one wording overclaim ("real executor" -> "FakeExecutor
-  implementation").
-- Axis 4 (confused-deputy resistance): `APPROVED_FOR_INTEGRATION`, no changes — most
-  security-critical axis, found no exploitable bypass.
-
-One fresh Implementer remediation round applied all three real Phase 6 findings; a follow-up Run
-Bundle resync corrected one stale content hash after the wording fix (output bytes unchanged,
-verified byte-identical). No finding at any point in this task required changing actual R1/R2/R3
-quorum semantics, council topology, or the authority boundary — `PROTOCOL_SEMANTICS_BLOCKER`/
-`COUNCIL_ESCALATION_REQUIRED` was never triggered; the continuation's pre-authorized real Shadow
-Council escalation path was not used.
-
-**Phase 7 final Verifier** (fresh, read-only): confirmed frozen ADR-0005 kernel/schema and the
-merged `council-quorum-proof.mjs`/schema byte-identical to `main`; ADR-0006 Status still `Proposed`;
-no execution/publication/shell/Git/network/provider-CLI capability anywhere in new code; full test
-matrix green (independently re-run, not just claimed); the 6-scenario demonstration independently
-re-run and confirmed; Run Bundle hashes independently recomputed and matched; `git diff --check`
-clean. Two sandbox-only false failures (`npm run test:run-bundle` EPERM under the Verifier's
-read-only sandbox) were independently re-run and confirmed green in this session's own shell.
-`scripts/dev/run-bundle.mjs`'s diff (a same-behavior pure re-export refactor, confirmed via its own
-unaffected 17/17 suite) was the only non-frozen tooling file touched.
-
----
-
-**Prior, unrelated task — historical, preserved as-is, not rewritten:**
-
-Task: DECISION-AUTHORIZATION-BOUNDARY-V1A-DESIGN
-Branch: `docs/decision-authorization-boundary-v1a-design`
-Target: main
-Publication:
-- Local Publication Builder authorized: **yes**, per this task's own explicit "Prepare one local
-  commit only if review finds the design coherent" instruction — exactly one local commit, subject
-  `docs: define decision authorization boundary`. No push, no PR, no merge (task-forbidden).
-- remote publication: human manual fallback only (unchanged by this task)
-
-This is a **design-only** task: no code, script, or schema file was created; `docs/adr/ADR-0005-
-DECISION-COUNCIL-PROTOCOL.md`, the Decision Council kernel/simulator/schema/tests, and the Shadow
-Council V1A exercise/evidence are all confirmed byte-identical to `main` (Verifier, below).
-
-**Round 1 — four parallel, independent, fresh Codex Reviewers (`mcp__codex__codex`, read-only),
-one per required adversarial axis**, against the first complete draft of
-`docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md`:
-
-- **Axis A (authority escalation / confused deputy)**, thread `01a0504c-d443-7a60-b1af-f7d5912d0cda`:
-  verdict REJECT. 2 BLOCKER + 2 MAJOR. Root finding: `evaluateAuthorization`/`checkAndConsume` as
-  drafted trusted a caller-supplied `DecisionRecord`/envelope's own claimed fields (disposition,
-  scope, hash) instead of independently verifying them; `TaskRecord` lookup was tautological
-  (equality-checked against a caller-supplied `TaskRecord`); the admin/client privilege split was
-  asserted, not structurally specified.
-- **Axis B (replay / stale context / STOP fencing)**, thread `01a0504e-0d57-71a3-b2d9-ddd350313584`:
-  verdict REJECT. 3 BLOCKER + 2 MAJOR. Root finding: caller-chosen/random `authorizationId` let the
-  same decision be wrapped in multiple separately-consumable envelopes; consumption-time freshness
-  and `stopEpoch` fencing were not actually linearized against concurrent bumps; `expiresAt` was
-  defined but never checked; grant creation didn't tie `boundStopEpoch` to the envelope it approved.
-- **Axis C (human-approval binding / R3 bypass)**, thread `01a0504f-db1b-7ec1-aa1e-bdaf710b7b84`:
-  verdict REJECT. 1 BLOCKER + 2 MAJOR. Root finding: `checkAndConsume` never recomputed
-  `envelopeHash`/disposition from the canonical `DecisionRecord`, so a submitted envelope's own
-  (falsifiable) claims of `POLICY_SATISFIED`/an approved hash were trusted directly; `expiresAt`
-  unchecked; `approverIdentity` had no eligibility/authentication policy.
-- **Axis D (DecisionRecord → execution separation)**, thread `01a05051-1336-7db2-b056-55bac0bc6e81`:
-  verdict FAIL. 1 BLOCKER + 1 MAJOR. Findings: `ALLOW_ONCE` is a genuine positive authorization fact
-  (this ADR's own thesis language overclaimed otherwise) and V1C, once built, would already hold the
-  authorization side a future Gateway needs; the ADR's claim that a future Gateway "would construct a
-  `PublicationEnvelope`" established a new, unauthorized producer relationship into the existing
-  Publication Protocol (`CODEX_ROLES.md` names Claude as the sole producer, "never a worker").
-
-**Claude's adjudication (Round 1):** all findings accepted as valid; none required changing frozen
-ADR-0005 (no `PROTOCOL-BOUNDARY BLOCKER` was raised by any of the four). Fixes applied directly to
-the ADR: added a mandatory, privileged "Independent Re-Verification" step (`independentlyRederive`)
-that re-derives the canonical `DecisionRecord`/`TaskRecord` (hash-verified) and re-runs
-`evaluateAuthorization` itself rather than trusting a submitted envelope's fields; made
-`authorizationId` a deterministic function of `(decisionRequestId, recordHash)`; added a global
-reader-writer-lock fencing model for `stopEpoch` vs. consumption; added an `expiresAt` check inside
-the atomic consumption section; tied `AuthorizationGrant.boundStopEpoch` to the recomputed envelope
-at creation time; specified `approverIdentity` as captured non-spoofably by the admin path's own
-authentication mechanism, not caller-asserted; made the admin/client disjoint-type separation a
-normative V1C requirement; softened the "no capability grant of any kind" thesis to an honest
-comparison with the already-accepted Publication Broker source-implemented-not-activated precedent,
-and added a V1C exit-gate requirement (no consumer of the Ledger may exist until V1D is separately
-authorized); removed the unauthorized `PublicationEnvelope`-construction claim, replacing it with an
-explicit non-decision.
-
-**Round 2 — one fresh, independent Codex Reviewer** (`mcp__codex__codex`, read-only, no memory of
-Round 1), thread `01a0505a-8463-79f1-8eca-53deb4edd9f1`, re-attacking the corrected design
-specifically to check whether the Round 1 fixes actually held: verdict BLOCKER. 1 BLOCKER + 1 MAJOR
-+ 1 MINOR. Root finding: the fix's own concurrency gate was keyed on the submitted (untrusted)
-`authorizationId`, not the independently-derived canonical one — two concurrent submissions with
-different fabricated IDs could each acquire a different gate and both reach `ALLOW_ONCE` before
-either marked the ledger. Also: the grant-creation invariant was specified only in prose, without
-the same reader-writer-lock rigor consumption itself has; the field-mismatch ordering was described
-as a forensic/causal claim rather than a diagnostic-precedence one.
-
-**Claude's adjudication (Round 2):** all three findings accepted as valid. Fixed by splitting
-re-derivation into an ungated `resolveCanonicalRecord` (pure read, produces the trustworthy
-canonical `authorizationId`) that runs *before* the gate is acquired, with the gate itself now keyed
-on that canonical value, never the submission's claim; grant creation's rule now explicitly requires
-holding the shared/reader form of the same global `stopEpoch` lock across re-derivation, epoch
-comparison, and durable persistence; the field-mismatch ordering is now described as "diagnostic
-precedence," not causal classification.
-
-**Claude's own additional self-review**, applied directly (not a separate Codex round, given
-diminishing marginal value after two independent adversarial rounds; named here rather than hidden):
-found and fixed a dangling section cross-reference ("see 'Two Kinds of Staleness' below," a heading
-that was never actually written); found and fixed a correctness bug where the schema proposal listed
-`EXPIRED_BY_DRIFT`/`REVOKED_BY_STOP_EPOCH`/`CONSUMED` as legal values of the envelope's own
-`disposition` field, which would have broken the hash-immutability the whole design depends on
-(`envelopeHash` covers `disposition`; mutating it post-construction would silently invalidate any
-already-issued `AuthorizationGrant`) — corrected so `disposition` is fixed at construction to exactly
-two values, and the State Machine diagram is now explicitly described as the Ledger's own tracked
-lifecycle for an `authorizationId`, not a mutation of the immutable envelope; found and fixed a
-malformed bullet in "Alternatives Considered" (a missing bullet marker/title had silently merged two
-alternatives into one) and two literal duplicated bullets in "Open Questions" (an editing artifact
-from an earlier insertion).
-
-**Residual, honestly flagged**: after these self-driven fixes, no third independent Codex Reviewer
-round was run against the exact final text — two independent adversarial rounds already converged
-toward decreasing severity (Round 1: multiple BLOCKERs across all four axes; Round 2: one BLOCKER,
-found and fixed), and this is a design document, not executable code, so the marginal value of a
-third round was judged not to outweigh the cost. This is Claude's own technical judgment call, named
-explicitly rather than silently assumed away — a human reviewer may reasonably want one more pass
-before treating the design as final.
-
-**Verifier** (`mcp__codex__codex`, fresh, read-only, independent, thread
-`01a0505f-aba2-7723-aaa9-8690ff8c0225`, no design opinion, deterministic checks only): **11/11
-checks PASS.** `git diff main --check` clean; `git diff main -- docs/adr/ADR-0005-DECISION-COUNCIL-
-PROTOCOL.md` empty; `git diff main --` over the Decision Council kernel/simulator/schema/tests empty;
-Shadow Council exercise + finalized run bundle
-(`.project/run-bundles/shadow-council-v1a-cli-harness-remediated/`) empty; `PUBLICATION_BROKER.md`/
-`CODEX_ROLES.md`/`AGENT_POLICY.md`/`publication-builder.mjs`/`tools/publication-broker/` all empty;
-only 4 Markdown files changed/added (`docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md` new;
-`.project/CURRENT_TASK.md`, `.project/PROJECT_STATE.md`, `.project/CONTEXT_INDEX.md` modified) — no
-executable, script, or schema file added anywhere; direct text inspection confirmed no runnable-code
-claim or execution instruction anywhere in the ADR; `npm run check:project-consistency` 7/7 PASS;
-`npm run context` confirmed clean bootstrap-visible state matching this record.
-
-**Human review is the next gate.** This task's local publication commit (once prepared) is not
-pushed; no PR is touched or created; no merge occurs. Nothing in this task activates execution,
-bounded autonomy, Publication Broker provisioning, or any council→tool/action path — all remain
-separate, explicitly human-authorized future work, exactly as the ADR's own "Non-Goals" states.
+**CandidateDisposition: `SUPERSEDED_PENDING_MATERIAL_REVISION`** for `candidateHash
+sha256:9bc6b4c3c63ffa02563d936557bfaced13e6f6251f7c0084bbd3abc01805a063` — Council-approved but
+**not** implementation-authorized. No Council rerun, no provider calls, no V1C implementation, no
+human approval performed by this closure. Finalized Run Bundle unmodified.
