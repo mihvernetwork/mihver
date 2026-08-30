@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/council-quorum-proof.schema.json",
+  "title": "MIHVER Decision Council Quorum Proof V1",
+  "$defs": {
+    "CouncilEpochRegistryEntry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["councilEpochId", "councilConfig", "councilConfigHash"],
+      "properties": {
+        "councilEpochId": { "type": "string", "minLength": 1 },
+        "councilConfig": { "$ref": "decision-council.schema.json#/$defs/CouncilConfig" },
+        "councilConfigHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "CouncilEpochRegistry": {
+      "type": "object", "additionalProperties": { "$ref": "#/$defs/CouncilEpochRegistryEntry" }
+    },
+    "CouncilQuorumProof": {
+      "type": "object", "additionalProperties": false,
+      "required": ["proofVersion", "decisionRequest", "decisionRecordHash", "quorumRuleVersion", "councilConfig", "councilConfigHash", "votes", "provenanceClass", "proofHash"],
+      "properties": {
+        "proofVersion": { "const": "1" },
+        "decisionRequest": { "$ref": "decision-council.schema.json#/$defs/DecisionRequest" },
+        "decisionRecordHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "quorumRuleVersion": { "const": "decision-council-v1a" },
+        "councilConfig": { "$ref": "decision-council.schema.json#/$defs/CouncilConfig" },
+        "councilConfigHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "votes": { "type": "array", "items": { "$ref": "decision-council.schema.json#/$defs/AgentVote" } },
+        "provenanceClass": { "enum": ["CONTEMPORANEOUS", "RECONSTRUCTED"] },
+        "proofHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/CouncilEpochRegistryEntry" },
+    { "$ref": "#/$defs/CouncilEpochRegistry" },
+    { "$ref": "#/$defs/CouncilQuorumProof" }
+  ]
+}

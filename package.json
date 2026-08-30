@@ -15,6 +15,7 @@
     "test:publication-broker": "cd tools/publication-broker && go test ./...",
     "test:publication-remote-name-parity": "node tests/dev/publication-remote-name-parity.test.mjs",
     "test:decision-council-kernel": "node tests/dev/decision-council-kernel.test.mjs",
+    "test:council-quorum-proof": "node tests/dev/council-quorum-proof.test.mjs",
     "test:decision-council-simulator": "node tests/dev/decision-council-simulator.test.mjs",
     "context:pack": "node scripts/dev/project-context-pack.mjs",
     "test:context-pack": "node tests/dev/project-context-pack.test.mjs",

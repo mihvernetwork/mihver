@@ -163,6 +163,39 @@ ever *reads* and *re-verifies* facts other artifacts already own:
 | STOP epoch / fencing | **Nobody, today.** `ROADMAP.md` §17.2 lists "STOP epoch simulation" and "idempotency and fencing simulation" as `PLANNED` scope for a Decision Council kernel v0; the kernel that actually shipped (ADR-0005, frozen) implements neither — confirmed by literal search of `scripts/dev/decision-council-kernel.mjs` and `schemas/dev/decision-council.schema.json` (zero hits for `STOP`, `fence`, `fencing`; the only `epoch` hits are `CouncilConfig.epochId`/`councilEpochId`, a per-session identifier, not a global kill-switch). | **This ADR is the first to define and own the global `stopEpoch` concept.** It does not amend ADR-0005 to add this — ADR-0005's kernel remains exactly as frozen, with no STOP/fencing field of its own. |
 | Lifecycle gate vocabulary (`AUTHORIZED` → ... → `HUMAN MERGE`) | `docs/development/REVIEW_PROTOCOL.md` | Unrelated axis — `REVIEW_PROTOCOL.md`'s gates describe a *task's* lifecycle through human review; `AuthorizationEnvelope`'s state machine (below) describes a *single decision's* lifecycle toward (never into) execution. Neither redefines the other. |
 
+### V1B Amendment — Council Quorum Proof Requirement
+
+**This ADR remains Status: Proposed; this subsection amends the design, not the Status.** MIHVER
+task `DECISION-COUNCIL-QUORUM-PROOF-V1B` added a `CouncilQuorumProof` sidecar
+(`scripts/dev/council-quorum-proof.mjs`, `schemas/dev/council-quorum-proof.schema.json`) alongside
+the frozen, unmodified ADR-0005 `DecisionRecord` — see that ADR's own "Future Work" amendment for
+the sidecar's exact fields and hash graph. A bare `DecisionRecord` is self-consistent (its
+`recordHash` proves it has not been tampered with) but does not, by itself, let a verifier
+independently recompute R1's provider/model-family diversity, R2's proposer exclusion, or R3's 3-of-3
+requirement — those depend on `CouncilConfig` seat identities the `DecisionRecord` does not carry.
+
+Accordingly, wherever this ADR's design (`evaluateAuthorization`, `resolveCanonicalRecord`,
+`independentlyRederive`, `checkAndConsume`) treats a `DecisionRecord` as canonical council-decision
+input, a future implementation of this design MUST additionally require and independently verify
+(via `verifyCouncilQuorumProof`) a `CouncilQuorumProof` bound to that exact `DecisionRecord.recordHash`
+whenever the applicable authorization policy requires independently provable council legitimacy —
+specifically:
+
+- `authorizationEvidenceEligible` (from `verifyCouncilQuorumProof`) must be `true` — hashes valid,
+  config trust-anchored against a registry (never merely self-consistent), bindings valid, and
+  quorum independently recomputed to match the `DecisionRecord`'s own `state`/`disposition`.
+- The proof's `provenanceClass` must be `"CONTEMPORANEOUS"` — a legacy/historical `DecisionRecord`
+  with no proof, or only a `"RECONSTRUCTED"` one, is insufficient and MUST fail closed
+  (`NO_ENVELOPE`/`BLOCKED` with a reason such as `COUNCIL_PROOF_MISSING` or
+  `COUNCIL_PROOF_NOT_CONTEMPORANEOUS`) rather than being treated as authorization-grade merely
+  because its `recordHash` is valid.
+- The proof's `quorumRuleVersion`/`proofVersion` must be a version this ADR's implementation
+  recognizes; an unknown version fails closed the same way an unknown `policyVersion` would.
+
+This amendment adds a required upstream evidence check; it does not change `evaluateAuthorization`'s
+own risk-specific disposition mapping or the Independent Re-Verification discipline above, it grants
+no execution authority, and it does not change this ADR's Status from `Proposed`.
+
 ### `AuthorizationEnvelope` — artifact schema proposal
 
 Illustrative shape only (no `schemas/dev/*.schema.json` file is created by this task — see
