@@ -310,3 +310,75 @@ Entries above this line are unmodified, per this log's append-only policy.
   execution or publication authority, no human approval. —
   `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v6/`, `.project/CURRENT_TASK.md`,
   `.project/REVIEW_STATE.md`, `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
+- 2026-08-30 — `AUTHORIZATION-LEDGER-V1C-R3-ARCHITECTURE-DECISION-V7`: real 3-seat Shadow Council R3
+  architecture exercise on `main @ 2e42febe`, one frozen candidate (`candidateHash
+  sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`, `councilEpochId
+  authorization-ledger-v1c-r3-arch-decision-7-epoch-1`). `rotationOrdinal = 6` was fixed before any
+  provider call and the frozen ADR-0005 kernel derived the proposer from
+  `CouncilConfig.seats[6 % 3]` — **`seat-openai`**; no seat was hard-coded, no rotation registry was
+  changed, and no durable cross-run rotation state is claimed to exist. V7 is a **narrow successor
+  to V6, not a redesign**: V6's substantive architecture is reproduced unchanged (dedicated
+  `authledgerd`/`mihver-ledger`, ADMIN/CLIENT socket split with reachability-only permissions,
+  `SO_PEERCRED` authentication + root-owned exact-UID authorization, privileged SQLite/WAL state,
+  trusted `CouncilEpochRegistry`, safe-integer `stopEpoch` domain, durable `admin_operation_journal`
+  keyed `(authenticatedPeerUid, operationKind, adminOperationId)`, domain-separated `requestHash`,
+  expected-epoch CAS, one `BEGIN IMMEDIATE` commit boundary, exact-bound R3 `AuthorizationGrant`,
+  dormant consume-once, zero production effect consumers, no Execution Gateway). The **sole**
+  material revision is the defect that actually caused V6's `NO_QUORUM`: the mandatory `yesNoMatrix`
+  now answers **17 of 17** questions as 17 independently represented entries, with the
+  Claude-vs-Codex pairs (`Q01`/`Q02`, `Q03`/`Q04`, `Q08`/`Q09`) uncollapsed and every answer exactly
+  `NO`. Two mechanical gates enforced this ahead of any vote: a pre-provider gate asserting all 17
+  questions are separately represented in the constructed packet (17/17 PASS, before the proposer
+  was invoked), and a post-freeze/pre-vote gate interposed on `FREEZE_CANDIDATE` via the harness's
+  `applyEventImpl` seam, which would have returned `CANDIDATE_CONSTRUCTION_BLOCKER` with zero voter
+  invocations had the frozen candidate not conformed. **Votes 3/3 APPROVE** (`seat-openai`,
+  `seat-anthropic`, `seat-google`); R3 requires exactly 3/3, so the kernel returned **`DECIDED` /
+  `HUMAN_APPROVAL_REQUIRED`** (`reasonCode R3_QUORUM_MET`, `recordHash
+  sha256:d16ae65b429648dd9e016bdb417895a881a12e2226c5c20f164a238f9c81bb21`), durably persisted and
+  `EvidenceManifest`-bound before `FINALIZED`. Fresh read-only Codex Verifier:
+  **`DECISION_EVIDENCE_VALID`** (18/18 criteria A–R PASS). Outcome:
+  **`COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`** — a fresh human pre-authorization audit of
+  the exact `candidateHash sha256:c072d996...4671f0f8` is still mandatory. No retry, no second
+  candidate, no provider or model substitution, no V1C implementation, no execution or publication
+  authority, no human approval. V5 (`sha256:9bc6b4c3...1805a063`) and V6
+  (`sha256:c5d16bea...b2fafb90`) remain permanently closed; the V3/V4/V5/V6 Run Bundles were not
+  modified. — `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v7/`,
+  `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`,
+  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
+- 2026-08-31 — `AUTHORIZATION-LEDGER-V1C-V7-PREAUTH-CLOSURE`: strict read-only **human R3
+  pre-authorization audit** of the exact V7 candidate (`candidateHash
+  sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`, `recordHash
+  sha256:d16ae65b429648dd9e016bdb417895a881a12e2226c5c20f164a238f9c81bb21`). **Two separate gates,
+  only the first passed.** Council: **`COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`** — 3/3
+  APPROVE, `DecisionRecord` `state DECIDED` / `disposition HUMAN_APPROVAL_REQUIRED` / `reasonCode
+  R3_QUORUM_MET`, valid and durable; **V7 is not Council-rejected**. Human pre-authorization audit:
+  **`HUMAN_R3_PREAUTH_NOT_READY`**. CandidateDisposition: **`SUPERSEDED_PENDING_MATERIAL_REVISION`**.
+  Three blockers: (1) **UID policy trust root — `MATERIAL_ARCHITECTURE_BLOCKER`**: the invariant is
+  established but the runtime trust-root contract is not fixed (absolute policy path, trusted
+  parent-directory chain, exact owner UID/GID, exact file/directory modes, no-symlink resolution,
+  hard-link policy, fail-closed ownership/mode/path validation, no model-writable ancestor capable of
+  replacement). (2) **`AuthorizationGrant` — `MATERIAL_ARCHITECTURE_BLOCKER`**: new R3 security
+  choices left to implementers (`grantId` generation authority/format/entropy/uniqueness, issuance
+  idempotency across retry/lost ACK, exact meaning of `issuanceIdentity`, whether V1C supports expiry
+  and revocation and their exact semantics/authority/state/atomicity, canonical grant identity/hash
+  decision, whether signatures exist and any canonical grant hash's covered fields/domain, and
+  grant-issuance request identity/`requestHash`/journal semantics); no wording such as "where
+  supported" may defer an R3 capability decision. (3) **`CouncilQuorumProof` — `EVIDENCE_BLOCKER`**:
+  no proof is required for the human R3 gate, but `authorization-binder.mjs` later requires a valid
+  eligible proof for R1/R2/R3 authorization evidence, and the V7 bundle cannot legitimately construct
+  one because the contemporaneous run did not durably persist the exact `DecisionRequest` with
+  `rotationOrdinal`, the exact `CouncilConfig`, its exact seat order, or `modelFamily` per seat —
+  these must **not** be reconstructed retroactively and no `CONTEMPORANEOUS` proof may be
+  manufactured after the run; forward-only repair is required before the next R3 architecture run and
+  must not alter historical V7 evidence. Clear: `MATRIX_CONTRACT_CLEAR` (exact 17/17),
+  `STOPEPOCH_DOMAIN_CLEAR`, `STOPEPOCH_IDEMPOTENCY_SATISFIED`, `ADMIN_JOURNAL_CLEAR`,
+  `ADMIN_RESULT_LOOKUP_CLEAR`, `CONSUME_ONCE_IMPLEMENTATION_DETAIL_ONLY`, `UID_AUTH_CLEAR`,
+  `COUNCIL_TRUST_CLEAR`, `HUMAN_APPROVAL_BINDING_CLEAR`, `ZERO_EFFECT_CONSUMER_CLEAR`,
+  `SEAT_EVIDENCE_CLEAR`, `DECISION_RECORD_DURABLE`, `RUN_BUNDLE_CLEAR`,
+  `HISTORICAL_INTEGRITY_CLEAR`. Primary next action: **`NEW_R3_CANDIDATE_REQUIRED`**; sequence is
+  forward-only evidence repair → V8 (new `candidateHash`) → real 3-seat Council → durable
+  `DecisionRecord` + contemporaneous `CouncilQuorumProof` → fresh human pre-auth audit → exact human
+  R3 authorization only if `HUMAN_R3_PREAUTH_READY`. Read-only audit: no Council rerun, no provider
+  invocation, no evidence reconstruction, no V1C implementation, no V8, no execution or publication
+  authority, **no human approval**. The finalized V7 Run Bundle and frozen V7 candidate are
+  byte-unchanged. — `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
