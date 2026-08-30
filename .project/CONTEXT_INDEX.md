@@ -51,6 +51,7 @@ that's a gap in the index, not license to guess; search deliberately, and consid
 | System-wide roadmap (navigational / non-authoritative — see its own source-of-truth priority order) | `ROADMAP.md` |
 | Decision Council V1A protocol: topology, state machine, commitment/reveal, candidate hashing, vote binding, R0–R4 quorum, authority boundary (Proposed) | `docs/adr/ADR-0005-DECISION-COUNCIL-PROTOCOL.md` |
 | Decision Council V1A kernel + fake-agent simulator + schema + tests | `scripts/dev/decision-council-kernel.mjs`, `scripts/dev/decision-council-simulator.mjs`, `schemas/dev/decision-council.schema.json`, `tests/dev/decision-council-kernel.test.mjs` (`npm run test:decision-council-kernel`), `tests/dev/decision-council-simulator.test.mjs` (`npm run test:decision-council-simulator`) |
+| Decision Authorization Boundary V1A design: `AuthorizationEnvelope`/`AuthorizationGrant`, policy-evaluation algorithm, replay/staleness/STOP-fencing semantics, human-approval binding (design only, Proposed — no code/schema exists yet) | `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md` |
 
 ## Not covered here
 
