@@ -15,6 +15,64 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
+Task: AUTHORIZATION-LOOP-FOUNDATION-V1A (resumed)
+Branch: `feat/authorization-loop-foundation-v1a`
+Target: main
+Publication:
+- Local Publication Builder authorized: **yes**, per this continuation's own "one local publication
+  commit if all gates pass" instruction — one local commit, subject
+  `feat: adopt council quorum proof in authorization loop`. No push, no PR, no merge.
+- remote publication: human manual fallback only (unchanged)
+
+**Proof-API adoption Scout** (`mcp__codex__codex`, read-only): mapped the real, merged
+`verifyCouncilQuorumProof({ proof, decisionRecord, trustedRegistry })` signature onto the existing
+Binder/Ledger; found no council-semantics mismatch.
+
+**Boundary-integration remediation** (2 parallel fresh Codex Implementers, workspace-write, disjoint
+file sets to avoid conflicts): Binder workstream and Ledger workstream, each reporting no council
+escalation required.
+
+**Phase 2 review re-entry** (3 fresh axis Reviewers — Binder/proof eligibility, Ledger independent
+re-derivation/replay/fencing, Fake-loop boundedness): 2× `APPROVE_WITH_CHANGES` (test-coverage gaps
+only — wrong-record-binding proof case, `RECONSTRUCTED`-provenance case, one R1-R3 loop integration
+test), 1× `APPROVED_FOR_INTEGRATION`. One fresh Implementer fix round closed all gaps; re-run
+confirmed green (Binder 23, Loop 13).
+
+**Phase 6 four-axis integrated review** (fresh Reviewers, read-only):
+- Axis 1 (hash graph/binding): `APPROVED_FOR_INTEGRATION`, no changes.
+- Axis 2 (quorum/replay/fencing): `APPROVE_WITH_CHANGES` — Ledger's redundant hand-rolled quorum
+  approximation removed; `checkAndConsume`/`issueGrant` check ordering fixed so the new proof gate
+  no longer masks older-precedence denials (replay, stopEpoch revocation, grant expiry).
+- Axis 3 (effect-isolation/no execution authority): `APPROVE_WITH_CHANGES` — extracted
+  `computeTaskRecordHash`/`valueWithoutHash` into a new pure module
+  (`scripts/dev/canonical-record-hash.mjs`) so Binder/Ledger no longer transitively import
+  `run-bundle.mjs`'s fs/child_process-capable code; extended the authority-distance test to walk the
+  transitive import graph; fixed one wording overclaim ("real executor" -> "FakeExecutor
+  implementation").
+- Axis 4 (confused-deputy resistance): `APPROVED_FOR_INTEGRATION`, no changes — most
+  security-critical axis, found no exploitable bypass.
+
+One fresh Implementer remediation round applied all three real Phase 6 findings; a follow-up Run
+Bundle resync corrected one stale content hash after the wording fix (output bytes unchanged,
+verified byte-identical). No finding at any point in this task required changing actual R1/R2/R3
+quorum semantics, council topology, or the authority boundary — `PROTOCOL_SEMANTICS_BLOCKER`/
+`COUNCIL_ESCALATION_REQUIRED` was never triggered; the continuation's pre-authorized real Shadow
+Council escalation path was not used.
+
+**Phase 7 final Verifier** (fresh, read-only): confirmed frozen ADR-0005 kernel/schema and the
+merged `council-quorum-proof.mjs`/schema byte-identical to `main`; ADR-0006 Status still `Proposed`;
+no execution/publication/shell/Git/network/provider-CLI capability anywhere in new code; full test
+matrix green (independently re-run, not just claimed); the 6-scenario demonstration independently
+re-run and confirmed; Run Bundle hashes independently recomputed and matched; `git diff --check`
+clean. Two sandbox-only false failures (`npm run test:run-bundle` EPERM under the Verifier's
+read-only sandbox) were independently re-run and confirmed green in this session's own shell.
+`scripts/dev/run-bundle.mjs`'s diff (a same-behavior pure re-export refactor, confirmed via its own
+unaffected 17/17 suite) was the only non-frozen tooling file touched.
+
+---
+
+**Prior, unrelated task — historical, preserved as-is, not rewritten:**
+
 Task: DECISION-AUTHORIZATION-BOUNDARY-V1A-DESIGN
 Branch: `docs/decision-authorization-boundary-v1a-design`
 Target: main

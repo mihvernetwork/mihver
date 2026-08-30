@@ -43,10 +43,11 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 
 import { canonicalizeJson } from "./canonical-json.mjs";
+import { computeTaskRecordHash, valueWithoutHash } from "./canonical-record-hash.mjs";
 import { computeContextHash } from "./project-context-pack.mjs";
 import { readRepositoryIdentity } from "./publication-builder.mjs";
 
-export const TASK_RECORD_HASH_DOMAIN = "MIHVER:TaskRecord:v1\0";
+export { TASK_RECORD_HASH_DOMAIN, computeTaskRecordHash, valueWithoutHash } from "./canonical-record-hash.mjs";
 export const EVIDENCE_MANIFEST_HASH_DOMAIN = "MIHVER:EvidenceManifest:v1\0";
 export const RUN_MANIFEST_HASH_DOMAIN = "MIHVER:RunManifest:v1\0";
 
@@ -82,10 +83,6 @@ function computeDomainHash(domain, value) {
   return sha256(Buffer.concat([domainBytes, canonicalBytes]));
 }
 
-export function computeTaskRecordHash(value) {
-  return computeDomainHash(TASK_RECORD_HASH_DOMAIN, value);
-}
-
 export function computeEvidenceManifestHash(value) {
   return computeDomainHash(EVIDENCE_MANIFEST_HASH_DOMAIN, value);
 }
@@ -96,12 +93,6 @@ export function computeRunManifestHash(value) {
 
 export function computeContentHash(value) {
   return sha256(value);
-}
-
-export function valueWithoutHash(value, hashField) {
-  const copy = { ...value };
-  delete copy[hashField];
-  return copy;
 }
 
 function attachSelfHash(value, hashField, computeHash) {
