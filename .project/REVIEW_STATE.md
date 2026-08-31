@@ -15,68 +15,108 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: shadow-council-contemporaneous-quorum-evidence-v1
-Branch: `fix/shadow-council-contemporaneous-quorum-evidence-v1`
-Target: main at `3b1ec8f30b2e85b3f07e8cfb2b1274038e02c96b` (PR #55 merged; merge-post CI SUCCESS)
+Task: authorization-ledger-v1c-r3-architecture-v8-failure-closure
+Branch: `decision/authorization-ledger-v1c-r3-architecture-v8`
+Target: main at `245957deab85b3a147ad3b8f38c7645628e30059` (PR #56 merged; merge-post CI SUCCESS)
 Publication:
 - Local publication: exactly ONE local commit is to be created on this branch, subject
-  `fix: persist contemporaneous council quorum evidence`. No push, no PR, no merge.
+  `chore: record v8 candidate construction blocker`. No push, no PR, no merge.
 - remote publication automation: NOT AVAILABLE; human manual publication is the fallback.
 - Human approval: **PENDING** — not requested, not granted.
 
-**Codex Scout** (thread `01a056cc-c285-7c43-a496-91e93d85feaf`): no blockers.
+**Authoritative classification of the V8 R3 attempt: `COUNCIL_EVIDENCE_BLOCKER`, proximate cause
+`CANDIDATE_CONSTRUCTION_BLOCKER`.** This was **not** `NO_QUORUM` and **not** a Council rejection.
+No `CandidateDecision` was frozen, **no frozen (non-null) `candidateHash` exists for V8**, and **no
+voter was invoked**. Precisely: the only `candidateHash` *field* in the bundle is the failure
+artifact's `"candidateHash": null`; the other occurrences are ordinary text inside the proposer
+packet's evidence strings and the attestation `text`. No V8 candidate hash value was ever computed
+into a persisted artifact. The `seat-anthropic` proposer invocation succeeded; the local post-proposal /
+pre-`FREEZE_CANDIDATE` mechanical gate falsely rejected an otherwise semantically complete proposal.
 
-**Codex Reviewer, round 1** (thread `01a056de-5c28-7e22-b50b-a69f4e373d83`):
-`REMEDIATION_REQUIRED` — durable vote ordering came from process memory and three test-matrix
-coverage gaps remained. A fresh Implementer (thread `01a056e1-b5b7-7590-a52f-cd5da832bf13`)
-remediated all four findings.
+**Preserved facts.** `decisionRequestId` `authorization-ledger-v1c-r3-arch-decision-8`;
+`councilEpochId` `authorization-ledger-v1c-r3-arch-decision-8-epoch-1`; `rotationOrdinal` `7`;
+kernel-derived proposer `seat-anthropic` (`seats[7 % 3]`, canonical order `seat-openai`,
+`seat-anthropic`, `seat-google`); pre-provider packet gate **PASS**; post-proposal/pre-vote
+construction gate **FAIL**; failure stage `KERNEL_EVENT` (`eventType FREEZE_CANDIDATE`); failure code
+`CANDIDATE_CONSTRUCTION_BLOCKER`; voter calls **0**; `DecisionRecord` **ABSENT**;
+`CouncilQuorumProof` **ABSENT**; Run Bundle **`OPEN`**; artifact count **5**. No retry, no second
+candidate, no implementation, no execution authority, no publication authority, no human approval.
 
-**Codex Reviewer, round 2 (fresh)** (thread `01a056e7-44e7-76c0-9861-594708ee735b`): confirmed
-the four remediations. It raised two findings judged out of scope: the pre-existing legacy
-`runShadowExerciseWithEvidence` helper writes no Run Bundle, and empty-reviewer-set `NO_QUORUM`
-authorizes nothing, while changing it would alter frozen quorum semantics.
+**False-positive gate finding (orchestrator finding, NOT bundle-proved).** The persisted
+`ShadowSeatInvocationFailure` records only `errorCode CANDIDATE_CONSTRUCTION_BLOCKER` and `details
+{"eventType": "FREEZE_CANDIDATE"}`. The five specific diagnostics below came from the throwaway,
+uncommitted driver's gate output, and the judgement that each was a false positive came from reading
+the recovered proposer text in `ShadowSeatAttestation.text`. **Neither is independently provable from
+the persisted bundle bytes alone.** With that caveat: the five reported construction failures were
+determined to be gate-definition defects rather than substantive proposal omissions. The gate required certain
+semantics to appear under specific nested candidate fields after the packet requirements had been
+shortened and reorganized to meet the packet-size bound. Known false-negative classes: (1) the
+server-derived `authenticatedApproverUid` requirement existed elsewhere in the proposal but the gate
+demanded it under `grantIssuanceRequest`; (2) the server-derived `grantHash` requirement existed
+elsewhere but the gate demanded it under `grantIssuanceRequest`; (3) the server-derived grant `state`
+requirement existed elsewhere but the gate demanded it under `grantIssuanceRequest`; (4)
+`IDEMPOTENCY_KEY_REUSE` semantics were required by the architecture but the gate depended on a
+literal/location removed while shrinking the packet requirements; (5) the UID policy correctly
+rejected `"unknown or extra top-level fields"` but the gate's accepted wording set failed to
+recognize that equivalent exact security semantic.
 
-**Codex Verifier (fresh)** (thread `01a056eb-abfb-7913-bd1c-d655814392f2`):
-`READY_FOR_PUBLICATION`; independently agreed both out-of-scope judgments are correct and
-non-blocking. This technical verdict is not human approval.
+**The recovered proposer output is NOT promoted to normative architecture.** It is recorded only as
+`UNFROZEN_PROPOSAL` / `PROPOSAL_CONTENT_NOT_ADMITTED_AS_CANDIDATE`, recoverable solely from the
+persisted `ShadowSeatAttestation.text`; no `proposalContent` wrapper and no `CandidateDecision` were
+persisted, consistent with failure at `FREEZE_CANDIDATE`.
 
-**Evidence/provenance gate: SATISFIED for the forward-only pipeline.** The canonical-config gate
-fails closed before provider budget is spent; the exact `DecisionRequest` and `CouncilConfig` are
-durably written and manifest-bound before provider invocation; terminal proof construction and
-verification use durable artifacts re-read from disk and persisted configuration seat order.
+**Durable evidence (OPEN bundle
+`.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/`).**
+`manifestHash sha256:5737aae3d3f8cd8cd20d90d2e817bcd1e8b718b79ac6665490dfcece679edf60`;
+`evidenceManifestHash sha256:22f4175070897b42706722d33b7ebf884abdc26b18625ab020290643c297ffd1`;
+`taskRecordHash sha256:9e6badf6028d0f1057f3667468fbe15dd6956b2520804dedf65a2d02ed5fc96e`. The exact
+`DecisionRequest` (`contentHash sha256:dae00b861995399becaf56d793e463a8b73f0efa600b1be23ac16372097dbebb`,
+`contextHash sha256:2c707d7f5846a883402e9191bb06849db66544f3c748c5e6307b1c7ea47db156`) and exact
+`CouncilConfig` (`contentHash sha256:193fc861ba8ef9f1102705f8a69007c2c9fae83117d3da301d489379ad21c8a7`,
+`councilConfigHash sha256:b6f7b1d3b700f6d90e7a37c83a3226e7bdee2f8de399a790105cff0a70d371bf`) were
+persisted and manifest-bound before the first provider process, and the persisted config byte-matches
+canonical `buildShadowCouncilConfig` — no seat, provider, `modelFamily` or `modelId` substitution.
+Exactly one proposer packet (`packetHash
+sha256:534a9c79b5f3c579ea7403afdfeb1f4c5742bbb1609f45bf7b690fb23f10252a`), exactly one admitted
+`seat-anthropic` attestation, exactly one `ShadowSeatInvocationFailure`
+(`failureHash sha256:d7719444beacb5e39eb88ef51335b8366cd8d51ca926ebe0d4674a11fdd19200`).
 
-**Real bounded R2 smoke** (`shadow-council-contemporaneous-quorum-evidence-v1-smoke`): one attempt,
-no retry and no provider/model substitution; `DECIDED` / `COUNCIL_APPROVED`,
-`reasonCode R2_QUORUM_MET`, 2/2 reviewer approvals (`seat-anthropic`, `seat-google`), with proposer
-`seat-openai` correctly excluded. The FINALIZED Run Bundle has 12 artifacts and
-`manifestHash sha256:b0a8ba3faa6bd6124b49aa7a551f57b73b71e0f9baca0e7c148e129f24481e1f`; its
-`recordHash` is `sha256:c4b6eca41c3d22505ebfdd41895952b7e4868a3e0a2b2c9e2cfa8a0a8caec61e`,
-`councilConfigHash` is `sha256:be89b567427f125087168184bcaebf07f04ac361479bd5e2c11d71bea26229ce`,
-and `proofHash` is `sha256:6c69f74e41c65b2e315151c44e15e56deb473fa9a1d9b504b0bef43cc98bda88`
-with `provenanceClass CONTEMPORANEOUS`.
+**Codex Verifier (fresh, read-only)** (thread `01a05880-0623-75e2-8a22-be1bd037cba0`):
+`DECISION_EVIDENCE_VALID`, explicitly scoped — this is **not** a verdict about a Council decision,
+because no `DecisionRecord` and no `CouncilQuorumProof` exist. It is a verdict that the blocked OPEN
+run's persisted evidence is internally consistent and raw-byte/hash-valid, that the zero-voter claim
+holds, and that historical bundles are preserved. It independently recomputed all three manifest
+self-hashes, all five raw-byte content hashes, the `packetHash`, the `councilConfigHash`, and the
+`7 % 3 → seat-anthropic` derivation. This technical verdict is not human approval.
 
-All provider invocations, the Council run, and pipeline persistence succeeded on the first and only
-attempt. The initial ad-hoc smoke driver failed only at finalization because it omitted `finalizedAt`
-(`RUN_BUNDLE_FINALIZE_FAILED:FINALIZED_AT_REQUIRED`); this was a throwaway-driver defect, not an
-evidence-pipeline or provider/Council failure. The bundle was finalized without new evidence or a new
-provider invocation; no second smoke ran. Finalized-byte-only verification re-verified every content
-hash, rebuilt and matched the persisted proof, recomputed the proof/config/record hashes and
-proposer, confirmed `authorizationEvidenceEligible === true`, and confirmed the persisted
-`DecisionRecord` has no proof/proofHash reference.
+**Historical integrity.** Run Bundles V3–V7 and the PR #56 smoke bundle are byte-unchanged
+(aggregate digest `46748e5f9efc9108dcaf18795064a324022100b20f33140bf9c0b70e823dedf9`, identical
+before and after this task). The V8 Run Bundle is byte-unchanged by this closure task (aggregate
+digest `cfcc1502abf7dab5275d11d9a4091d535810aa9cd4a608dcf28ed2264357a70c`, identical before and
+after). No scripts, schemas, kernel, or ADR files were modified.
 
-**Deterministic validation: green, no `FAIL` lines.** Includes `npm test` (170 fixtures),
-`council-quorum-proof` (25), `decision-council-kernel` (18), `run-bundle` (17),
-`shadow-council-harness` (32), `shadow-council-cli-transport` (10), all three shadow-council
-evidence suites, `authorization-binder` (23), `authorization-loop` (13),
-`decision-council-simulator` (18), `project-consistency` (19 groups),
-`check:project-consistency`, `context-pack` (115), and `publication-builder` (42).
+**Deterministic validation: run, NOT fully green — disclosed rather than suppressed.** Passing:
+`npm test` (170 fixtures), `check:project-consistency` (7 checks), `test:project-consistency`
+(19 groups), `context-pack` (115), `run-bundle` (17), `publication-builder` (42),
+`publication-broker` (all Go packages ok), `publication-remote-name-parity` (44),
+`decision-council-kernel` (18), `council-quorum-proof` (25), `decision-council-simulator` (18),
+`shadow-council-packet` (18), `shadow-council-attestation` (5), `shadow-council-cli-transport` (10),
+`shadow-council-harness` (32), all three shadow-council evidence suites, and `night-runner`
+(15 fixtures). **One pre-existing failure:** `test:night-runner-executor` fails on
+`resolver lookup timeout fails closed for discovery and execution` (expected `FAILED`, got
+`undefined`). It reproduces identically on a clean detached checkout of the base commit
+`245957deab85b3a147ad3b8f38c7645628e30059`, is deterministic (not flaky) on this machine, and is
+environment-sensitive (CI on that same SHA was SUCCESS). This task changed only three documentation
+files and cannot have caused it; it is recorded as a pre-existing, unrelated local failure and is
+**not** repaired here. A separate Codex sandbox additionally reported `publication-broker` Go
+failures caused solely by that sandbox denying loopback TCP binding
+(`listen tcp6 [::1]:0: operation not permitted`); those do not reproduce outside the sandbox and are
+an artifact of the verification environment, not a repository defect.
 
-Frozen/unmodified: ADR-0005, ADR-0006, `scripts/dev/decision-council-kernel.mjs`,
-`scripts/dev/council-quorum-proof.mjs`, `schemas/dev/council-quorum-proof.schema.json`,
-`schemas/dev/decision-council.schema.json`, `scripts/dev/shadow-council-vote-assessment.mjs`, and
-Authorization Binder semantics. No V1C implementation; no V8. Historical Run Bundles V3-V7 are
-byte-unchanged and not repaired; no retroactive `CONTEMPORANEOUS` proof is permitted. The locally
-derived registry entry is a DEVELOPMENT-TIME structural check only, not the future privileged
-`CouncilEpochRegistry` trust anchor; future privileged `authledgerd` must independently compare
-`councilConfigHash` against its trusted registry. No execution, publication, merge, or autonomy
-authority is granted.
+**Next sequence.** V8 failure evidence publication → Shadow Council candidate-gate reliability
+repair → forward-only unfrozen-proposal evidence persistence → deterministic tests + bounded smoke →
+merge → V9 new R3 `DecisionRequest` → fresh proposer / fresh candidate → 3-seat Council.
+
+Primary next action: **`CANDIDATE_GATE_RELIABILITY_REPAIR_REQUIRED`**. `NEW_R3_CANDIDATE_REQUIRED` is
+explicitly **not** the immediate next action: the tooling defect must be fixed before another R3
+attempt is made.
