@@ -25,7 +25,10 @@
     "test:shadow-council-packet": "node tests/dev/shadow-council-packet.test.mjs",
     "test:shadow-council-attestation": "node tests/dev/shadow-council-attestation.test.mjs",
     "test:shadow-council-cli-transport": "node tests/dev/shadow-council-cli-transport.test.mjs",
-    "test:shadow-council-harness": "node tests/dev/shadow-council-harness.test.mjs"
+    "test:shadow-council-harness": "node tests/dev/shadow-council-harness.test.mjs",
+    "test:shadow-council-run-bundle-evidence": "node tests/dev/shadow-council-run-bundle-evidence.test.mjs",
+    "test:shadow-council-decision-record-evidence": "node tests/dev/shadow-council-decision-record-evidence.test.mjs",
+    "test:shadow-council-failure-evidence": "node tests/dev/shadow-council-failure-evidence.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

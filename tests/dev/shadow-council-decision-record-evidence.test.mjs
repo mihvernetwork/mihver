@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { canonicalizeJson } from "../../scripts/dev/canonical-json.mjs";
 import { applyEvent, computeDecisionRecordHash, createSession } from "../../scripts/dev/decision-council-kernel.mjs";
+import { buildCouncilQuorumProof, computeCouncilConfigHash, computeProofHash, makeRegistryEntry, verifyCouncilQuorumProof } from "../../scripts/dev/council-quorum-proof.mjs";
 import { compileProjectContextPack } from "../../scripts/dev/project-context-pack.mjs";
 import { computeContentHash, writeRunBundle } from "../../scripts/dev/run-bundle.mjs";
 import { runShadowExerciseWithDurableEvidence } from "../../scripts/dev/shadow-council-run-bundle-evidence.mjs";
+import { deriveAgentVote, verifyAssessmentHash } from "../../scripts/dev/shadow-council-vote-assessment.mjs";
 
 const REPO_ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const root = mkdtempSync(join(realpathSync(tmpdir()), "mihver-shadow-decision-record-evidence-"));
@@ -72,13 +74,61 @@ function readRunManifest(out) {
 function decisionRecordEntry(evidence) {
   return evidence.find((entry) => entry.evidenceId.startsWith("shadow-decision-record:"));
 }
+function evidenceEntry(evidence, prefix) { return evidence.find((entry) => entry.evidenceId.startsWith(prefix)); }
+function recursiveKeys(value) {
+  if (Array.isArray(value)) return value.flatMap(recursiveKeys);
+  if (value !== null && typeof value === "object") return Object.entries(value)
+    .flatMap(([key, child]) => [key, ...recursiveKeys(child)]);
+  return [];
+}
+function assertPersistedVotedTerminalEvidence(out) {
+  const manifest = readManifest(out);
+  const requestEntry = evidenceEntry(manifest.evidence, "shadow-decision-request:");
+  const configEntry = evidenceEntry(manifest.evidence, "shadow-council-config:");
+  const recordEntry = evidenceEntry(manifest.evidence, "shadow-decision-record:");
+  const proofEntry = evidenceEntry(manifest.evidence, "shadow-council-quorum-proof:");
+  assert.ok(requestEntry && configEntry && recordEntry && proofEntry, "voted terminal needs request/config/record/proof evidence");
+  assert.equal(existsSync(proofEntry.sourcePath), true, "quorum proof artifact must exist on disk");
+  const persistedConfig = JSON.parse(readFileSync(configEntry.sourcePath, "utf8"));
+  const persistedDecisionRecordText = readFileSync(recordEntry.sourcePath, "utf8");
+  const persistedDecisionRecord = JSON.parse(persistedDecisionRecordText);
+  const persistedProof = JSON.parse(readFileSync(proofEntry.sourcePath, "utf8"));
+  for (const forbidden of ["proof", "proofHash", "councilQuorumProof"]) {
+    assert.equal(persistedDecisionRecordText.includes(`\"${forbidden}\"`), false);
+    assert.equal(recursiveKeys(persistedDecisionRecord).includes(forbidden), false);
+  }
+  assert.equal(persistedProof.provenanceClass, "CONTEMPORANEOUS");
+  const { proofHash, ...proofWithoutHash } = persistedProof;
+  assert.equal(proofHash, computeProofHash(proofWithoutHash));
+  assert.equal(persistedProof.decisionRecordHash, persistedDecisionRecord.recordHash);
+  assert.equal(verifyCouncilQuorumProof({ proof: persistedProof, decisionRecord: persistedDecisionRecord,
+    trustedRegistry: { [persistedConfig.epochId]: makeRegistryEntry(persistedConfig).entry } }).authorizationEvidenceEligible, true);
+  return { manifest, requestEntry, configEntry, recordEntry, proofEntry, persistedConfig, persistedDecisionRecord, persistedProof };
+}
 
 const approveAll = Object.fromEntries(seatIds.map((seatId) => [seatId, { voteValue: "APPROVE", rationale: `Approve for ${seatId}` }]));
 
 try {
   // 1 & 2: R3 3/3 terminal DECIDED run persists DecisionRecord before FINALIZED.
   {
-    const opts = options("r3-decided", fixture(approveAll));
+    let providerCalls = 0;
+    const injected = fixture(approveAll);
+    const opts = options("r3-decided", {
+      ...injected,
+      spawnSeatImpl(seatId, prompt) {
+        providerCalls++;
+        if (providerCalls === 1) {
+          const manifest = readManifest(opts.out);
+          const request = manifest.evidence.find((entry) => entry.evidenceId.startsWith("shadow-decision-request:"));
+          const config = manifest.evidence.find((entry) => entry.evidenceId.startsWith("shadow-council-config:"));
+          assert.ok(request, "DecisionRequest must be manifest-bound before first provider call");
+          assert.ok(config, "CouncilConfig must be manifest-bound before first provider call");
+          assert.deepEqual(JSON.parse(readFileSync(request.sourcePath, "utf8")), fresh("r3-decided", "R3").decisionRequest);
+          assert.deepEqual(JSON.parse(readFileSync(config.sourcePath, "utf8")), fresh("r3-decided", "R3").councilConfig);
+        }
+        return injected.spawnSeatImpl(seatId, prompt);
+      },
+    });
     const result = runShadowExerciseWithDurableEvidence(fresh("r3-decided", "R3"), opts);
     assert.equal(result.decisionRecord.state, "DECIDED");
     assert.equal(result.decisionRecord.disposition, "HUMAN_APPROVAL_REQUIRED");
@@ -96,6 +146,49 @@ try {
     // 14: recordHash exactly equals independent recomputation.
     const { recordHash, ...withoutHash } = result.decisionRecord;
     assert.equal(computeDecisionRecordHash(withoutHash), recordHash);
+    assert.equal(providerCalls, 4);
+    const { requestEntry, configEntry, persistedConfig, persistedDecisionRecord, persistedProof } = assertPersistedVotedTerminalEvidence(opts.out);
+    const persistedRequest = JSON.parse(readFileSync(requestEntry.sourcePath, "utf8"));
+    assert.equal(persistedRequest.rotationOrdinal, 0);
+    assert.equal(persistedProof.councilConfigHash, computeCouncilConfigHash(persistedConfig));
+    assert.equal(persistedProof.decisionRecordHash, persistedDecisionRecord.recordHash);
+    assert.equal(result.decisionRecord.proposerSeatId, persistedConfig.seats[persistedRequest.rotationOrdinal % 3].seatId);
+    assert.equal(canonicalizeJson(persistedProof.votes), canonicalizeJson(result.session.votes));
+  }
+
+  // Real-seat identity claims must be canonical before the first provider is called.
+  for (const [name, mutate] of [
+    ["missing-model-family", (config) => { config.seats[0] = { ...config.seats[0], modelFamily: "" }; }],
+    ["altered-seat-order", (config) => { config.seats.reverse(); }],
+    ["altered-model", (config) => { config.seats[0] = { ...config.seats[0], modelId: "other" }; }],
+    ["altered-provider", (config) => { config.seats[0] = { ...config.seats[0], provider: "other" }; }],
+  ]) {
+    let calls = 0;
+    const session = fresh(name, "R1");
+    const config = structuredClone(session.councilConfig);
+    mutate(config);
+    const opts = options(name, { ...fixture(approveAll), spawnSeatImpl() { calls++; throw new Error("must not run"); } });
+    assert.throws(() => runShadowExerciseWithDurableEvidence({ ...session, councilConfig: config }, opts),
+      (error) => error.message === "SHADOW_COUNCIL_CONFIG_MISMATCH");
+    assert.equal(calls, 0);
+  }
+
+  // A failed identity artifact write is before the provider boundary, while a failed proof write
+  // leaves the terminal bundle OPEN and does not bind a proof.
+  for (const [name, prefix] of [["request-write-failure", "shadow-decision-request-"], ["config-write-failure", "shadow-council-config-"]]) {
+    let calls = 0;
+    const opts = options(name, { ...fixture(approveAll), spawnSeatImpl() { calls++; throw new Error("must not run"); },
+      writeFileSyncImpl(path, bytes) { if (path.includes(prefix)) throw new Error("ARTIFACT_WRITE_FAILED"); return writeFileSync(path, bytes); } });
+    assert.throws(() => runShadowExerciseWithDurableEvidence(fresh(name, "R1"), opts), /ARTIFACT_WRITE_FAILED/);
+    assert.equal(calls, 0);
+    assert.equal(existsSync(join(opts.out, "evidence-manifest.json")), name !== "request-write-failure");
+  }
+  {
+    const opts = options("proof-write-failure", { ...fixture(approveAll),
+      writeFileSyncImpl(path, bytes) { if (path.includes("shadow-council-quorum-proof-")) throw new Error("ARTIFACT_WRITE_FAILED"); return writeFileSync(path, bytes); } });
+    assert.throws(() => runShadowExerciseWithDurableEvidence(fresh("proof-write-failure", "R3"), opts), /ARTIFACT_WRITE_FAILED/);
+    assert.equal(readRunManifest(opts.out).status, "OPEN");
+    assert.equal(readManifest(opts.out).evidence.some((entry) => entry.evidenceId.startsWith("shadow-council-quorum-proof:")), false);
   }
 
   // 3: R1 terminal approved run persists DecisionRecord.
@@ -106,17 +199,41 @@ try {
     assert.equal(result.decisionRecord.disposition, "COUNCIL_APPROVED");
     assert.ok(decisionRecordEntry(result.evidence));
     assert.equal(readRunManifest(opts.out).status, "FINALIZED");
+    const { persistedConfig, persistedProof, persistedDecisionRecord } = assertPersistedVotedTerminalEvidence(opts.out);
+    assert.deepEqual(persistedConfig.seats.map(({ modelFamily }) => modelFamily), ["gpt", "claude", "gemini"]);
+    const verification = verifyCouncilQuorumProof({ proof: persistedProof, decisionRecord: persistedDecisionRecord,
+      trustedRegistry: { [persistedConfig.epochId]: makeRegistryEntry(persistedConfig).entry } });
+    assert.equal(verification.quorumRecomputation.ruleset, "R1");
+    assert.ok(verification.quorumRecomputation.detail.distinctProviderModelFamilies >= 2);
+    assert.equal(verification.authorizationEvidenceEligible, true);
   }
 
   // 4: R2 terminal approved run persists DecisionRecord.
   {
-    const reviewerSeatIds = seatIds.filter((seatId) => seatId !== "seat-openai");
+    const reviewerSeatIds = ["seat-google", "seat-anthropic"];
     const opts = options("r2-approved", { ...fixture(approveAll), seatIds: reviewerSeatIds });
     const result = runShadowExerciseWithDurableEvidence(fresh("r2-approved", "R2"), opts);
     assert.equal(result.decisionRecord.state, "DECIDED");
     assert.equal(result.decisionRecord.disposition, "COUNCIL_APPROVED");
     assert.ok(decisionRecordEntry(result.evidence));
     assert.equal(readRunManifest(opts.out).status, "FINALIZED");
+    const { manifest, requestEntry, configEntry, recordEntry, proofEntry } = assertPersistedVotedTerminalEvidence(opts.out);
+    const persistedRequest = JSON.parse(readFileSync(requestEntry.sourcePath, "utf8"));
+    const persistedConfig = JSON.parse(readFileSync(configEntry.sourcePath, "utf8"));
+    const persistedDecisionRecord = JSON.parse(readFileSync(recordEntry.sourcePath, "utf8"));
+    const persistedVotesBySeat = new Map(manifest.evidence
+      .filter((entry) => entry.evidenceId.startsWith("shadow-vote-assessment:"))
+      .map((entry) => JSON.parse(readFileSync(entry.sourcePath, "utf8")))
+      .map((assessment) => {
+        assert.equal(verifyAssessmentHash(assessment), true);
+        const vote = deriveAgentVote(assessment);
+        return [vote.seatId, vote];
+      }));
+    const bundleOnlyProof = buildCouncilQuorumProof({ decisionRequest: persistedRequest, councilConfig: persistedConfig,
+      decisionRecord: persistedDecisionRecord, votes: persistedConfig.seats
+        .filter(({ seatId }) => persistedVotesBySeat.has(seatId)).map(({ seatId }) => persistedVotesBySeat.get(seatId)) });
+    assert.equal(bundleOnlyProof.ok, true);
+    assert.equal(bundleOnlyProof.proof.proofHash, JSON.parse(readFileSync(proofEntry.sourcePath, "utf8")).proofHash);
   }
 
   // 5: terminal NO_QUORUM persists DecisionRecord.
@@ -129,6 +246,7 @@ try {
     const entry = decisionRecordEntry(result.evidence);
     assert.ok(entry);
     assert.equal(readRunManifest(opts.out).status, "FINALIZED");
+    assertPersistedVotedTerminalEvidence(opts.out);
   }
 
   // 6 & 7: malformed seat output / invocation failure before FINALIZE leaves no DecisionRecord, bundle OPEN.
@@ -271,10 +389,10 @@ try {
     const opts = options("self-consistent-vote-substitution", { ...fixture(approveAll), applyEventImpl });
     assert.throws(
       () => runShadowExerciseWithDurableEvidence(fresh("self-consistent-vote-substitution", "R3"), opts),
-      (error) => error.message.startsWith("DECISION_RECORD_QUORUM_")
+      (error) => error.message.startsWith("DURABLE_QUORUM_PROOF_VERIFICATION_FAILED:")
     );
     assert.equal(readRunManifest(opts.out).status, "OPEN");
-    assert.equal(readManifest(opts.out).evidence.some((entry) => entry.evidenceId.startsWith("shadow-decision-record:")), false);
+    assert.equal(readManifest(opts.out).evidence.some((entry) => entry.evidenceId.startsWith("shadow-decision-record:")), true);
   }
 
   // Self-consistent disposition substitution (DECIDED/COUNCIL_APPROVED forged for an R3 request)
@@ -294,7 +412,7 @@ try {
     const opts = options("self-consistent-disposition-substitution", { ...fixture(approveAll), applyEventImpl });
     assert.throws(
       () => runShadowExerciseWithDurableEvidence(fresh("self-consistent-disposition-substitution", "R3"), opts),
-      (error) => error.message.startsWith("DECISION_RECORD_QUORUM_")
+      (error) => error.message.startsWith("DURABLE_QUORUM_PROOF_VERIFICATION_FAILED:")
     );
     assert.equal(readRunManifest(opts.out).status, "OPEN");
   }
@@ -323,10 +441,10 @@ try {
     const opts = options("self-consistent-state-substitution", { ...fixture(approveAll), applyEventImpl });
     assert.throws(
       () => runShadowExerciseWithDurableEvidence(fresh("self-consistent-state-substitution", "R3"), opts),
-      (error) => error.message.startsWith("DECISION_RECORD_QUORUM_")
+      (error) => error.message.startsWith("DURABLE_QUORUM_PROOF_VERIFICATION_FAILED:")
     );
     assert.equal(readRunManifest(opts.out).status, "OPEN");
-    assert.equal(readManifest(opts.out).evidence.some((entry) => entry.evidenceId.startsWith("shadow-decision-record:")), false);
+    assert.equal(readManifest(opts.out).evidence.some((entry) => entry.evidenceId.startsWith("shadow-decision-record:")), true);
   }
 
   console.log("Shadow Council DecisionRecord evidence tests: passed");

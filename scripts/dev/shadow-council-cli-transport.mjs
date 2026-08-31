@@ -1,7 +1,10 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs"; import os from "node:os"; import path from "node:path";
-export const SEAT_ADAPTERS=Object.freeze({"seat-openai":Object.freeze({provider:"openai",cli:"codex",model:"gpt-5.6-sol"}),"seat-anthropic":Object.freeze({provider:"anthropic",cli:"claude",model:"claude-opus-5"}),"seat-google":Object.freeze({provider:"google",cli:"agy",model:"gemini-3.7-flash-medium"})});
+export const SEAT_ADAPTERS=Object.freeze({"seat-openai":Object.freeze({provider:"openai",modelFamily:"gpt",cli:"codex",model:"gpt-5.6-sol"}),"seat-anthropic":Object.freeze({provider:"anthropic",modelFamily:"claude",cli:"claude",model:"claude-opus-5"}),"seat-google":Object.freeze({provider:"google",modelFamily:"gemini",cli:"agy",model:"gemini-3.7-flash-medium"})});
+export const SHADOW_COUNCIL_SEAT_ORDER=Object.freeze(["seat-openai","seat-anthropic","seat-google"]);
+if(SHADOW_COUNCIL_SEAT_ORDER.length!==Object.keys(SEAT_ADAPTERS).length||new Set(SHADOW_COUNCIL_SEAT_ORDER).size!==SHADOW_COUNCIL_SEAT_ORDER.length||SHADOW_COUNCIL_SEAT_ORDER.some(id=>!Object.hasOwn(SEAT_ADAPTERS,id)))throw new Error("SHADOW_COUNCIL_SEAT_ORDER_DRIFT");
 export const PROVIDER_TO_SEAT=Object.freeze(Object.fromEntries(Object.entries(SEAT_ADAPTERS).map(([s,a])=>[a.provider,s])));
+export function buildShadowCouncilConfig(councilEpochId){if(typeof councilEpochId!=="string"||councilEpochId.length===0)throw new Error("COUNCIL_EPOCH_ID_REQUIRED");return{epochId:councilEpochId,seats:SHADOW_COUNCIL_SEAT_ORDER.map(seatId=>{const adapter=SEAT_ADAPTERS[seatId];return{seatId,provider:adapter.provider,modelFamily:adapter.modelFamily,modelId:adapter.model,councilEpochId};})};}
 export function resolveSeatAdapter(id){const a=SEAT_ADAPTERS[id];if(!a)throw new Error("UNKNOWN_SEAT");return a;}
 export function buildInvocationArgv(id,p){const {cli,model}=resolveSeatAdapter(id);if(cli==="codex")return ["exec","--ephemeral","--json","--model",model,"--sandbox","read-only","--skip-git-repo-check",p];if(cli==="claude")return ["--model",model,"--output-format","json","--no-session-persistence","--permission-mode","plan","--tools","","-p",p];return ["--model",model,"--output-format","json","--sandbox","--print",p];}
 const minimalEnv=()=>({PATH:process.env.PATH,HOME:process.env.HOME,USER:process.env.USER});
