@@ -382,3 +382,50 @@ Entries above this line are unmodified, per this log's append-only policy.
   invocation, no evidence reconstruction, no V1C implementation, no V8, no execution or publication
   authority, **no human approval**. The finalized V7 Run Bundle and frozen V7 candidate are
   byte-unchanged. — `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
+- 2026-08-31 — `AUTHORIZATION-LEDGER-V1C-R3-ARCHITECTURE-V8-FAILURE-CLOSURE`: persist the
+  already-terminal V8 R3 architecture attempt as **historical failure evidence**. Authoritative
+  classification **`COUNCIL_EVIDENCE_BLOCKER`**, proximate cause
+  **`CANDIDATE_CONSTRUCTION_BLOCKER`**. **This was NOT `NO_QUORUM` and NOT a Council rejection**: no
+  `CandidateDecision` was frozen, **no frozen (non-null) `candidateHash` exists for V8** (the only
+  `candidateHash` field in the bundle is the failure artifact's `"candidateHash": null`), and **no
+  voter was invoked**.
+  Preserved facts: `decisionRequestId` `authorization-ledger-v1c-r3-arch-decision-8`,
+  `councilEpochId` `authorization-ledger-v1c-r3-arch-decision-8-epoch-1`, `rotationOrdinal` `7`,
+  kernel-derived proposer `seat-anthropic` (`seats[7 % 3]` over canonical order `seat-openai`,
+  `seat-anthropic`, `seat-google`), pre-provider packet gate **PASS**, post-proposal/pre-vote
+  construction gate **FAIL**, failure stage `KERNEL_EVENT` (`eventType FREEZE_CANDIDATE`), failure
+  code `CANDIDATE_CONSTRUCTION_BLOCKER`, voter calls **0**, `DecisionRecord` **ABSENT**,
+  `CouncilQuorumProof` **ABSENT**, Run Bundle **`OPEN`**, artifact count **5**. The `seat-anthropic`
+  proposer invocation itself succeeded; the local post-proposal / pre-`FREEZE_CANDIDATE` mechanical
+  gate falsely rejected an otherwise semantically complete proposal. **False-positive gate finding** (orchestrator finding, **not** provable
+  from the persisted bundle alone — the failure artifact records only `errorCode` and `details
+  {"eventType": "FREEZE_CANDIDATE"}`; the diagnostics came from the throwaway uncommitted driver's
+  gate output and the judgement from reading the recovered `ShadowSeatAttestation.text`): the five
+  reported construction failures were gate-definition defects, not substantive proposal omissions — the gate required semantics under specific nested candidate fields after the packet
+  requirements had been shortened/reorganized to meet the packet-size bound. Known false-negative
+  classes: (1) server-derived `authenticatedApproverUid` present elsewhere but demanded under
+  `grantIssuanceRequest`; (2) server-derived `grantHash` present elsewhere but demanded under
+  `grantIssuanceRequest`; (3) server-derived grant `state` present elsewhere but demanded under
+  `grantIssuanceRequest`; (4) `IDEMPOTENCY_KEY_REUSE` required by the architecture but the gate
+  depended on a literal/location removed while shrinking the packet requirements; (5) the UID policy
+  correctly rejected `"unknown or extra top-level fields"` but the gate's accepted wording set failed
+  to recognize that equivalent exact security semantic. The recovered proposer output is **not**
+  promoted to normative architecture and is recorded only as `UNFROZEN_PROPOSAL` /
+  `PROPOSAL_CONTENT_NOT_ADMITTED_AS_CANDIDATE`, recoverable solely from the persisted
+  `ShadowSeatAttestation.text`. Next sequence: V8 failure evidence publication → Shadow Council
+  candidate-gate reliability repair → forward-only unfrozen-proposal evidence persistence →
+  deterministic tests + bounded smoke → merge → V9 new R3 `DecisionRequest` → fresh proposer / fresh
+  candidate → 3-seat Council. Primary next action: **`CANDIDATE_GATE_RELIABILITY_REPAIR_REQUIRED`**;
+  `NEW_R3_CANDIDATE_REQUIRED` is explicitly **not** the immediate next action because the tooling
+  defect must be fixed first. No Council rerun, no provider invocation, no gate repair, no candidate
+  freeze, no V9, no V1C implementation, no push, no PR, no execution or publication authority, **no
+  human approval**. Every byte already inside the V8 Run Bundle is unchanged (aggregate digest
+  `cfcc1502abf7dab5275d11d9a4091d535810aa9cd4a608dcf28ed2264357a70c` before and after); historical
+  V3–V7 and the PR #56 smoke bundle are byte-unchanged (aggregate digest
+  `46748e5f9efc9108dcaf18795064a324022100b20f33140bf9c0b70e823dedf9` before and after); no scripts,
+  schemas, kernel or ADR files were modified. Deterministic validation was run and is disclosed as not
+  fully green: one **pre-existing, unrelated** failure, `test:night-runner-executor`
+  (`resolver lookup timeout fails closed...`), reproduces identically on a clean checkout of the base
+  commit and is not repaired here. —
+  `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/`, `.project/CURRENT_TASK.md`,
+  `.project/REVIEW_STATE.md`
