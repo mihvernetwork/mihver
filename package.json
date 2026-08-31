@@ -28,7 +28,9 @@
     "test:shadow-council-harness": "node tests/dev/shadow-council-harness.test.mjs",
     "test:shadow-council-run-bundle-evidence": "node tests/dev/shadow-council-run-bundle-evidence.test.mjs",
     "test:shadow-council-decision-record-evidence": "node tests/dev/shadow-council-decision-record-evidence.test.mjs",
-    "test:shadow-council-failure-evidence": "node tests/dev/shadow-council-failure-evidence.test.mjs"
+    "test:shadow-council-failure-evidence": "node tests/dev/shadow-council-failure-evidence.test.mjs",
+    "test:shadow-council-candidate-requirements": "node tests/dev/shadow-council-candidate-requirements.test.mjs",
+    "test:shadow-council-candidate-gate": "node tests/dev/shadow-council-candidate-gate.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

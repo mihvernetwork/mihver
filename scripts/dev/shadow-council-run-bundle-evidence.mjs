@@ -16,6 +16,7 @@ import { runShadowExercise } from "./shadow-council-harness.mjs";
 import { buildShadowCouncilConfig, SHADOW_COUNCIL_SEAT_ORDER } from "./shadow-council-cli-transport.mjs";
 import { verifyInvocationFailureHash } from "./shadow-council-invocation-failure.mjs";
 import { deriveAgentVote, verifyAssessmentHash } from "./shadow-council-vote-assessment.mjs";
+import { renderCandidateRequirementEvidenceItems } from "./shadow-council-candidate-requirements.mjs";
 
 const TERMINAL_RECORD_STATES = new Set(["COUNCIL_NOT_REQUIRED", "DECIDED", "NO_QUORUM", "DENIED"]);
 const VOTED_TERMINAL_STATES = new Set(["DECIDED", "NO_QUORUM"]);
@@ -142,6 +143,12 @@ export function runShadowExerciseWithDurableEvidence(session, opts) {
     summary: `Shadow Council CouncilConfig for epoch ${session.councilConfig.epochId}.`,
     writeFileSyncImpl: opts.writeFileSyncImpl,
   }));
+  if(opts.candidateRequirementSpec)append(writeCanonicalArtifact(opts.candidateRequirementSpec,opts.evidenceDir,{
+    evidenceId:`shadow-candidate-requirement-spec:${opts.candidateRequirementSpec.requirementSpecHash}`,
+    filenamePrefix:"shadow-candidate-requirement-spec",
+    summary:`Shadow Candidate Requirement Spec ${opts.candidateRequirementSpec.specId}.`,
+    writeFileSyncImpl:opts.writeFileSyncImpl,
+  }));
   const assessmentEvidence = [];
   const seatPrefix = (kind, seatId) => `${kind}-${encodeURIComponent(seatId)}`;
   const callerHooks = opts.hooks ?? {};
@@ -170,6 +177,15 @@ export function runShadowExerciseWithDurableEvidence(session, opts) {
       }));
       callerHooks.onAttestationRejected?.(attestation, meta);
     },
+    onUnfrozenProposal(unfrozenProposal) {
+      if(opts.candidateRequirementSpec)append(writeCanonicalArtifact(unfrozenProposal,opts.evidenceDir,{
+          evidenceId:`shadow-unfrozen-proposal:${unfrozenProposal.unfrozenProposalHash}`,
+          filenamePrefix:"shadow-unfrozen-proposal",
+          summary:`Unfrozen Shadow Council proposal for ${unfrozenProposal.decisionRequestId}.`,
+          writeFileSyncImpl:opts.writeFileSyncImpl,
+        }));
+      callerHooks.onUnfrozenProposal?.(unfrozenProposal);
+    },
     onAssessmentBuilt(assessment, meta) {
       assessmentEvidence.push(append(writeShadowVoteAssessmentEvidence(assessment, opts.evidenceDir)));
       callerHooks.onAssessmentBuilt?.(assessment, meta);
@@ -195,7 +211,8 @@ export function runShadowExerciseWithDurableEvidence(session, opts) {
     if (result.status !== "OK") throw Object.assign(new Error(`RUN_BUNDLE_FINALIZE_FAILED:${result.reason}`), { result });
   };
 
-  const result = runShadowExercise(session, { ...opts, hooks });
+  const callerEvidence=opts.evidence??[],requirementEvidence=opts.candidateRequirementSpec?renderCandidateRequirementEvidenceItems(opts.candidateRequirementSpec,{maxItems:20,reservedItems:callerEvidence.length}):[];
+  const result = runShadowExercise(session, { ...opts, evidence:[...callerEvidence,...requirementEvidence], hooks });
   if (result.decisionRecord) {
     verifyDecisionRecord(result.decisionRecord);
     const decisionRecordEvidence = append(writeShadowDecisionRecordEvidence(result.decisionRecord, opts.evidenceDir));

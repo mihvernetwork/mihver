@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/shadow-unfrozen-proposal.schema.json",
+  "title": "ShadowUnfrozenProposal v1",
+  "description": "Forensic pre-freeze evidence only. It carries zero vote, quorum, DecisionRecord, or authorization authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "decisionRequestId", "councilEpochId", "seatId", "packetHash", "attestationHash", "requirementSpecHash", "proposalContent", "unfrozenProposalHash"],
+  "properties": {
+    "kind": { "const": "ShadowUnfrozenProposal" },
+    "schemaVersion": { "const": "1.0.0" },
+    "decisionRequestId": { "$ref": "#/$defs/id" },
+    "councilEpochId": { "$ref": "#/$defs/id" },
+    "seatId": { "$ref": "#/$defs/id" },
+    "packetHash": { "$ref": "#/$defs/hash" },
+    "attestationHash": { "$ref": "#/$defs/hash" },
+    "requirementSpecHash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "proposalContent": { "type": "object", "additionalProperties": false, "required": ["summary", "payload"], "properties": { "summary": { "type": "string", "minLength": 1 }, "payload": { "type": "object" } } },
+    "unfrozenProposalHash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "id": { "type": "string", "minLength": 1, "maxLength": 200 }
+  }
+}

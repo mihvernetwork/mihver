@@ -501,6 +501,77 @@ untouched with no V1C implementation on this branch.
 merge, or V1C implementation authority; a fresh human pre-authorization audit of the exact
 `candidateHash` remains mandatory.
 
+## Candidate gate reliability (`SHADOW-COUNCIL-CANDIDATE-GATE-RELIABILITY-V1`)
+
+The V8 architecture exercise failed before `FREEZE_CANDIDATE` with
+`KERNEL_EVENT` / `CANDIDATE_CONSTRUCTION_BLOCKER` while the proposal itself was sound. The cause was
+structural, not semantic: the task-local mechanical gate carried its own copy of the provider-facing
+requirements, the provider-facing wording moved, and the copy did not. A requirement phrased to the
+provider as "unknown or extra top-level fields" was matched by a validator still looking for
+"unknown fields". That is a drift defect, and it is the class this change removes.
+
+**One canonical spec, two derived surfaces.** A `CandidateRequirementSpec`
+(`scripts/dev/shadow-council-candidate-requirements.mjs`) is the single source for a run's
+mechanical construction contract. The provider-facing instructions are *generated* from the spec's
+rule objects, and the validator *executes* those same rule objects. There is no second,
+independently-maintained requirement list to fall out of step; removing or changing a rule changes
+both surfaces at once, and a deterministic test asserts that property directly.
+
+**The candidate gate is structural, not a semantic judge.** A spec separates two categories:
+
+- `HARD_GATE` — deterministic, machine-checkable structural and value invariants, expressed in a
+  deliberately narrow declarative vocabulary (`PATH_PRESENT`, `TYPE`, `EQUALS`, `ENUM`, `NULL`,
+  `BOOLEAN`, `INTEGER_RANGE`, `EXACT_KEYS`, `NO_UNKNOWN_FIELDS`, `OBJECT_EXACT`, `ARRAY_LENGTH`,
+  `ARRAY_UNIQUE`, `ARRAY_EXACT_IDS`). Each rule carries a stable `requirementId`.
+- `COUNCIL_REVIEW` — architecture and security merit criteria, rendered into proposal and vote
+  context, assessed by the Council voters, and never machine-evaluated.
+
+Mechanical completeness belongs to the gate; architectural merit belongs to the Council. A fuzzy
+natural-language judgement must not be promoted to a `HARD_GATE` because doing so is convenient.
+
+**No substring security gates.** Hard requirement validation reads structured candidate values at
+declared paths. It does not search prose, match wording dictionaries, detect synonyms, or run
+regexes over explanatory text. A candidate whose prose asserts the right semantics while its
+structured values are wrong fails, and no wording variant changes any verdict.
+
+**Requirement rendering never truncates.** Rendered requirements are packed deterministically into
+whole-rule evidence items within the packet's hard limits. No requirement is dropped, abbreviated,
+reordered, or elided with `...`. When the requirements cannot fit, rendering fails closed with
+`REQUIREMENT_SPEC_PROMPT_BUDGET_EXCEEDED` *before* the provider is invoked. Size pressure is never
+resolved by deleting security semantics.
+
+**The unfrozen proposal is durable advisory evidence only.** `ShadowUnfrozenProposal`
+(`scripts/dev/shadow-council-unfrozen-proposal.mjs`, domain
+`MIHVER:ShadowCouncil:UnfrozenProposal:v1\0`) records the parsed proposer output *before* candidate
+admission, binding the request/epoch/seat ids, `packetHash`, `attestationHash`, the governing
+`requirementSpecHash`, and the proposal content. It carries zero vote, quorum, DecisionRecord and
+authorization authority. `unfrozenProposalHash` is domain-separated from `candidateHash` and must
+never be substituted for it.
+
+**Candidate authority begins only at kernel `FREEZE_CANDIDATE`.** The durable order for a gated
+proposer flow is: DecisionRequest → CouncilConfig → CandidateRequirementSpec → proposer packet →
+provider invocation → attestation admitted → strict `{summary,payload}` parse → UNFROZEN_PROPOSAL →
+`HARD_GATE` validation → `SUBMIT_COMMITMENT` → `REVEAL_PROPOSAL` → `FREEZE_CANDIDATE`. Only then
+does a `CandidateDecision` or a `candidateHash` exist. If the unfrozen proposal cannot be persisted,
+or validation fails, nothing freezes; if a freeze fails, the unfrozen proposal survives as
+historical non-normative evidence.
+
+**A blocked gate is not a kernel rejection.** For compatibility the failure is still recorded as
+stage `KERNEL_EVENT` with `errorCode` `CANDIDATE_CONSTRUCTION_BLOCKER`, but its `details` carry
+`requirementSpecHash` and `failedRequirementIds` alongside `eventType: FREEZE_CANDIDATE`. Those
+fields are the distinction: a genuine kernel error carries only `eventType`. The kernel did not
+reject the architecture semantics — the pre-freeze candidate gate did, and the governing spec, the
+exact proposal and the failed requirement IDs are all recoverable from the Run Bundle bytes after
+process death.
+
+The gate is opt-in. Runs that supply no `CandidateRequirementSpec` behave exactly as before and
+persist neither a requirement-spec nor an unfrozen-proposal artifact.
+
+**The V8 bundle is unchanged.** `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/`
+remains exactly as recorded, `OPEN`, with no `candidateHash` and no retroactively added
+`UNFROZEN_PROPOSAL` artifact. V8 was not rerun and its proposer was not called again. This work is
+forward-only tooling repair; it does not re-open, re-litigate or re-decide V8.
+
 ## Residual trust limitations
 
 - One parent harness process (the Claude Code orchestrator, on this machine) controlled all three
