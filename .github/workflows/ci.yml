@@ -66,6 +66,15 @@ jobs:
       - name: Project consistency check
         run: npm run check:project-consistency
 
+      - name: Shadow Council Run Bundle evidence tests
+        run: npm run test:shadow-council-run-bundle-evidence
+
+      - name: Shadow Council DecisionRecord evidence tests
+        run: npm run test:shadow-council-decision-record-evidence
+
+      - name: Shadow Council failure evidence tests
+        run: npm run test:shadow-council-failure-evidence
+
   publication-broker:
     name: Publication Broker
     runs-on: ubuntu-latest

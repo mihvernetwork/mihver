@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createSession } from "../../scripts/dev/decision-council-kernel.mjs";
 import { compileProjectContextPack } from "../../scripts/dev/project-context-pack.mjs";
 import { computeOutputHash } from "../../scripts/dev/shadow-council-attestation.mjs";
+import { computeContentHash } from "../../scripts/dev/run-bundle.mjs";
 import { runShadowExerciseWithDurableEvidence } from "../../scripts/dev/shadow-council-run-bundle-evidence.mjs";
 
 const REPO_ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
@@ -93,14 +94,15 @@ try {
   const successOpts = options("success", { ...fixture(successfulAnswers), hooks: successCaptured.hooks });
   const success = runShadowExerciseWithDurableEvidence(fresh("success-decision"), successOpts);
   assert.equal(success.assessments.length, 3);
-  // proposer packet/attestation + 3 packet/attestation/assessment sets + 1 terminal DecisionRecord
-  assert.equal(success.evidence.length, 12);
-  assert.equal(readManifest(successOpts.out).evidence.length, 12);
+  // pre-provider request/config + proposer packet/attestation + 3 packet/attestation/assessment
+  // sets + terminal DecisionRecord/proof
+  assert.equal(success.evidence.length, 15);
+  assert.equal(readManifest(successOpts.out).evidence.length, 15);
   const decisionRecordEntry = success.evidence.find((entry) => entry.evidenceId.startsWith("shadow-decision-record:"));
   assert.ok(decisionRecordEntry, "expected a persisted shadow-decision-record evidence entry");
   assert.deepEqual(JSON.parse(readFileSync(decisionRecordEntry.sourcePath, "utf8")), success.decisionRecord);
   assert.deepEqual(
-    success.evidence.filter((entry) => entry !== decisionRecordEntry)
+    success.evidence.filter((entry) => /^(shadow-council-packet|shadow-seat-attestation|shadow-vote-assessment):/.test(entry.evidenceId))
       .map((entry) => JSON.parse(readFileSync(entry.sourcePath, "utf8"))),
     successCaptured.values
   );
@@ -123,7 +125,12 @@ try {
   );
 
   const manifest = readManifest(failureOpts.out);
-  assert.equal(manifest.evidence.length, 8);
+  assert.equal(manifest.evidence.length, 10);
+  for (const prefix of ["shadow-decision-request:", "shadow-council-config:"]) {
+    const entry = manifest.evidence.find((item) => item.evidenceId.startsWith(prefix));
+    assert.ok(entry, `${prefix} must be durable before provider invocation`);
+    assert.equal(entry.contentHash, computeContentHash(readFileSync(entry.sourcePath)), `${prefix} must be manifest-bound`);
+  }
   const persisted = manifest.evidence.map((entry) => ({
     entry, value: JSON.parse(readFileSync(entry.sourcePath, "utf8")),
   }));
@@ -139,6 +146,9 @@ try {
   assert.equal(persisted.filter(({ entry }) => entry.evidenceId.startsWith("shadow-seat-attestation:")).length, 3);
   assert.equal(persisted.filter(({ entry }) => entry.evidenceId.startsWith("shadow-vote-assessment:")).length, 1);
   assert.equal(persisted.filter(({ entry }) => entry.evidenceId.startsWith("shadow-seat-invocation-failure:")).length, 1);
+  for (const { entry } of persisted.filter(({ entry }) => /^(shadow-council-packet|shadow-seat-attestation|shadow-vote-assessment|shadow-seat-invocation-failure):/.test(entry.evidenceId))) {
+    assert.equal(entry.contentHash, computeContentHash(readFileSync(entry.sourcePath)), `${entry.evidenceId} must be manifest-bound`);
+  }
   const assessment = persisted.find(({ entry }) => entry.evidenceId.startsWith("shadow-vote-assessment:"))?.value;
   assert.equal(assessment.seatId, "seat-openai");
   assert.equal(assessment.voteValue, "REJECT");
@@ -156,6 +166,8 @@ try {
   assert.equal(Object.hasOwn(failure, "stdout"), false);
   assert.equal(persisted.some(({ value }) => value.seatId === "seat-google"), false);
   assert.equal(persisted.some(({ value }) => Object.hasOwn(value, "recordHash") || value.type === "DecisionRecord"), false);
+  assert.equal(manifest.evidence.some((entry) => entry.evidenceId.startsWith("shadow-decision-record:")), false);
+  assert.equal(manifest.evidence.some((entry) => entry.evidenceId.startsWith("shadow-council-quorum-proof:")), false);
 
   const runManifest = JSON.parse(readFileSync(join(failureOpts.out, "run-manifest.json"), "utf8"));
   assert.equal(runManifest.status, "OPEN");

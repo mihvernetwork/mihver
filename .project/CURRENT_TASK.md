@@ -5,246 +5,87 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-authorization-ledger-v1c-v7-preauth-closure
+shadow-council-contemporaneous-quorum-evidence-v1
 
 ## Objective
 
-Persist the completed **human pre-authorization audit** of the exact V7 candidate so that no future
-session can read V7's 3/3 Council approval as implementation authorization. These are **two
-separate gates**, and only the first one passed:
-
-| Gate | Result |
-| --- | --- |
-| Council (R3 quorum) | **`COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`** — 3/3 APPROVE, `DECIDED` / `HUMAN_APPROVAL_REQUIRED`, `reasonCode R3_QUORUM_MET` |
-| Human R3 pre-authorization audit | **`HUMAN_R3_PREAUTH_NOT_READY`** — 2 material architecture blockers + 1 evidence blocker |
-
-**V7 is not Council-rejected.** The Council decision is valid, durable and unchallenged. The
-candidate nonetheless cannot proceed to implementation, because the pre-authorization audit found
-that a fresh implementation team could not implement V1C exactly from it without inventing new R3
-security decisions.
-
-**CandidateDisposition: `SUPERSEDED_PENDING_MATERIAL_REVISION`.**
-
-State/evidence closure only. No Council rerun, no provider invocation, no evidence reconstruction,
-no V1C implementation, no V8, no human approval, no push, no PR. The finalized V7 Run Bundle and the
-frozen V7 candidate are **not** modified by this task.
-
-The originating decision task (`authorization-ledger-v1c-r3-arch-decision-7`) is recorded below and
-in `DECISIONS_LOG.md`; its facts are preserved unchanged.
+Repair the **FORWARD-ONLY** Shadow Council evidence pipeline so every future real R1/R2/R3 terminal
+run produces a legitimate `CONTEMPORANEOUS` `CouncilQuorumProof` from durable evidence.
 
 ## Branch / Base
 
-Branch: `decision/authorization-ledger-v1c-r3-architecture-v7`
-Base: `main` at `2e42febe088e5e6bdff61431cd964dd2a3f2fcd8` (PR #54 merged: record v1c r3
-architecture decision v6; merge-post CI SUCCESS for this exact SHA — `Publication Broker` and
-`Project validation` both `success`)
+Branch: `fix/shadow-council-contemporaneous-quorum-evidence-v1`
+Base: `main` at `3b1ec8f30b2e85b3f07e8cfb2b1274038e02c96b` (PR #55 merged; merge-post CI on this
+exact SHA: SUCCESS)
 
-## Status
+## Scope / non-goals
 
-**Closed at both gates: Council `COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`, human
-pre-authorization `HUMAN_R3_PREAUTH_NOT_READY`. `SUPERSEDED_PENDING_MATERIAL_REVISION`. No V1C
-implementation is authorized.** The V7 Council run is recorded first below, unchanged; the
-pre-authorization audit result follows it.
+Risk class: R2 (evidence/provenance contract hardening). Real seat adapters carry authoritative
+`modelFamily` metadata; their ordered identity is frozen by
+`SHADOW_COUNCIL_SEAT_ORDER = ["seat-openai","seat-anthropic","seat-google"]`, and
+`buildShadowCouncilConfig(councilEpochId)` is the canonical builder. `modelFamily` is never derived
+heuristically from `modelId` text.
 
-### Originating Council decision (`authorization-ledger-v1c-r3-arch-decision-7`)
+The evidence writer fails closed on a canonical-config mismatch before provider budget is spent;
+writes and binds the exact `DecisionRequest` and `CouncilConfig` before the first provider process;
+and, at terminal time, persists the `DecisionRecord`, re-reads the request/config/record/every
+`ShadowVoteAssessment` from disk, derives votes through frozen `deriveAgentVote` in persisted seat
+order, builds and verifies the proof, then persists it before `FINALIZED`. New evidence identities:
+`shadow-decision-request:<decisionRequestId>:<contentHash>`,
+`shadow-council-config:<councilConfigHash>`, and `shadow-council-quorum-proof:<proofHash>`.
+New failure codes: `SHADOW_COUNCIL_CONFIG_MISMATCH`, `SHADOW_COUNCIL_SEAT_ORDER_DRIFT`,
+`COUNCIL_EPOCH_ID_REQUIRED`, `DURABLE_ASSESSMENT_HASH_INVALID`, `DURABLE_VOTE_SEAT_UNKNOWN`,
+`DURABLE_VOTES_MISMATCH`, `DURABLE_COUNCIL_CONFIG_INVALID`,
+`DURABLE_QUORUM_PROOF_BUILD_FAILED`, and `DURABLE_QUORUM_PROOF_VERIFICATION_FAILED`. The three
+shadow-council evidence suites are now npm-scripted and run in CI's project-validation job;
+`docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md` records the forward invariant.
 
-**Bootstrap:** verified `main @ 2e42feb`, `origin/main` at the same SHA, working tree clean, PR #54
-merged at exactly this commit with both merge-post checks SUCCESS. Branch created at that exact
-commit.
+Unchanged: ADR-0005, ADR-0006, the Decision Council kernel
+(`scripts/dev/decision-council-kernel.mjs`), `CouncilQuorumProof` semantics/schema
+(`scripts/dev/council-quorum-proof.mjs`, `schemas/dev/council-quorum-proof.schema.json`),
+`schemas/dev/decision-council.schema.json`, `scripts/dev/shadow-council-vote-assessment.mjs`, and
+Authorization Binder semantics. No V1C implementation. No V8. Historical Run Bundles V3-V7 are
+byte-unchanged and are not repaired: historical absence remains historical evidence, and no
+retroactive `CONTEMPORANEOUS` proof is permitted.
 
-**Proposer rotation:** `rotationOrdinal = 6` (task-local deterministic rule: architecture decision
-version N → `rotationOrdinal = N - 1`; V7 → 6), fixed as a caller-controlled `DecisionRequest`
-parameter *before* any provider invocation. No seat was hard-coded or hand-selected: the frozen
-ADR-0005 kernel computed `expectedProposerSeatId = CouncilConfig.seats[6 % 3].seatId`. CouncilConfig
-seat ordering is `[0] seat-openai, [1] seat-anthropic, [2] seat-google`, so the kernel-derived
-proposer is **`seat-openai`**. No durable cross-run rotation state is claimed to exist — the V5
-audit established that it does not, and no rotation registry was changed.
-
-**Two mechanical matrix gates, both ahead of any vote.** The V6 failure was a *candidate
-construction* failure, so V7 gated it mechanically rather than by inspection:
-
-1. **Pre-provider gate** — before the proposer CLI was invoked at all, the driver asserted that each
-   of the 17 canonical questions appears in the constructed decision question/evidence set exactly
-   once. Result: **17/17 PASS**. Had it failed, the run would have stopped with
-   `CANDIDATE_CONSTRUCTION_BLOCKER` without consuming any provider budget.
-2. **Post-freeze, pre-vote gate** — interposed on the kernel's `FREEZE_CANDIDATE` transition through
-   the harness's existing `applyEventImpl` seam, so it runs *after* the candidate is frozen and
-   *before* the first voter packet is built. It checks: `yesNoMatrix` is an array of exactly 17
-   entries; ids `Q01`..`Q17` each used exactly once; each entry has exactly `id`/`question`/`answer`;
-   each `question` matches the required text verbatim (whitespace/case normalization only, no fuzzy
-   matching); all 17 question strings pairwise distinct; all 17 answers exactly `NO`. Result:
-   **PASS**. Had it failed, the harness would have written a durable `ShadowSeatInvocationFailure`
-   artifact and stopped with zero voter invocations.
-
-The frozen candidate was never edited, repaired, re-prompted, or regenerated.
-
-**Council exercise:** ran the real 3-seat Shadow Council harness
-(`scripts/dev/shadow-council-run-bundle-evidence.mjs`, PR #47/#48/#51/#53 lineage) against exactly
-one frozen new candidate. Real subprocess invocations of the installed `codex`, `claude`, and `agy`
-CLIs produced the proposal and all three votes — 4 real calls, zero retries, zero provider or model
-substitution, zero response repair, no second candidate.
-
-- `contextHash`: `sha256:7999f772b587226da8637577de934985076bd4404a90c5aa17ce90685c4f1452`
-- `repositoryHead`: `2e42febe088e5e6bdff61431cd964dd2a3f2fcd8`
-- `councilEpochId`: `authorization-ledger-v1c-r3-arch-decision-7-epoch-1`
-- `candidateHash`: `sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`
-  (distinct from V6's `sha256:c5d16bea...2fafb90` and V5's `sha256:9bc6b4c3...1805a063`, both
-  permanently closed)
-
-**Material difference from V6:** the architecture is deliberately the same. The frozen candidate
-reproduces V6's accepted design — dedicated `authledgerd` daemon and `mihver-ledger` OS identity,
-separate ADMIN/CLIENT Unix-domain sockets with permissions as reachability only, `SO_PEERCRED` UID
-as authenticated identity, root-owned exact-UID allowlist as authorization, privileged SQLite/WAL
-state, trusted `CouncilEpochRegistry` with canonical evidence import and re-validation, safe-integer
-`stopEpoch` domain `0..9007199254740991` with SQLite `INTEGER` `CHECK` and `STOP_EPOCH_EXHAUSTED` at
-the maximum, durable `admin_operation_journal` uniquely keyed
-`(authenticatedPeerUid, operationKind, adminOperationId)`, domain-separated `requestHash`
-(`MIHVER/AUTHLEDGERD/ADMIN/INCREMENT_STOP_EPOCH/REQUEST/V1C\0`) binding peer UID + operation kind +
-`adminOperationId` + `expectedStopEpoch`, one `BEGIN IMMEDIATE` commit boundary covering the epoch
-write, journal insert and audit append, expected-epoch CAS, exact-bound R3 `AuthorizationGrant`,
-dormant consume-once state, Publication Broker structurally separate, no Execution Gateway. Both
-required lost-ack traces are discharged (same-ID retry replays the stored `N+1` with no second
-mutation and no second audit mutation event; a new operation ID carrying a stale
-`expectedStopEpoch = N` fails closed with `STALE_EXPECTED_STOP_EPOCH`); neither path reaches `N+2`;
-same-ID/different-request fails closed with `IDEMPOTENCY_KEY_REUSE`. Operation-result lookup is
-Option A — an ADMIN-socket, `SO_PEERCRED`-scoped, strictly read-only
-`getAdminOperationResult(operationKind, adminOperationId)`. The **only** material change from V6 is
-the 17/17 uncollapsed `yesNoMatrix` and the resulting new `candidateHash`.
-
-**Votes: 3/3 APPROVE** (`seat-openai`, `seat-anthropic`, `seat-google`). R3 requires exactly 3/3, so
-the frozen kernel returned `DECIDED` / `HUMAN_APPROVAL_REQUIRED`, `reasonCode R3_QUORUM_MET`,
-`quorumDetail {ruleset: R3, approvals: 3}`,
-`recordHash sha256:d16ae65b429648dd9e016bdb417895a881a12e2226c5c20f164a238f9c81bb21`.
-
-**Evidence:** Run Bundle `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v7/`,
-`status FINALIZED`, `manifestHash sha256:0b48c8b7...e6de`, 12 artifacts (4 packets, 4 attestations,
-3 vote assessments, 1 terminal `DecisionRecord`; zero invocation failures, zero rejected
-attestations). The terminal `DecisionRecord` was durably persisted and `EvidenceManifest`-bound
-*before* `FINALIZED`.
-
-**Fresh Verifier** (`mcp__codex__codex`, read-only, independent, thread
-`01a0545e-ad5f-7cb2-8135-61ef2fd3cb15`): **`DECISION_EVIDENCE_VALID`**, 18/18 criteria A–R PASS.
-
-**Council outcome: `COUNCIL_APPROVED_PENDING_HUMAN_R3_AUTHORIZATION`.**
-
----
-
-## Human pre-authorization audit (second gate) — `HUMAN_R3_PREAUTH_NOT_READY`
-
-Strict read-only pre-authorization audit of the exact
-`candidateHash sha256:c072d9969bede46ebfd3ab336d50ef97065a4ff08c6f17f42fe062c74671f0f8`. Base state
-re-verified mechanically (branch, `HEAD 86fad34`, merge-base `2e42feb`, `origin/main` at the same
-SHA, clean tree, PR #54 merged at exactly `2e42feb` with both merge-post checks `success`).
-`candidateHash`, `recordHash` and the Run Bundle `manifestHash` were each **independently
-recomputed** from persisted bytes through the frozen ADR-0005 kernel path — never read from a
-report. Two fresh read-only Codex auditors were used (`sandbox: read-only`): Auditor A
-(architecture / exact implementability) thread `01a0546d-d99a-73a2-b776-8323c790f840`, Auditor B
-(identity / trust / human authorization) thread `01a0546f-d77e-7863-a91c-3a31f4aeb70c`. The
-decision/evidence chain was verified mechanically by Claude; no third auditor was needed and **no
-voting provider was invoked**.
-
-**Verdict: `HUMAN_R3_PREAUTH_NOT_READY`. Primary next action: `NEW_R3_CANDIDATE_REQUIRED`.**
-
-The evidence chain is sound. V7 fails on **exact implementability** — three blockers:
-
-**1. UID policy trust root — `MATERIAL_ARCHITECTURE_BLOCKER`.** The candidate establishes the
-desired invariant (root-owned, non-model-writable, ownership/mode/format validated, fail-closed,
-CLIENT socket cannot replace it, Claude/Codex cannot edit it) but does not fix the complete runtime
-trust-root contract. A successor candidate must define at minimum: absolute policy path; trusted
-parent-directory chain; exact acceptable owner UID/GID; exact acceptable file/directory modes;
-no-symlink resolution; hard-link policy; fail-closed ownership/mode/path validation; and no
-model-writable ancestor capable of replacement. A root-owned file reached through a model-writable
-parent is replaceable, so choosing the trust-root location and its resolution rules is itself a
-security decision.
-
-**2. `AuthorizationGrant` — `MATERIAL_ARCHITECTURE_BLOCKER`.** V7 binds the important authorization
-fields but leaves new R3 security choices to an implementation team. A successor candidate must fix
-at minimum: `grantId` generation authority; `grantId` format/entropy; uniqueness; issuance
-idempotency across retry/lost ACK; the exact meaning of `issuanceIdentity`; whether V1C supports
-expiry, and its exact semantics if so; whether V1C supports revocation, and its exact
-authority/state/atomicity if so; the canonical grant identity/hash decision; whether signatures
-exist; the exact covered fields/domain of any canonical grant hash; and grant-issuance request
-identity / `requestHash` / journal semantics. **No wording such as "where supported" may defer an R3
-capability decision.** (V7's `exactBindings` uses exactly that phrasing for both expiry and
-revocation; its `requestHash` domain separator is also scoped to `INCREMENT_STOP_EPOCH` only, so
-grant-issuance request binding and journaling are not fixed.)
-
-**3. `CouncilQuorumProof` — `EVIDENCE_BLOCKER`.** The V7 `DecisionRecord` is durable and valid, and
-**no** `CouncilQuorumProof` is required for the human R3 approval gate itself. However
-`scripts/dev/authorization-binder.mjs` later requires a valid, eligible `CouncilQuorumProof` for
-R1/R2/R3 authorization evidence, and the V7 bundle **cannot legitimately construct one**: the
-contemporaneous run did not durably persist all required source inputs — the exact `DecisionRequest`
-including `rotationOrdinal`, the exact `CouncilConfig`, its exact seat order, and `modelFamily` per
-seat. (`rotationOrdinal = 6` and the seat order are narrated in task-local prose here and in
-`REVIEW_STATE.md`, but narration in a model-writable state file is not durable run-bundle evidence;
-`modelFamily` has no source at all — `SEAT_ADAPTERS` in `scripts/dev/shadow-council-cli-transport.mjs`
-defines only `{provider, cli, model}`, and the only real-seat `modelFamily` values in the repository
-are test fixtures.) `buildCouncilQuorumProof` hardcodes `provenanceClass: "CONTEMPORANEOUS"` and the
-verifier rejects anything else, so building a proof now from invented facts would **manufacture
-provenance rather than verify it**.
-
-**These values MUST NOT be reconstructed retroactively for V7. Do not manufacture a
-`CONTEMPORANEOUS` proof after the run. Forward repair is required before the next R3 architecture
-run, and must not alter or repair historical V7 evidence.**
-
-### Axes that passed (non-blocking / clear)
-
-`MATRIX_CONTRACT_CLEAR` (exact 17/17 — count 17, `Q01`..`Q17` each exactly once, 17 pairwise
-distinct questions, all answers exactly `NO`, no Claude/Codex collapse, no alias substitution) ·
-`STOPEPOCH_DOMAIN_CLEAR` · `STOPEPOCH_IDEMPOTENCY_SATISFIED` (all six traces discharged from the
-exact candidate text) · `ADMIN_JOURNAL_CLEAR` · `ADMIN_RESULT_LOOKUP_CLEAR` ·
-`CONSUME_ONCE_IMPLEMENTATION_DETAIL_ONLY` (the duplicate-replay result is already canonically
-defined as `DENY`/`REPLAY_REJECTED` in `authorization-ledger-result.schema.json`, the simulator and
-ADR-0006; the unnamed field is a column name over fixed semantics, and the surface is dormant in
-V1C) · `UID_AUTH_CLEAR` · `COUNCIL_TRUST_CLEAR` · `HUMAN_APPROVAL_BINDING_CLEAR` (proven:
-human-readable approval text alone ≠ privileged authorization) · `ZERO_EFFECT_CONSUMER_CLEAR` ·
-`SEAT_EVIDENCE_CLEAR` · `DECISION_RECORD_DURABLE` · `RUN_BUNDLE_CLEAR` ·
-`HISTORICAL_INTEGRITY_CLEAR`.
-
-Also preserved: **no retry; no second candidate; no provider or model substitution; no output
-repair; no implementation; no execution authority; no publication authority; no human approval.**
-
-## Next architectural sequence
-
-```
-V7 evidence + preauth closure publication
-        ↓
-forward-only Council context/quorum-proof evidence repair
-        ↓
-V8 new R3 candidate
-        ↓
-real 3-seat Council
-        ↓
-durable DecisionRecord + contemporaneous CouncilQuorumProof
-        ↓
-fresh human pre-auth audit
-        ↓
-only if HUMAN_R3_PREAUTH_READY: exact human R3 authorization
-```
-
-The forward evidence repair **must not** alter or repair historical V7 evidence. **V8 must be a new
-`candidateHash`.** Primary audit recommendation remains **`NEW_R3_CANDIDATE_REQUIRED`**.
-
-## Human action required next
-
-**None of this authorizes anything.** Council approval — even 3/3 — grants zero implementation,
-execution, or publication authority, and the human pre-authorization gate returned
-`HUMAN_R3_PREAUTH_NOT_READY`, so V1C implementation is **not** authorized on either gate. Each step
-in the sequence above requires its own separate, explicit human task instruction. Remote publication
-(push/PR/merge) remains human manual fallback only. V1D remains a separate future ADR/task/risk
-gate.
+The registry entry derived locally from persisted `CouncilConfig` is a DEVELOPMENT-TIME structural
+check only, not the future privileged `CouncilEpochRegistry` trust anchor. Production trust remains
+with future privileged `authledgerd`, which must independently compare `councilConfigHash` against
+its own trusted registry. This task supplies durable proof-capable evidence; it establishes no
+production trust and grants no execution, publication, merge, or autonomy authority.
 
 ## Required Context
 
-- `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v7/` (the frozen V7 evidence this
-  closure describes — read directly; **byte-identical, not modified by this task**)
-- `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v6/` (historical V6 evidence,
-  frozen and not modified by this task)
-- `.project/REVIEW_STATE.md` (both gate outcomes for this branch/task)
-- `docs/adr/ADR-0006-DECISION-AUTHORIZATION-BOUNDARY.md` (frozen/unmodified, `Status: Proposed`)
-- `scripts/dev/authorization-binder.mjs` (the R1/R2/R3 `CouncilQuorumProof` admission gate behind
-  blocker 3)
-- `scripts/dev/council-quorum-proof.mjs` (proof builder/verifier inputs and the `CONTEMPORANEOUS`
-  provenance requirement)
-- `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md` (harness exercise record)
+- `.project/run-bundles/shadow-council-contemporaneous-quorum-evidence-v1-smoke/` (FINALIZED and
+  immutable smoke evidence; 12 artifacts; `manifestHash`
+  `sha256:b0a8ba3faa6bd6124b49aa7a551f57b73b71e0f9baca0e7c148e129f24481e1f`)
+- `scripts/dev/shadow-council-cli-transport.mjs`
+- `scripts/dev/shadow-council-run-bundle-evidence.mjs`
+- `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
+- `.project/REVIEW_STATE.md`, `.project/PROJECT_STATE.md`
 - `docs/development/AGENT_POLICY.md`, `docs/development/REVIEW_PROTOCOL.md`
+
+## Status
+
+**Implementation and deterministic validation complete; human approval PENDING — not requested,
+not granted.** One bounded real R2 exercise, no retry or provider/model substitution, produced
+FINALIZED Run Bundle `shadow-council-contemporaneous-quorum-evidence-v1-smoke`:
+`DECIDED` / `COUNCIL_APPROVED`, `R2_QUORUM_MET`, 2/2 reviewer approvals (`seat-anthropic` and
+`seat-google` APPROVE), proposer `seat-openai` correctly excluded, `recordHash`
+`sha256:c4b6eca41c3d22505ebfdd41895952b7e4868a3e0a2b2c9e2cfa8a0a8caec61e`,
+`councilConfigHash sha256:be89b567427f125087168184bcaebf07f04ac361479bd5e2c11d71bea26229ce`, and
+`proofHash sha256:6c69f74e41c65b2e315151c44e15e56deb473fa9a1d9b504b0bef43cc98bda88`
+with `provenanceClass CONTEMPORANEOUS`.
+
+All three provider invocations succeeded on the first and only Council attempt; the pipeline built,
+verified, and persisted the `DecisionRecord` and proof. The initial ad-hoc smoke driver then failed
+only at its final step with `RUN_BUNDLE_FINALIZE_FAILED:FINALIZED_AT_REQUIRED`, because it omitted
+the required `finalizedAt` option. That throwaway-driver defect was not an evidence-pipeline or
+provider/Council failure. The same bundle was finalized with no new evidence and no new provider
+invocation; no second smoke was run.
+
+Independent verification from finalized bytes alone re-verified every artifact content hash,
+rebuilt the proof from disk-only sources with an exact persisted `proofHash` match, recomputed the
+proof/config/record hashes and proposer from persisted rotation/order, confirmed
+`authorizationEvidenceEligible === true`, and confirmed the persisted `DecisionRecord` contains no
+proof or `proofHash` reference. This grants no execution or publication authority.

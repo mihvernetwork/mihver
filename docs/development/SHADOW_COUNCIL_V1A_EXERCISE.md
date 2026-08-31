@@ -185,6 +185,24 @@ Incremental writes leave the Run Bundle `OPEN` unless the caller explicitly requ
 An OPEN bundle can accept later diagnostic evidence, but its `TaskRecord` is immutable: an initial
 `IN_PROGRESS` disposition cannot later be changed to `BLOCKED` in the same bundle.
 
+## Contemporaneous identity and quorum evidence
+
+New Shadow Council runs durably append the exact `DecisionRequest` and `CouncilConfig` before the
+first provider invocation. The real-seat order is the explicit constant
+`[seat-openai, seat-anthropic, seat-google]`; adapter identity carries explicit, non-heuristic
+`modelFamily` metadata: `seat-openai` is `openai/gpt/gpt-5.6-sol`, `seat-anthropic` is
+`anthropic/claude/claude-opus-5`, and `seat-google` is `google/gemini/gemini-3.7-flash-medium`.
+
+For voted R1/R2/R3 terminal runs, the wrapper persists the `DecisionRecord` and then a
+`CONTEMPORANEOUS` `CouncilQuorumProof` built solely from the re-read durable request, config,
+record, and vote-assessment artifacts; only then may the Run Bundle be FINALIZED. The V3–V7
+historical bundles remain historical and proof-incomplete: no retroactive `CONTEMPORANEOUS` proof
+is permitted. The locally derived development registry entry used during this check is not a
+production trust anchor; production trust remains the future privileged `CouncilEpochRegistry`.
+A synthetic (non-real-seat) `CouncilConfig` on an injected test transport is deterministic-test-only;
+its locally verified proof is never production authorization evidence, and the future privileged
+`CouncilEpochRegistry` supplies the trusted config hash.
+
 ## Exercise 3 — `shadow-vote-rationale-smoke-1` (R1 smoke test, all 3 seats vote, rationale contract)
 
 Real, bounded smoke exercise for `SHADOW-COUNCIL-VOTE-RATIONALE-V1B`, proving the new
@@ -330,16 +348,17 @@ exercises; V5 itself is historical evidence and is not reconstructed or reinterp
 `runShadowExerciseWithDurableEvidence()` (`scripts/dev/shadow-council-run-bundle-evidence.mjs`) now,
 for every exercise that reaches a terminal `DecisionRecord`:
 
-1. independently re-verifies the record against the terminal session that produced it — recomputing
-   `recordHash` via the kernel's own exported `computeDecisionRecordHash()`, and, for `DECIDED`/
-   `NO_QUORUM` outcomes, independently rebuilding and verifying a `CouncilQuorumProof` via the
-   existing, frozen `buildCouncilQuorumProof()`/`verifyCouncilQuorumProof()` exports
-   (`scripts/dev/council-quorum-proof.mjs`) — so a self-consistent but substituted record (one whose
-   `recordHash` was freshly recomputed over forged content) is still rejected;
+1. independently re-verifies the record's own identity — recomputing `recordHash` via the kernel's
+   own exported `computeDecisionRecordHash()` and rejecting any non-terminal state;
 2. writes the exact canonical JSON bytes of that `DecisionRecord` as a new `ARTIFACT` evidence entry
    (`shadow-decision-record:<recordHash>`, mirroring the existing packet/attestation/assessment
    evidence pattern) and appends it to the still-`OPEN` bundle's `EvidenceManifest`;
-3. only then finalizes the Run Bundle.
+3. for `DECIDED`/`NO_QUORUM` outcomes at `R1`/`R2`/`R3`, rebuilds and verifies a `CouncilQuorumProof`
+   via the existing, frozen `buildCouncilQuorumProof()`/`verifyCouncilQuorumProof()` exports
+   (`scripts/dev/council-quorum-proof.mjs`) from the **durable artifacts re-read from disk** — not
+   from the in-memory session — so a self-consistent but substituted record (one whose `recordHash`
+   was freshly recomputed over forged content) is still rejected, leaving the bundle `OPEN`;
+4. only then finalizes the Run Bundle.
 
 If verification or the durable write/append fails, the bundle is never finalized, already-written
 incremental evidence is preserved, and the bundle remains `OPEN`/partial — the same fail-closed

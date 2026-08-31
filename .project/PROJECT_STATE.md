@@ -123,6 +123,25 @@ and not reinterpreted, and which seat/stage/reason caused it is not reconstructe
 was exactly what was lost. This modifies `scripts/dev/shadow-council-harness.mjs` again (see the V1B
 entry above for the same "frozen for protocol-exercise purposes, extended only for advisory evidence"
 caveat) only to add hooks; the V1C architecture Council decision itself was not rerun by this task.
+Shadow Council contemporaneous quorum evidence V1 (forward-only durable `DecisionRequest` +
+canonical `CouncilConfig` + terminal `CouncilQuorumProof` evidence pipeline for real R1/R2/R3 runs;
+explicit authoritative real-seat `modelFamily` metadata, frozen canonical seat order, and a
+fail-closed canonical-config gate before provider spend; at terminal time, the persisted
+request/config/record and every `ShadowVoteAssessment` are re-read from disk, votes are derived
+through frozen `deriveAgentVote` in persisted seat order, then proof is built, verified, persisted,
+and only then may the Run Bundle be FINALIZED): IMPLEMENTED — owner:
+`scripts/dev/shadow-council-cli-transport.mjs`, `scripts/dev/shadow-council-run-bundle-evidence.mjs`,
+`docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`. Demonstrated by one bounded real R2 smoke Run
+Bundle `.project/run-bundles/shadow-council-contemporaneous-quorum-evidence-v1-smoke/` (FINALIZED,
+12 artifacts, `CONTEMPORANEOUS` proof); historical Run Bundles V3-V7 remain byte-unchanged and are
+not repaired — historical absence remains historical evidence, and no retroactive proof is
+permitted. ADR-0005, ADR-0006, the Decision Council kernel, `CouncilQuorumProof` semantics/schema,
+the Decision Council schema, `shadow-council-vote-assessment.mjs`, and Authorization Binder
+semantics are frozen/unmodified; no V1C implementation and no V8. The locally derived registry
+entry is a DEVELOPMENT-TIME structural check only, not the future privileged `CouncilEpochRegistry`
+trust anchor: future privileged `authledgerd` must independently compare `councilConfigHash` against
+its own trusted registry. This provides durable proof-capable evidence only and grants no execution,
+publication, merge, or autonomy authority.
 Shadow Council V1A advisory CLI harness (three independently-spawned provider CLI child processes —
 OpenAI/Anthropic/Google — acting as advisory-only council seats feeding the unmodified Decision
 Council V1A kernel; no direct provider API/SDK integration): IMPLEMENTED and frozen — owner:
@@ -456,6 +475,13 @@ task," completing a task is not authorization to start the next one. In particul
 memory-integration work are all **not** authorized by any checkpoint recorded above — each requires
 its own separate, explicit human task instruction, given later. **M0 Step 03B is now DONE** (see the
 checkpoint above) — its completion does not, by itself, authorize the next task.
+
+For the currently checked-out branch, completing `shadow-council-contemporaneous-quorum-evidence-v1`
+is likewise not authorization to start another task. The next action is human review of this
+branch's single local commit and the FINALIZED smoke Run Bundle
+`.project/run-bundles/shadow-council-contemporaneous-quorum-evidence-v1-smoke/`; human approval is
+PENDING — not requested, not granted. No execution, publication, push, PR, merge, or autonomy
+authority follows from it.
 
 This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out
