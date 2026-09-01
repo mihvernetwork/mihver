@@ -5,96 +5,105 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-authorization-ledger-v1c-r3-architecture-v8-failure-closure
+shadow-council-candidate-gate-reliability-v1
 
 ## Objective
 
-Persist the already-terminal V8 R3 architecture attempt exactly as **historical failure evidence**.
-The V8 Council attempt reached a terminal blocked state before any voter was invoked; this task
-records that state and its cause. It runs no Council, invokes no provider, freezes no candidate,
-repairs no gate, and creates no V9.
+Repair the candidate-construction validation architecture exposed by the V8 failure. V8 failed
+before `FREEZE_CANDIDATE` because a task-local mechanical gate drifted away from the provider-facing
+requirements, falsely rejecting a sound proposal. This task establishes one canonical
+`CandidateRequirementSpec` that generates both the provider-facing requirement rendering and the
+deterministic candidate validator, so the two cannot drift apart, plus a durable non-normative
+`ShadowUnfrozenProposal` artifact so a blocked freeze stays auditable. It is forward-only tooling
+repair: no V8 rerun, no V9, no V1C implementation.
 
 ## Branch / Base
 
-Branch: `decision/authorization-ledger-v1c-r3-architecture-v8`
-Base: `main` at `245957deab85b3a147ad3b8f38c7645628e30059` (PR #56 merged; merge-post CI on this
+Branch: `fix/shadow-council-candidate-gate-reliability-v1`
+Base: `main` at `3d90e0eaa9dbd65cd52112c574b1d823c598f0f8` (PR #57 merged; merge-post CI on this
 exact SHA: SUCCESS)
 
 ## Scope / non-goals
 
-Risk class: R3 attempt, terminated pre-vote. Authoritative classification:
+Forward-only tooling repair + deterministic verification + one bounded real R2 smoke. Does not touch
+V3–V8 historical Run Bundles, the Decision Council kernel, ADR-0005, `CouncilQuorumProof` semantics,
+or Authorization Binder semantics. Runs no V9 exercise and hard-codes no V9 matrix into generic
+library code. Implements no V1C. Grants no execution, publication, merge, or authorization authority.
 
-- **`COUNCIL_EVIDENCE_BLOCKER`** (task-level outcome)
-- proximate cause: **`CANDIDATE_CONSTRUCTION_BLOCKER`** (local mechanical gate)
+## Result
 
-**This was NOT `NO_QUORUM`. This was NOT a Council rejection.** No `CandidateDecision` was frozen,
-**no frozen (non-null) `candidateHash` exists for V8**, and no voter was invoked. Precisely: the only
-`candidateHash` *field* anywhere in the bundle is the failure artifact's `"candidateHash": null`; the
-other occurrences are ordinary text inside the proposer packet's evidence strings and inside the
-attestation `text`. No V8 candidate hash value was ever computed into a persisted artifact. The
-proposer invocation itself succeeded; the local post-proposal / pre-`FREEZE_CANDIDATE` mechanical
-gate falsely rejected an otherwise semantically complete proposal.
+`READY_FOR_PUBLICATION`.
 
-Exact preserved facts:
+**Core invariant established:**
+
+```
+ONE CANONICAL CandidateRequirementSpec
+        │
+        ├── provider-facing rendering
+        └── deterministic validation
+```
+
+`HARD_GATE` (deterministic, structural/value invariants) and `COUNCIL_REVIEW` (prose, assessed by
+Council voters) are kept separate; no hard gate depends on substring/regex/synonym matching over
+prose. `ShadowUnfrozenProposal` is first-class durable advisory evidence recorded before candidate
+admission, with zero candidate, vote, quorum, `DecisionRecord`, or authorization authority. Candidate
+authority still begins only after a successful kernel `FREEZE_CANDIDATE`.
+
+**Implementation commit:** `8c19e6aa028e64d1d86e0e608ce66e673bc5a9c2` (single local commit, 27
+files: 10 source/schema/test/doc files plus the 17-file smoke Run Bundle below; not pushed, no PR).
+
+**Gates passed:**
+
+| Gate | Thread / evidence | Verdict |
+| --- | --- | --- |
+| Scout (fresh, read-only) | `01a05917-4b31-7103-876c-72e5571d281c` | `NO PROTOCOL SEMANTICS CHANGE REQUIRED` |
+| Implementer + 3 remediation rounds | — | closed empty-hard-gate fail-open, `validateCandidateImpl` bypass, unaudited validator throws, op-inventory duplication, unauthenticated-spec acceptance, non-total gate-result predicate |
+| Reviewer (fresh, read-only, adversarial) | `01a0593f-cc37-7d81-9693-1bdc478a85b8` | `READY_FOR_FINAL_VERIFICATION` |
+| Verifier (fresh, read-only) | `01a05948-beb5-78b1-aec0-c042c03200ec` | `READY_FOR_PUBLICATION` (26/26 checks) |
+| Smoke evidence verifier (fresh, read-only, from bundle bytes alone) | `01a05957-8fc7-7d02-accf-3990e775303e` | `SMOKE_EVIDENCE_VERIFIED` |
+
+**One bounded real R2 smoke:** `shadow-council-candidate-gate-reliability-v1-smoke` — no retry, no
+provider substitution, no second smoke.
 
 | Fact | Value |
 | --- | --- |
-| `decisionRequestId` / `taskId` | `authorization-ledger-v1c-r3-arch-decision-8` |
-| `councilEpochId` | `authorization-ledger-v1c-r3-arch-decision-8-epoch-1` |
-| `rotationOrdinal` | `7` (fixed before any provider call) |
-| Kernel-derived proposer | `seat-anthropic` (`seats[7 % 3]`, canonical order `seat-openai`, `seat-anthropic`, `seat-google`) |
-| Pre-provider packet gate | **PASS** |
-| Post-proposal / pre-vote construction gate | **FAIL** |
-| Failure stage | `KERNEL_EVENT` (`eventType` `FREEZE_CANDIDATE`) |
-| Failure code | `CANDIDATE_CONSTRUCTION_BLOCKER` |
+| Gate outcome | **ACCEPTED** (8/8 hard requirements evaluated, 0 failures) |
+| Terminal state / disposition | **`DECIDED`** / **`COUNCIL_APPROVED`** |
+| Proposer / voters | `seat-openai` (proposer); `seat-google`, `seat-anthropic` (voters); proposer did not vote (R2 rule held) |
+| `candidateHash` | `sha256:1c1de1a428a380d93123237428cb5d12cda915b02713d82bf5ec56d079f38573` |
+| `unfrozenProposalHash` | `sha256:fa4c792952d6e9e0e246a8a4a020ce4f4163deb98f4c25c5e8a9f4c395429727` (distinct domain/preimage from `candidateHash`; confirmed unequal) |
+| DecisionRecord `recordHash` | `sha256:e2accd2e0f2c51000414ff3a257405cc13142ec6dd93a06fe9aba7bfaa28dd6f` |
+| CouncilQuorumProof `proofHash` (provenance CONTEMPORANEOUS) | `sha256:30ae0a3e2309620c6ea7ef9a369d701ece45c87136b7fa8d7356c76262cf4be1` |
+| `authorizationEvidenceEligible` | `true` |
+| Run Bundle status | **`FINALIZED`** |
+| `manifestHash` | `sha256:893ba6a63817add517bfd737263bc3689988c0817f82ab2b4e82666663d579a3` |
+| Artifact count | **14** |
+
+No retry. No V9. No V1C implementation. No execution authority. No publication authority. No human
+approval.
+
+### V8 historical state — unchanged
+
+V8 was **not** repaired retroactively and was not rerun. Its Run Bundle
+(`.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/`) remains:
+
+| Fact | Value |
+| --- | --- |
+| Status | **`OPEN`** |
+| `candidateHash` | `null` |
+| Artifact count | **5** |
 | Voter calls | **0** |
 | `DecisionRecord` | **ABSENT** |
 | `CouncilQuorumProof` | **ABSENT** |
-| Run Bundle status | **`OPEN`** |
-| Artifact count | **5** |
 
-No retry. No second candidate. No implementation. No execution authority. No publication authority.
-No human approval.
-
-### False-positive gate finding
-
-The five reported construction failures were determined to be **gate-definition defects, not
-substantive proposal omissions**. **Provenance caveat:** the persisted `ShadowSeatInvocationFailure`
-records only `errorCode CANDIDATE_CONSTRUCTION_BLOCKER` and `details {"eventType":
-"FREEZE_CANDIDATE"}`. The five specific diagnostics below came from the throwaway, uncommitted
-driver's gate output, and the judgement that each was a false positive came from reading the
-recovered proposer text in `ShadowSeatAttestation.text`. **Neither the five diagnostics nor the
-false-positive judgement is independently provable from the persisted bundle bytes alone**; they are
-recorded here as the orchestrator's finding, not as bundle-proved fact.
-
-The gate required certain semantics to appear under specific nested candidate fields after the
-packet requirements had been shortened and reorganized to fit the packet-size bound (`shadow-council-packet.mjs`: ≤ 20 evidence items of ≤ 1000 chars,
-`decisionQuestion` ≤ 2000 chars). Known false-negative classes:
-
-1. The server-derived `authenticatedApproverUid` requirement existed elsewhere in the proposal, but
-   the gate demanded it under `grantIssuanceRequest`.
-2. The server-derived `grantHash` requirement existed elsewhere, but the gate demanded it under
-   `grantIssuanceRequest`.
-3. The server-derived grant `state` requirement existed elsewhere, but the gate demanded it under
-   `grantIssuanceRequest`.
-4. `IDEMPOTENCY_KEY_REUSE` semantics were required by the architecture, but the gate depended on a
-   literal/location that was removed while shrinking the packet requirements.
-5. The UID policy correctly rejected `"unknown or extra top-level fields"`, but the gate's accepted
-   wording set failed to recognize that equivalent exact security semantic.
-
-**The recovered proposal is NOT promoted to normative architecture.** It may be described only as
-`UNFROZEN_PROPOSAL` / `PROPOSAL_CONTENT_NOT_ADMITTED_AS_CANDIDATE`. It survives only inside the
-persisted `ShadowSeatAttestation.text`; no `proposalContent` wrapper and no `CandidateDecision` were
-persisted, consistent with failure at `FREEZE_CANDIDATE`.
-
-Unchanged by this task: every byte already written inside the V8 Run Bundle, ADR-0005, ADR-0006, the
-Decision Council kernel, `CouncilQuorumProof` semantics/schema, every other schema, every script, and
-historical Run Bundles V3–V7 and the PR #56 smoke bundle. The throwaway V8 driver and gate modules
-were scratchpad-only and are deliberately not committed.
+V3–V7 and the PR #56 contemporaneous-quorum smoke bundle are likewise byte-unchanged. See
+`DECISIONS_LOG.md`'s `AUTHORIZATION-LEDGER-V1C-R3-ARCHITECTURE-V8-FAILURE-CLOSURE` entry for V8's
+own record, which this task does not alter.
 
 ## Required Context
 
-- `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/`
+- `.project/run-bundles/shadow-council-candidate-gate-reliability-v1-smoke/`
+- `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/` (unchanged; historical)
 - `.project/REVIEW_STATE.md`
 - `.project/DECISIONS_LOG.md`
 - `.project/PROJECT_STATE.md`
@@ -104,23 +113,17 @@ were scratchpad-only and are deliberately not committed.
 
 ## Status
 
-**V8 attempt terminal and closed as failure evidence; human approval PENDING — not requested, not
-granted.** The V8 Run Bundle is `OPEN` with 5 artifacts and `manifestHash`
-`sha256:5737aae3d3f8cd8cd20d90d2e817bcd1e8b718b79ac6665490dfcece679edf60`.
+**Implementation, review, verification and bounded real smoke all COMPLETE. Human approval
+PENDING — not requested, not granted.** Nothing has been pushed; no PR exists. Publication remains
+manual per `CLAUDE.md`'s "Publication" section (remote publication automation is not available).
 
-Durable pre-provider evidence exists and verifies: the exact `DecisionRequest`
-(`contentHash sha256:dae00b861995399becaf56d793e463a8b73f0efa600b1be23ac16372097dbebb`,
-`contextHash sha256:2c707d7f5846a883402e9191bb06849db66544f3c748c5e6307b1c7ea47db156`) and the exact
-`CouncilConfig` (`contentHash sha256:193fc861ba8ef9f1102705f8a69007c2c9fae83117d3da301d489379ad21c8a7`,
-`councilConfigHash sha256:b6f7b1d3b700f6d90e7a37c83a3226e7bdee2f8de399a790105cff0a70d371bf`) were
-written and manifest-bound before the first provider process, and the persisted config byte-matches
-canonical `buildShadowCouncilConfig` — no seat, provider, `modelFamily` or `modelId` substitution.
-Exactly one proposer packet (`packetHash
-sha256:534a9c79b5f3c579ea7403afdfeb1f4c5742bbb1609f45bf7b690fb23f10252a`), exactly one admitted
-`seat-anthropic` attestation, and exactly one `ShadowSeatInvocationFailure`
-(`failureHash sha256:d7719444beacb5e39eb88ef51335b8366cd8d51ca926ebe0d4674a11fdd19200`) are durable.
-Zero voter packets, zero assessments, zero `DecisionRecord`, zero `CouncilQuorumProof`.
+Primary next action: **`CANDIDATE_GATE_RELIABILITY_PUBLICATION_PENDING_HUMAN_REVIEW`** — human review
+of commit `8c19e6aa028e64d1d86e0e608ce66e673bc5a9c2` and the finalized smoke Run Bundle, then a
+manual publication decision.
 
-Primary next action: **`CANDIDATE_GATE_RELIABILITY_REPAIR_REQUIRED`**. The tooling defect must be
-fixed before another R3 attempt, so `NEW_R3_CANDIDATE_REQUIRED` is explicitly **not** the immediate
-next action.
+New next architectural action (**not yet authorized**): `V9_NEW_R3_ARCHITECTURE_DECISION`. Sequence:
+candidate-gate reliability publication → merge-post CI → human explicitly authorizes a V9 task → V9
+fresh `DecisionRequest` → new proposer invocation → new frozen candidate → 3-seat R3 Council →
+durable `DecisionRecord` → durable contemporaneous `CouncilQuorumProof` → fresh human
+pre-authorization audit. No V9 task may start without a separate, explicit human instruction; V1C
+implementation remains likewise unauthorized.
