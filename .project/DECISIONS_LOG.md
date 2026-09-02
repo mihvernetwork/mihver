@@ -429,3 +429,60 @@ Entries above this line are unmodified, per this log's append-only policy.
   commit and is not repaired here. —
   `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/`, `.project/CURRENT_TASK.md`,
   `.project/REVIEW_STATE.md`
+- 2026-09-01 — `SHADOW-COUNCIL-CANDIDATE-GATE-RELIABILITY-V1`: repaired the candidate-construction
+  validation architecture exposed by V8. Root cause was structural drift — a task-local mechanical
+  gate held its own copy of the provider-facing requirements, the wording moved, the copy did not,
+  and a sound proposal was falsely rejected. Fix establishes one canonical `CandidateRequirementSpec`
+  (`scripts/dev/shadow-council-candidate-requirements.mjs`) that both the provider-facing renderer
+  and the deterministic validator execute — no second, independently-maintained requirement list.
+  `HARD_GATE` (deterministic, structural) and `COUNCIL_REVIEW` (prose, Council-assessed) are kept
+  separate; no hard gate depends on substring/regex/synonym matching over prose. A new durable,
+  non-normative `ShadowUnfrozenProposal` artifact (`scripts/dev/shadow-council-unfrozen-proposal.mjs`)
+  records the parsed proposer output before candidate admission, carrying zero vote, quorum,
+  `DecisionRecord`, or authorization authority; its hash is domain-separated from `candidateHash` and
+  candidate authority still begins only at kernel `FREEZE_CANDIDATE`. The gate is opt-in: runs
+  supplying no spec are unchanged. Implementation commit
+  `8c19e6aa028e64d1d86e0e608ce66e673bc5a9c2` on `fix/shadow-council-candidate-gate-reliability-v1`
+  (base `main` `3d90e0eaa9dbd65cd52112c574b1d823c598f0f8`, PR #57 merged, merge-post CI SUCCESS).
+  Gates passed: Scout (thread `01a05917-4b31-7103-876c-72e5571d281c`, `NO PROTOCOL SEMANTICS CHANGE
+  REQUIRED`); three remediation rounds against adversarial review closing empty-hard-gate fail-open,
+  a `validateCandidateImpl` bypass, unaudited validator throws, op-inventory duplication, an
+  unauthenticated-spec acceptance path, and a non-total gate-result predicate; fresh Reviewer
+  (thread `01a0593f-cc37-7d81-9693-1bdc478a85b8`) verdict `READY_FOR_FINAL_VERIFICATION`; fresh
+  Verifier (thread `01a05948-beb5-78b1-aec0-c042c03200ec`) verdict `READY_FOR_PUBLICATION` across 26
+  checks, including that the V8-class regression proposal validates and each of its five real
+  structured values independently fails the correct `requirementId` when mutated. One bounded real
+  R2 smoke, `shadow-council-candidate-gate-reliability-v1-smoke`: gate **ACCEPTED**, terminal
+  **`DECIDED` / `COUNCIL_APPROVED`**, Run Bundle **`FINALIZED`** with **14 artifacts**
+  (`manifestHash sha256:893ba6a63817add517bfd737263bc3689988c0817f82ab2b4e82666663d579a3`),
+  `candidateHash sha256:1c1de1a428a380d93123237428cb5d12cda915b02713d82bf5ec56d079f38573`,
+  `unfrozenProposalHash sha256:fa4c792952d6e9e0e246a8a4a020ce4f4163deb98f4c25c5e8a9f4c395429727`
+  (distinct from `candidateHash`, confirmed via separate hash domains and preimages), DecisionRecord
+  `recordHash sha256:e2accd2e0f2c51000414ff3a257405cc13142ec6dd93a06fe9aba7bfaa28dd6f`, contemporaneous
+  CouncilQuorumProof `proofHash sha256:30ae0a3e2309620c6ea7ef9a369d701ece45c87136b7fa8d7356c76262cf4be1`,
+  `authorizationEvidenceEligible true`. No retry, no provider substitution, no second smoke; smoke
+  evidence independently re-verified from bundle bytes alone by a fresh Verifier (thread
+  `01a05957-8fc7-7d02-accf-3990e775303e`), verdict `SMOKE_EVIDENCE_VERIFIED`. **V8 was NOT repaired
+  retroactively**: its Run Bundle remains `OPEN`, `candidateHash: null`, 5 artifacts, zero voters,
+  zero `DecisionRecord`, zero `CouncilQuorumProof`, byte-unchanged; V3–V7 and the PR #56
+  contemporaneous-quorum smoke bundle are likewise byte-unchanged. `scripts/dev/decision-council-kernel.mjs`,
+  ADR-0005, `CouncilQuorumProof` semantics/schema, and Authorization Binder semantics are all
+  unchanged. No V9 was run and no V9 matrix is hard-coded into generic library code (the 17/12
+  matrices used to prove expressibility live only in this task's tests). No V1C implementation
+  exists on this branch. No execution, publication, merge, or authorization authority is granted by
+  anything added — the new artifact explicitly carries none. **No human approval**: not requested,
+  not granted. Next sequence: candidate-gate reliability publication → merge-post CI → human
+  explicitly authorizes a V9 task → V9 fresh `DecisionRequest` → new proposer invocation → new frozen
+  candidate → 3-seat R3 Council → durable `DecisionRecord` → durable contemporaneous
+  `CouncilQuorumProof` → fresh human pre-authorization audit. Primary next action:
+  **`CANDIDATE_GATE_RELIABILITY_PUBLICATION_PENDING_HUMAN_REVIEW`**; `V9_NEW_R3_ARCHITECTURE_DECISION`
+  is the next architectural action but is explicitly **not** yet authorized — no V9 task may start
+  without a separate, explicit human instruction. —
+  `scripts/dev/shadow-council-candidate-requirements.mjs`,
+  `scripts/dev/shadow-council-unfrozen-proposal.mjs`, `scripts/dev/shadow-council-harness.mjs`,
+  `scripts/dev/shadow-council-run-bundle-evidence.mjs`,
+  `schemas/dev/shadow-candidate-requirement-spec.schema.json`,
+  `schemas/dev/shadow-unfrozen-proposal.schema.json`,
+  `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`,
+  `.project/run-bundles/shadow-council-candidate-gate-reliability-v1-smoke/`,
+  `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`

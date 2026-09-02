@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mihver.network/schemas/dev/shadow-candidate-requirement-spec.schema.json",
+  "title": "ShadowCandidateRequirementSpec v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "schemaVersion", "specId", "hardGate", "councilReview", "requirementSpecHash"],
+  "properties": {
+    "kind": { "const": "ShadowCandidateRequirementSpec" },
+    "schemaVersion": { "const": "1.0.0" },
+    "specId": { "$ref": "#/$defs/id200" },
+    "hardGate": { "type": "array", "minItems": 1, "maxItems": 200, "items": { "$ref": "#/$defs/hardRule" } },
+    "councilReview": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/reviewItem" } },
+    "requirementSpecHash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "id120": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "id200": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "path": { "type": "array", "maxItems": 100, "items": { "oneOf": [{ "$ref": "#/$defs/id200" }, { "type": "integer", "minimum": 0 }] } },
+    "stringSet": { "type": "array", "maxItems": 200, "uniqueItems": true, "items": { "$ref": "#/$defs/id200" } },
+    "op": { "enum": ["PATH_PRESENT", "TYPE", "EQUALS", "ENUM", "NULL", "BOOLEAN", "INTEGER_RANGE", "EXACT_KEYS", "NO_UNKNOWN_FIELDS", "OBJECT_EXACT", "ARRAY_LENGTH", "ARRAY_UNIQUE", "ARRAY_EXACT_IDS"] },
+    "base": { "type": "object", "required": ["requirementId", "path", "op"], "properties": { "requirementId": { "$ref": "#/$defs/id120" }, "path": { "$ref": "#/$defs/path" }, "op": { "$ref": "#/$defs/op" } } },
+    "hardRule": {
+      "oneOf": [
+        { "$ref": "#/$defs/noArgsPresent" }, { "$ref": "#/$defs/typeRule" }, { "$ref": "#/$defs/equalsRule" }, { "$ref": "#/$defs/enumRule" },
+        { "$ref": "#/$defs/noArgsNull" }, { "$ref": "#/$defs/booleanRule" }, { "$ref": "#/$defs/rangeRule" }, { "$ref": "#/$defs/exactKeysRule" },
+        { "$ref": "#/$defs/noUnknownRule" }, { "$ref": "#/$defs/objectExactRule" }, { "$ref": "#/$defs/lengthRule" }, { "$ref": "#/$defs/uniqueRule" }, { "$ref": "#/$defs/exactIdsRule" }
+      ]
+    },
+    "noArgsPresent": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "PATH_PRESENT" } } }] },
+    "noArgsNull": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "NULL" } } }] },
+    "typeRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "expectedType"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "TYPE" }, "expectedType": { "enum": ["string", "number", "integer", "boolean", "object", "array", "null"] } } }] },
+    "equalsRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "expected"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "EQUALS" }, "expected": {} } }] },
+    "enumRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "allowed"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "ENUM" }, "allowed": { "type": "array", "minItems": 1, "maxItems": 200, "items": { "type": ["string", "number", "boolean", "null"] } } } }] },
+    "booleanRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "expected"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "BOOLEAN" }, "expected": { "type": "boolean" } } }] },
+    "rangeRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "min", "max"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "INTEGER_RANGE" }, "min": { "type": "integer" }, "max": { "type": "integer" } } }] },
+    "exactKeysRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "keys"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "EXACT_KEYS" }, "keys": { "$ref": "#/$defs/stringSet" } } }] },
+    "noUnknownRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "allowed"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "NO_UNKNOWN_FIELDS" }, "allowed": { "$ref": "#/$defs/stringSet" } } }] },
+    "objectExactRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "expected"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "OBJECT_EXACT" }, "expected": { "type": "object" } } }] },
+    "lengthRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "length"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "ARRAY_LENGTH" }, "length": { "type": "integer", "minimum": 0 } } }] },
+    "uniqueRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "idField"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "ARRAY_UNIQUE" }, "idField": { "$ref": "#/$defs/id200" } } }] },
+    "exactIdsRule": { "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["requirementId", "path", "op", "idField", "ids"], "properties": { "requirementId": {}, "path": {}, "op": { "const": "ARRAY_EXACT_IDS" }, "idField": { "$ref": "#/$defs/id200" }, "ids": { "$ref": "#/$defs/stringSet" } } }] },
+    "reviewItem": { "type": "object", "additionalProperties": false, "required": ["requirementId", "criterion"], "properties": { "requirementId": { "$ref": "#/$defs/id120" }, "criterion": { "type": "string", "minLength": 1, "maxLength": 600 } } }
+  }
+}

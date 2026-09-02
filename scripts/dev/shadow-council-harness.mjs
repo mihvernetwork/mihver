@@ -3,6 +3,8 @@ import { buildProposalPacket,buildVotePacket,renderPacketPrompt } from "./shadow
 import { buildAttestation,checkAdmission,computeInvocationConfigHash,computeOutputHash,attestSeatOriginRegistry,assertStableExecutableAcrossRun } from "./shadow-council-attestation.mjs";
 import { buildShadowVoteAssessment,deriveAgentVote } from "./shadow-council-vote-assessment.mjs";
 import { buildShadowSeatInvocationFailure } from "./shadow-council-invocation-failure.mjs";
+import { assertGateResultAccepted,validateCandidateAgainstRequirementSpec } from "./shadow-council-candidate-requirements.mjs";
+import { buildShadowUnfrozenProposal } from "./shadow-council-unfrozen-proposal.mjs";
 import { SEAT_ADAPTERS,buildInvocationArgv,spawnSeat,parseSeatOutput } from "./shadow-council-cli-transport.mjs";
 attestSeatOriginRegistry(Object.entries(SEAT_ADAPTERS).map(([seatId,a])=>({seatId,provider:a.provider,cliExecutableRealpath:a.cli})));
 const plain=v=>v&&typeof v==="object"&&!Array.isArray(v)&&[Object.prototype,null].includes(Object.getPrototypeOf(v));
@@ -35,7 +37,14 @@ function kernel(session,event,opts,c){const r=(opts.applyEventImpl??applyEvent)(
 export function runProposerFlow(session,opts){
   const seatId=session.expectedProposerSeatId,packet=buildProposalPacket(base(session,opts,seatId));opts.hooks?.onPacketBuilt?.(packet,{seatId,invocationRole:"PROPOSER"});
   const {value,attestation,context}=invoke(packet,opts,"PROPOSER");if(!exact(value,["summary","payload"])||typeof value.summary!=="string"||!value.summary||!plain(value.payload)){const e=new Error("MALFORMED_SEAT_OUTPUT");capture(opts,context,"SHADOW_RESPONSE_SHAPE",e,responseShapeDetails(value,["summary","payload"]));throw e;}
-  const common={decisionRequestId:session.decisionRequest.decisionRequestId,seatId,councilEpochId:session.decisionRequest.councilEpochId};let s=kernel(session,{type:"SUBMIT_COMMITMENT",commitment:{...common,commitmentHash:computeCommitmentHash(value)}},opts,context);s=kernel(s,{type:"REVEAL_PROPOSAL",proposal:{...common,proposalContent:value}},opts,context);s=kernel(s,{type:"FREEZE_CANDIDATE"},opts,context);return{session:s,packet,attestation,proposalContent:value,invocationContext:context};
+  const requirementSpecHash=opts.candidateRequirementSpec?.requirementSpecHash??null,unfrozenProposal=buildShadowUnfrozenProposal({decisionRequestId:session.decisionRequest.decisionRequestId,councilEpochId:session.decisionRequest.councilEpochId,seatId,packetHash:packet.packetHash,attestationHash:attestation.attestationHash,requirementSpecHash,proposalContent:value});
+  try{opts.hooks?.onUnfrozenProposal?.(unfrozenProposal)}catch(e){capture(opts,context,"RUN_POSTCONDITION",e);throw e}
+  if(opts.candidateRequirementSpec!==undefined||opts.validateCandidateImpl!==undefined){let validation,accepted;try{validation=(opts.validateCandidateImpl??validateCandidateAgainstRequirementSpec)({spec:opts.candidateRequirementSpec,candidatePayload:value.payload});accepted=assertGateResultAccepted({spec:opts.candidateRequirementSpec,result:validation})}catch(e){const blocker=new Error("CANDIDATE_CONSTRUCTION_BLOCKER");capture(opts,context,"KERNEL_EVENT",blocker,{eventType:"FREEZE_CANDIDATE",requirementSpecHash,failedRequirementIds:[],gateEvaluationError:code(e).slice(0,200)});throw blocker}if(!accepted){const e=new Error("CANDIDATE_CONSTRUCTION_BLOCKER");
+      // KERNEL_EVENT + CANDIDATE_CONSTRUCTION_BLOCKER denotes this pre-freeze candidate gate, not
+      // a kernel semantic rejection. requirementSpecHash/failedRequirementIds distinguish it from
+      // genuine kernel errors, whose details carry only eventType.
+      capture(opts,context,"KERNEL_EVENT",e,{eventType:"FREEZE_CANDIDATE",requirementSpecHash,failedRequirementIds:Array.isArray(validation?.failedRequirementIds)?validation.failedRequirementIds:[],gateResultInvalid:true});throw e;}}
+  const common={decisionRequestId:session.decisionRequest.decisionRequestId,seatId,councilEpochId:session.decisionRequest.councilEpochId};let s=kernel(session,{type:"SUBMIT_COMMITMENT",commitment:{...common,commitmentHash:computeCommitmentHash(value)}},opts,context);s=kernel(s,{type:"REVEAL_PROPOSAL",proposal:{...common,proposalContent:value}},opts,context);s=kernel(s,{type:"FREEZE_CANDIDATE"},opts,context);return{session:s,packet,attestation,proposalContent:value,unfrozenProposal,invocationContext:context};
 }
 export function runVotingFlow(session,opts){
   const seatIds=opts.seatIds;if(session.decisionRequest.riskClass==="R2"&&seatIds.includes(session.expectedProposerSeatId))throw new Error("PROPOSER_CANNOT_VOTE");const packets=[],votes=[],attestations=[],assessments=[],invocationContexts=[];let s=session;
@@ -50,5 +59,5 @@ export function runVotingFlow(session,opts){
 export function runShadowExercise(session,opts){
   const p=runProposerFlow(session,opts),v=runVotingFlow(p.session,opts),attestations=[p.attestation,...v.attestations];
   try{(opts.assertStableExecutableAcrossRunImpl??assertStableExecutableAcrossRun)(attestations);}catch(e){let index=1,seen=new Map();for(let i=0;i<attestations.length;i++){const a=attestations[i];if(seen.has(a.seatId)&&seen.get(a.seatId)!==a.cliExecutableRealpath){index=i;break;}seen.set(a.seatId,a.cliExecutableRealpath);}const contexts=[p.invocationContext,...v.invocationContexts],c=contexts[index]??contexts.at(-1);capture(opts,c,"RUN_POSTCONDITION",e);throw e;}
-  return{session:v.session,decisionRecord:getDecisionRecord(v.session),packets:[p.packet,...v.packets],attestations,proposalContent:p.proposalContent,votes:v.votes,assessments:v.assessments};
+  return{session:v.session,decisionRecord:getDecisionRecord(v.session),packets:[p.packet,...v.packets],attestations,proposalContent:p.proposalContent,unfrozenProposal:p.unfrozenProposal,votes:v.votes,assessments:v.assessments};
 }
