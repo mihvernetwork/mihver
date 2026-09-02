@@ -5,125 +5,100 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-shadow-council-candidate-gate-reliability-v1
+MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-CI-SCOPE-REMEDIATION
 
 ## Objective
 
-Repair the candidate-construction validation architecture exposed by the V8 failure. V8 failed
-before `FREEZE_CANDIDATE` because a task-local mechanical gate drifted away from the provider-facing
-requirements, falsely rejecting a sound proposal. This task establishes one canonical
-`CandidateRequirementSpec` that generates both the provider-facing requirement rendering and the
-deterministic candidate validator, so the two cannot drift apart, plus a durable non-normative
-`ShadowUnfrozenProposal` artifact so a blocked freeze stays auditable. It is forward-only tooling
-repair: no V8 rerun, no V9, no V1C implementation.
+Add a restriction-only Claude Code hook-based orchestrator delegation firewall for this repository.
+The firewall mechanically denies direct repository tools to the Claude MAIN thread, binds Codex MCP
+delegation to a `MIHVER_DELEGATION_V1` role contract, records hook-authored hash-chained receipts,
+and permits session Stop only after a `COMPLETED` IMPLEMENTER receipt and a fresh,
+fingerprint-matching `COMPLETED` VERIFIER receipt. This is developer control-plane hardening only:
+it expands no authority and gives no agent any new capability.
+
+Remediate the cross-platform scope-boundary defect exposed by PR #59 Project validation: when an
+existing cwd resolves successfully, its resolved filesystem location is authoritative. A fresh
+adversarial Reviewer subsequently returned `SCOPE_REMEDIATION_BLOCKER` because malformed absolute
+cwd values could fail open in the failed-realpath fallback; that restriction-only defect is also
+remediated.
 
 ## Branch / Base
 
-Branch: `fix/shadow-council-candidate-gate-reliability-v1`
-Base: `main` at `3d90e0eaa9dbd65cd52112c574b1d823c598f0f8` (PR #57 merged; merge-post CI on this
-exact SHA: SUCCESS)
+Branch: `fix/orchestrator-delegation-firewall-v1`
+Base / HEAD: `3bf4f73ab43cbe0e8117142e23b78b785a9a5bd4` (unchanged; no commit created)
 
 ## Scope / non-goals
 
-Forward-only tooling repair + deterministic verification + one bounded real R2 smoke. Does not touch
-V3–V8 historical Run Bundles, the Decision Council kernel, ADR-0005, `CouncilQuorumProof` semantics,
-or Authorization Binder semantics. Runs no V9 exercise and hard-codes no V9 matrix into generic
-library code. Implements no V1C. Grants no execution, publication, merge, or authorization authority.
+Risk class **R2**. Implementation comprises 14 new files under
+`tools/orchestrator-firewall/{bin,src,install,test}` and
+`docs/development/ORCHESTRATOR_FIREWALL.md`, plus two-line `package.json` test-script wiring
+(approximately 2,045 lines). It does not install the firewall on the host, grant execution,
+publication, merge, or authorization authority, authorize V9, or introduce any V1C content.
 
 ## Result
 
-`READY_FOR_PUBLICATION`.
+`REMEDIATION_COMPLETED`; publication state: `PENDING_NEW_PR_CI`.
 
-**Core invariant established:**
+The source, installer, deterministic tests, and policy documentation are complete in the working
+tree. No commit, push, PR creation, merge, or host installation was performed during implementation.
+PR expected: yes. Target: `main`. Live PR identity/state: verify from GitHub.
 
-```
-ONE CANONICAL CandidateRequirementSpec
-        │
-        ├── provider-facing rendering
-        └── deterministic validation
-```
+**PR #59 initial Project validation:** **FAILED**. Cause:
+`SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`. Remediation: **COMPLETED**. Fresh local
+verification: **PASS** — 40/40 deterministic firewall tests, 170/170 contract fixtures, and 7/7
+project-consistency checks pass; `git diff --check` is clean. This is not a claim that PR #59 CI is
+green. A new commit must be pushed and GitHub CI must actually succeed before any green claim.
 
-`HARD_GATE` (deterministic, structural/value invariants) and `COUNCIL_REVIEW` (prose, assessed by
-Council voters) are kept separate; no hard gate depends on substring/regex/synonym matching over
-prose. `ShadowUnfrozenProposal` is first-class durable advisory evidence recorded before candidate
-admission, with zero candidate, vote, quorum, `DecisionRecord`, or authorization authority. Candidate
-authority still begins only after a successful kernel `FREEZE_CANDIDATE`.
+**Fresh scope-remediation review:** a fresh adversarial Reviewer returned
+`SCOPE_REMEDIATION_BLOCKER` on a malformed-absolute-cwd fail-open in the failed-realpath fallback.
+The restriction-only correction is **COMPLETED**: only genuine `ENOENT`/`ENOTDIR` failures retain
+lexical exclusion, while every other realpath failure is treated as ambiguous and in scope. Fresh
+local verification: **PASS** — 42/42 deterministic firewall tests, 170/170 contract fixtures, and
+7/7 project-consistency checks pass; `git diff --check` is clean. Publication remains
+`PENDING_NEW_PR_CI`.
 
-**Implementation commit:** `8c19e6aa028e64d1d86e0e608ce66e673bc5a9c2` (single local commit, 27
-files: 10 source/schema/test/doc files plus the 17-file smoke Run Bundle below; not pushed, no PR).
+**Review:** six fresh adversarial Codex rounds completed. Rounds 1–3 found real blocking bypasses:
+metadata fail-open; Codex `config` sandbox escalation; codex-reply role relabeling; Stop
+self-release; ambiguous `threadId` binding; manifest-existence demotion re-enabling environment
+overrides; and entry-only hashing with static import before validation. All were remediated. Rounds
+4–5 found operator-misleading diagnostic defects: false-positive `INSTALLED` status, status crash on
+a malformed manifest, cross-release validator drift, and incomplete content addressing. All were
+remediated. Round 6 returned **`READY_FOR_FINAL_VERIFICATION`** with no blocking or major findings.
 
-**Gates passed:**
+**Accepted limitations:** receipts and the thread-authority store are tamper-**evident**, not
+tamper-proof; a same-user process can rewrite the unkeyed hash chain, and closing this requires
+OS-level privilege separation of the kind already designed for the Publication Broker. Host hooks
+fail open if the engine is missing, crashes, or exits non-zero. Bash protection is heuristic, not an
+OS sandbox. A hash-to-import TOCTOU remains. `.gitignore`d files are excluded from workspace
+fingerprints. `ConfigChange` protects only the running session. Break-glass is human-only by
+convention, not mechanically enforced.
 
-| Gate | Thread / evidence | Verdict |
-| --- | --- | --- |
-| Scout (fresh, read-only) | `01a05917-4b31-7103-876c-72e5571d281c` | `NO PROTOCOL SEMANTICS CHANGE REQUIRED` |
-| Implementer + 3 remediation rounds | — | closed empty-hard-gate fail-open, `validateCandidateImpl` bypass, unaudited validator throws, op-inventory duplication, unauthenticated-spec acceptance, non-total gate-result predicate |
-| Reviewer (fresh, read-only, adversarial) | `01a0593f-cc37-7d81-9693-1bdc478a85b8` | `READY_FOR_FINAL_VERIFICATION` |
-| Verifier (fresh, read-only) | `01a05948-beb5-78b1-aec0-c042c03200ec` | `READY_FOR_PUBLICATION` (26/26 checks) |
-| Smoke evidence verifier (fresh, read-only, from bundle bytes alone) | `01a05957-8fc7-7d02-accf-3990e775303e` | `SMOKE_EVIDENCE_VERIFIED` |
-
-**One bounded real R2 smoke:** `shadow-council-candidate-gate-reliability-v1-smoke` — no retry, no
-provider substitution, no second smoke.
-
-| Fact | Value |
-| --- | --- |
-| Gate outcome | **ACCEPTED** (8/8 hard requirements evaluated, 0 failures) |
-| Terminal state / disposition | **`DECIDED`** / **`COUNCIL_APPROVED`** |
-| Proposer / voters | `seat-openai` (proposer); `seat-google`, `seat-anthropic` (voters); proposer did not vote (R2 rule held) |
-| `candidateHash` | `sha256:1c1de1a428a380d93123237428cb5d12cda915b02713d82bf5ec56d079f38573` |
-| `unfrozenProposalHash` | `sha256:fa4c792952d6e9e0e246a8a4a020ce4f4163deb98f4c25c5e8a9f4c395429727` (distinct domain/preimage from `candidateHash`; confirmed unequal) |
-| DecisionRecord `recordHash` | `sha256:e2accd2e0f2c51000414ff3a257405cc13142ec6dd93a06fe9aba7bfaa28dd6f` |
-| CouncilQuorumProof `proofHash` (provenance CONTEMPORANEOUS) | `sha256:30ae0a3e2309620c6ea7ef9a369d701ece45c87136b7fa8d7356c76262cf4be1` |
-| `authorizationEvidenceEligible` | `true` |
-| Run Bundle status | **`FINALIZED`** |
-| `manifestHash` | `sha256:893ba6a63817add517bfd737263bc3689988c0817f82ab2b4e82666663d579a3` |
-| Artifact count | **14** |
-
-No retry. No V9. No V1C implementation. No execution authority. No publication authority. No human
-approval.
-
-### V8 historical state — unchanged
-
-V8 was **not** repaired retroactively and was not rerun. Its Run Bundle
-(`.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/`) remains:
-
-| Fact | Value |
-| --- | --- |
-| Status | **`OPEN`** |
-| `candidateHash` | `null` |
-| Artifact count | **5** |
-| Voter calls | **0** |
-| `DecisionRecord` | **ABSENT** |
-| `CouncilQuorumProof` | **ABSENT** |
-
-V3–V7 and the PR #56 contemporaneous-quorum smoke bundle are likewise byte-unchanged. See
-`DECISIONS_LOG.md`'s `AUTHORIZATION-LEDGER-V1C-R3-ARCHITECTURE-V8-FAILURE-CLOSURE` entry for V8's
-own record, which this task does not alter.
+**Accepted non-blocking test-completeness follow-ups:** `permission_mode` invariance is asserted only
+for main-thread Read, not delegated calls; delegated-effort tests do not compare resulting `STARTED`
+receipts. Neither field is consulted by any authorization path.
 
 ## Required Context
 
-- `.project/run-bundles/shadow-council-candidate-gate-reliability-v1-smoke/`
-- `.project/run-bundles/authorization-ledger-v1c-r3-architecture-v8/` (unchanged; historical)
 - `.project/REVIEW_STATE.md`
 - `.project/DECISIONS_LOG.md`
 - `.project/PROJECT_STATE.md`
-- `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`
+- `tools/orchestrator-firewall/bin/mihver-firewall.mjs`
+- `tools/orchestrator-firewall/install/mihver-firewall-install.mjs`
+- `tools/orchestrator-firewall/src/policy.mjs`
+- `tools/orchestrator-firewall/src/scope.mjs`
+- `tools/orchestrator-firewall/src/stopgate.mjs`
+- `docs/development/ORCHESTRATOR_FIREWALL.md`
 - `docs/development/AGENT_POLICY.md`
 - `docs/development/REVIEW_PROTOCOL.md`
 
 ## Status
 
-**Implementation, review, verification and bounded real smoke all COMPLETE. Human approval
-PENDING — not requested, not granted.** Nothing has been pushed; no PR exists. Publication remains
-manual per `CLAUDE.md`'s "Publication" section (remote publication automation is not available).
+**Implementation and CI scope remediation are COMPLETE in the working tree. Publication state is
+`PENDING_NEW_PR_CI`.** The next authorized action is human review of the working tree, followed by
+a human-performed commit and push; GitHub CI must actually succeed before any green claim. Remote
+publication automation remains unavailable.
 
-Primary next action: **`CANDIDATE_GATE_RELIABILITY_PUBLICATION_PENDING_HUMAN_REVIEW`** — human review
-of commit `8c19e6aa028e64d1d86e0e608ce66e673bc5a9c2` and the finalized smoke Run Bundle, then a
-manual publication decision.
-
-New next architectural action (**not yet authorized**): `V9_NEW_R3_ARCHITECTURE_DECISION`. Sequence:
-candidate-gate reliability publication → merge-post CI → human explicitly authorizes a V9 task → V9
-fresh `DecisionRequest` → new proposer invocation → new frozen candidate → 3-seat R3 Council →
-durable `DecisionRecord` → durable contemporaneous `CouncilQuorumProof` → fresh human
-pre-authorization audit. No V9 task may start without a separate, explicit human instruction; V1C
-implementation remains likewise unauthorized.
+**V9 REMAINS BLOCKED and is not authorized by this task.** It may be reconsidered only after this
+exact sequence completes: (1) the firewall feature is merged; (2) post-merge CI succeeds; (3) a
+human installs the firewall on the host; (4) a real enforcement smoke test succeeds. V1C remains
+unauthorized.

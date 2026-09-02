@@ -476,12 +476,18 @@ memory-integration work are all **not** authorized by any checkpoint recorded ab
 its own separate, explicit human task instruction, given later. **M0 Step 03B is now DONE** (see the
 checkpoint above) — its completion does not, by itself, authorize the next task.
 
-For the currently checked-out branch, completing `shadow-council-contemporaneous-quorum-evidence-v1`
-is likewise not authorization to start another task. The next action is human review of this
-branch's single local commit and the FINALIZED smoke Run Bundle
-`.project/run-bundles/shadow-council-contemporaneous-quorum-evidence-v1-smoke/`; human approval is
-PENDING — not requested, not granted. No execution, publication, push, PR, merge, or autonomy
-authority follows from it.
+PR #59 exists and is OPEN. Its initial Project validation **FAILED** with
+`SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`; the Publication Broker check passed. The scope
+defect has been remediated locally in the working tree, and fresh local verification passed:
+firewall 42/42, contracts 170/170, project consistency 7/7. The remediation is not yet committed
+and not yet pushed. Publication state: `PENDING_HUMAN_REMEDIATION_COMMIT_AND_NEW_PR_CI`. The next
+authorized action is the human remediation commit followed by new PR CI; the feature is not
+recorded as a frozen project capability here.
+
+**V9 remains blocked and is not authorized.** It may be reconsidered only after, in order: (1) the
+firewall feature is merged; (2) post-merge CI succeeds; (3) a human installs the firewall on the
+host; and (4) a real enforcement smoke test succeeds. This restriction-only R2 hardening grants no
+agent new capability, and it introduces or authorizes no V1C work.
 
 This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out

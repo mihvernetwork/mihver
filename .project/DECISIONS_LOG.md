@@ -486,3 +486,36 @@ Entries above this line are unmodified, per this log's append-only policy.
   `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`,
   `.project/run-bundles/shadow-council-candidate-gate-reliability-v1-smoke/`,
   `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
+- 2026-09-02 — `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1`: human directed durable recording of
+  the completed R2 restriction-only developer control-plane hardening now present in the working
+  tree: a Claude Code hook-based orchestrator delegation firewall that denies Claude MAIN direct
+  repository tools, binds Codex MCP delegation to `MIHVER_DELEGATION_V1` roles, writes hash-chained
+  hook receipts, and gates Stop on completed IMPLEMENTER plus fresh fingerprint-matching VERIFIER
+  evidence. Six fresh adversarial review rounds closed all blocking bypasses and misleading
+  diagnostics; the final verdict was `READY_FOR_FINAL_VERIFICATION`. This entry records no
+  publication or activation: no commit was created, nothing was pushed, no PR exists, nothing is
+  merged, and the firewall is not installed on the host. Next authorized action is human review and
+  human-performed commit/push/PR. **V9 remains blocked and unauthorized** until the firewall is
+  merged, post-merge CI succeeds, a human installs it, and a real enforcement smoke succeeds, in
+  that order. No authority expansion and no V1C authorization. — `.project/CURRENT_TASK.md`,
+  `.project/REVIEW_STATE.md`
+- 2026-09-02 — `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-CI-SCOPE-REMEDIATION`: PR #59 initial
+  Project validation **FAILED** due to `SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`. The
+  restriction-only remediation is **COMPLETED** in the working tree, with fresh local verification
+  **PASS** (40/40 firewall tests, 170/170 contract fixtures, 7/7 project-consistency checks, clean
+  `git diff --check`). Publication state is `PENDING_NEW_PR_CI`; this is not a claim that PR #59 CI
+  is green. A new commit must be pushed and GitHub CI must actually succeed before any green claim.
+  No commit, push, merge, host installation, authority expansion, or V1C authorization occurred. —
+  `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
+- 2026-09-02 — `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-CI-SCOPE-REMEDIATION` follow-up: a fresh
+  adversarial Reviewer returned `SCOPE_REMEDIATION_BLOCKER` on a malformed-absolute-cwd fail-open in
+  the failed-realpath fallback. Remediation is restriction-only and **COMPLETED**: genuine
+  `ENOENT`/`ENOTDIR` failures preserve the prior lexical fallback, while every other realpath failure
+  is ambiguous and now remains in scope. Fresh local verification **PASS**: 42/42 firewall tests,
+  170/170 contract fixtures, 7/7 project-consistency checks, clean `git diff --check`. PR #59 initial
+  Project validation remains **FAILED**, cause `SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`; its
+  remediation is **COMPLETED**, and publication remains `PENDING_NEW_PR_CI`. No claim that PR #59 CI
+  is green; no commit, push, merge, host installation, authority expansion, or V1C authorization. —
+  `tools/orchestrator-firewall/src/scope.mjs`,
+  `tools/orchestrator-firewall/test/orchestrator-firewall.test.mjs`, `.project/CURRENT_TASK.md`,
+  `.project/REVIEW_STATE.md`
