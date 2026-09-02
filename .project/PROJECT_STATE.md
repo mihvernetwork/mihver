@@ -476,12 +476,16 @@ memory-integration work are all **not** authorized by any checkpoint recorded ab
 its own separate, explicit human task instruction, given later. **M0 Step 03B is now DONE** (see the
 checkpoint above) — its completion does not, by itself, authorize the next task.
 
-For the currently checked-out branch, completing `shadow-council-contemporaneous-quorum-evidence-v1`
-is likewise not authorization to start another task. The next action is human review of this
-branch's single local commit and the FINALIZED smoke Run Bundle
-`.project/run-bundles/shadow-council-contemporaneous-quorum-evidence-v1-smoke/`; human approval is
-PENDING — not requested, not granted. No execution, publication, push, PR, merge, or autonomy
-authority follows from it.
+The next authorized action is **human publication of the completed orchestrator delegation firewall**:
+human review of the working tree, followed by human-performed commit, push, and PR. Remote
+publication automation remains unavailable. The implementation task performed no commit, push, PR
+creation, merge, or host installation, so the feature is not recorded as a frozen project
+capability here. Live PR identity/state: verify from GitHub.
+
+**V9 remains blocked and is not authorized.** It may be reconsidered only after, in order: (1) the
+firewall feature is merged; (2) post-merge CI succeeds; (3) a human installs the firewall on the
+host; and (4) a real enforcement smoke test succeeds. This restriction-only R2 hardening grants no
+agent new capability, and it introduces or authorizes no V1C work.
 
 This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out

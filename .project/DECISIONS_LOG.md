@@ -486,3 +486,16 @@ Entries above this line are unmodified, per this log's append-only policy.
   `docs/development/SHADOW_COUNCIL_V1A_EXERCISE.md`,
   `.project/run-bundles/shadow-council-candidate-gate-reliability-v1-smoke/`,
   `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`
+- 2026-09-02 — `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1`: human directed durable recording of
+  the completed R2 restriction-only developer control-plane hardening now present in the working
+  tree: a Claude Code hook-based orchestrator delegation firewall that denies Claude MAIN direct
+  repository tools, binds Codex MCP delegation to `MIHVER_DELEGATION_V1` roles, writes hash-chained
+  hook receipts, and gates Stop on completed IMPLEMENTER plus fresh fingerprint-matching VERIFIER
+  evidence. Six fresh adversarial review rounds closed all blocking bypasses and misleading
+  diagnostics; the final verdict was `READY_FOR_FINAL_VERIFICATION`. This entry records no
+  publication or activation: no commit was created, nothing was pushed, no PR exists, nothing is
+  merged, and the firewall is not installed on the host. Next authorized action is human review and
+  human-performed commit/push/PR. **V9 remains blocked and unauthorized** until the firewall is
+  merged, post-merge CI succeeds, a human installs it, and a real enforcement smoke succeeds, in
+  that order. No authority expansion and no V1C authorization. — `.project/CURRENT_TASK.md`,
+  `.project/REVIEW_STATE.md`

@@ -2,7 +2,8 @@
   "name": "mihver-contract-validation",
   "private": true,
   "scripts": {
-    "test": "node tests/contracts/validate-contracts.mjs",
+    "test": "node tests/contracts/validate-contracts.mjs && npm run test:orchestrator-firewall",
+    "test:orchestrator-firewall": "node --test tools/orchestrator-firewall/test/*.test.mjs",
     "context": "node scripts/dev/project-context.mjs",
     "night-runner": "node scripts/dev/night-runner.mjs",
     "test:night-runner": "node tests/night-runner/validate-night-runner.mjs",
