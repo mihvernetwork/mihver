@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { canonicalJson, parseDelegation, validateSandbox } from '../src/delegation.mjs';
@@ -20,6 +20,7 @@ const bin = join(repoRoot, 'tools/orchestrator-firewall/bin/mihver-firewall.mjs'
 const installer = join(repoRoot, 'tools/orchestrator-firewall/install/mihver-firewall-install.mjs');
 const roots = [];
 const temp = (label) => { const root = execFileSync('mktemp', ['-d', join(tmpdir(), `mihver-fw-${label}-XXXXXX`)], { encoding: 'utf8' }).trim(); roots.push(root); return root; };
+const fixtureBeneath = (candidate, root) => { const rel = relative(root, candidate); return rel === '' || (rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel)); };
 test.after(() => { for (const root of roots) rmSync(root, { recursive: true, force: true }); });
 
 function runHook(root, input, extraEnv = {}) {
@@ -64,19 +65,58 @@ test('scope uses path segments and resolves symlinks into the root', () => {
 });
 
 test('bound scope fails safe for ambiguous cwd and excludes only unambiguous outside paths', () => {
-  const root = temp('cwd-root'); const outside = temp('cwd-out'); const link = join(root, 'link-out'); symlinkSync(outside, link, 'dir');
+  const root = realpathSync.native(temp('cwd-root')); const outside = realpathSync.native(temp('cwd-out')); const sibling = `${root}-other`; mkdirSync(sibling); roots.push(sibling);
+  const linkIn = join(outside, 'link-in'); const linkOut = join(root, 'link-out'); symlinkSync(root, linkIn, 'dir'); symlinkSync(outside, linkOut, 'dir');
+  assert.equal(fixtureBeneath(linkIn, root), false); assert.equal(fixtureBeneath(realpathSync.native(linkIn), root), true);
+  assert.equal(fixtureBeneath(linkOut, root), true); assert.equal(fixtureBeneath(realpathSync.native(linkOut), root), false);
   for (const cwd of [undefined, null, '', 0, false, {}, [], 'relative', join(root, 'missing')]) assert.equal(inScope(cwd, root), true);
   const deletedOutside = join(outside, 'deleted');
   assert.equal(inScope(deletedOutside, root), false);
+  assert.equal(inScope(root, root), true);
   assert.equal(inScope(`${root}/`, root), true);
-  assert.equal(inScope(link, root), false);
+  assert.equal(inScope(linkIn, root), true);
+  assert.equal(inScope(linkOut, root), false);
   assert.equal(inScope(outside, root), false);
+  assert.equal(inScope(sibling, root), false);
   for (const cwd of [undefined, null, '', 0, false, {}, [], 'relative', join(root, 'missing')]) {
     const out = verdict(runHook(root, { hook_event_name: 'PreToolUse', cwd, tool_name: 'Read', tool_input: {} }));
     assert.match(out.hookSpecificOutput.permissionDecisionReason, /^MAIN_DIRECT_READ_DENIED:/);
   }
   const excluded = runHook(root, { hook_event_name: 'PreToolUse', cwd: deletedOutside, tool_name: 'Read', tool_input: {} });
   assert.equal(excluded.stdout, '');
+});
+
+test('scope fails safe for malformed absolute cwd while preserving ENOENT exclusions', () => {
+  const root = realpathSync.native(temp('malformed-root')); const outside = realpathSync.native(temp('malformed-out'));
+  const missingInside = join(root, 'missing'); const missingOutside = join(outside, 'missing');
+  const overlongInside = join(root, 'x'.repeat(5000)); const overlongOutside = join(outside, 'x'.repeat(5000));
+  assert.equal(inScope(`${outside}/bad\0`, root), true);
+  assert.equal(inScope(`${root}/bad\0`, root), true);
+  assert.equal(inScope(overlongOutside, root), true);
+  assert.equal(inScope(overlongInside, root), true);
+  assert.equal(inScope('   ', root), true);
+  assert.equal(inScope(missingInside, root), true);
+  assert.equal(inScope(missingOutside, root), false);
+});
+
+test('scope resolves chained, dangling, and canonical-root symlinks', () => {
+  const root = realpathSync.native(temp('linked-root')); const outside = realpathSync.native(temp('linked-out'));
+  const outward2 = join(root, 'outward-2'); const outward1 = join(root, 'outward-1');
+  const inward2 = join(outside, 'inward-2'); const inward1 = join(outside, 'inward-1');
+  symlinkSync(outside, outward2, 'dir'); symlinkSync(outward2, outward1, 'dir');
+  symlinkSync(root, inward2, 'dir'); symlinkSync(inward2, inward1, 'dir');
+  assert.equal(fixtureBeneath(outward1, root), true); assert.equal(fixtureBeneath(realpathSync.native(outward1), root), false);
+  assert.equal(fixtureBeneath(inward1, root), false); assert.equal(fixtureBeneath(realpathSync.native(inward1), root), true);
+  assert.equal(inScope(outward1, root), false);
+  assert.equal(inScope(inward1, root), true);
+  const dangling = join(root, 'dangling'); symlinkSync(join(outside, 'never-existed'), dangling, 'dir');
+  assert.equal(inScope(dangling, root), true);
+
+  const nested = join(root, 'nested'); mkdirSync(nested);
+  const aliasParent = realpathSync.native(temp('root-alias')); const rootAlias = join(aliasParent, 'alias'); symlinkSync(root, rootAlias, 'dir');
+  assert.notEqual(rootAlias, realpathSync.native(rootAlias));
+  assert.equal(realpathSync.native(join(rootAlias, 'nested')), nested);
+  assert.equal(inScope(join(rootAlias, 'nested'), rootAlias), true);
 });
 
 test('only trimmed non-empty own string agent_id grants subagent identity; effort never changes verdict', () => {

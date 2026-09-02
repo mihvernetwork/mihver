@@ -476,11 +476,13 @@ memory-integration work are all **not** authorized by any checkpoint recorded ab
 its own separate, explicit human task instruction, given later. **M0 Step 03B is now DONE** (see the
 checkpoint above) — its completion does not, by itself, authorize the next task.
 
-The next authorized action is **human publication of the completed orchestrator delegation firewall**:
-human review of the working tree, followed by human-performed commit, push, and PR. Remote
-publication automation remains unavailable. The implementation task performed no commit, push, PR
-creation, merge, or host installation, so the feature is not recorded as a frozen project
-capability here. Live PR identity/state: verify from GitHub.
+PR #59 exists and is OPEN. Its initial Project validation **FAILED** with
+`SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`; the Publication Broker check passed. The scope
+defect has been remediated locally in the working tree, and fresh local verification passed:
+firewall 42/42, contracts 170/170, project consistency 7/7. The remediation is not yet committed
+and not yet pushed. Publication state: `PENDING_HUMAN_REMEDIATION_COMMIT_AND_NEW_PR_CI`. The next
+authorized action is the human remediation commit followed by new PR CI; the feature is not
+recorded as a frozen project capability here.
 
 **V9 remains blocked and is not authorized.** It may be reconsidered only after, in order: (1) the
 firewall feature is merged; (2) post-merge CI succeeds; (3) a human installs the firewall on the

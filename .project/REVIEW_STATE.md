@@ -15,9 +15,9 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1
+Task: MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-CI-SCOPE-REMEDIATION
 Branch: `fix/orchestrator-delegation-firewall-v1`
-Target: `main`; base / HEAD `f67dd99e79307761dcd29c8b58f0f43c59bf7577` (unchanged; no commit)
+Target: `main`; base / HEAD `3bf4f73ab43cbe0e8117142e23b78b785a9a5bd4` (unchanged; no commit)
 
 **Implementation** (R2, restriction-only developer control-plane hardening): a Claude Code
 hook-based firewall mechanically denies direct repository tools to the Claude MAIN thread, binds
@@ -39,9 +39,19 @@ could drift between copies, and content addressing was incomplete. Every finding
 **Fresh adversarial Codex review, round 6:** **`READY_FOR_FINAL_VERIFICATION`**, with no blocking or
 major findings.
 
-**Deterministic validation:** 40/40 firewall tests and 170/170 contract fixtures pass. The firewall
-suite was independently executed twice in a separate session with identical results. `git diff
---check` is clean.
+**PR #59 initial Project validation:** **FAILED**. Cause:
+`SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`. Remediation: **COMPLETED**. Fresh local
+verification: **PASS** — 40/40 firewall tests, 170/170 contract fixtures, and 7/7
+project-consistency checks pass; `git diff --check` is clean. This is not a claim that PR #59 CI is
+green. A new commit must be pushed and GitHub CI must actually succeed before any green claim.
+
+**Fresh scope-remediation review:** a fresh adversarial Reviewer returned
+`SCOPE_REMEDIATION_BLOCKER` on a malformed-absolute-cwd fail-open in the failed-realpath fallback.
+The restriction-only correction is **COMPLETED**: `ENOENT`/`ENOTDIR` retain the prior lexical
+fallback and every other realpath failure now fails safe in scope. Fresh local verification:
+**PASS** — 42/42 firewall tests, 170/170 contract fixtures, 7/7 project-consistency checks, and a
+clean `git diff --check`. Publication state remains `PENDING_NEW_PR_CI`; no PR #59 green-CI claim
+is made.
 
 **Accepted documented limitations:** receipts and the thread-authority store are tamper-evident,
 not tamper-proof; any same-user process can rewrite the unkeyed hash chain, with OS-level privilege
@@ -55,11 +65,11 @@ enforced.
 for main-thread Read, not delegated calls, and delegated-effort tests do not compare resulting
 `STARTED` receipts. Neither field participates in an authorization path.
 
-**Current gate:** implementation is complete in the working tree, pending human publication.
-No commit, push, PR creation, merge, or host installation was performed during implementation. PR
-expected: yes. Target: `main`. Live PR identity/state: verify from GitHub. The next authorized action
-is human review of the working tree and then human-performed commit/push/PR; remote publication
-automation remains unavailable. Human approval is PENDING — not requested, not granted.
+**Current gate:** remediation is complete in the working tree; publication state is
+`PENDING_NEW_PR_CI`. No commit, push, merge, or host installation was performed during remediation.
+The next authorized action is human review and then a human-performed commit/push; GitHub CI must
+actually succeed before any green claim. Remote publication automation remains unavailable. Human
+approval is PENDING — not requested, not granted.
 
 **V9 gate:** V9 remains **BLOCKED** and is not authorized. Reconsideration requires, in order:
 (1) merge this firewall feature; (2) successful post-merge CI; (3) human host installation; (4) a

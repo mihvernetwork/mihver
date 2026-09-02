@@ -5,7 +5,7 @@ below — not a history of past tasks (see [DECISIONS_LOG.md](./DECISIONS_LOG.md
 
 ## Task ID
 
-MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1
+MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-CI-SCOPE-REMEDIATION
 
 ## Objective
 
@@ -16,10 +16,16 @@ and permits session Stop only after a `COMPLETED` IMPLEMENTER receipt and a fres
 fingerprint-matching `COMPLETED` VERIFIER receipt. This is developer control-plane hardening only:
 it expands no authority and gives no agent any new capability.
 
+Remediate the cross-platform scope-boundary defect exposed by PR #59 Project validation: when an
+existing cwd resolves successfully, its resolved filesystem location is authoritative. A fresh
+adversarial Reviewer subsequently returned `SCOPE_REMEDIATION_BLOCKER` because malformed absolute
+cwd values could fail open in the failed-realpath fallback; that restriction-only defect is also
+remediated.
+
 ## Branch / Base
 
 Branch: `fix/orchestrator-delegation-firewall-v1`
-Base / HEAD: `f67dd99e79307761dcd29c8b58f0f43c59bf7577` (unchanged; no commit created)
+Base / HEAD: `3bf4f73ab43cbe0e8117142e23b78b785a9a5bd4` (unchanged; no commit created)
 
 ## Scope / non-goals
 
@@ -31,15 +37,25 @@ publication, merge, or authorization authority, authorize V9, or introduce any V
 
 ## Result
 
-`IMPLEMENTATION_COMPLETE_IN_WORKING_TREE_PENDING_HUMAN_PUBLICATION`.
+`REMEDIATION_COMPLETED`; publication state: `PENDING_NEW_PR_CI`.
 
 The source, installer, deterministic tests, and policy documentation are complete in the working
 tree. No commit, push, PR creation, merge, or host installation was performed during implementation.
 PR expected: yes. Target: `main`. Live PR identity/state: verify from GitHub.
 
-**Validation:** 40 deterministic firewall tests and 170 contract fixtures pass. The firewall suite
-was independently executed twice in a separate session with identical results. `git diff --check`
-is clean.
+**PR #59 initial Project validation:** **FAILED**. Cause:
+`SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`. Remediation: **COMPLETED**. Fresh local
+verification: **PASS** — 40/40 deterministic firewall tests, 170/170 contract fixtures, and 7/7
+project-consistency checks pass; `git diff --check` is clean. This is not a claim that PR #59 CI is
+green. A new commit must be pushed and GitHub CI must actually succeed before any green claim.
+
+**Fresh scope-remediation review:** a fresh adversarial Reviewer returned
+`SCOPE_REMEDIATION_BLOCKER` on a malformed-absolute-cwd fail-open in the failed-realpath fallback.
+The restriction-only correction is **COMPLETED**: only genuine `ENOENT`/`ENOTDIR` failures retain
+lexical exclusion, while every other realpath failure is treated as ambiguous and in scope. Fresh
+local verification: **PASS** — 42/42 deterministic firewall tests, 170/170 contract fixtures, and
+7/7 project-consistency checks pass; `git diff --check` is clean. Publication remains
+`PENDING_NEW_PR_CI`.
 
 **Review:** six fresh adversarial Codex rounds completed. Rounds 1–3 found real blocking bypasses:
 metadata fail-open; Codex `config` sandbox escalation; codex-reply role relabeling; Stop
@@ -66,16 +82,21 @@ receipts. Neither field is consulted by any authorization path.
 - `.project/REVIEW_STATE.md`
 - `.project/DECISIONS_LOG.md`
 - `.project/PROJECT_STATE.md`
-- `tools/orchestrator-firewall/`
+- `tools/orchestrator-firewall/bin/mihver-firewall.mjs`
+- `tools/orchestrator-firewall/install/mihver-firewall-install.mjs`
+- `tools/orchestrator-firewall/src/policy.mjs`
+- `tools/orchestrator-firewall/src/scope.mjs`
+- `tools/orchestrator-firewall/src/stopgate.mjs`
 - `docs/development/ORCHESTRATOR_FIREWALL.md`
 - `docs/development/AGENT_POLICY.md`
 - `docs/development/REVIEW_PROTOCOL.md`
 
 ## Status
 
-**Implementation and adversarial review are COMPLETE in the working tree. Human publication is
-PENDING.** The next authorized action is human review of the working tree, followed by a
-human-performed commit, push, and PR. Remote publication automation remains unavailable.
+**Implementation and CI scope remediation are COMPLETE in the working tree. Publication state is
+`PENDING_NEW_PR_CI`.** The next authorized action is human review of the working tree, followed by
+a human-performed commit and push; GitHub CI must actually succeed before any green claim. Remote
+publication automation remains unavailable.
 
 **V9 REMAINS BLOCKED and is not authorized by this task.** It may be reconsidered only after this
 exact sequence completes: (1) the firewall feature is merged; (2) post-merge CI succeeds; (3) a
