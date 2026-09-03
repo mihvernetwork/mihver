@@ -51,6 +51,14 @@ Full checkpoint-by-checkpoint PR history is in "Frozen Steps / Checkpoints" belo
 - DECISION_OPTION historical-source gate: DONE
 - Dependency D (Memory-Informed R-19 Working Defaults): DONE
 
+MIHVER Orchestrator Delegation Firewall V1: OPERATIONAL — PR #59 merged at main SHA
+`7d4ff0b2be4d33d180429ea827b8aebd113d100b`; merge-post CI, Project validation, and Publication
+Broker **SUCCESS**; human installation **COMPLETED** / **INSTALLED**; real enforcement smoke
+**PASS**. `ORCHESTRATOR_FIREWALL_V1_OPERATIONAL = true`; `V9_PREREQUISITES_FIREWALL = SATISFIED`.
+This is a cooperative-agent orchestration guardrail only; documented V1 limitations remain, with no
+malicious-same-user protection, OS privilege separation, Execution Gateway activation, V1C
+authorization, or R3 human approval.
+
 MemoryContext consumers — owner: `docs/foundation/M0_SCOPE.md`:
 - Intent Parsing → `DISCOVERY_ATTENTION`, `SEMANTIC_PREMISE`
 - Research Planning → `DISCOVERY_ATTENTION`
@@ -476,18 +484,18 @@ memory-integration work are all **not** authorized by any checkpoint recorded ab
 its own separate, explicit human task instruction, given later. **M0 Step 03B is now DONE** (see the
 checkpoint above) — its completion does not, by itself, authorize the next task.
 
-PR #59 exists and is OPEN. Its initial Project validation **FAILED** with
-`SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`; the Publication Broker check passed. The scope
-defect has been remediated locally in the working tree, and fresh local verification passed:
-firewall 42/42, contracts 170/170, project consistency 7/7. The remediation is not yet committed
-and not yet pushed. Publication state: `PENDING_HUMAN_REMEDIATION_COMMIT_AND_NEW_PR_CI`. The next
-authorized action is the human remediation commit followed by new PR CI; the feature is not
-recorded as a frozen project capability here.
+The `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1` prerequisite chain is complete: PR #59 merged at
+main SHA `7d4ff0b2be4d33d180429ea827b8aebd113d100b`; merge-post CI, Project validation, and Publication
+Broker succeeded; human installation completed with status `INSTALLED`; and the real enforcement
+smoke passed. Therefore `ORCHESTRATOR_FIREWALL_V1_OPERATIONAL = true` and
+`V9_PREREQUISITES_FIREWALL = SATISFIED`.
 
-**V9 remains blocked and is not authorized.** It may be reconsidered only after, in order: (1) the
-firewall feature is merged; (2) post-merge CI succeeds; (3) a human installs the firewall on the
-host; and (4) a real enforcement smoke test succeeds. This restriction-only R2 hardening grants no
-agent new capability, and it introduces or authorizes no V1C work.
+**V9 remains unstarted and is not authorized by this closure.** The next architectural action may
+be `V9_NEW_R3_ARCHITECTURE_DECISION`, but it requires a separate, explicit human task instruction.
+No V9 DecisionRequest or Council-provider invocation is authorized. Firewall operational status is
+limited to the cooperative-agent orchestration guardrail: it does not provide malicious-same-user
+protection or OS privilege separation, activate an Execution Gateway, authorize V1C, or constitute
+R3 human approval; the documented V1 limitations remain.
 
 This reconciliation performed no semantic redesign, changed no ADR status, and started no new work.
 See [CURRENT_TASK.md](./CURRENT_TASK.md) for whatever task is active on the currently checked-out

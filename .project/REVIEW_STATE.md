@@ -15,62 +15,38 @@ Action" is authoritative for what's next, not anything below.
 
 ## Latest Review
 
-Task: MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-CI-SCOPE-REMEDIATION
-Branch: `fix/orchestrator-delegation-firewall-v1`
-Target: `main`; base / HEAD `3bf4f73ab43cbe0e8117142e23b78b785a9a5bd4` (unchanged; no commit)
+Task: ORCHESTRATOR-FIREWALL-V1-ACTIVATION-STATE-CLOSURE
+Branch: `chore/orchestrator-firewall-v1-activation-state`
+Target: durable project-state closure; base / HEAD `7d4ff0b2be4d33d180429ea827b8aebd113d100b`
 
-**Implementation** (R2, restriction-only developer control-plane hardening): a Claude Code
-hook-based firewall mechanically denies direct repository tools to the Claude MAIN thread, binds
-Codex MCP delegation to a `MIHVER_DELEGATION_V1` role contract, writes hook-authored hash-chained
-receipts, and gates session Stop on a `COMPLETED` IMPLEMENTER receipt plus a fresh,
-fingerprint-matching `COMPLETED` VERIFIER receipt. The working-tree change is 14 new source,
-installer, test, and policy-documentation files plus two-line `package.json` test-script wiring
-(approximately 2,045 lines). No authority expands and no agent gains a capability.
+**Closure evidence:** `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1` merged through PR #59 at main
+SHA `7d4ff0b2be4d33d180429ea827b8aebd113d100b`. Merge-post CI: **SUCCESS**; Project validation:
+**SUCCESS**; Publication Broker: **SUCCESS**.
 
-**Fresh adversarial Codex review, rounds 1–3:** found real blocking bypasses in metadata fail-open,
-Codex `config` sandbox escalation, codex-reply role relabeling, Stop self-release, ambiguous
-`threadId` binding, manifest-existence demotion re-enabling environment overrides, and entry-only
-hashing with static import before validation. Every finding was remediated.
+**Installation:** human installation **COMPLETED**; status **INSTALLED**. Trust root:
+`/Users/ev/.claude/mihver-firewall`; release `a74bf475bc61`; executable
+`mihver-firewall-1.0.0-a74bf475bc61.mjs`; executable SHA-256
+`a55045e30b727055f267396f5e886aa11c79c206f143dbed7a8fe24ba5c8b38d`; settings backup
+`settings.2026-09-02T22:22:22.903Z.json`.
 
-**Fresh adversarial Codex review, rounds 4–5:** found operator-misleading diagnostic defects: status
-could falsely report `INSTALLED`, status could crash on a malformed manifest, release validation
-could drift between copies, and content addressing was incomplete. Every finding was remediated.
+**Real enforcement smoke:** `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-REAL-ENFORCEMENT-SMOKE`
+**PASS** at HEAD `7d4ff0b2be4d33d180429ea827b8aebd113d100b`. MAIN Read, Bash, and Write were denied with
+`MAIN_DIRECT_READ_DENIED`, `MAIN_DIRECT_BASH_DENIED`, and `MAIN_DIRECT_WRITE_DENIED`, respectively.
+Scout thread: `01a0643a-310e-7b73-b941-308d1c840b18`; Implementer thread:
+`01a0643a-a5d1-75b2-b2d8-78e8bee71748`; Verifier thread:
+`01a0643b-580d-7081-b1cb-e0f013afe19c`. Initial dirty-workspace Stop:
+`BLOCKED — VERIFIER_REQUIRED`; final Stop after a fresh Verifier: `ALLOWED`. The smoke performed no
+commit, push, or PR mutation.
 
-**Fresh adversarial Codex review, round 6:** **`READY_FOR_FINAL_VERIFICATION`**, with no blocking or
-major findings.
+**Current gate:** the prerequisite chain is complete: firewall feature merged → merge-post CI
+success → human firewall installation → real enforcement smoke PASS. Therefore
+`ORCHESTRATOR_FIREWALL_V1_OPERATIONAL = true` and `V9_PREREQUISITES_FIREWALL = SATISFIED`.
 
-**PR #59 initial Project validation:** **FAILED**. Cause:
-`SCOPE_SYMLINK_BOUNDARY_CROSS_PLATFORM_DEFECT`. Remediation: **COMPLETED**. Fresh local
-verification: **PASS** — 40/40 firewall tests, 170/170 contract fixtures, and 7/7
-project-consistency checks pass; `git diff --check` is clean. This is not a claim that PR #59 CI is
-green. A new commit must be pushed and GitHub CI must actually succeed before any green claim.
+Operational means only that the cooperative-agent orchestration guardrail is operational. It does
+not protect against a malicious same-user process, provide OS privilege separation, activate an
+Execution Gateway, authorize V1C, or constitute R3 human approval. All documented V1 limitations
+remain accepted.
 
-**Fresh scope-remediation review:** a fresh adversarial Reviewer returned
-`SCOPE_REMEDIATION_BLOCKER` on a malformed-absolute-cwd fail-open in the failed-realpath fallback.
-The restriction-only correction is **COMPLETED**: `ENOENT`/`ENOTDIR` retain the prior lexical
-fallback and every other realpath failure now fails safe in scope. Fresh local verification:
-**PASS** — 42/42 firewall tests, 170/170 contract fixtures, 7/7 project-consistency checks, and a
-clean `git diff --check`. Publication state remains `PENDING_NEW_PR_CI`; no PR #59 green-CI claim
-is made.
-
-**Accepted documented limitations:** receipts and the thread-authority store are tamper-evident,
-not tamper-proof; any same-user process can rewrite the unkeyed hash chain, with OS-level privilege
-separation required to close that limitation. Host hooks fail open if the engine is missing,
-crashes, or returns non-zero. Bash protection is heuristic rather than an OS sandbox. Hash-to-import
-TOCTOU remains. `.gitignore`d files are excluded from workspace fingerprints. `ConfigChange`
-protects only the running session. Break-glass is human-only by convention, not mechanically
-enforced.
-
-**Accepted non-blocking test-completeness follow-ups:** `permission_mode` invariance is tested only
-for main-thread Read, not delegated calls, and delegated-effort tests do not compare resulting
-`STARTED` receipts. Neither field participates in an authorization path.
-
-**Current gate:** remediation is complete in the working tree; publication state is
-`PENDING_NEW_PR_CI`. No commit, push, merge, or host installation was performed during remediation.
-The next authorized action is human review and then a human-performed commit/push; GitHub CI must
-actually succeed before any green claim. Remote publication automation remains unavailable. Human
-approval is PENDING — not requested, not granted.
-
-**V9 gate:** V9 remains **BLOCKED** and is not authorized. Reconsideration requires, in order:
-(1) merge this firewall feature; (2) successful post-merge CI; (3) human host installation; (4) a
-successful real enforcement smoke test. No V1C content or authority follows from this task.
+**V9 gate:** V9 is not running and is not authorized by this closure task. The next architectural
+action may be `V9_NEW_R3_ARCHITECTURE_DECISION`, but only under a separate, explicit human task
+instruction. No V9 DecisionRequest was created and no Council provider was invoked.
