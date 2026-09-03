@@ -519,3 +519,26 @@ Entries above this line are unmodified, per this log's append-only policy.
   `tools/orchestrator-firewall/src/scope.mjs`,
   `tools/orchestrator-firewall/test/orchestrator-firewall.test.mjs`, `.project/CURRENT_TASK.md`,
   `.project/REVIEW_STATE.md`
+- 2026-09-03 — `ORCHESTRATOR-FIREWALL-V1-ACTIVATION-STATE-CLOSURE`: durable state records
+  `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1` merged through PR #59 at main SHA
+  `7d4ff0b2be4d33d180429ea827b8aebd113d100b`, with merge-post CI, Project validation, and
+  Publication Broker **SUCCESS**. Human installation is **COMPLETED** / **INSTALLED** at trust root
+  `/Users/ev/.claude/mihver-firewall`, release `a74bf475bc61`, executable
+  `mihver-firewall-1.0.0-a74bf475bc61.mjs`, SHA-256
+  `a55045e30b727055f267396f5e886aa11c79c206f143dbed7a8fe24ba5c8b38d`, settings backup
+  `settings.2026-09-02T22:22:22.903Z.json`. Real enforcement smoke
+  `MIHVER-ORCHESTRATOR-DELEGATION-FIREWALL-V1-REAL-ENFORCEMENT-SMOKE` **PASS** at HEAD
+  `7d4ff0b2be4d33d180429ea827b8aebd113d100b`: MAIN Read/Bash/Write denied respectively with
+  `MAIN_DIRECT_READ_DENIED`, `MAIN_DIRECT_BASH_DENIED`, and `MAIN_DIRECT_WRITE_DENIED`; Scout
+  `01a0643a-310e-7b73-b941-308d1c840b18`, Implementer
+  `01a0643a-a5d1-75b2-b2d8-78e8bee71748`, Verifier
+  `01a0643b-580d-7081-b1cb-e0f013afe19c`; initial dirty-workspace Stop
+  `BLOCKED — VERIFIER_REQUIRED`, final Stop after fresh Verifier `ALLOWED`; no commit, push, or PR
+  mutation during smoke. The prerequisite chain is complete, so
+  `ORCHESTRATOR_FIREWALL_V1_OPERATIONAL = true` and `V9_PREREQUISITES_FIREWALL = SATISFIED`.
+  Operational means the cooperative-agent orchestration guardrail only, not malicious-same-user
+  protection, OS privilege separation, Execution Gateway activation, V1C authorization, or R3
+  human approval; documented V1 limitations remain. V9 is unstarted and unauthorized by this
+  closure; `V9_NEW_R3_ARCHITECTURE_DECISION` may occur only on separate explicit human instruction.
+  No V9 DecisionRequest was created and no Council provider was invoked. —
+  `.project/CURRENT_TASK.md`, `.project/REVIEW_STATE.md`, `.project/PROJECT_STATE.md`
